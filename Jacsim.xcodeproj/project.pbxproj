@@ -42,6 +42,7 @@
 		25EE099E28CF198000B5B5CA /* HeaderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25EE099D28CF198000B5B5CA /* HeaderView.swift */; };
 		25EE09A028CF1A6200B5B5CA /* Color.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25EE099F28CF1A6200B5B5CA /* Color.swift */; };
 		25EE09A228CF1A7300B5B5CA /* Constant.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25EE09A128CF1A7300B5B5CA /* Constant.swift */; };
+		25EE09A728D0AE6300B5B5CA /* Floaty in Frameworks */ = {isa = PBXBuildFile; productRef = 25EE09A628D0AE6300B5B5CA /* Floaty */; };
 		25FDC51E28CC6174002543CC /* Realm in Frameworks */ = {isa = PBXBuildFile; productRef = 25FDC51D28CC6174002543CC /* Realm */; };
 		25FDC52028CC6174002543CC /* RealmSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 25FDC51F28CC6174002543CC /* RealmSwift */; };
 		25FDC52328CC6186002543CC /* FSCalendar in Frameworks */ = {isa = PBXBuildFile; productRef = 25FDC52228CC6186002543CC /* FSCalendar */; };
@@ -93,6 +94,7 @@
 				2547135228CC522E0049D952 /* Alamofire in Frameworks */,
 				2547134C28CC520D0049D952 /* SnapKit in Frameworks */,
 				2547134F28CC521C0049D952 /* Then in Frameworks */,
+				25EE09A728D0AE6300B5B5CA /* Floaty in Frameworks */,
 				25FDC52328CC6186002543CC /* FSCalendar in Frameworks */,
 				25FDC51E28CC6174002543CC /* Realm in Frameworks */,
 			);
@@ -316,6 +318,7 @@
 				25FDC51D28CC6174002543CC /* Realm */,
 				25FDC51F28CC6174002543CC /* RealmSwift */,
 				25FDC52228CC6186002543CC /* FSCalendar */,
+				25EE09A628D0AE6300B5B5CA /* Floaty */,
 			);
 			productName = Jacsim;
 			productReference = 2547131D28CC4B670049D952 /* Jacsim.app */;
@@ -352,6 +355,7 @@
 				2547135328CC52410049D952 /* XCRemoteSwiftPackageReference "Toast-Swift" */,
 				25FDC51C28CC6174002543CC /* XCRemoteSwiftPackageReference "realm-swift" */,
 				25FDC52128CC6186002543CC /* XCRemoteSwiftPackageReference "FSCalendar" */,
+				25EE09A528D0AE6300B5B5CA /* XCRemoteSwiftPackageReference "Floaty" */,
 			);
 			productRefGroup = 2547131E28CC4B670049D952 /* Products */;
 			projectDirPath = "";
@@ -661,6 +665,14 @@
 				minimumVersion = 5.0.0;
 			};
 		};
+		25EE09A528D0AE6300B5B5CA /* XCRemoteSwiftPackageReference "Floaty" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/kciter/Floaty.git";
+			requirement = {
+				branch = master;
+				kind = branch;
+			};
+		};
 		25FDC51C28CC6174002543CC /* XCRemoteSwiftPackageReference "realm-swift" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/realm/realm-swift.git";
@@ -699,6 +711,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 2547135328CC52410049D952 /* XCRemoteSwiftPackageReference "Toast-Swift" */;
 			productName = Toast;
+		};
+		25EE09A628D0AE6300B5B5CA /* Floaty */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 25EE09A528D0AE6300B5B5CA /* XCRemoteSwiftPackageReference "Floaty" */;
+			productName = Floaty;
 		};
 		25FDC51D28CC6174002543CC /* Realm */ = {
 			isa = XCSwiftPackageProductDependency;
