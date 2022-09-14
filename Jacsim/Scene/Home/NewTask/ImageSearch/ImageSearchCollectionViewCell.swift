@@ -7,9 +7,17 @@
 
 import UIKit
 
+import Kingfisher
+
 class ImageSearchCollectionViewCell: BaseCollectionViewCell {
     
     // MARK: UIImageView
+    let imageView = UIImageView().then {
+        $0.backgroundColor = .lightGray
+        $0.contentMode = .scaleAspectFill
+        $0.clipsToBounds = true
+    }
+    
     
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -20,10 +28,16 @@ class ImageSearchCollectionViewCell: BaseCollectionViewCell {
     }
     
     override func configure() {
-        
+        self.addSubview(imageView)
     }
     
     override func setConstraints() {
-        
+        imageView.snp.makeConstraints { make in
+            make.edges.equalToSuperview()
+        }
+    }
+    
+    func setData(imageURL: URL) {
+            imageView.kf.setImage(with: imageURL)
     }
 }

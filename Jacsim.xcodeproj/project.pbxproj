@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		2535270028D20F190086383E /* Shadow+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 253526FF28D20F180086383E /* Shadow+Extension.swift */; };
 		2535270228D222BD0086383E /* UITextField+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2535270128D222BD0086383E /* UITextField+Extension.swift */; };
+		2535270528D244C40086383E /* Kingfisher in Frameworks */ = {isa = PBXBuildFile; productRef = 2535270428D244C40086383E /* Kingfisher */; };
 		2547132128CC4B670049D952 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2547132028CC4B670049D952 /* AppDelegate.swift */; };
 		2547132328CC4B670049D952 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2547132228CC4B670049D952 /* SceneDelegate.swift */; };
 		2547132528CC4B670049D952 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2547132428CC4B670049D952 /* ViewController.swift */; };
@@ -98,6 +99,7 @@
 				25FDC52028CC6174002543CC /* RealmSwift in Frameworks */,
 				2547135528CC52410049D952 /* Toast in Frameworks */,
 				2547135228CC522E0049D952 /* Alamofire in Frameworks */,
+				2535270528D244C40086383E /* Kingfisher in Frameworks */,
 				2547134C28CC520D0049D952 /* SnapKit in Frameworks */,
 				2547134F28CC521C0049D952 /* Then in Frameworks */,
 				25EE09A728D0AE6300B5B5CA /* Floaty in Frameworks */,
@@ -328,6 +330,7 @@
 				25FDC51F28CC6174002543CC /* RealmSwift */,
 				25FDC52228CC6186002543CC /* FSCalendar */,
 				25EE09A628D0AE6300B5B5CA /* Floaty */,
+				2535270428D244C40086383E /* Kingfisher */,
 			);
 			productName = Jacsim;
 			productReference = 2547131D28CC4B670049D952 /* Jacsim.app */;
@@ -365,6 +368,7 @@
 				25FDC51C28CC6174002543CC /* XCRemoteSwiftPackageReference "realm-swift" */,
 				25FDC52128CC6186002543CC /* XCRemoteSwiftPackageReference "FSCalendar" */,
 				25EE09A528D0AE6300B5B5CA /* XCRemoteSwiftPackageReference "Floaty" */,
+				2535270328D244C40086383E /* XCRemoteSwiftPackageReference "Kingfisher" */,
 			);
 			productRefGroup = 2547131E28CC4B670049D952 /* Products */;
 			projectDirPath = "";
@@ -651,6 +655,14 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		2535270328D244C40086383E /* XCRemoteSwiftPackageReference "Kingfisher" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/onevcat/Kingfisher.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 7.0.0;
+			};
+		};
 		2547134A28CC520D0049D952 /* XCRemoteSwiftPackageReference "SnapKit" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/SnapKit/SnapKit.git";
@@ -710,6 +722,11 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		2535270428D244C40086383E /* Kingfisher */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 2535270328D244C40086383E /* XCRemoteSwiftPackageReference "Kingfisher" */;
+			productName = Kingfisher;
+		};
 		2547134B28CC520D0049D952 /* SnapKit */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 2547134A28CC520D0049D952 /* XCRemoteSwiftPackageReference "SnapKit" */;

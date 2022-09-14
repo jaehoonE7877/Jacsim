@@ -69,4 +69,8 @@ class HomeTableViewCell: BaseTableViewCell {
             make.edges.equalTo(jacsimContentView.snp.edges).inset(8)
         }
     }
+    
+    func setData(){
+        
+    }
 }
