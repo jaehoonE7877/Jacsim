@@ -7,26 +7,28 @@
 
 import UIKit
 
-class HeaderView: BaseView {
+final class HeaderView: UITableViewHeaderFooterView {
     
     let headerLabel = UILabel().then {
         $0.font = .boldSystemFont(ofSize: 24)
         $0.textColor = .black
     }
     
-    override init(frame: CGRect) {
-        super.init(frame: frame)
+    override init(reuseIdentifier: String?) {
+        super.init(reuseIdentifier: reuseIdentifier)
+        configure()
+        setConstraints()
     }
     
     required init?(coder: NSCoder) {
          fatalError()
     }
     
-    override func configure() {
+    private func configure() {
         self.addSubview(headerLabel)
     }
     
-    override func setConstraints() {
+    private func setConstraints() {
         headerLabel.snp.makeConstraints { make in
             make.centerY.equalToSuperview()
             make.leading.equalTo(self.snp.leading)

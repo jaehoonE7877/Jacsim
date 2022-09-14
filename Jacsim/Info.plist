@@ -2,10 +2,6 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>NSPhotoLibraryUsageDescription</key>
-	<string>작심한 일의 배경, 인증 사진을 적용하기 위해 사용됩니다.</string>
-	<key>NSCameraUsageDescription</key>
-	<string>작심한 일의 배경, 인증 사진을 적용하기 위해 사용됩니다.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

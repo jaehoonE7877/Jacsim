@@ -14,7 +14,7 @@ class UserJacsim: Object {
     
     @Persisted(primaryKey: true) var objectId: ObjectId
     
-    @Persisted var jacsimTitle: String
+    @Persisted var title: String
     @Persisted var startDate: Date
     @Persisted var endDate: Date
     @Persisted var mainImage: String
@@ -24,15 +24,13 @@ class UserJacsim: Object {
     var certified = List<CertifiedObject>()
     
     
-    convenience init(jacsimTitle: String, startDate: Date, endDate: Date, mainImage: String, isDone: Bool) {
+    convenience init(title: String, startDate: Date, endDate: Date, mainImage: String, isDone: Bool) {
         self.init()
-        self.jacsimTitle = jacsimTitle
+        self.title = title
         self.startDate = startDate
         self.endDate = endDate
         self.mainImage = mainImage
         self.isDone = false
-        
-        
     }
     
 }

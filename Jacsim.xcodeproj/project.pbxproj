@@ -25,9 +25,10 @@
 		2547135528CC52410049D952 /* Toast in Frameworks */ = {isa = PBXBuildFile; productRef = 2547135428CC52410049D952 /* Toast */; };
 		25636C4728CC544A00B385AF /* BaseCollectionViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25636C4628CC544A00B385AF /* BaseCollectionViewCell.swift */; };
 		25636C4928CC54A200B385AF /* BaseTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25636C4828CC54A200B385AF /* BaseTableViewCell.swift */; };
-		25636C4C28CC552D00B385AF /* RealmModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25636C4B28CC552D00B385AF /* RealmModel.swift */; };
+		25636C4C28CC552D00B385AF /* UserJacsim.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25636C4B28CC552D00B385AF /* UserJacsim.swift */; };
 		25636C4E28CC560700B385AF /* Tabbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25636C4D28CC560700B385AF /* Tabbar.swift */; };
 		25636C5128CC580400B385AF /* APIManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25636C5028CC580400B385AF /* APIManager.swift */; };
+		258114F728D1DD5000CBA0ED /* UIImage+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 258114F628D1DD5000CBA0ED /* UIImage+Extension.swift */; };
 		25EE098228CF0CF600B5B5CA /* HomeViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25EE098128CF0CF600B5B5CA /* HomeViewController.swift */; };
 		25EE098428CF0D0800B5B5CA /* HomeTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25EE098328CF0D0800B5B5CA /* HomeTableViewCell.swift */; };
 		25EE098828CF104100B5B5CA /* DoneTaskViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25EE098728CF104100B5B5CA /* DoneTaskViewController.swift */; };
@@ -65,9 +66,10 @@
 		2547134828CC51E30049D952 /* BaseViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BaseViewController.swift; sourceTree = "<group>"; };
 		25636C4628CC544A00B385AF /* BaseCollectionViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BaseCollectionViewCell.swift; sourceTree = "<group>"; };
 		25636C4828CC54A200B385AF /* BaseTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BaseTableViewCell.swift; sourceTree = "<group>"; };
-		25636C4B28CC552D00B385AF /* RealmModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RealmModel.swift; sourceTree = "<group>"; };
+		25636C4B28CC552D00B385AF /* UserJacsim.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserJacsim.swift; sourceTree = "<group>"; };
 		25636C4D28CC560700B385AF /* Tabbar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Tabbar.swift; sourceTree = "<group>"; };
 		25636C5028CC580400B385AF /* APIManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIManager.swift; sourceTree = "<group>"; };
+		258114F628D1DD5000CBA0ED /* UIImage+Extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIImage+Extension.swift"; sourceTree = "<group>"; };
 		25EE098128CF0CF600B5B5CA /* HomeViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeViewController.swift; sourceTree = "<group>"; };
 		25EE098328CF0D0800B5B5CA /* HomeTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeTableViewCell.swift; sourceTree = "<group>"; };
 		25EE098728CF104100B5B5CA /* DoneTaskViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DoneTaskViewController.swift; sourceTree = "<group>"; };
@@ -163,7 +165,7 @@
 		2547133A28CC4C310049D952 /* Database */ = {
 			isa = PBXGroup;
 			children = (
-				25636C4B28CC552D00B385AF /* RealmModel.swift */,
+				25636C4B28CC552D00B385AF /* UserJacsim.swift */,
 			);
 			path = Database;
 			sourceTree = "<group>";
@@ -190,6 +192,7 @@
 			isa = PBXGroup;
 			children = (
 				2547134128CC4D780049D952 /* Transition+Extension.swift */,
+				258114F628D1DD5000CBA0ED /* UIImage+Extension.swift */,
 			);
 			path = Extension;
 			sourceTree = "<group>";
@@ -387,6 +390,7 @@
 			files = (
 				2547134228CC4D780049D952 /* Transition+Extension.swift in Sources */,
 				25EE098F28CF153200B5B5CA /* NewTaskView.swift in Sources */,
+				258114F728D1DD5000CBA0ED /* UIImage+Extension.swift in Sources */,
 				2547132528CC4B670049D952 /* ViewController.swift in Sources */,
 				25636C4728CC544A00B385AF /* BaseCollectionViewCell.swift in Sources */,
 				25EE099A28CF172200B5B5CA /* TaskUpdateViewController.swift in Sources */,
@@ -394,7 +398,7 @@
 				25EE098D28CF14E400B5B5CA /* NewTaskViewController.swift in Sources */,
 				25EE099828CF170E00B5B5CA /* TaskDetailViewController.swift in Sources */,
 				25EE099228CF161000B5B5CA /* ImageSearchViewController.swift in Sources */,
-				25636C4C28CC552D00B385AF /* RealmModel.swift in Sources */,
+				25636C4C28CC552D00B385AF /* UserJacsim.swift in Sources */,
 				25EE098228CF0CF600B5B5CA /* HomeViewController.swift in Sources */,
 				25EE098428CF0D0800B5B5CA /* HomeTableViewCell.swift in Sources */,
 				2547134028CC4C970049D952 /* ReusableViewProtocol.swift in Sources */,
@@ -561,6 +565,9 @@
 				DEVELOPMENT_TEAM = RFHV927M8S;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Jacsim/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "작심";
+				INFOPLIST_KEY_NSCameraUsageDescription = "작심한 일의 배경, 인증 사진을 적용하기 위해 사용됩니다.";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "작심한 일의 배경, 인증 사진을 적용하기 위해 사용됩니다.";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UIMainStoryboardFile = Main;
@@ -590,6 +597,9 @@
 				DEVELOPMENT_TEAM = RFHV927M8S;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Jacsim/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "작심";
+				INFOPLIST_KEY_NSCameraUsageDescription = "작심한 일의 배경, 인증 사진을 적용하기 위해 사용됩니다.";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "작심한 일의 배경, 인증 사진을 적용하기 위해 사용됩니다.";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UIMainStoryboardFile = Main;
