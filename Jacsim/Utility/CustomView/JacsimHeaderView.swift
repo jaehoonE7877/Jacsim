@@ -7,10 +7,10 @@
 
 import UIKit
 
-final class HeaderView: UITableViewHeaderFooterView {
+class JacsimHeaderView: UITableViewHeaderFooterView {
     
     let headerLabel = UILabel().then {
-        $0.font = .boldSystemFont(ofSize: 24)
+        $0.font = .boldSystemFont(ofSize: 22)
         $0.textColor = .black
     }
     
@@ -30,8 +30,8 @@ final class HeaderView: UITableViewHeaderFooterView {
     
     private func setConstraints() {
         headerLabel.snp.makeConstraints { make in
-            make.centerY.equalToSuperview()
-            make.leading.equalTo(self.snp.leading)
+            make.top.equalTo(self.snp.top).offset(8)
+            make.leading.equalTo(self.snp.leading).offset(12)
         }
     }
     

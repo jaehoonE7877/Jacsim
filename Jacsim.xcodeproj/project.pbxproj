@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		2535270028D20F190086383E /* Shadow+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 253526FF28D20F180086383E /* Shadow+Extension.swift */; };
+		2535270228D222BD0086383E /* UITextField+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2535270128D222BD0086383E /* UITextField+Extension.swift */; };
 		2547132128CC4B670049D952 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2547132028CC4B670049D952 /* AppDelegate.swift */; };
 		2547132328CC4B670049D952 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2547132228CC4B670049D952 /* SceneDelegate.swift */; };
 		2547132528CC4B670049D952 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2547132428CC4B670049D952 /* ViewController.swift */; };
@@ -40,7 +42,7 @@
 		25EE099828CF170E00B5B5CA /* TaskDetailViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25EE099728CF170E00B5B5CA /* TaskDetailViewController.swift */; };
 		25EE099A28CF172200B5B5CA /* TaskUpdateViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25EE099928CF172200B5B5CA /* TaskUpdateViewController.swift */; };
 		25EE099C28CF175F00B5B5CA /* TaskDetailCollectionViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25EE099B28CF175F00B5B5CA /* TaskDetailCollectionViewCell.swift */; };
-		25EE099E28CF198000B5B5CA /* HeaderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25EE099D28CF198000B5B5CA /* HeaderView.swift */; };
+		25EE099E28CF198000B5B5CA /* JacsimHeaderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25EE099D28CF198000B5B5CA /* JacsimHeaderView.swift */; };
 		25EE09A028CF1A6200B5B5CA /* Color.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25EE099F28CF1A6200B5B5CA /* Color.swift */; };
 		25EE09A228CF1A7300B5B5CA /* Constant.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25EE09A128CF1A7300B5B5CA /* Constant.swift */; };
 		25EE09A728D0AE6300B5B5CA /* Floaty in Frameworks */ = {isa = PBXBuildFile; productRef = 25EE09A628D0AE6300B5B5CA /* Floaty */; };
@@ -50,6 +52,8 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		253526FF28D20F180086383E /* Shadow+Extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Shadow+Extension.swift"; sourceTree = "<group>"; };
+		2535270128D222BD0086383E /* UITextField+Extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UITextField+Extension.swift"; sourceTree = "<group>"; };
 		2547131D28CC4B670049D952 /* Jacsim.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Jacsim.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		2547132028CC4B670049D952 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		2547132228CC4B670049D952 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
@@ -81,7 +85,7 @@
 		25EE099728CF170E00B5B5CA /* TaskDetailViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskDetailViewController.swift; sourceTree = "<group>"; };
 		25EE099928CF172200B5B5CA /* TaskUpdateViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskUpdateViewController.swift; sourceTree = "<group>"; };
 		25EE099B28CF175F00B5B5CA /* TaskDetailCollectionViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskDetailCollectionViewCell.swift; sourceTree = "<group>"; };
-		25EE099D28CF198000B5B5CA /* HeaderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeaderView.swift; sourceTree = "<group>"; };
+		25EE099D28CF198000B5B5CA /* JacsimHeaderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JacsimHeaderView.swift; sourceTree = "<group>"; };
 		25EE099F28CF1A6200B5B5CA /* Color.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Color.swift; sourceTree = "<group>"; };
 		25EE09A128CF1A7300B5B5CA /* Constant.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Constant.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -193,6 +197,8 @@
 			children = (
 				2547134128CC4D780049D952 /* Transition+Extension.swift */,
 				258114F628D1DD5000CBA0ED /* UIImage+Extension.swift */,
+				253526FF28D20F180086383E /* Shadow+Extension.swift */,
+				2535270128D222BD0086383E /* UITextField+Extension.swift */,
 			);
 			path = Extension;
 			sourceTree = "<group>";
@@ -217,7 +223,7 @@
 		2547134428CC50E20049D952 /* CustomView */ = {
 			isa = PBXGroup;
 			children = (
-				25EE099D28CF198000B5B5CA /* HeaderView.swift */,
+				25EE099D28CF198000B5B5CA /* JacsimHeaderView.swift */,
 			);
 			path = CustomView;
 			sourceTree = "<group>";
@@ -403,8 +409,10 @@
 				25EE098428CF0D0800B5B5CA /* HomeTableViewCell.swift in Sources */,
 				2547134028CC4C970049D952 /* ReusableViewProtocol.swift in Sources */,
 				2547132128CC4B670049D952 /* AppDelegate.swift in Sources */,
+				2535270228D222BD0086383E /* UITextField+Extension.swift in Sources */,
 				2547134628CC50F10049D952 /* BaseView.swift in Sources */,
-				25EE099E28CF198000B5B5CA /* HeaderView.swift in Sources */,
+				25EE099E28CF198000B5B5CA /* JacsimHeaderView.swift in Sources */,
+				2535270028D20F190086383E /* Shadow+Extension.swift in Sources */,
 				25EE098A28CF105A00B5B5CA /* DoneTaskTableViewCell.swift in Sources */,
 				25EE09A028CF1A6200B5B5CA /* Color.swift in Sources */,
 				2547134928CC51E30049D952 /* BaseViewController.swift in Sources */,

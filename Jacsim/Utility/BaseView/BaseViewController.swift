@@ -23,8 +23,8 @@ class BaseViewController: UIViewController {
     
     func setConstraint() {}
     
-    func showAlertMessage(title: String, button: String) {
-        let alert = UIAlertController(title: title, message: nil, preferredStyle: .alert)
+    func showAlertMessage(title: String, message: String ,button: String) {
+        let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
         let ok = UIAlertAction(title: button, style: .default)
         alert.addAction(ok)
         present(alert, animated: true)

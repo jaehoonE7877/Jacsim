@@ -12,10 +12,7 @@ class HomeTableViewCell: BaseTableViewCell {
     //shadowview, image, label
     
     let shadowView = UIView().then {
-        $0.layer.shadowColor = UIColor.black.cgColor
-        $0.layer.shadowOffset = CGSize(width: 3, height: 3)
-        $0.layer.shadowRadius = 8
-        $0.layer.shadowOpacity = 1
+        makeShadow(view: $0)
         $0.backgroundColor = .clear
     }
     
