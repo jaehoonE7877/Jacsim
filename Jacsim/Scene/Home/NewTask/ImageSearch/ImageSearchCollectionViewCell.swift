@@ -38,6 +38,6 @@ class ImageSearchCollectionViewCell: BaseCollectionViewCell {
     }
     
     func setData(imageURL: URL) {
-            imageView.kf.setImage(with: imageURL)
+        imageView.kf.setImage(with: imageURL)
     }
 }

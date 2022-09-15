@@ -30,7 +30,7 @@ class HomeTableViewCell: BaseTableViewCell {
     }
     
     let titleLabel = UILabel().then {
-        $0.text = "물 마시기"
+        $0.text = "물 마시기물 마시기물 마시기물 마시기"
         $0.font = .systemFont(ofSize: 20)
         $0.textAlignment = .left
     }
@@ -39,6 +39,16 @@ class HomeTableViewCell: BaseTableViewCell {
         $0.axis = .horizontal
         $0.distribution = .fillProportionally
         $0.spacing = 12
+        
+        isDoneImage.snp.makeConstraints { make in
+            make.width.equalTo(isDoneImage.snp.height)
+            make.centerY.equalToSuperview()
+        }
+        
+        titleLabel.snp.makeConstraints { make in
+            make.centerY.equalToSuperview()
+        }
+        
     }
     
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {

@@ -9,8 +9,8 @@ import UIKit
 
 class NewTaskView: BaseView {
     
+            // MARK: Property
     
-    // MARK: [Label, Label], TextField, Label, UIImage, UIButton, [UILabel, UITextField], [UILabel, UITextField]
     let newTaskTitleLabel = UILabel().then {
         $0.font = .boldSystemFont(ofSize: 16)
         $0.text = "작심한 일의 제목을 입력해주세요."
@@ -18,7 +18,7 @@ class NewTaskView: BaseView {
     
     let titleCountLabel = UILabel().then {
         $0.font = .systemFont(ofSize: 13)
-        $0.text = "88/88"
+        $0.text = "0/20"
     }
     
     let newTaskTitleTextfield = UITextField().then {
@@ -26,6 +26,7 @@ class NewTaskView: BaseView {
         $0.backgroundColor = .lightGray
         $0.placeholder = "예시 - 아침에 일어나서 물 마시기"
         $0.textAlignment = .center
+        $0.font = .systemFont(ofSize: 14)
     }
     
     let newTaskImageLabel = UILabel().then {
@@ -38,8 +39,9 @@ class NewTaskView: BaseView {
         $0.backgroundColor = .lightGray
     }
     
-    let imageAddButton = UIButton().then {
+    let imageAddButton = UIButton(type: .system).then {
         $0.setImage(UIImage(systemName: "plus.circle.fill", withConfiguration: UIImage.SymbolConfiguration(pointSize: 36)), for: .normal)
+        $0.showsMenuAsPrimaryAction = true
         $0.tintColor = Constant.BaseColor.buttonColor
     }
     
@@ -51,7 +53,7 @@ class NewTaskView: BaseView {
     let startDateTextField = UITextField().then {
         makeShadow(view: $0)
         $0.placeholder = "시작일을 정해주세요."
-        $0.font = .boldSystemFont(ofSize: 14)
+        $0.font = .systemFont(ofSize: 14)
         $0.textAlignment = .center
         $0.backgroundColor = .lightGray
     }
@@ -64,7 +66,7 @@ class NewTaskView: BaseView {
     let endDateTextField = UITextField().then {
         makeShadow(view: $0)
         $0.placeholder = "종료일을 정해주세요."
-        $0.font = .boldSystemFont(ofSize: 14)
+        $0.font = .systemFont(ofSize: 14)
         $0.textAlignment = .center
         $0.backgroundColor = .lightGray
     }
@@ -86,13 +88,16 @@ class NewTaskView: BaseView {
     lazy var startDateStackView = UIStackView(arrangedSubviews: [startDateLabel, startDateTextField]).then {
         $0.axis = .horizontal
         $0.distribution = .fillProportionally
+        $0.spacing = 12
         
         startDateLabel.snp.makeConstraints { make in
             make.leading.equalToSuperview()
             make.centerY.equalToSuperview()
+            make.width.equalTo(60)
         }
         
         startDateTextField.snp.makeConstraints { make in
+            //make.leading.equalTo(startDateLabel.snp.trailing).offset(16)
             make.trailing.equalToSuperview()
             make.centerY.equalToSuperview()
         }
@@ -101,13 +106,16 @@ class NewTaskView: BaseView {
     lazy var endDateStackView = UIStackView(arrangedSubviews: [endDateLabel, endDateTextField]).then {
         $0.axis = .horizontal
         $0.distribution = .fillProportionally
-
+        $0.spacing = 12
+        
         endDateLabel.snp.makeConstraints { make in
             make.leading.equalToSuperview()
             make.centerY.equalToSuperview()
+            make.width.equalTo(60)
         }
         
         endDateTextField.snp.makeConstraints { make in
+            //make.leading.equalTo(endDateLabel.snp.trailing).offset(16)
             make.trailing.equalToSuperview()
             make.centerY.equalToSuperview()
         }

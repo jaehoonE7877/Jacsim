@@ -26,12 +26,14 @@
 		2547134F28CC521C0049D952 /* Then in Frameworks */ = {isa = PBXBuildFile; productRef = 2547134E28CC521C0049D952 /* Then */; };
 		2547135228CC522E0049D952 /* Alamofire in Frameworks */ = {isa = PBXBuildFile; productRef = 2547135128CC522E0049D952 /* Alamofire */; };
 		2547135528CC52410049D952 /* Toast in Frameworks */ = {isa = PBXBuildFile; productRef = 2547135428CC52410049D952 /* Toast */; };
+		256070CB28D396C400A1F553 /* ImageModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 256070CA28D396C400A1F553 /* ImageModel.swift */; };
 		25636C4728CC544A00B385AF /* BaseCollectionViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25636C4628CC544A00B385AF /* BaseCollectionViewCell.swift */; };
 		25636C4928CC54A200B385AF /* BaseTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25636C4828CC54A200B385AF /* BaseTableViewCell.swift */; };
 		25636C4C28CC552D00B385AF /* UserJacsim.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25636C4B28CC552D00B385AF /* UserJacsim.swift */; };
 		25636C4E28CC560700B385AF /* Tabbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25636C4D28CC560700B385AF /* Tabbar.swift */; };
 		25636C5128CC580400B385AF /* APIManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25636C5028CC580400B385AF /* APIManager.swift */; };
 		258114F728D1DD5000CBA0ED /* UIImage+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 258114F628D1DD5000CBA0ED /* UIImage+Extension.swift */; };
+		258A47F328D38D0A009F0F95 /* ImageSearchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 258A47F228D38D0A009F0F95 /* ImageSearchView.swift */; };
 		25EE098228CF0CF600B5B5CA /* HomeViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25EE098128CF0CF600B5B5CA /* HomeViewController.swift */; };
 		25EE098428CF0D0800B5B5CA /* HomeTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25EE098328CF0D0800B5B5CA /* HomeTableViewCell.swift */; };
 		25EE098828CF104100B5B5CA /* DoneTaskViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25EE098728CF104100B5B5CA /* DoneTaskViewController.swift */; };
@@ -69,12 +71,14 @@
 		2547134128CC4D780049D952 /* Transition+Extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Transition+Extension.swift"; sourceTree = "<group>"; };
 		2547134528CC50F10049D952 /* BaseView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BaseView.swift; sourceTree = "<group>"; };
 		2547134828CC51E30049D952 /* BaseViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BaseViewController.swift; sourceTree = "<group>"; };
+		256070CA28D396C400A1F553 /* ImageModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageModel.swift; sourceTree = "<group>"; };
 		25636C4628CC544A00B385AF /* BaseCollectionViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BaseCollectionViewCell.swift; sourceTree = "<group>"; };
 		25636C4828CC54A200B385AF /* BaseTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BaseTableViewCell.swift; sourceTree = "<group>"; };
 		25636C4B28CC552D00B385AF /* UserJacsim.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserJacsim.swift; sourceTree = "<group>"; };
 		25636C4D28CC560700B385AF /* Tabbar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Tabbar.swift; sourceTree = "<group>"; };
 		25636C5028CC580400B385AF /* APIManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIManager.swift; sourceTree = "<group>"; };
 		258114F628D1DD5000CBA0ED /* UIImage+Extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIImage+Extension.swift"; sourceTree = "<group>"; };
+		258A47F228D38D0A009F0F95 /* ImageSearchView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageSearchView.swift; sourceTree = "<group>"; };
 		25EE098128CF0CF600B5B5CA /* HomeViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeViewController.swift; sourceTree = "<group>"; };
 		25EE098328CF0D0800B5B5CA /* HomeTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeTableViewCell.swift; sourceTree = "<group>"; };
 		25EE098728CF104100B5B5CA /* DoneTaskViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DoneTaskViewController.swift; sourceTree = "<group>"; };
@@ -162,7 +166,6 @@
 			children = (
 				25636C4D28CC560700B385AF /* Tabbar.swift */,
 				25EE098028CF0CE100B5B5CA /* Home */,
-				25EE098528CF101D00B5B5CA /* DoneTask */,
 				25EE098628CF102B00B5B5CA /* Setting */,
 			);
 			path = Scene;
@@ -246,8 +249,9 @@
 			children = (
 				25EE098128CF0CF600B5B5CA /* HomeViewController.swift */,
 				25EE098328CF0D0800B5B5CA /* HomeTableViewCell.swift */,
-				25EE098B28CF149100B5B5CA /* NewTask */,
 				25EE099528CF16C600B5B5CA /* TaskDetail */,
+				25EE098B28CF149100B5B5CA /* NewTask */,
+				25EE098528CF101D00B5B5CA /* DoneTask */,
 			);
 			path = Home;
 			sourceTree = "<group>";
@@ -282,7 +286,9 @@
 			isa = PBXGroup;
 			children = (
 				25EE099128CF160F00B5B5CA /* ImageSearchViewController.swift */,
+				258A47F228D38D0A009F0F95 /* ImageSearchView.swift */,
 				25EE099328CF165D00B5B5CA /* ImageSearchCollectionViewCell.swift */,
+				256070CA28D396C400A1F553 /* ImageModel.swift */,
 			);
 			path = ImageSearch;
 			sourceTree = "<group>";
@@ -421,6 +427,7 @@
 				25EE09A028CF1A6200B5B5CA /* Color.swift in Sources */,
 				2547134928CC51E30049D952 /* BaseViewController.swift in Sources */,
 				2547133828CC4BCE0049D952 /* APIKey.swift in Sources */,
+				258A47F328D38D0A009F0F95 /* ImageSearchView.swift in Sources */,
 				25EE099C28CF175F00B5B5CA /* TaskDetailCollectionViewCell.swift in Sources */,
 				25636C5128CC580400B385AF /* APIManager.swift in Sources */,
 				25636C4928CC54A200B385AF /* BaseTableViewCell.swift in Sources */,
@@ -428,6 +435,7 @@
 				25EE099428CF165D00B5B5CA /* ImageSearchCollectionViewCell.swift in Sources */,
 				25EE098828CF104100B5B5CA /* DoneTaskViewController.swift in Sources */,
 				25EE09A228CF1A7300B5B5CA /* Constant.swift in Sources */,
+				256070CB28D396C400A1F553 /* ImageModel.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

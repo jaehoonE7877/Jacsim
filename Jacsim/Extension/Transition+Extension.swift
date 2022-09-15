@@ -28,7 +28,7 @@ extension UIViewController {
             nav.modalPresentationStyle = .fullScreen
             self.present(nav, animated: true)
         case .push:
-            self.navigationController?.pushViewController(nav, animated: true)
+            self.navigationController?.pushViewController(vc, animated: true)
         }
     }
 }

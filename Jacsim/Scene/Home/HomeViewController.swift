@@ -11,7 +11,7 @@ import Floaty
 
 final class HomeViewController: BaseViewController {
     
-    // MARK: Label, FSCalendar, TableView
+    // MARK: Property
     let nicknameLabel = UILabel().then {
         $0.font = .boldSystemFont(ofSize: 24)
         $0.text = "Nickname의 챌린지"
@@ -26,6 +26,7 @@ final class HomeViewController: BaseViewController {
         $0.locale = Locale(identifier: "ko_KR")
         $0.appearance.headerDateFormat = "yyyy년 M월"
         $0.backgroundColor = .systemBackground
+        $0.clipsToBounds = true
     }
     
     lazy var infoButton = UIButton().then {
@@ -44,11 +45,17 @@ final class HomeViewController: BaseViewController {
         $0.backgroundColor = .clear
     }
     
-    let formatter = DateFormatter().then{
-        $0.dateFormat = "yyyyMMdd"
-    }
+    
+    lazy var scopeGesture: UIPanGestureRecognizer = { [unowned self] in
+        let panGesture = UIPanGestureRecognizer(target: self.calendar, action: #selector(self.calendar.handleScopeGesture(_:)))
+        panGesture.delegate = self
+        panGesture.minimumNumberOfTouches = 1
+        panGesture.maximumNumberOfTouches = 2
+        return panGesture
+    }()
     
     let floaty = Floaty()
+    
     
     // MARK: View LifeCycle
     override func viewDidLoad() {
@@ -57,17 +64,18 @@ final class HomeViewController: BaseViewController {
         view.backgroundColor = .systemBackground
     }
     
-    
+    // MARK: Set UI, Constraints
     override func configure() {
         
         [nicknameLabel, calendar, tableView, infoButton, floaty].forEach { view.addSubview($0) }
+        
         layoutFAB()
         
-        navigationItem.rightBarButtonItem = UIBarButtonItem(image: UIImage(systemName: "gearshape.fill"), style: .plain, target: self, action: #selector(moveToSetting))
-        navigationItem.rightBarButtonItem?.tintColor = Constant.BaseColor.buttonColor
-        
-        calendarSwipeEvent()
         infoButton.addTarget(self, action: #selector(infoButtonTapped), for: .touchUpInside)
+        
+        self.view.addGestureRecognizer(self.scopeGesture)
+        self.tableView.panGestureRecognizer.require(toFail: self.scopeGesture)
+        self.calendar.scope = .month
     }
     
     override func setConstraint() {
@@ -94,8 +102,24 @@ final class HomeViewController: BaseViewController {
             make.trailing.equalTo(tableView.snp.trailing).offset(-12)
         }
     }
+    
+    override func setNavigationController() {
+        let appearance = UINavigationBarAppearance()
+        appearance.configureWithOpaqueBackground()
+        appearance.backgroundColor = .white
+        navigationController?.navigationBar.standardAppearance = appearance
+        navigationController?.navigationBar.scrollEdgeAppearance = appearance
+        navigationController?.view.backgroundColor = .red
+        
+        navigationItem.rightBarButtonItem = UIBarButtonItem(image: UIImage(systemName: "gearshape.fill"), style: .plain, target: self, action: #selector(moveToSetting))
+        navigationItem.rightBarButtonItem?.tintColor = Constant.BaseColor.buttonColor
+    }
+    
+    
     // MARK: Floaty Button Customize
     private func layoutFAB(){
+        floaty.paddingY = 60
+        
         floaty.addItem("새로운 작심", icon: UIImage(systemName: "square.and.pencil")) { item in
             self.transitionViewController(viewController: NewTaskViewController(), transitionStyle: .presentFullNavigation)
         }
@@ -104,35 +128,19 @@ final class HomeViewController: BaseViewController {
             self.transitionViewController(viewController: DoneTaskViewController(), transitionStyle: .presentFullNavigation)
         }
     }
+    
+    
     // right navi item
     @objc func moveToSetting(){
         
-    }
-    
-    private func calendarSwipeEvent(){
-        let swipeUp = UISwipeGestureRecognizer(target: self, action: #selector(swipeEvent(_:)))
-        swipeUp.direction = .up
-        self.calendar.addGestureRecognizer(swipeUp)
-        
-        let swipeDown = UISwipeGestureRecognizer(target: self, action: #selector(swipeEvent(_:)))
-        swipeDown.direction = .down
-        self.calendar.addGestureRecognizer(swipeDown)
-    }
-    
-    @objc func swipeEvent(_ swipe: UISwipeGestureRecognizer){
-        if swipe.direction == .up{
-            calendar.scope = .week
-        } else if swipe.direction == .down {
-            calendar.scope = .month
-        }
     }
     
     @objc func infoButtonTapped(){
         showAlertMessage(title: "작심한 일은...", message: "좋은 습관을 만들어주기 위해\n최대 5개의 목표를 다루고 있습니다!", button: "확인")
     }
     
-    
 }
+
 // MARK: TableView Delegate, Datasource
 extension HomeViewController: UITableViewDelegate, UITableViewDataSource {
     
@@ -156,20 +164,38 @@ extension HomeViewController: UITableViewDelegate, UITableViewDataSource {
         return cell
     }
     
-    
 }
+
+extension HomeViewController: UIGestureRecognizerDelegate {
+    func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
+        let shouldBegin = self.tableView.contentOffset.y <= -self.tableView.contentInset.top
+        if shouldBegin {
+            let velocity = self.scopeGesture.velocity(in: self.view)
+            switch self.calendar.scope {
+            case .month:
+                return velocity.y < 0
+            case .week:
+                return velocity.y > 0
+            @unknown default:
+                fatalError()
+            }
+        }
+        return shouldBegin
+    }
+}
+
+
+
 // MARK: FSCalendar Delegate, Datasource
 extension HomeViewController: FSCalendarDelegate, FSCalendarDataSource {
     
     func calendar(_ calendar: FSCalendar, boundingRectWillChange bounds: CGRect, animated: Bool) {
-        calendar.removeConstraint(calendar.constraints.last!)
-        calendar.snp.remakeConstraints { make in
-            make.top.equalTo(nicknameLabel.snp.bottom).offset(8)
-            make.leading.trailing.equalTo(view.safeAreaLayoutGuide)
+        calendar.snp.updateConstraints { make in
             make.height.equalTo(bounds.height)
         }
         self.view.layoutIfNeeded()
     }
+    
     
     func calendar(_ calendar: FSCalendar, numberOfEventsFor date: Date) -> Int {
         return 0
