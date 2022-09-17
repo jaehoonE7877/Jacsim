@@ -49,6 +49,7 @@
 		25EE09A028CF1A6200B5B5CA /* Color.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25EE099F28CF1A6200B5B5CA /* Color.swift */; };
 		25EE09A228CF1A7300B5B5CA /* Constant.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25EE09A128CF1A7300B5B5CA /* Constant.swift */; };
 		25EE09A728D0AE6300B5B5CA /* Floaty in Frameworks */ = {isa = PBXBuildFile; productRef = 25EE09A628D0AE6300B5B5CA /* Floaty */; };
+		25FCD98F28D5CA15004F48E8 /* JacsimRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25FCD98E28D5CA15004F48E8 /* JacsimRepository.swift */; };
 		25FDC51E28CC6174002543CC /* Realm in Frameworks */ = {isa = PBXBuildFile; productRef = 25FDC51D28CC6174002543CC /* Realm */; };
 		25FDC52028CC6174002543CC /* RealmSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 25FDC51F28CC6174002543CC /* RealmSwift */; };
 		25FDC52328CC6186002543CC /* FSCalendar in Frameworks */ = {isa = PBXBuildFile; productRef = 25FDC52228CC6186002543CC /* FSCalendar */; };
@@ -93,6 +94,7 @@
 		25EE099D28CF198000B5B5CA /* JacsimHeaderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JacsimHeaderView.swift; sourceTree = "<group>"; };
 		25EE099F28CF1A6200B5B5CA /* Color.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Color.swift; sourceTree = "<group>"; };
 		25EE09A128CF1A7300B5B5CA /* Constant.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Constant.swift; sourceTree = "<group>"; };
+		25FCD98E28D5CA15004F48E8 /* JacsimRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JacsimRepository.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -175,6 +177,7 @@
 			isa = PBXGroup;
 			children = (
 				25636C4B28CC552D00B385AF /* UserJacsim.swift */,
+				25FCD98E28D5CA15004F48E8 /* JacsimRepository.swift */,
 			);
 			path = Database;
 			sourceTree = "<group>";
@@ -409,6 +412,7 @@
 				258114F728D1DD5000CBA0ED /* UIImage+Extension.swift in Sources */,
 				2547132528CC4B670049D952 /* ViewController.swift in Sources */,
 				25636C4728CC544A00B385AF /* BaseCollectionViewCell.swift in Sources */,
+				25FCD98F28D5CA15004F48E8 /* JacsimRepository.swift in Sources */,
 				25EE099A28CF172200B5B5CA /* TaskUpdateViewController.swift in Sources */,
 				25636C4E28CC560700B385AF /* Tabbar.swift in Sources */,
 				25EE098D28CF14E400B5B5CA /* NewTaskViewController.swift in Sources */,

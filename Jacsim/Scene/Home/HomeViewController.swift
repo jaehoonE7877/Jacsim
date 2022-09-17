@@ -10,7 +10,7 @@ import FSCalendar
 import Floaty
 
 final class HomeViewController: BaseViewController {
-    
+        
     // MARK: Property
     let nicknameLabel = UILabel().then {
         $0.font = .boldSystemFont(ofSize: 24)

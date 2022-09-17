@@ -9,11 +9,11 @@ import Foundation
 
 struct ImageModel: Codable {
     let total: Int
-    let items: [Result]
+    let items: [Item]
     
 }
 
-struct Result: Codable {
+struct Item: Codable {
     let link: String
     
 }

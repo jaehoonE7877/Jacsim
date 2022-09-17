@@ -61,3 +61,41 @@ class BaseViewController: UIViewController {
     }
     
 }
+
+extension BaseViewController {
+
+       func showLoading() {
+          
+           DispatchQueue.main.async {
+               
+               let scenes = UIApplication.shared.connectedScenes
+               let windowScenes = scenes.first as? UIWindowScene
+               guard let window = windowScenes?.windows.last else { return }
+               
+               let loadingView: UIActivityIndicatorView
+               
+               if let existView = window.subviews.first(where: { $0 is UIActivityIndicatorView }) as? UIActivityIndicatorView {
+                   loadingView = existView
+               } else {
+                   loadingView = UIActivityIndicatorView(style: .large)
+                   
+                   loadingView.frame = window.frame
+                   loadingView.color = Constant.BaseColor.customCellColor
+                   window.addSubview(loadingView)
+               }
+               loadingView.startAnimating()
+           }
+       }
+       
+       func hideLoading() {
+           DispatchQueue.main.async {
+               let scenes = UIApplication.shared.connectedScenes
+               let windowScenes = scenes.first as? UIWindowScene
+               guard let window = windowScenes?.windows.last else { return }
+               
+               window.subviews.filter { $0 is UIActivityIndicatorView }.forEach { $0.removeFromSuperview() }
+           }
+       }
+   
+
+}

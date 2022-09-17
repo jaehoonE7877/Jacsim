@@ -29,31 +29,27 @@ class ImageSearchAPIManager {
         let text = query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed)
         guard let text = text else { return }
         
-        let url = EndPoint.imageSearchURL + "query=\(String(describing: text))&display=20&start=\(page)"
+        let url = EndPoint.imageSearchURL + "query=\(String(describing: text))&display=20&start=\(page)&sort=sim&filter=small"
         let header: HTTPHeaders = ["X-Naver-Client-Id": APIKey.NAVER_ID, "X-Naver-Client-Secret": APIKey.NAVER_SECRET]
         
-        AF.request(url, method: .get, headers: header).validate(statusCode: 200...400).responseData(queue: .global()) { data in
-            
-            switch data.result {
-            // 통신 성공
-            case .success(let value):
-                dump(value)
+        let request = AF.request(url, method: .get, headers: header).validate(statusCode: 200..<300)
+        request.responseData { (response) in
+            switch response.result {
+            case .success(let obj):
+                
                 do {
-                    
-                    let dataJSON = try JSONSerialization.data(withJSONObject: value, options: .prettyPrinted)
-                    
-                    let imageResult = try JSONDecoder().decode(ImageModel.self, from: dataJSON)
-                    
-                    completion(imageResult)
+                    //let dataJSON = try JSONSerialization.data(withJSONObject: obj, options: .prettyPrinted)
+                    let getData = try JSONDecoder().decode(ImageModel.self, from: obj)
+                    completion(getData)
                 } catch {
                     print(error.localizedDescription)
                 }
-            // 통신 실패
+                
+                
             case .failure(let error):
                 print(error)
             }
-
         }
+        
     }
 }
-

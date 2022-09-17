@@ -17,14 +17,14 @@ class UserJacsim: Object {
     @Persisted var title: String
     @Persisted var startDate: Date
     @Persisted var endDate: Date
-    @Persisted var mainImage: String
+    @Persisted var mainImage: Data?
     @Persisted var isDone: Bool
-    @Persisted var nickName: String = "Nickname"
     
-    var certified = List<CertifiedObject>()
+    var certified = List<Certified>()
     
     
-    convenience init(title: String, startDate: Date, endDate: Date, mainImage: String, isDone: Bool) {
+    
+    convenience init(title: String, startDate: Date, endDate: Date, mainImage: Data?, isDone: Bool) {
         self.init()
         self.title = title
         self.startDate = startDate
@@ -35,9 +35,14 @@ class UserJacsim: Object {
     
 }
 
-class CertifiedObject: Object {
+class Certified: Object {
+    @Persisted var image: Data?
+    @Persisted var memo: String
     
-    dynamic var certifiedImage: UIImage?
-    dynamic var certifiedMemo: String?
+    convenience init(image: Data?, memo: String){
+        self.init()
+        self.image = image
+        self.memo = memo
+    }
     
 }

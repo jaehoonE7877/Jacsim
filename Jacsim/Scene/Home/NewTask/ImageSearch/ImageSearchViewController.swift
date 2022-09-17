@@ -7,14 +7,14 @@
 
 import UIKit
 
-class ImageSearchViewController: BaseViewController {
+final class ImageSearchViewController: BaseViewController {
     
     // MARK: Property SearchBar, CollectionView
-    
+    var delegate: SelectImageDelegate?
     let imageSearchView = ImageSearchView()
     let apiManager = ImageSearchAPIManager.shared
     
-    var imageList: [items] = []
+    var imageList: [String] = []
     var totalPage = 0
     var startPage = 1
     var selectedImage: UIImage?
@@ -29,34 +29,55 @@ class ImageSearchViewController: BaseViewController {
         
         navigationController?.isNavigationBarHidden = false
         
-        imageSearchView.searchBar.delegate = self
+        configureDelegate()
+        setNavigationController()
     }
+
     
-    override func configure() {
-        
+    private func configureDelegate() {
         imageSearchView.collectionView.delegate = self
         imageSearchView.collectionView.dataSource = self
         imageSearchView.collectionView.prefetchDataSource = self
-        imageSearchView.collectionView.register(ImageSearchViewController.self, forCellWithReuseIdentifier: ImageSearchCollectionViewCell.reuseIdentifier)
-        
-        
+        imageSearchView.collectionView.register(ImageSearchCollectionViewCell.self, forCellWithReuseIdentifier: ImageSearchCollectionViewCell.reuseIdentifier)
+        imageSearchView.searchBar.delegate = self
     }
-
+    
+    override func setNavigationController() {
+        navigationItem.rightBarButtonItem = UIBarButtonItem(title: "선택", style: .plain, target: self, action: #selector(selectButtonTapped))
+    }
+    
+    @objc func selectButtonTapped(){
+        guard let selectedImage = selectedImage else {
+            showAlertMessage(title: "사진을 선택해주세요!", button: "확인")
+            return
+        }
+        delegate?.sendImage(image: selectedImage)
+        self.navigationController?.popViewController(animated: true)
+    }
+    
 }
+
+
+
+
 // MARK: Networking
 extension ImageSearchViewController {
+   
     func fetchImage(query: String, startPage: Int){
+        
+        showLoading()
         apiManager.fetchImageDate(query: query, page: startPage) { [weak self] data in
             
             guard let self = self else { return }
-            self.imageList = data.items
+            data.items.forEach{ self.imageList.append($0.link) }
             self.totalPage = data.total
-            dump(self.imageList)
             
             DispatchQueue.main.async {
                 self.imageSearchView.collectionView.reloadData()
+                self.hideLoading()
             }
         }
+        
     }
 }
 
@@ -69,33 +90,49 @@ extension ImageSearchViewController: UICollectionViewDelegate, UICollectionViewD
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: ImageSearchCollectionViewCell.reuseIdentifier, for: indexPath) as? ImageSearchCollectionViewCell else { return UICollectionViewCell() }
         
-        let url = URL(string: String(describing: imageList[indexPath.item]))
-        guard let url = url else { return UICollectionViewCell() }
-
+        
+        guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: ImageSearchCollectionViewCell.reuseIdentifier, for: indexPath) as? ImageSearchCollectionViewCell
+        else { return UICollectionViewCell() }
+        
+        //cell.backgroundColor = .lightGray
+        let url = URL(string: imageList[indexPath.item])
+       
         cell.setData(imageURL: url)
+        
         cell.layer.borderWidth = selectedIndexPath == indexPath ? 4 : 0
         cell.layer.borderColor = selectedIndexPath == indexPath ? UIColor.tintColor.cgColor : nil
         return cell
     }
     
+    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        
+        guard let cell = collectionView.cellForItem(at: indexPath) as? ImageSearchCollectionViewCell else { return }
+        
+        selectedImage = cell.imageView.image
+        selectedIndexPath = indexPath
+        collectionView.reloadData()
+    }
+    
 }
 
-//MARK: UICollectionView
+//MARK: UICollectionView Datasource Prefetching
 extension ImageSearchViewController: UICollectionViewDataSourcePrefetching {
     
     func collectionView(_ collectionView: UICollectionView, prefetchItemsAt indexPaths: [IndexPath]) {
         for indexPath in indexPaths {
             if imageList.count - 1 == indexPath.item && imageList.count < totalPage {
+                showLoading()
                 
-                startPage += 1
+                startPage += 20
                 guard let text = imageSearchView.searchBar.text else { return }
                 fetchImage(query: text, startPage: startPage)
                 
                 DispatchQueue.main.async {
                     self.imageSearchView.collectionView.reloadData()
+                    self.hideLoading()
                 }
+                
             }
             
         }
@@ -110,16 +147,13 @@ extension ImageSearchViewController: UISearchBarDelegate {
     }
     
     func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
-        print(#function)
-        guard let text = imageSearchView.searchBar.text else { return }
+        guard let text = searchBar.text else { return }
         
-        print(text)
-//        guard text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-//            showAlertMessage(title: "단어를 입력해주세요!", button: "확인")
-//            return
-//        }
-        //imageList.removeAll()
+        imageList.removeAll()
+        
         fetchImage(query: text, startPage: startPage)
+        
         view.endEditing(true)
+        searchBar.text = ""
     }
 }

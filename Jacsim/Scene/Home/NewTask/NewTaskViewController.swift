@@ -10,7 +10,7 @@ import PhotosUI
 
 import Toast
 
-class NewTaskViewController: BaseViewController {
+final class NewTaskViewController: BaseViewController {
     
     //MARK: Property
     let mainView = NewTaskView()
@@ -98,7 +98,7 @@ class NewTaskViewController: BaseViewController {
     private func addImageButtonTapped() -> UIMenu {
         let search = UIAction(title: "웹으로 검색", image: UIImage(systemName: "magnifyingglass")) { [weak self]_ in
             let vc = ImageSearchViewController()
-            //vc.delegate = self
+            vc.delegate = self
             self?.transitionViewController(viewController: vc, transitionStyle: .push)
             
         }
@@ -154,8 +154,9 @@ extension NewTaskViewController: UITextFieldDelegate {
     
     func textFieldDidBeginEditing(_ textField: UITextField) {
         someTextField = textField
-    }
     
+    }
+    // 첫번째 텍스트 필드만
     func textFieldDidEndEditing(_ textField: UITextField) {
         guard let text = textField.text else { return }
         if text.count <= 2 {
@@ -188,6 +189,7 @@ extension NewTaskViewController: UITextFieldDelegate {
     // start와 end textfield는 중복이 되는데, parameter를 이용해서 줄일 수 있는 방법 찾기!
     @objc func startDateTextFieldTapped(){
         if let datePicker = self.mainView.startDateTextField.inputView as? UIDatePicker {
+            
             self.mainView.startDateTextField.text = formatter.string(from: datePicker.date)
         }
         self.mainView.startDateTextField.resignFirstResponder()
@@ -195,6 +197,7 @@ extension NewTaskViewController: UITextFieldDelegate {
     
     @objc func endDateTextFieldTapped(){
         if let datePicker = self.mainView.endDateTextField.inputView as? UIDatePicker {
+            
             self.mainView.endDateTextField.text = formatter.string(from: datePicker.date)
         }
         self.mainView.endDateTextField.resignFirstResponder()
@@ -248,4 +251,16 @@ extension NewTaskViewController: PHPickerViewControllerDelegate {
             showAlertMessage(title: "오류 발생으로 사진이 적용되지 않았습니다.", message: "다시 한 번 부탁드릴게요!", button: "확인")
         }
     }
+}
+
+protocol SelectImageDelegate {
+    func sendImage(image: UIImage)
+}
+
+extension NewTaskViewController: SelectImageDelegate {
+    
+    func sendImage(image: UIImage) {
+        mainView.newTaskImageView.image = image
+    }
+
 }

@@ -16,6 +16,7 @@ extension UITextField {
         datePicker.datePickerMode = .date
         datePicker.preferredDatePickerStyle = .wheels
         datePicker.sizeToFit()
+        datePicker.minimumDate = Date()
         
         self.inputView = datePicker
         
