@@ -17,14 +17,13 @@ class UserJacsim: Object {
     @Persisted var title: String
     @Persisted var startDate: Date
     @Persisted var endDate: Date
-    @Persisted var mainImage: Data?
+    @Persisted var mainImage: String?
     @Persisted var isDone: Bool
     
-    var certified = List<Certified>()
     
-    
-    
-    convenience init(title: String, startDate: Date, endDate: Date, mainImage: Data?, isDone: Bool) {
+    var certifiedMemo = List<Certified>()
+
+    convenience init(title: String, startDate: Date, endDate: Date, mainImage: String?, isDone: Bool) {
         self.init()
         self.title = title
         self.startDate = startDate
@@ -36,12 +35,10 @@ class UserJacsim: Object {
 }
 
 class Certified: Object {
-    @Persisted var image: Data?
     @Persisted var memo: String
     
-    convenience init(image: Data?, memo: String){
+    convenience init(memo: String){
         self.init()
-        self.image = image
         self.memo = memo
     }
     

@@ -12,6 +12,9 @@ import Toast
 
 final class NewTaskViewController: BaseViewController {
     
+    let repository = JacsimRepository()
+    
+    var selectedImageURL: String?
     //MARK: Property
     let mainView = NewTaskView()
     
@@ -46,15 +49,15 @@ final class NewTaskViewController: BaseViewController {
         
         view.backgroundColor = .white
         
-        self.title = "새로운 작심"
         
+        print("Realm is located at:", repository.localRealm.configuration.fileURL!)
     }
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillShow(_:)), name: UIResponder.keyboardWillShowNotification, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillHide(_:)), name: UIResponder.keyboardWillHideNotification, object: nil)
-        //NotificationCenter.default.addObserver(self, selector: <#T##Selector#>, name: UITextField.textDidChangeNotification, object: self.mainView.newTaskTitleTextfield)
+        
     }
     
     override func viewWillDisappear(_ animated: Bool) {
@@ -62,7 +65,6 @@ final class NewTaskViewController: BaseViewController {
         
         NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillShowNotification, object: nil)
         NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillHideNotification, object: nil)
-        //NotificationCenter.default.removeObserver(self, name: UITextField.textDidChangeNotification, object: self.mainView.newTaskTitleTextfield)
     }
     
     override func configure() {
@@ -78,6 +80,7 @@ final class NewTaskViewController: BaseViewController {
     }
     
     override func setNavigationController() {
+        self.title = "새로운 작심"
         let appearance = UINavigationBarAppearance()
         appearance.configureWithOpaqueBackground()
         appearance.backgroundColor = .white
@@ -114,7 +117,7 @@ final class NewTaskViewController: BaseViewController {
         let gallery = UIAction(title: "갤러리", image: UIImage(systemName: "photo.on.rectangle")) { _ in
             self.present(self.phPicker, animated: true)
         }
-        let menu = UIMenu(title: "사진의 경로를 정해주세요.", options: .displayInline, children: [gallery, camera, search])
+        let menu = UIMenu(title: "사진의 경로를 정해주세요.", options: .displayInline, children: [search,camera,gallery])
        
         return menu
     }
@@ -132,6 +135,15 @@ final class NewTaskViewController: BaseViewController {
     // MARK: Realm Create
     @objc func saveButtonTapped(){
         
+        guard let title = mainView.newTaskTitleTextfield.text else { return }
+        guard let startDate = formatter.date(from: mainView.startDateTextField.text ?? "") else { return }
+        guard let endDate = formatter.date(from: mainView.endDateTextField.text ?? "") else { return }
+        
+        let task = UserJacsim(title: title, startDate: startDate, endDate: endDate, mainImage: selectedImageURL, isDone: false)
+        
+        repository.addItem(item: task)
+        
+        dismiss(animated: true)
     }
 }
 
@@ -254,13 +266,14 @@ extension NewTaskViewController: PHPickerViewControllerDelegate {
 }
 
 protocol SelectImageDelegate {
-    func sendImage(image: UIImage)
+    func sendImage(image: UIImage, urlString: String)
 }
 
 extension NewTaskViewController: SelectImageDelegate {
     
-    func sendImage(image: UIImage) {
+    func sendImage(image: UIImage, urlString: String) {
         mainView.newTaskImageView.image = image
+        selectedImageURL = urlString
     }
 
 }

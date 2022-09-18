@@ -20,6 +20,8 @@ final class ImageSearchViewController: BaseViewController {
     var selectedImage: UIImage?
     var selectedIndexPath: IndexPath?
     
+    var selectedImageURL: String?
+    
     override func loadView() {
         self.view = imageSearchView
     }
@@ -47,11 +49,13 @@ final class ImageSearchViewController: BaseViewController {
     }
     
     @objc func selectButtonTapped(){
+        
         guard let selectedImage = selectedImage else {
             showAlertMessage(title: "사진을 선택해주세요!", button: "확인")
             return
         }
-        delegate?.sendImage(image: selectedImage)
+        guard let selectedImageURL = selectedImageURL else { return }
+        delegate?.sendImage(image: selectedImage, urlString: selectedImageURL)
         self.navigationController?.popViewController(animated: true)
     }
     
@@ -97,7 +101,7 @@ extension ImageSearchViewController: UICollectionViewDelegate, UICollectionViewD
         
         //cell.backgroundColor = .lightGray
         let url = URL(string: imageList[indexPath.item])
-       
+        
         cell.setData(imageURL: url)
         
         cell.layer.borderWidth = selectedIndexPath == indexPath ? 4 : 0
@@ -111,6 +115,7 @@ extension ImageSearchViewController: UICollectionViewDelegate, UICollectionViewD
         
         selectedImage = cell.imageView.image
         selectedIndexPath = indexPath
+        selectedImageURL = imageList[indexPath.item]
         collectionView.reloadData()
     }
     

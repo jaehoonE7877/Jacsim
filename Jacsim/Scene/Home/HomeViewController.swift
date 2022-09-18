@@ -8,9 +8,12 @@
 import UIKit
 import FSCalendar
 import Floaty
+import RealmSwift
 
 final class HomeViewController: BaseViewController {
         
+    let repository = JacsimRepository()
+    
     // MARK: Property
     let nicknameLabel = UILabel().then {
         $0.font = .boldSystemFont(ofSize: 24)
@@ -56,12 +59,27 @@ final class HomeViewController: BaseViewController {
     
     let floaty = Floaty()
     
+    var tasks: Results<UserJacsim>!{
+        didSet {
+            DispatchQueue.main.async {
+                self.tableView.reloadData()
+            }
+        }
+    }
+    
     
     // MARK: View LifeCycle
     override func viewDidLoad() {
         super.viewDidLoad()
        
         view.backgroundColor = .systemBackground
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        
+        tasks = repository.fetchRealm()
+        calendar.reloadData()
     }
     
     // MARK: Set UI, Constraints
@@ -145,7 +163,7 @@ final class HomeViewController: BaseViewController {
 extension HomeViewController: UITableViewDelegate, UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return 5
+        return tasks.count
     }
     
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
@@ -160,6 +178,7 @@ extension HomeViewController: UITableViewDelegate, UITableViewDataSource {
         guard let cell = tableView.dequeueReusableCell(withIdentifier: HomeTableViewCell.reuseIdentifier) as? HomeTableViewCell else { return UITableViewCell() }
         
         cell.backgroundColor = .clear
+        cell.titleLabel.text = tasks[indexPath.row].title
         
         return cell
     }
