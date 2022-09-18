@@ -16,7 +16,7 @@ enum APIError: Error {
     case invalidData
 }
 
-class ImageSearchAPIManager {
+final class ImageSearchAPIManager {
     
     static let shared = ImageSearchAPIManager()
     

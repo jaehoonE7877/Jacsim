@@ -7,7 +7,7 @@
 
 import UIKit
 
-class HomeTableViewCell: BaseTableViewCell {
+final class HomeTableViewCell: BaseTableViewCell {
     
     //shadowview, image, label
     
@@ -22,7 +22,7 @@ class HomeTableViewCell: BaseTableViewCell {
         $0.clipsToBounds = true
         $0.backgroundColor = Constant.BaseColor.customCellColor
     }
-    
+    // 하루에 인증되면 바꿔주기
     let isDoneImage = UIImageView().then {
         $0.image = UIImage(systemName: "checkmark.circle", withConfiguration: UIImage.SymbolConfiguration(font: .systemFont(ofSize: 10.0)))
         $0.tintColor = .black
@@ -30,7 +30,6 @@ class HomeTableViewCell: BaseTableViewCell {
     }
     
     let titleLabel = UILabel().then {
-        $0.text = "물 마시기물 마시기물 마시기물 마시기"
         $0.font = .systemFont(ofSize: 20)
         $0.textAlignment = .left
     }

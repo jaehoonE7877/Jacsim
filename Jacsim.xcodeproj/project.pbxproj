@@ -50,6 +50,8 @@
 		25EE09A228CF1A7300B5B5CA /* Constant.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25EE09A128CF1A7300B5B5CA /* Constant.swift */; };
 		25EE09A728D0AE6300B5B5CA /* Floaty in Frameworks */ = {isa = PBXBuildFile; productRef = 25EE09A628D0AE6300B5B5CA /* Floaty */; };
 		25FCD98F28D5CA15004F48E8 /* JacsimRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25FCD98E28D5CA15004F48E8 /* JacsimRepository.swift */; };
+		25FCD99128D74473004F48E8 /* TaskDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25FCD99028D74473004F48E8 /* TaskDetailView.swift */; };
+		25FCD99328D77FFF004F48E8 /* FileManager+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25FCD99228D77FFF004F48E8 /* FileManager+Extension.swift */; };
 		25FDC51E28CC6174002543CC /* Realm in Frameworks */ = {isa = PBXBuildFile; productRef = 25FDC51D28CC6174002543CC /* Realm */; };
 		25FDC52028CC6174002543CC /* RealmSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 25FDC51F28CC6174002543CC /* RealmSwift */; };
 		25FDC52328CC6186002543CC /* FSCalendar in Frameworks */ = {isa = PBXBuildFile; productRef = 25FDC52228CC6186002543CC /* FSCalendar */; };
@@ -95,6 +97,8 @@
 		25EE099F28CF1A6200B5B5CA /* Color.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Color.swift; sourceTree = "<group>"; };
 		25EE09A128CF1A7300B5B5CA /* Constant.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Constant.swift; sourceTree = "<group>"; };
 		25FCD98E28D5CA15004F48E8 /* JacsimRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JacsimRepository.swift; sourceTree = "<group>"; };
+		25FCD99028D74473004F48E8 /* TaskDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskDetailView.swift; sourceTree = "<group>"; };
+		25FCD99228D77FFF004F48E8 /* FileManager+Extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "FileManager+Extension.swift"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -139,7 +143,6 @@
 			children = (
 				2547133A28CC4C310049D952 /* Database */,
 				2547133B28CC4C4B0049D952 /* APIManager */,
-				2547133928CC4C1A0049D952 /* Scene */,
 				2547133C28CC4C580049D952 /* Utility */,
 				2547133D28CC4C650049D952 /* Extension */,
 				2547133E28CC4C6D0049D952 /* Protocol */,
@@ -186,6 +189,7 @@
 			isa = PBXGroup;
 			children = (
 				25636C5028CC580400B385AF /* APIManager.swift */,
+				2547133928CC4C1A0049D952 /* Scene */,
 			);
 			path = APIManager;
 			sourceTree = "<group>";
@@ -207,6 +211,7 @@
 				258114F628D1DD5000CBA0ED /* UIImage+Extension.swift */,
 				253526FF28D20F180086383E /* Shadow+Extension.swift */,
 				2535270128D222BD0086383E /* UITextField+Extension.swift */,
+				25FCD99228D77FFF004F48E8 /* FileManager+Extension.swift */,
 			);
 			path = Extension;
 			sourceTree = "<group>";
@@ -300,6 +305,7 @@
 			isa = PBXGroup;
 			children = (
 				25EE099728CF170E00B5B5CA /* TaskDetailViewController.swift */,
+				25FCD99028D74473004F48E8 /* TaskDetailView.swift */,
 				25EE099B28CF175F00B5B5CA /* TaskDetailCollectionViewCell.swift */,
 				25EE099628CF16E900B5B5CA /* TaskUpdate */,
 			);
@@ -433,12 +439,14 @@
 				2547133828CC4BCE0049D952 /* APIKey.swift in Sources */,
 				258A47F328D38D0A009F0F95 /* ImageSearchView.swift in Sources */,
 				25EE099C28CF175F00B5B5CA /* TaskDetailCollectionViewCell.swift in Sources */,
+				25FCD99328D77FFF004F48E8 /* FileManager+Extension.swift in Sources */,
 				25636C5128CC580400B385AF /* APIManager.swift in Sources */,
 				25636C4928CC54A200B385AF /* BaseTableViewCell.swift in Sources */,
 				2547132328CC4B670049D952 /* SceneDelegate.swift in Sources */,
 				25EE099428CF165D00B5B5CA /* ImageSearchCollectionViewCell.swift in Sources */,
 				25EE098828CF104100B5B5CA /* DoneTaskViewController.swift in Sources */,
 				25EE09A228CF1A7300B5B5CA /* Constant.swift in Sources */,
+				25FCD99128D74473004F48E8 /* TaskDetailView.swift in Sources */,
 				256070CB28D396C400A1F553 /* ImageModel.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

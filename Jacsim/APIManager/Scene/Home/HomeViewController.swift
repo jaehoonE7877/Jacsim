@@ -127,8 +127,6 @@ final class HomeViewController: BaseViewController {
         appearance.backgroundColor = .white
         navigationController?.navigationBar.standardAppearance = appearance
         navigationController?.navigationBar.scrollEdgeAppearance = appearance
-        navigationController?.view.backgroundColor = .red
-        
         navigationItem.rightBarButtonItem = UIBarButtonItem(image: UIImage(systemName: "gearshape.fill"), style: .plain, target: self, action: #selector(moveToSetting))
         navigationItem.rightBarButtonItem?.tintColor = Constant.BaseColor.buttonColor
     }
@@ -181,6 +179,14 @@ extension HomeViewController: UITableViewDelegate, UITableViewDataSource {
         cell.titleLabel.text = tasks[indexPath.row].title
         
         return cell
+    }
+    
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        
+        let vc = TaskDetailViewController()
+        vc.task = tasks[indexPath.item]
+        self.navigationItem.backButtonTitle = ""
+        self.transitionViewController(viewController: vc, transitionStyle: .presentFullNavigation)
     }
     
 }

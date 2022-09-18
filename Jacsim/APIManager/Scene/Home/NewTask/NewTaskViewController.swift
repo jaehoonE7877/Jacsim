@@ -136,13 +136,26 @@ final class NewTaskViewController: BaseViewController {
     @objc func saveButtonTapped(){
         
         guard let title = mainView.newTaskTitleTextfield.text else { return }
+        formatter.locale = Locale(identifier: "ko-KR")
         guard let startDate = formatter.date(from: mainView.startDateTextField.text ?? "") else { return }
         guard let endDate = formatter.date(from: mainView.endDateTextField.text ?? "") else { return }
+        // 이미지가 완전 없을 때 (이미지 선택 엑스)
+        // 이미지를 웹에서 저장해줬을 때
+        // 이미지를 카메라, 사진첩에서 저장해줬을 때
         
-        let task = UserJacsim(title: title, startDate: startDate, endDate: endDate, mainImage: selectedImageURL, isDone: false)
-        
-        repository.addItem(item: task)
-        
+        if selectedImageURL != nil {
+            //웹으로 받아왔을 때
+            let task = UserJacsim(title: title, startDate: startDate, endDate: endDate, mainImage: selectedImageURL, isDone: false)
+            repository.addItem(item: task)
+        } else {
+            // 디바이스로 받아오거나 없거나 -> imageView 이미지가 있고 없고
+            
+            let task = UserJacsim(title: title, startDate: startDate, endDate: endDate, mainImage: nil, isDone: false)
+            guard let baseImage = UIImage(systemName: "xmark") else { return }
+            saveImageToDocument(fileName: "\(String(describing: task.objectId)).jpg", image: mainView.newTaskImageView.image ?? baseImage)
+            repository.addItem(item: task)
+        }
+
         dismiss(animated: true)
     }
 }
@@ -276,4 +289,10 @@ extension NewTaskViewController: SelectImageDelegate {
         selectedImageURL = urlString
     }
 
+}
+
+enum ImageSelection: CaseIterable {
+    case web
+    case device
+    case none
 }

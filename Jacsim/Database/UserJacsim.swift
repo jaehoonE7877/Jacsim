@@ -10,7 +10,7 @@ import Foundation
 import RealmSwift
 import UIKit
 
-class UserJacsim: Object {
+final class UserJacsim: Object {
     
     @Persisted(primaryKey: true) var objectId: ObjectId
     
@@ -19,8 +19,7 @@ class UserJacsim: Object {
     @Persisted var endDate: Date
     @Persisted var mainImage: String?
     @Persisted var isDone: Bool
-    
-    
+
     var certifiedMemo = List<Certified>()
 
     convenience init(title: String, startDate: Date, endDate: Date, mainImage: String?, isDone: Bool) {
@@ -34,7 +33,7 @@ class UserJacsim: Object {
     
 }
 
-class Certified: Object {
+final class Certified: Object {
     @Persisted var memo: String
     
     convenience init(memo: String){

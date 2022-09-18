@@ -17,13 +17,13 @@ class BaseViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        setFormatterTimezone()
+        setFormatterLocale()
+        setFormatter()
         configure()
         setConstraint()
         setNavigationController()
         
-        setFormatterTimezone()
-        setFormatter()
-        setFormatterLocale()
     }
     
     
@@ -51,9 +51,8 @@ class BaseViewController: UIViewController {
         formatter.locale = Locale(identifier: "ko-KR")
     }
     
-    // 다국어 대응에 따라서 생각해보기
-    private func setFormatter(){
-        formatter.dateFormat = "yyyy년 M월 dd일 EEEE"
+    func setFormatter(){
+        formatter.dateFormat = "yyyy년 M월 d일 EEEE"
     }
     
     private func setFormatterTimezone() {

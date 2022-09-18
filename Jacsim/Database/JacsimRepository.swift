@@ -8,12 +8,12 @@
 import Foundation
 import RealmSwift
 
-protocol JacsimRepositoryProtocol {
+private protocol JacsimRepositoryProtocol: AnyObject {
     func fetchRealm() -> Results<UserJacsim>!
     func addItem(item: UserJacsim) 
 }
 
-class JacsimRepository: JacsimRepositoryProtocol {
+final class JacsimRepository: JacsimRepositoryProtocol {
     
     let localRealm = try! Realm()
     
