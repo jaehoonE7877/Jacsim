@@ -10,7 +10,7 @@ import Foundation
 import RealmSwift
 import UIKit
 
-final class UserJacsim: Object {
+class UserJacsim: Object {
     
     @Persisted(primaryKey: true) var objectId: ObjectId
     
@@ -20,25 +20,20 @@ final class UserJacsim: Object {
     @Persisted var mainImage: String?
     @Persisted var isDone: Bool
 
-    var certifiedMemo = List<Certified>()
+    @Persisted var memo: List<String>
 
-    convenience init(title: String, startDate: Date, endDate: Date, mainImage: String?, isDone: Bool) {
+    convenience init(title: String, startDate: Date, endDate: Date, mainImage: String?, isDone: Bool, memo: List<String>) {
         self.init()
         self.title = title
         self.startDate = startDate
         self.endDate = endDate
         self.mainImage = mainImage
         self.isDone = false
-    }
-    
-}
-
-final class Certified: Object {
-    @Persisted var memo: String
-    
-    convenience init(memo: String){
-        self.init()
         self.memo = memo
     }
     
 }
+
+//class Certified: Object {
+//    @Persisted var memo: String
+//}

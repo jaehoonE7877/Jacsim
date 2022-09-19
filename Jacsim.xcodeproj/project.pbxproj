@@ -30,10 +30,11 @@
 		25636C4728CC544A00B385AF /* BaseCollectionViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25636C4628CC544A00B385AF /* BaseCollectionViewCell.swift */; };
 		25636C4928CC54A200B385AF /* BaseTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25636C4828CC54A200B385AF /* BaseTableViewCell.swift */; };
 		25636C4C28CC552D00B385AF /* UserJacsim.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25636C4B28CC552D00B385AF /* UserJacsim.swift */; };
-		25636C4E28CC560700B385AF /* Tabbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25636C4D28CC560700B385AF /* Tabbar.swift */; };
 		25636C5128CC580400B385AF /* APIManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25636C5028CC580400B385AF /* APIManager.swift */; };
 		258114F728D1DD5000CBA0ED /* UIImage+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 258114F628D1DD5000CBA0ED /* UIImage+Extension.swift */; };
 		258A47F328D38D0A009F0F95 /* ImageSearchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 258A47F228D38D0A009F0F95 /* ImageSearchView.swift */; };
+		25D0AD3528D8747F006A918C /* Date+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25D0AD3428D8747F006A918C /* Date+Extension.swift */; };
+		25D0AD3728D8C5B0006A918C /* TaskUpdateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25D0AD3628D8C5B0006A918C /* TaskUpdateView.swift */; };
 		25EE098228CF0CF600B5B5CA /* HomeViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25EE098128CF0CF600B5B5CA /* HomeViewController.swift */; };
 		25EE098428CF0D0800B5B5CA /* HomeTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25EE098328CF0D0800B5B5CA /* HomeTableViewCell.swift */; };
 		25EE098828CF104100B5B5CA /* DoneTaskViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25EE098728CF104100B5B5CA /* DoneTaskViewController.swift */; };
@@ -78,10 +79,11 @@
 		25636C4628CC544A00B385AF /* BaseCollectionViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BaseCollectionViewCell.swift; sourceTree = "<group>"; };
 		25636C4828CC54A200B385AF /* BaseTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BaseTableViewCell.swift; sourceTree = "<group>"; };
 		25636C4B28CC552D00B385AF /* UserJacsim.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserJacsim.swift; sourceTree = "<group>"; };
-		25636C4D28CC560700B385AF /* Tabbar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Tabbar.swift; sourceTree = "<group>"; };
 		25636C5028CC580400B385AF /* APIManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIManager.swift; sourceTree = "<group>"; };
 		258114F628D1DD5000CBA0ED /* UIImage+Extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIImage+Extension.swift"; sourceTree = "<group>"; };
 		258A47F228D38D0A009F0F95 /* ImageSearchView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageSearchView.swift; sourceTree = "<group>"; };
+		25D0AD3428D8747F006A918C /* Date+Extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Date+Extension.swift"; sourceTree = "<group>"; };
+		25D0AD3628D8C5B0006A918C /* TaskUpdateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskUpdateView.swift; sourceTree = "<group>"; };
 		25EE098128CF0CF600B5B5CA /* HomeViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeViewController.swift; sourceTree = "<group>"; };
 		25EE098328CF0D0800B5B5CA /* HomeTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeTableViewCell.swift; sourceTree = "<group>"; };
 		25EE098728CF104100B5B5CA /* DoneTaskViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DoneTaskViewController.swift; sourceTree = "<group>"; };
@@ -143,6 +145,7 @@
 			children = (
 				2547133A28CC4C310049D952 /* Database */,
 				2547133B28CC4C4B0049D952 /* APIManager */,
+				2547133928CC4C1A0049D952 /* Scene */,
 				2547133C28CC4C580049D952 /* Utility */,
 				2547133D28CC4C650049D952 /* Extension */,
 				2547133E28CC4C6D0049D952 /* Protocol */,
@@ -169,7 +172,6 @@
 		2547133928CC4C1A0049D952 /* Scene */ = {
 			isa = PBXGroup;
 			children = (
-				25636C4D28CC560700B385AF /* Tabbar.swift */,
 				25EE098028CF0CE100B5B5CA /* Home */,
 				25EE098628CF102B00B5B5CA /* Setting */,
 			);
@@ -189,7 +191,6 @@
 			isa = PBXGroup;
 			children = (
 				25636C5028CC580400B385AF /* APIManager.swift */,
-				2547133928CC4C1A0049D952 /* Scene */,
 			);
 			path = APIManager;
 			sourceTree = "<group>";
@@ -212,6 +213,7 @@
 				253526FF28D20F180086383E /* Shadow+Extension.swift */,
 				2535270128D222BD0086383E /* UITextField+Extension.swift */,
 				25FCD99228D77FFF004F48E8 /* FileManager+Extension.swift */,
+				25D0AD3428D8747F006A918C /* Date+Extension.swift */,
 			);
 			path = Extension;
 			sourceTree = "<group>";
@@ -316,6 +318,7 @@
 			isa = PBXGroup;
 			children = (
 				25EE099928CF172200B5B5CA /* TaskUpdateViewController.swift */,
+				25D0AD3628D8C5B0006A918C /* TaskUpdateView.swift */,
 			);
 			path = TaskUpdate;
 			sourceTree = "<group>";
@@ -420,7 +423,6 @@
 				25636C4728CC544A00B385AF /* BaseCollectionViewCell.swift in Sources */,
 				25FCD98F28D5CA15004F48E8 /* JacsimRepository.swift in Sources */,
 				25EE099A28CF172200B5B5CA /* TaskUpdateViewController.swift in Sources */,
-				25636C4E28CC560700B385AF /* Tabbar.swift in Sources */,
 				25EE098D28CF14E400B5B5CA /* NewTaskViewController.swift in Sources */,
 				25EE099828CF170E00B5B5CA /* TaskDetailViewController.swift in Sources */,
 				25EE099228CF161000B5B5CA /* ImageSearchViewController.swift in Sources */,
@@ -438,7 +440,9 @@
 				2547134928CC51E30049D952 /* BaseViewController.swift in Sources */,
 				2547133828CC4BCE0049D952 /* APIKey.swift in Sources */,
 				258A47F328D38D0A009F0F95 /* ImageSearchView.swift in Sources */,
+				25D0AD3728D8C5B0006A918C /* TaskUpdateView.swift in Sources */,
 				25EE099C28CF175F00B5B5CA /* TaskDetailCollectionViewCell.swift in Sources */,
+				25D0AD3528D8747F006A918C /* Date+Extension.swift in Sources */,
 				25FCD99328D77FFF004F48E8 /* FileManager+Extension.swift in Sources */,
 				25636C5128CC580400B385AF /* APIManager.swift in Sources */,
 				25636C4928CC54A200B385AF /* BaseTableViewCell.swift in Sources */,

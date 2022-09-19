@@ -15,10 +15,6 @@ final class HomeViewController: BaseViewController {
     let repository = JacsimRepository()
     
     // MARK: Property
-    let nicknameLabel = UILabel().then {
-        $0.font = .boldSystemFont(ofSize: 24)
-        $0.text = "Nickname의 챌린지"
-    }
     
     lazy var calendar = FSCalendar(frame: .zero).then {
         $0.delegate = self
@@ -80,12 +76,13 @@ final class HomeViewController: BaseViewController {
         
         tasks = repository.fetchRealm()
         calendar.reloadData()
+        
     }
     
     // MARK: Set UI, Constraints
     override func configure() {
         
-        [nicknameLabel, calendar, tableView, infoButton, floaty].forEach { view.addSubview($0) }
+        [calendar, tableView, infoButton, floaty].forEach { view.addSubview($0) }
         
         layoutFAB()
         
@@ -98,13 +95,9 @@ final class HomeViewController: BaseViewController {
     
     override func setConstraint() {
         
-        nicknameLabel.snp.makeConstraints { make in
-            make.top.equalTo(view.safeAreaLayoutGuide)
-            make.leading.equalTo(view.snp.leading).offset(16)
-        }
         // 달력 높이 비율로 잡기
         calendar.snp.makeConstraints { make in
-            make.top.equalTo(nicknameLabel.snp.bottom).offset(8)
+            make.top.equalTo(view.safeAreaLayoutGuide)
             make.leading.trailing.equalTo(view.safeAreaLayoutGuide)
             make.height.equalTo(UIScreen.main.bounds.height / 2.5)
         }
@@ -122,6 +115,7 @@ final class HomeViewController: BaseViewController {
     }
     
     override func setNavigationController() {
+        self.title = "Nickname의 작심일지"
         let appearance = UINavigationBarAppearance()
         appearance.configureWithOpaqueBackground()
         appearance.backgroundColor = .white
@@ -134,7 +128,7 @@ final class HomeViewController: BaseViewController {
     
     // MARK: Floaty Button Customize
     private func layoutFAB(){
-        floaty.paddingY = 60
+        floaty.paddingY = UIScreen.main.bounds.height / 12
         
         floaty.addItem("새로운 작심", icon: UIImage(systemName: "square.and.pencil")) { item in
             self.transitionViewController(viewController: NewTaskViewController(), transitionStyle: .presentFullNavigation)
@@ -177,7 +171,6 @@ extension HomeViewController: UITableViewDelegate, UITableViewDataSource {
         
         cell.backgroundColor = .clear
         cell.titleLabel.text = tasks[indexPath.row].title
-        
         return cell
     }
     

@@ -54,7 +54,7 @@ class TaskDetailView: BaseView {
         let width = UIScreen.main.bounds.width / 2.5
         let spacing: CGFloat = 16
         layout.scrollDirection = .horizontal
-        layout.itemSize = CGSize(width: width, height: width * 1.2)
+        layout.itemSize = CGSize(width: width, height: width * 1.36)
         layout.minimumLineSpacing = spacing
         layout.minimumInteritemSpacing = spacing
         layout.sectionInset = UIEdgeInsets(top: 0, left: spacing, bottom: 0, right: spacing)
@@ -128,9 +128,8 @@ class TaskDetailView: BaseView {
         }
         
         collectionView.snp.makeConstraints { make in
-            make.top.equalTo(certifyLabel.snp.bottom).offset(12)
+            make.top.equalTo(certifyLabel.snp.bottom).offset(8)
             make.leading.trailing.bottom.equalTo(self.safeAreaLayoutGuide)
-            
         }
         
         

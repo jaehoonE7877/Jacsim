@@ -32,5 +32,14 @@ final class JacsimRepository: JacsimRepositoryProtocol {
         }
     }
     
+    func updateMemo(item: UserJacsim, index: Int, memo: String){
+        do {
+            try localRealm.write{
+                item.memo[index] = memo
+            }
+        } catch let error {
+            print(error)
+        }
+    }
 
 }

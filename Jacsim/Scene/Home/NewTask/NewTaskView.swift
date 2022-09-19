@@ -7,7 +7,7 @@
 
 import UIKit
 
-class NewTaskView: BaseView {
+final class NewTaskView: BaseView {
     
             // MARK: Property
     

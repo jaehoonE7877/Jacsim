@@ -29,7 +29,7 @@ class JacsimHeaderView: UITableViewHeaderFooterView {
     }
     
     private func setConstraints() {
-        headerLabel.snp.makeConstraints { make in
+        headerLabel.snp.makeConstraints { make in 
             make.top.equalTo(self.snp.top).offset(8)
             make.leading.equalTo(self.snp.leading).offset(12)
         }

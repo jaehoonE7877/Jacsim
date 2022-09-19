@@ -11,9 +11,14 @@ class TaskDetailCollectionViewCell: BaseCollectionViewCell {
     
     
     //MARK: UIImage, UILabel
+    let dateLabel = UILabel().then {
+        $0.font = .boldSystemFont(ofSize: 14)
+    }
+    
     let certifiedImageView = UIImageView().then {
+        makeShadow(view: $0)
         $0.backgroundColor = .lightGray
-        $0.contentMode = .scaleAspectFill
+        $0.contentMode = .scaleToFill
     }
     
     let certifiedMemo = UILabel().then {
@@ -29,18 +34,25 @@ class TaskDetailCollectionViewCell: BaseCollectionViewCell {
     }
     
     override func configure() {
-        [certifiedImageView, certifiedMemo].forEach { self.addSubview($0) }
+        [dateLabel, certifiedImageView, certifiedMemo].forEach { contentView.addSubview($0) }
     }
     
     override func setConstraints() {
+        dateLabel.snp.makeConstraints { make in
+            make.top.equalToSuperview()
+            make.horizontalEdges.equalToSuperview()
+        }
+        
         certifiedImageView.snp.makeConstraints { make in
-            make.top.leading.trailing.equalToSuperview()
-            make.height.equalTo(self).multipliedBy(0.84)
+            make.top.equalTo(dateLabel.snp.bottom).offset(6)
+            make.horizontalEdges.equalToSuperview()
+            make.height.equalTo(self).multipliedBy(0.74)
         }
         
         certifiedMemo.snp.makeConstraints { make in
             make.top.equalTo(certifiedImageView.snp.bottom).offset(8)
-            make.leading.bottom.equalToSuperview()
+            make.horizontalEdges.bottom.equalToSuperview()
+            
         }
     }
     

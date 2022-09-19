@@ -25,13 +25,13 @@ extension UIViewController {
     
     func saveImageToDocument(fileName: String, image: UIImage) {
        
-        guard let imageDirectory = ImageDirectoryPath() else {return}
+        guard let imageDirectory = ImageDirectoryPath() else { return }
         
         if FileManager.default.fileExists(atPath: imageDirectory.path) {
             
             let fileURL = imageDirectory.appendingPathComponent(fileName)
             
-            guard let data = image.jpegData(compressionQuality: 0.4) else {return}
+            guard let data = image.jpegData(compressionQuality: 0.4) else { return }
 
             do {
                 try data.write(to: fileURL)
@@ -50,7 +50,7 @@ extension UIViewController {
             
             let fileURL = imageDirectory.appendingPathComponent(fileName)
             
-            guard let data = image.jpegData(compressionQuality: 0.4) else {return}
+            guard let data = image.jpegData(compressionQuality: 0.4) else { return }
           
             do {
                 

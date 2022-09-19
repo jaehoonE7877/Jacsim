@@ -8,11 +8,13 @@
 import UIKit
 import PhotosUI
 
+import RealmSwift
 import Toast
 
 final class NewTaskViewController: BaseViewController {
     
     let repository = JacsimRepository()
+    let calendar = Calendar.current
     
     var selectedImageURL: String?
     //MARK: Property
@@ -130,7 +132,9 @@ final class NewTaskViewController: BaseViewController {
         self.dismiss(animated: true)
     }
     
-    
+    private func calculateDays(startDate: Date, endDate: Date) -> Int {
+        return (calendar.dateComponents([.day], from: startDate, to: endDate).day ?? 1) + 1
+    }
     
     // MARK: Realm Create
     @objc func saveButtonTapped(){
@@ -141,16 +145,31 @@ final class NewTaskViewController: BaseViewController {
         guard let endDate = formatter.date(from: mainView.endDateTextField.text ?? "") else { return }
         // 이미지가 완전 없을 때 (이미지 선택 엑스)
         // 이미지를 웹에서 저장해줬을 때
-        // 이미지를 카메라, 사진첩에서 저장해줬을 때
+        // 이미지를 카메라, 사진첩에서 저장해줬을
         
         if selectedImageURL != nil {
             //웹으로 받아왔을 때
-            let task = UserJacsim(title: title, startDate: startDate, endDate: endDate, mainImage: selectedImageURL, isDone: false)
+            
+            let list = List<String>()
+            
+            for _ in 0...calculateDays(startDate: startDate, endDate: endDate) - 1 {
+                
+                list.append("인증하세요")
+            }
+            
+            let task = UserJacsim(title: title, startDate: startDate, endDate: endDate, mainImage: selectedImageURL, isDone: false, memo: list)
+
             repository.addItem(item: task)
+            
         } else {
             // 디바이스로 받아오거나 없거나 -> imageView 이미지가 있고 없고
+            let list = List<String>()
             
-            let task = UserJacsim(title: title, startDate: startDate, endDate: endDate, mainImage: nil, isDone: false)
+            for _ in 0...calculateDays(startDate: startDate, endDate: endDate) - 1 {
+                
+                list.append("인증하세요")
+            }
+            let task = UserJacsim(title: title, startDate: startDate, endDate: endDate, mainImage: nil, isDone: false, memo: list)
             guard let baseImage = UIImage(systemName: "xmark") else { return }
             saveImageToDocument(fileName: "\(String(describing: task.objectId)).jpg", image: mainView.newTaskImageView.image ?? baseImage)
             repository.addItem(item: task)
@@ -289,10 +308,4 @@ extension NewTaskViewController: SelectImageDelegate {
         selectedImageURL = urlString
     }
 
-}
-
-enum ImageSelection: CaseIterable {
-    case web
-    case device
-    case none
 }
