@@ -10,11 +10,11 @@ import PhotosUI
 
 import RealmSwift
 import Toast
+import SwiftUI
 
 final class NewTaskViewController: BaseViewController {
     
     let repository = JacsimRepository()
-    let calendar = Calendar.current
     
     var selectedImageURL: String?
     //MARK: Property
@@ -119,7 +119,7 @@ final class NewTaskViewController: BaseViewController {
         let gallery = UIAction(title: "갤러리", image: UIImage(systemName: "photo.on.rectangle")) { _ in
             self.present(self.phPicker, animated: true)
         }
-        let menu = UIMenu(title: "사진의 경로를 정해주세요.", options: .displayInline, children: [search,camera,gallery])
+        let menu = UIMenu(title: "사진의 경로를 정해주세요.", options: .displayInline, children: [gallery,camera,search])
        
         return menu
     }
@@ -132,10 +132,6 @@ final class NewTaskViewController: BaseViewController {
         self.dismiss(animated: true)
     }
     
-    private func calculateDays(startDate: Date, endDate: Date) -> Int {
-        return (calendar.dateComponents([.day], from: startDate, to: endDate).day ?? 1) + 1
-    }
-    
     // MARK: Realm Create
     @objc func saveButtonTapped(){
         
@@ -143,35 +139,39 @@ final class NewTaskViewController: BaseViewController {
         formatter.locale = Locale(identifier: "ko-KR")
         guard let startDate = formatter.date(from: mainView.startDateTextField.text ?? "") else { return }
         guard let endDate = formatter.date(from: mainView.endDateTextField.text ?? "") else { return }
-        // 이미지가 완전 없을 때 (이미지 선택 엑스)
-        // 이미지를 웹에서 저장해줬을 때
-        // 이미지를 카메라, 사진첩에서 저장해줬을
+        
+        if startDate - endDate > 0 {
+            view.makeToast("종료일은 시작일보다 빠를 수 없습니다.", duration: 0.4, position: .center, title: nil, image: nil, style: .init()) { _ in
+                DispatchQueue.main.async {
+                    self.mainView.endDateTextField.text = ""
+                }
+            }
+            return
+        }
         
         if selectedImageURL != nil {
             //웹으로 받아왔을 때
             
-            let list = List<String>()
+            let task = UserJacsim(title: title, startDate: startDate, endDate: endDate, mainImage: selectedImageURL, isDone: false)
             
             for _ in 0...calculateDays(startDate: startDate, endDate: endDate) - 1 {
-                
-                list.append("인증하세요")
+                let certified = Certified(memo: "인증하세요")
+                task.memoList.append(certified)
             }
             
-            let task = UserJacsim(title: title, startDate: startDate, endDate: endDate, mainImage: selectedImageURL, isDone: false, memo: list)
-
             repository.addItem(item: task)
             
         } else {
             // 디바이스로 받아오거나 없거나 -> imageView 이미지가 있고 없고
-            let list = List<String>()
             
+            let task = UserJacsim(title: title, startDate: startDate, endDate: endDate, mainImage: nil, isDone: false)
             for _ in 0...calculateDays(startDate: startDate, endDate: endDate) - 1 {
-                
-                list.append("인증하세요")
+                let certified = Certified(memo: "인증하세요")
+                task.memoList.append(certified)
             }
-            let task = UserJacsim(title: title, startDate: startDate, endDate: endDate, mainImage: nil, isDone: false, memo: list)
+
             guard let baseImage = UIImage(systemName: "xmark") else { return }
-            saveImageToDocument(fileName: "\(String(describing: task.objectId)).jpg", image: mainView.newTaskImageView.image ?? baseImage)
+            saveImageToDocument(fileName: "\(String(describing: task.id)).jpg", image: mainView.newTaskImageView.image ?? baseImage)
             repository.addItem(item: task)
         }
 

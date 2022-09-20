@@ -119,7 +119,7 @@ class TaskUpdateViewController: BaseViewController {
         repository.updateMemo(item: task, index: index, memo: memo)
         
         guard let baseImage = UIImage(systemName: "xmark") else { return }
-        saveImageToDocument(fileName: "\(task.objectId)_\(dateText).jpg", image: mainView.certifyImageView.image ?? baseImage)
+        saveImageToDocument(fileName: "\(task.id)_\(dateText).jpg", image: mainView.certifyImageView.image ?? baseImage)
         
         self.navigationController?.popViewController(animated: true)
     }

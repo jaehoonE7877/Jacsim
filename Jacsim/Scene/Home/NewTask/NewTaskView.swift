@@ -40,8 +40,11 @@ final class NewTaskView: BaseView {
     }
     
     let imageAddButton = UIButton(type: .system).then {
-        $0.setImage(UIImage(systemName: "plus.circle.fill", withConfiguration: UIImage.SymbolConfiguration(pointSize: 36)), for: .normal)
         $0.showsMenuAsPrimaryAction = true
+    }
+    
+    let imageAddView = UIImageView().then {
+        $0.image = UIImage(systemName: "plus.circle.fill", withConfiguration: UIImage.SymbolConfiguration(pointSize: 36))
         $0.tintColor = Constant.BaseColor.buttonColor
     }
     
@@ -97,7 +100,6 @@ final class NewTaskView: BaseView {
         }
         
         startDateTextField.snp.makeConstraints { make in
-            //make.leading.equalTo(startDateLabel.snp.trailing).offset(16)
             make.trailing.equalToSuperview()
             make.centerY.equalToSuperview()
         }
@@ -115,7 +117,6 @@ final class NewTaskView: BaseView {
         }
         
         endDateTextField.snp.makeConstraints { make in
-            //make.leading.equalTo(endDateLabel.snp.trailing).offset(16)
             make.trailing.equalToSuperview()
             make.centerY.equalToSuperview()
         }
@@ -132,7 +133,7 @@ final class NewTaskView: BaseView {
     
     
     override func configure() {
-        [topHorizontalStackView, newTaskTitleTextfield, newTaskImageLabel, newTaskImageView, imageAddButton, startDateStackView, endDateStackView].forEach{ self.addSubview($0) }
+        [topHorizontalStackView, newTaskTitleTextfield, newTaskImageLabel, newTaskImageView, imageAddButton, imageAddView, startDateStackView, endDateStackView].forEach{ self.addSubview($0) }
     }
     //MARK: Constraints 
     override func setConstraints() {
@@ -164,7 +165,11 @@ final class NewTaskView: BaseView {
         }
         
         imageAddButton.snp.makeConstraints { make in
-            make.trailing.bottom.equalTo(newTaskImageView).offset(-4)
+            make.edges.equalTo(newTaskImageView)
+        }
+        
+        imageAddView.snp.makeConstraints { make in
+            make.trailing.bottom.equalTo(imageAddButton).offset(-4)
             make.size.equalTo(44)
         }
         

@@ -20,34 +20,12 @@ final class HomeTableViewCell: BaseTableViewCell {
         $0.layer.cornerRadius = 12
         $0.layer.masksToBounds = true
         $0.clipsToBounds = true
-        $0.backgroundColor = Constant.BaseColor.customCellColor
-    }
-    // 하루에 인증되면 바꿔주기
-    let isDoneImage = UIImageView().then {
-        $0.image = UIImage(systemName: "checkmark.circle", withConfiguration: UIImage.SymbolConfiguration(font: .systemFont(ofSize: 10.0)))
-        $0.tintColor = .black
-        $0.contentMode = .scaleAspectFill
+        $0.backgroundColor = Constant.BaseColor.buttonColor
     }
     
     let titleLabel = UILabel().then {
         $0.font = .systemFont(ofSize: 20)
         $0.textAlignment = .left
-    }
-    
-    lazy var horizontalStackView = UIStackView(arrangedSubviews: [isDoneImage, titleLabel]).then {
-        $0.axis = .horizontal
-        $0.distribution = .fillProportionally
-        $0.spacing = 12
-        
-        isDoneImage.snp.makeConstraints { make in
-            make.width.equalTo(isDoneImage.snp.height)
-            make.centerY.equalToSuperview()
-        }
-        
-        titleLabel.snp.makeConstraints { make in
-            make.centerY.equalToSuperview()
-        }
-        
     }
     
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
@@ -61,7 +39,7 @@ final class HomeTableViewCell: BaseTableViewCell {
     override func configure() {
         contentView.addSubview(shadowView)
         shadowView.addSubview(jacsimContentView)
-        jacsimContentView.addSubview(horizontalStackView)
+        jacsimContentView.addSubview(titleLabel)
     }
     
     override func setConstraints() {
@@ -74,12 +52,10 @@ final class HomeTableViewCell: BaseTableViewCell {
             make.edges.equalTo(shadowView)
         }
         
-        horizontalStackView.snp.makeConstraints { make in
-            make.edges.equalTo(jacsimContentView.snp.edges).inset(8)
+        titleLabel.snp.makeConstraints { make in
+            make.leading.equalTo(jacsimContentView.snp.leading).offset(20)
+            make.centerY.equalToSuperview()
         }
     }
     
-    func setData(){
-        
-    }
 }

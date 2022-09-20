@@ -38,7 +38,7 @@ final class ImageSearchAPIManager {
             case .success(let obj):
                 
                 do {
-                    //let dataJSON = try JSONSerialization.data(withJSONObject: obj, options: .prettyPrinted)
+                    //let data = try JSONSerialization.data(withJSONObject: obj, options: .prettyPrinted)
                     let getData = try JSONDecoder().decode(ImageModel.self, from: obj)
                     completion(getData)
                 } catch {

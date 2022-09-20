@@ -8,11 +8,16 @@
 import Foundation
 
 extension Date : Strideable {
+    
     public func distance(to other: Date) -> TimeInterval {
         return other.timeIntervalSinceReferenceDate - self.timeIntervalSinceReferenceDate + 86400
     }
     
     public func advanced(by n: TimeInterval) -> Date {
         return self + n
+    }
+    
+    static func - (lhs: Date, rhs: Date) -> TimeInterval {
+        return lhs.timeIntervalSinceReferenceDate - rhs.timeIntervalSinceReferenceDate
     }
 }

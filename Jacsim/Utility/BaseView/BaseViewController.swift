@@ -13,6 +13,7 @@ import Then
 class BaseViewController: UIViewController {
     
     let formatter = DateFormatter()
+    let calendar = Calendar.current
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -57,6 +58,10 @@ class BaseViewController: UIViewController {
     
     private func setFormatterTimezone() {
         formatter.timeZone = TimeZone.autoupdatingCurrent
+    }
+    
+    func calculateDays(startDate: Date, endDate: Date) -> Int {
+        return (calendar.dateComponents([.day], from: startDate, to: endDate).day ?? 1) + 1
     }
     
 }

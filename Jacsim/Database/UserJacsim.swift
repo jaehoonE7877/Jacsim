@@ -12,7 +12,7 @@ import UIKit
 
 class UserJacsim: Object {
     
-    @Persisted(primaryKey: true) var objectId: ObjectId
+    @Persisted(primaryKey: true) var id: ObjectId
     
     @Persisted var title: String
     @Persisted var startDate: Date
@@ -20,20 +20,35 @@ class UserJacsim: Object {
     @Persisted var mainImage: String?
     @Persisted var isDone: Bool
 
-    @Persisted var memo: List<String>
+    @Persisted var memoList: List<Certified>
 
-    convenience init(title: String, startDate: Date, endDate: Date, mainImage: String?, isDone: Bool, memo: List<String>) {
+    convenience init(title: String, startDate: Date, endDate: Date, mainImage: String?, isDone: Bool = false) {
         self.init()
         self.title = title
         self.startDate = startDate
         self.endDate = endDate
         self.mainImage = mainImage
-        self.isDone = false
+        self.isDone = isDone
+    }
+    
+    override class func primaryKey() -> String? {
+        return "id"
+    }
+}
+
+class Certified: Object {
+   
+    @Persisted(primaryKey: true) var id: ObjectId
+    
+    @Persisted var memo: String
+    @Persisted var check: Bool
+    
+    let forUserjacsim = LinkingObjects(fromType: UserJacsim.self, property: "memo")
+    
+    convenience init(memo: String) {
+        self.init()
         self.memo = memo
+        self.check = false
     }
     
 }
-
-//class Certified: Object {
-//    @Persisted var memo: String
-//}

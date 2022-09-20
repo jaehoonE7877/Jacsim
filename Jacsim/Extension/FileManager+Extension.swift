@@ -71,7 +71,7 @@ extension UIViewController {
         guard let imageDirectory = ImageDirectoryPath() else { return nil }
         
         let fileURL = imageDirectory.appendingPathComponent(fileName)
-        print(fileURL)
+        //print(fileURL)
         if FileManager.default.fileExists(atPath: fileURL.path) {
             
             return UIImage(contentsOfFile: fileURL.path)
