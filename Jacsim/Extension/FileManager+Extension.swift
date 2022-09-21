@@ -62,8 +62,6 @@ extension UIViewController {
                 
             }
         }
-        
-        
     }
     
     func loadImageFromDocument(fileName: String) -> UIImage? {

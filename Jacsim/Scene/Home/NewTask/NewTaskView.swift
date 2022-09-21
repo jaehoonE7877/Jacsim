@@ -22,7 +22,6 @@ final class NewTaskView: BaseView {
     }
     
     let newTaskTitleTextfield = UITextField().then {
-        makeShadow(view: $0)
         $0.backgroundColor = .lightGray
         $0.placeholder = "예시 - 아침에 일어나서 물 마시기"
         $0.textAlignment = .center
@@ -35,7 +34,6 @@ final class NewTaskView: BaseView {
     }
     
     let newTaskImageView = UIImageView().then {
-        makeShadow(view: $0)
         $0.backgroundColor = .lightGray
     }
     
@@ -54,7 +52,6 @@ final class NewTaskView: BaseView {
     }
     
     let startDateTextField = UITextField().then {
-        makeShadow(view: $0)
         $0.placeholder = "시작일을 정해주세요."
         $0.font = .systemFont(ofSize: 14)
         $0.textAlignment = .center
@@ -67,7 +64,6 @@ final class NewTaskView: BaseView {
     }
     
     let endDateTextField = UITextField().then {
-        makeShadow(view: $0)
         $0.placeholder = "종료일을 정해주세요."
         $0.font = .systemFont(ofSize: 14)
         $0.textAlignment = .center

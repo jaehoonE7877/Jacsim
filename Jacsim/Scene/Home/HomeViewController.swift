@@ -6,15 +6,16 @@
 //
 
 import UIKit
+
+import RealmSwift
 import FSCalendar
 import Floaty
-import RealmSwift
+
 
 final class HomeViewController: BaseViewController {
         
     let repository = JacsimRepository()
     
-    var dayArray: [Date] = []
     // MARK: Property
     
     lazy var fsCalendar = FSCalendar(frame: .zero).then {
@@ -42,10 +43,11 @@ final class HomeViewController: BaseViewController {
         $0.delegate = self
         $0.dataSource = self
         $0.register(JacsimHeaderView.self, forHeaderFooterViewReuseIdentifier: JacsimHeaderView.reuseIdentifier)
-        $0.register(HomeTableViewCell.self, forCellReuseIdentifier: HomeTableViewCell.reuseIdentifier)
+        $0.register(JacsimTableViewCell.self, forCellReuseIdentifier: JacsimTableViewCell.reuseIdentifier)
         $0.rowHeight = 72
         $0.sectionFooterHeight = 0
         $0.sectionHeaderHeight = 40
+        $0.separatorStyle = UITableViewCell.SeparatorStyle.none
         $0.backgroundColor = .clear
     }
     
@@ -58,7 +60,12 @@ final class HomeViewController: BaseViewController {
         return panGesture
     }()
     
-    let floaty = Floaty()
+    lazy var floaty = Floaty().then {
+        $0.paddingY = UIScreen.main.bounds.height / 12
+        $0.buttonColor = .systemMint
+        $0.itemTitleColor = .systemGray6
+        $0.fabDelegate = self
+    }
     
     var tasks: Results<UserJacsim>!{
         didSet {
@@ -132,7 +139,7 @@ final class HomeViewController: BaseViewController {
     }
     
     override func setNavigationController() {
-        self.title = "Nickname의 작심일지"
+        self.title = "작심일지"
         let appearance = UINavigationBarAppearance()
         appearance.configureWithOpaqueBackground()
         appearance.backgroundColor = .white
@@ -145,22 +152,17 @@ final class HomeViewController: BaseViewController {
     
     // MARK: Floaty Button Customize
     private func setFloatyButton(){
-        floaty.paddingY = UIScreen.main.bounds.height / 12
-        floaty.buttonColor = .systemMint
-        floaty.hasShadow = true
-        floaty.itemTitleColor = .systemGray6
-        
         
         floaty.addItem("새로운 작심", icon: UIImage(systemName: "square.and.pencil")) { item in
-            
             self.transitionViewController(viewController: NewTaskViewController(), transitionStyle: .presentFullNavigation)
         }
         
         floaty.addItem("이전 작심", icon: UIImage(systemName: "checkmark.square")) { item in
-            self.transitionViewController(viewController: DoneTaskViewController(), transitionStyle: .presentFullNavigation)
+            self.transitionViewController(viewController: AllTaskViewController(), transitionStyle: .presentFullNavigation)
         }
         
     }
+
     
     // MARK: FSCalendar Customize
     private func setFSCalendar(){
@@ -176,7 +178,8 @@ final class HomeViewController: BaseViewController {
     
     
     @objc func moveToSetting(){
-        
+        let vc = SettingViewController()
+        self.transitionViewController(viewController: vc, transitionStyle: .push)
     }
     
     @objc func infoButtonTapped(){
@@ -184,7 +187,11 @@ final class HomeViewController: BaseViewController {
     }
     
     @objc func sortButtonTapped(){
+        
+        fsCalendar.deselect(Date())
+        fsCalendar.setCurrentPage(Date(), animated: true)
         tasks = repository.fetchRealm()
+        
     }
     
 }
@@ -198,14 +205,15 @@ extension HomeViewController: UITableViewDelegate, UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
         guard let headerView = tableView.dequeueReusableHeaderFooterView(withIdentifier: JacsimHeaderView.reuseIdentifier) as? JacsimHeaderView else { return UIView() }
-        
+        headerView.foldButton = UIButton(frame: .null)
+        headerView.foldImage = UIImageView(frame: .null)
         headerView.headerLabel.text = "작심한 일"
         
         return headerView
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        guard let cell = tableView.dequeueReusableCell(withIdentifier: HomeTableViewCell.reuseIdentifier) as? HomeTableViewCell else { return UITableViewCell() }
+        guard let cell = tableView.dequeueReusableCell(withIdentifier: JacsimTableViewCell.reuseIdentifier) as? JacsimTableViewCell else { return UITableViewCell() }
         
         cell.backgroundColor = .clear
         cell.titleLabel.text = tasks?[indexPath.row].title
@@ -255,7 +263,10 @@ extension HomeViewController: FSCalendarDelegate, FSCalendarDataSource {
     }
     
     func calendar(_ calendar: FSCalendar, didSelect date: Date, at monthPosition: FSCalendarMonthPosition) {
-        
+        formatter.timeZone = TimeZone.autoupdatingCurrent
+        formatter.dateFormat = "yyyy년 MM월 dd일"
+        print(formatter.string(from: date))
+        print(date)
         tasks = repository.fetchDate(date: date)
         
         if monthPosition == .previous || monthPosition == .next {
@@ -271,6 +282,16 @@ extension HomeViewController: FSCalendarDelegate, FSCalendarDataSource {
             return nil
         }
     }
+}
+
+extension HomeViewController: FloatyDelegate {
     
+    func floatyWillOpen(_ floaty: Floaty) {
+        if repository.fetchIsNotDone() >= 5 {
+            floaty.items[0].isHidden = true
+        } else {
+            floaty.items[0].isHidden = false
+        }
+    }
     
 }

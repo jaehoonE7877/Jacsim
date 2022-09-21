@@ -12,7 +12,6 @@ final class TaskUpdateView: BaseView {
     //MARK: Property
     
     let certifyImageView = UIImageView().then {
-        makeShadow(view: $0)
         $0.backgroundColor = .lightGray
     }
     
@@ -34,7 +33,6 @@ final class TaskUpdateView: BaseView {
     }
     
     let memoTextfield = UITextField().then {
-        makeShadow(view: $0)
         $0.backgroundColor = .lightGray
         $0.placeholder = "한 줄 메모를 입력해주세요"
         $0.textAlignment = .center
@@ -42,7 +40,6 @@ final class TaskUpdateView: BaseView {
     }
     
     let certifyButton = UIButton().then {
-        makeShadow(view: $0)
         $0.setTitle("인증하겠습니다!", for: .normal)
         $0.tintColor = .black
         $0.backgroundColor = Constant.BaseColor.buttonColor

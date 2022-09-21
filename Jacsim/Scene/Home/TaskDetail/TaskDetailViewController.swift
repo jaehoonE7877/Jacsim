@@ -55,8 +55,6 @@ final class TaskDetailViewController: BaseViewController {
         mainView.titleLabel.text = task?.title
         guard let task = task else { return }
         
-        
-        
         mainView.startDateLabel.text = formatter.string(from: task.startDate)
         mainView.endDateLabel.text = formatter.string(from: task.endDate)
         
@@ -84,12 +82,41 @@ final class TaskDetailViewController: BaseViewController {
         navigationController?.navigationBar.standardAppearance = appearance
         navigationController?.navigationBar.scrollEdgeAppearance = appearance
         navigationItem.leftBarButtonItem = UIBarButtonItem(image: UIImage(systemName: "xmark"), style: .plain, target: self, action: #selector(xButtonTapped))
-        navigationItem.rightBarButtonItem?.tintColor = Constant.BaseColor.buttonColor
+        navigationItem.rightBarButtonItem = UIBarButtonItem(title: "작심 그만두기", style: .plain, target: self, action: #selector(quitJacsimButtonTapped))
+        navigationItem.rightBarButtonItem?.tintColor = .red
         navigationItem.leftBarButtonItem?.tintColor = Constant.BaseColor.buttonColor
     }
     
     @objc func xButtonTapped(){
         self.dismiss(animated: true)
+    }
+    
+    @objc func quitJacsimButtonTapped(){
+        // Alert표시 진짜 그만둘건지(저장한 데이터 삭제된다.)
+        showAlertMessage(title: "해당 작심을 그만두실 건가요?", message: "기존에 저장한 데이터들은 사라집니다.", button: "확인", cancel: "취소") { [weak self] _ in
+            guard let self = self else { return }
+            guard let task = self.task else { return }
+            // 인증유무 분기처리
+            self.formatter.dateFormat = "M월 dd일 EEEE"
+            
+            if self.repository.checkCertified(item: task) == 0 {
+                
+                self.repository.deleteJacsim(item: task)
+                
+            } else {
+                // 인증이 있을 때
+                for index in 0...self.repository.checkCertified(item: task) - 1 {
+                    let dateText = self.formatter.string(from: self.dayArray[index])
+                    self.repository.removeImageFromDocument(fileName: "\(task.id)_\(dateText).jpg")
+                }
+                
+                self.repository.deleteJacsim(item: task)
+                
+            }
+            
+            self.dismiss(animated: true)
+        }
+        
     }
     
 }
@@ -118,14 +145,25 @@ extension TaskDetailViewController: UICollectionViewDelegate, UICollectionViewDa
     }
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        
         guard let cell = collectionView.cellForItem(at: indexPath) as? TaskDetailCollectionViewCell else { return }
         
         let vc = TaskUpdateViewController()
-        vc.dateText = cell.dateLabel.text
-        vc.task = task
-        vc.index = indexPath.item
-        self.transitionViewController(viewController: vc, transitionStyle: .push)
+        guard let task = task else { return }
+        let dateText = formatter.string(from: dayArray[indexPath.item])
+        // 인증처음 할 때
+        if !task.memoList[indexPath.item].check {
+            vc.dateText = cell.dateLabel.text
+            vc.task = task
+            vc.index = indexPath.item
+            self.transitionViewController(viewController: vc, transitionStyle: .push)
+        } else {
+            vc.dateText = cell.dateLabel.text
+            vc.task = task
+            vc.index = indexPath.item
+            vc.mainView.memoTextfield.text = task.memoList[indexPath.item].memo
+            vc.mainView.certifyImageView.image = loadImageFromDocument(fileName: "\(task.id)_\(dateText).jpg")
+            self.transitionViewController(viewController: vc, transitionStyle: .push)
+        }
     }
     
     

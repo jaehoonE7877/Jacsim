@@ -7,7 +7,9 @@
 
 import UIKit
 
+import RealmSwift
 import SnapKit
+import Toast
 import Then
 
 class BaseViewController: UIViewController {
@@ -33,6 +35,16 @@ class BaseViewController: UIViewController {
     func setConstraint() {}
     
     func setNavigationController() {}
+    
+    func showAlertMessage(title: String, message: String ,button: String, cancel: String, completion: @escaping (UIAlertAction) -> Void) {
+        let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
+        let ok = UIAlertAction(title: button, style: .destructive, handler: completion)
+        let cancel = UIAlertAction(title: cancel, style: .cancel)
+        alert.addAction(cancel)
+        alert.addAction(ok)
+        
+        present(alert, animated: true)
+    }
     
     func showAlertMessage(title: String, message: String ,button: String) {
         let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)

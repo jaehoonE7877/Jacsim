@@ -8,9 +8,7 @@
 import UIKit
 import PhotosUI
 
-import Toast
-
-class TaskUpdateViewController: BaseViewController {
+final class TaskUpdateViewController: BaseViewController {
     
     let mainView = TaskUpdateView()
     let repository = JacsimRepository()

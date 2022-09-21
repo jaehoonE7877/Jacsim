@@ -16,7 +16,6 @@ class TaskDetailCollectionViewCell: BaseCollectionViewCell {
     }
     
     let certifiedImageView = UIImageView().then {
-        makeShadow(view: $0)
         $0.backgroundColor = .lightGray
         $0.contentMode = .scaleToFill
     }
@@ -54,9 +53,5 @@ class TaskDetailCollectionViewCell: BaseCollectionViewCell {
             make.horizontalEdges.bottom.equalToSuperview()
             
         }
-    }
-    
-    func setData(image: UIImage){
-        
     }
 }

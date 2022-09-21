@@ -8,10 +8,6 @@
 import UIKit
 import PhotosUI
 
-import RealmSwift
-import Toast
-import SwiftUI
-
 final class NewTaskViewController: BaseViewController {
     
     let repository = JacsimRepository()
@@ -50,8 +46,7 @@ final class NewTaskViewController: BaseViewController {
         super.viewDidLoad()
         
         view.backgroundColor = .white
-        
-        
+
         print("Realm is located at:", repository.localRealm.configuration.fileURL!)
     }
     
@@ -136,7 +131,6 @@ final class NewTaskViewController: BaseViewController {
     @objc func saveButtonTapped(){
         
         guard let title = mainView.newTaskTitleTextfield.text else { return }
-        formatter.locale = Locale(identifier: "ko-KR")
         guard let startDate = formatter.date(from: mainView.startDateTextField.text ?? "") else { return }
         guard let endDate = formatter.date(from: mainView.endDateTextField.text ?? "") else { return }
         
@@ -152,27 +146,27 @@ final class NewTaskViewController: BaseViewController {
         if selectedImageURL != nil {
             //웹으로 받아왔을 때
             
-            let task = UserJacsim(title: title, startDate: startDate, endDate: endDate, mainImage: selectedImageURL, isDone: false)
+            let task = UserJacsim(title: title, startDate: startDate, endDate: endDate, mainImage: selectedImageURL)
             
             for _ in 0...calculateDays(startDate: startDate, endDate: endDate) - 1 {
-                let certified = Certified(memo: "인증하세요")
+                let certified = Certified(memo: "인증해주세요")
                 task.memoList.append(certified)
             }
             
-            repository.addItem(item: task)
+            repository.addJacsim(item: task)
             
         } else {
             // 디바이스로 받아오거나 없거나 -> imageView 이미지가 있고 없고
             
-            let task = UserJacsim(title: title, startDate: startDate, endDate: endDate, mainImage: nil, isDone: false)
+            let task = UserJacsim(title: title, startDate: startDate, endDate: endDate, mainImage: nil)
             for _ in 0...calculateDays(startDate: startDate, endDate: endDate) - 1 {
-                let certified = Certified(memo: "인증하세요")
+                let certified = Certified(memo: "인증해주세요")
                 task.memoList.append(certified)
             }
 
             guard let baseImage = UIImage(systemName: "xmark") else { return }
             saveImageToDocument(fileName: "\(String(describing: task.id)).jpg", image: mainView.newTaskImageView.image ?? baseImage)
-            repository.addItem(item: task)
+            repository.addJacsim(item: task)
         }
 
         dismiss(animated: true)
@@ -198,6 +192,9 @@ extension NewTaskViewController: UITextFieldDelegate {
     
     func textFieldDidBeginEditing(_ textField: UITextField) {
         someTextField = textField
+        if textField == mainView.startDateTextField || textField == mainView.endDateTextField {
+            textField.tintColor = .clear
+        }
     
     }
     // 첫번째 텍스트 필드만

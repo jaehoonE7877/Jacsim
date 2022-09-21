@@ -7,14 +7,7 @@
 
 import UIKit
 
-final class HomeTableViewCell: BaseTableViewCell {
-    
-    //shadowview, image, label
-    
-    let shadowView = UIView().then {
-        makeShadow(view: $0)
-        $0.backgroundColor = .clear
-    }
+final class JacsimTableViewCell: BaseTableViewCell {
     
     let jacsimContentView = UIView().then {
         $0.layer.cornerRadius = 12
@@ -37,19 +30,16 @@ final class HomeTableViewCell: BaseTableViewCell {
     }
     
     override func configure() {
-        contentView.addSubview(shadowView)
-        shadowView.addSubview(jacsimContentView)
+        contentView.addSubview(jacsimContentView)
         jacsimContentView.addSubview(titleLabel)
     }
     
     override func setConstraints() {
         
-        shadowView.snp.makeConstraints { make in
-            make.edges.equalTo(contentView).inset(12)
-        }
-        
         jacsimContentView.snp.makeConstraints { make in
-            make.edges.equalTo(shadowView)
+            make.center.equalToSuperview()
+            make.width.equalTo(contentView).multipliedBy(0.95)
+            make.height.equalTo(contentView).multipliedBy(0.72)
         }
         
         titleLabel.snp.makeConstraints { make in
