@@ -66,7 +66,7 @@ final class NewTaskViewController: BaseViewController {
     
     override func configure() {
         
-        [mainView.newTaskTitleTextfield, mainView.startDateTextField, mainView.endDateTextField].forEach { $0.delegate = self }
+        [mainView.newTaskTitleTextfield, mainView.startDateTextField, mainView.endDateTextField, mainView.successTextField].forEach { $0.delegate = self }
         [mainView.newTaskTitleTextfield, mainView.startDateTextField, mainView.endDateTextField].forEach { $0.returnKeyType = .done }
         tapGesture()
         
@@ -134,19 +134,35 @@ final class NewTaskViewController: BaseViewController {
         guard let startDate = formatter.date(from: mainView.startDateTextField.text ?? "") else { return }
         guard let endDate = formatter.date(from: mainView.endDateTextField.text ?? "") else { return }
         
+        guard let success = Int(mainView.successTextField.text ?? "") else { return }
+        
+        guard let offsetDay = calendar.dateComponents([.day], from: Date(), to: endDate).day else { return }
+        print(endDate)
+        print(Date())
+        print(offsetDay + 1)
         if startDate - endDate > 0 {
-            view.makeToast("종료일은 시작일보다 빠를 수 없습니다.", duration: 0.4, position: .center, title: nil, image: nil, style: .init()) { _ in
+            view.makeToast("종료일은 시작일보다 빠를 수 없습니다.", duration: 1.0, position: .center, title: nil, image: nil, style: .init()) { _ in
                 DispatchQueue.main.async {
                     self.mainView.endDateTextField.text = ""
                 }
             }
             return
+        } else {
+            let days = calculateDays(startDate: startDate, endDate: endDate)
+            if success > days || success <= 0 {
+                view.makeToast("최소 성공 횟수는 작심 진행 일수 보다 많을 수 없습니다.", duration: 2.0, position: .center, title: nil, image: nil, style: .init()) { _ in
+                    DispatchQueue.main.async {
+                        self.mainView.successTextField.text = ""
+                    }
+                }
+                return
+            }
         }
         
         if selectedImageURL != nil {
             //웹으로 받아왔을 때
             
-            let task = UserJacsim(title: title, startDate: startDate, endDate: endDate, mainImage: selectedImageURL)
+            let task = UserJacsim(title: title, startDate: startDate, endDate: endDate, mainImage: selectedImageURL, success: success)
             
             for _ in 0...calculateDays(startDate: startDate, endDate: endDate) - 1 {
                 let certified = Certified(memo: "인증해주세요")
@@ -158,7 +174,7 @@ final class NewTaskViewController: BaseViewController {
         } else {
             // 디바이스로 받아오거나 없거나 -> imageView 이미지가 있고 없고
             
-            let task = UserJacsim(title: title, startDate: startDate, endDate: endDate, mainImage: nil)
+            let task = UserJacsim(title: title, startDate: startDate, endDate: endDate, mainImage: nil, success: success)
             for _ in 0...calculateDays(startDate: startDate, endDate: endDate) - 1 {
                 let certified = Certified(memo: "인증해주세요")
                 task.memoList.append(certified)
@@ -197,17 +213,37 @@ extension NewTaskViewController: UITextFieldDelegate {
         }
     
     }
-    // 첫번째 텍스트 필드만
+    
     func textFieldDidEndEditing(_ textField: UITextField) {
-        guard let text = textField.text else { return }
-        if text.count <= 2 {
-            view.makeToast("작심한 일의 제목은 2글자 이상이어야 합니다!", duration: 0.4, position: .center, title: nil, image: nil, style: .init()) { _ in
-                DispatchQueue.main.async {
-                    textField.text = ""
+        
+        switch textField {
+        case mainView.newTaskTitleTextfield:
+            guard let text = textField.text else { return }
+            if text.count <= 2 {
+                view.makeToast("작심한 일의 제목은 2글자 이상이어야 합니다!", duration: 0.4, position: .center, title: nil, image: nil, style: .init()) { _ in
+                    DispatchQueue.main.async {
+                        textField.text = ""
+                    }
                 }
+                return
             }
+        case mainView.successTextField:
+            guard let text = textField.text else { return }
+            if Int(text) ?? 0 < 1 {
+                view.makeToast("성공 횟수는 1보다 커야합니다.", duration: 0.3, position: .center, title: nil, image: nil, style: .init()) { _ in
+                    DispatchQueue.main.async {
+                        textField.text = ""
+                    }
+                }
+                return
+            }
+        default:
             return
         }
+        
+        
+        
+        
     }
     
     @objc func keyboardWillShow(_ sender: Notification){
@@ -215,9 +251,11 @@ extension NewTaskViewController: UITextFieldDelegate {
         if let keyboardSize = (sender.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? NSValue)?.cgRectValue {
 
             if someTextField == mainView.endDateTextField {
-                UIView.animate(withDuration: 0.3, animations: { self.view.transform = CGAffineTransform(translationX: 0, y: -keyboardSize.height + 110)}, completion: nil)
+                UIView.animate(withDuration: 0.3, animations: { self.view.transform = CGAffineTransform(translationX: 0, y: -keyboardSize.height + 116)}, completion: nil)
             } else if someTextField == mainView.startDateTextField {
                 UIView.animate(withDuration: 0.3, animations: { self.view.transform = CGAffineTransform(translationX: 0, y: -keyboardSize.height + 100)}, completion: nil)
+            } else if someTextField == mainView.successTextField {
+                UIView.animate(withDuration: 0.3, animations: { self.view.transform = CGAffineTransform(translationX: 0, y: -keyboardSize.height)}, completion: nil)
             } else {
                 return
             }

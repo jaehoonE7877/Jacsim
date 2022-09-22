@@ -20,4 +20,25 @@ extension Date : Strideable {
     static func - (lhs: Date, rhs: Date) -> TimeInterval {
         return lhs.timeIntervalSinceReferenceDate - rhs.timeIntervalSinceReferenceDate
     }
+    
+    func toString() -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy년 MM월 dd일 EEEE"
+        formatter.timeZone = TimeZone(identifier: "UTC+9")
+        return formatter.string(from: self)
+    }
+    
+}
+
+extension String {
+    func toDate() -> Date? {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy년 MM월 dd일 EEEE"
+        formatter.timeZone = TimeZone(identifier: "UTC+9")
+        if let date = formatter.date(from: self) {
+            return date
+        } else {
+            return nil
+        }
+    }
 }

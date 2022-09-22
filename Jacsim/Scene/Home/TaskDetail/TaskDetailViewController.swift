@@ -36,7 +36,13 @@ final class TaskDetailViewController: BaseViewController {
         
         guard let task = task else { return }
         repository.checkIsDone(item: task, count: jacsimDays)
+        repository.checkIsSuccess(item: task)
         
+        if task.success - repository.checkCertified(item: task) > 0 {
+            mainView.successLabel.text = "작심 성공까지 \(task.success - repository.checkCertified(item: task))회 남았습니다!"
+        } else {
+            mainView.successLabel.text = "목표를 달성했습니다! 끝까지 힘내세요!!"
+        }
         
         DispatchQueue.main.async {
             self.mainView.collectionView.reloadData()
@@ -52,7 +58,6 @@ final class TaskDetailViewController: BaseViewController {
     // MARK: Configure
     override func configure() {
         
-        mainView.titleLabel.text = task?.title
         guard let task = task else { return }
         
         mainView.startDateLabel.text = formatter.string(from: task.startDate)
@@ -69,10 +74,10 @@ final class TaskDetailViewController: BaseViewController {
         // collectionView cell개수
         jacsimDays = calculateDays(startDate: task.startDate, endDate: task.endDate)
         
-        for date in stride(from: task.startDate, to: task.endDate + 86401, by: 86400 ){
+        for date in stride(from: task.startDate, to: task.endDate + 86400, by: 86400 ){
             dayArray.append(date)
         }
-        
+        print(dayArray)
     }
     
     override func setNavigationController() {

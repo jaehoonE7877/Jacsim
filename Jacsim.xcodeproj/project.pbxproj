@@ -38,6 +38,11 @@
 		259C4E2428DB7BA20092223A /* SettingModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 259C4E2328DB7BA20092223A /* SettingModel.swift */; };
 		25D0AD3528D8747F006A918C /* Date+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25D0AD3428D8747F006A918C /* Date+Extension.swift */; };
 		25D0AD3728D8C5B0006A918C /* TaskUpdateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25D0AD3628D8C5B0006A918C /* TaskUpdateView.swift */; };
+		25E8466928DCB20B00E5300B /* AlarmViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25E8466828DCB20B00E5300B /* AlarmViewController.swift */; };
+		25E8466C28DCC00000E5300B /* AlarmTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25E8466B28DCC00000E5300B /* AlarmTableViewCell.swift */; };
+		25E8466E28DCC43F00E5300B /* AddAlarmViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25E8466D28DCC43F00E5300B /* AddAlarmViewController.swift */; };
+		25E8467028DCC46A00E5300B /* Alarm.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25E8466F28DCC46A00E5300B /* Alarm.swift */; };
+		25E8467228DCCBCC00E5300B /* UNUserNotificationCenter+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25E8467128DCCBCC00E5300B /* UNUserNotificationCenter+Extension.swift */; };
 		25EE098228CF0CF600B5B5CA /* HomeViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25EE098128CF0CF600B5B5CA /* HomeViewController.swift */; };
 		25EE098428CF0D0800B5B5CA /* JacsimTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25EE098328CF0D0800B5B5CA /* JacsimTableViewCell.swift */; };
 		25EE098828CF104100B5B5CA /* AllTaskViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25EE098728CF104100B5B5CA /* AllTaskViewController.swift */; };
@@ -89,6 +94,11 @@
 		259C4E2328DB7BA20092223A /* SettingModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingModel.swift; sourceTree = "<group>"; };
 		25D0AD3428D8747F006A918C /* Date+Extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Date+Extension.swift"; sourceTree = "<group>"; };
 		25D0AD3628D8C5B0006A918C /* TaskUpdateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskUpdateView.swift; sourceTree = "<group>"; };
+		25E8466828DCB20B00E5300B /* AlarmViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlarmViewController.swift; sourceTree = "<group>"; };
+		25E8466B28DCC00000E5300B /* AlarmTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlarmTableViewCell.swift; sourceTree = "<group>"; };
+		25E8466D28DCC43F00E5300B /* AddAlarmViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddAlarmViewController.swift; sourceTree = "<group>"; };
+		25E8466F28DCC46A00E5300B /* Alarm.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Alarm.swift; sourceTree = "<group>"; };
+		25E8467128DCCBCC00E5300B /* UNUserNotificationCenter+Extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UNUserNotificationCenter+Extension.swift"; sourceTree = "<group>"; };
 		25EE098128CF0CF600B5B5CA /* HomeViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeViewController.swift; sourceTree = "<group>"; };
 		25EE098328CF0D0800B5B5CA /* JacsimTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JacsimTableViewCell.swift; sourceTree = "<group>"; };
 		25EE098728CF104100B5B5CA /* AllTaskViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AllTaskViewController.swift; sourceTree = "<group>"; };
@@ -218,6 +228,7 @@
 				2535270128D222BD0086383E /* UITextField+Extension.swift */,
 				25FCD99228D77FFF004F48E8 /* FileManager+Extension.swift */,
 				25D0AD3428D8747F006A918C /* Date+Extension.swift */,
+				25E8467128DCCBCC00E5300B /* UNUserNotificationCenter+Extension.swift */,
 			);
 			path = Extension;
 			sourceTree = "<group>";
@@ -259,6 +270,17 @@
 			path = BaseView;
 			sourceTree = "<group>";
 		};
+		25E8466A28DCB7BD00E5300B /* Alarm */ = {
+			isa = PBXGroup;
+			children = (
+				25E8466828DCB20B00E5300B /* AlarmViewController.swift */,
+				25E8466B28DCC00000E5300B /* AlarmTableViewCell.swift */,
+				25E8466D28DCC43F00E5300B /* AddAlarmViewController.swift */,
+				25E8466F28DCC46A00E5300B /* Alarm.swift */,
+			);
+			path = Alarm;
+			sourceTree = "<group>";
+		};
 		25EE098028CF0CE100B5B5CA /* Home */ = {
 			isa = PBXGroup;
 			children = (
@@ -284,6 +306,7 @@
 				259C4E1E28DB77680092223A /* SettingViewController.swift */,
 				259C4E2028DB77750092223A /* SettingTableViewCell.swift */,
 				259C4E2328DB7BA20092223A /* SettingModel.swift */,
+				25E8466A28DCB7BD00E5300B /* Alarm */,
 			);
 			path = Setting;
 			sourceTree = "<group>";
@@ -427,6 +450,7 @@
 				258114F728D1DD5000CBA0ED /* UIImage+Extension.swift in Sources */,
 				2547132528CC4B670049D952 /* ViewController.swift in Sources */,
 				25636C4728CC544A00B385AF /* BaseCollectionViewCell.swift in Sources */,
+				25E8467028DCC46A00E5300B /* Alarm.swift in Sources */,
 				25FCD98F28D5CA15004F48E8 /* JacsimRepository.swift in Sources */,
 				25EE099A28CF172200B5B5CA /* TaskUpdateViewController.swift in Sources */,
 				25EE098D28CF14E400B5B5CA /* NewTaskViewController.swift in Sources */,
@@ -436,6 +460,7 @@
 				25636C4C28CC552D00B385AF /* UserJacsim.swift in Sources */,
 				25EE098228CF0CF600B5B5CA /* HomeViewController.swift in Sources */,
 				25EE098428CF0D0800B5B5CA /* JacsimTableViewCell.swift in Sources */,
+				25E8466928DCB20B00E5300B /* AlarmViewController.swift in Sources */,
 				2547134028CC4C970049D952 /* ReusableViewProtocol.swift in Sources */,
 				2547132128CC4B670049D952 /* AppDelegate.swift in Sources */,
 				2535270228D222BD0086383E /* UITextField+Extension.swift in Sources */,
@@ -456,9 +481,12 @@
 				2547132328CC4B670049D952 /* SceneDelegate.swift in Sources */,
 				25EE099428CF165D00B5B5CA /* ImageSearchCollectionViewCell.swift in Sources */,
 				25EE098828CF104100B5B5CA /* AllTaskViewController.swift in Sources */,
+				25E8466C28DCC00000E5300B /* AlarmTableViewCell.swift in Sources */,
+				25E8467228DCCBCC00E5300B /* UNUserNotificationCenter+Extension.swift in Sources */,
 				25EE09A228CF1A7300B5B5CA /* Constant.swift in Sources */,
 				25FCD99128D74473004F48E8 /* TaskDetailView.swift in Sources */,
 				259C4E2128DB77750092223A /* SettingTableViewCell.swift in Sources */,
+				25E8466E28DCC43F00E5300B /* AddAlarmViewController.swift in Sources */,
 				256070CB28D396C400A1F553 /* ImageModel.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -610,13 +638,13 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Jacsim/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "작심";
-				INFOPLIST_KEY_NSCameraUsageDescription = "작심한 일의 배경, 인증 사진을 적용하기 위해 사용됩니다.";
+				INFOPLIST_KEY_NSCameraUsageDescription = "작심 이미지를 적용하기 위해서는 카메라 권한이 필요합니다. ";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "작심한 일의 배경, 인증 사진을 적용하기 위해 사용됩니다.";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UIMainStoryboardFile = Main;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -625,6 +653,9 @@
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.jaehoon.Jacsim;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 1;
@@ -642,13 +673,13 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Jacsim/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "작심";
-				INFOPLIST_KEY_NSCameraUsageDescription = "작심한 일의 배경, 인증 사진을 적용하기 위해 사용됩니다.";
+				INFOPLIST_KEY_NSCameraUsageDescription = "작심 이미지를 적용하기 위해서는 카메라 권한이 필요합니다. ";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "작심한 일의 배경, 인증 사진을 적용하기 위해 사용됩니다.";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UIMainStoryboardFile = Main;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -657,6 +688,9 @@
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.jaehoon.Jacsim;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 1;

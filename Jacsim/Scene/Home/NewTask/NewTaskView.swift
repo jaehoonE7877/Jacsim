@@ -69,6 +69,25 @@ final class NewTaskView: BaseView {
         $0.textAlignment = .center
         $0.backgroundColor = .lightGray
     }
+    
+    let successLabel = UILabel().then {
+        $0.text = "성공 기준 횟수를 정해주세요."
+        $0.font = .boldSystemFont(ofSize: 16)
+    }
+    
+    let successTextField = UITextField().then {
+        $0.textAlignment = .center
+        $0.backgroundColor = .lightGray
+        $0.keyboardType = .numberPad
+        $0.addDoneButtonOnKeyboard()
+        $0.text = "1"
+        $0.font = .systemFont(ofSize: 14)
+    }
+    let successCountLabel = UILabel().then {
+        $0.font = .boldSystemFont(ofSize: 14)
+        $0.text = "회"
+    }
+    
     // MARK: StackView 생성
     lazy var topHorizontalStackView = UIStackView(arrangedSubviews: [newTaskTitleLabel, titleCountLabel]).then {
         $0.axis = .horizontal
@@ -118,6 +137,23 @@ final class NewTaskView: BaseView {
         }
     }
     
+    lazy var successStackView = UIStackView(arrangedSubviews: [successTextField, successCountLabel]).then {
+        $0.axis = .horizontal
+        $0.distribution = .fillProportionally
+        $0.spacing = 12
+        
+        successTextField.snp.makeConstraints { make in
+            make.leading.equalToSuperview()
+            make.centerY.equalToSuperview()
+        }
+        
+        successCountLabel.snp.makeConstraints { make in
+            make.trailing.equalToSuperview()
+            make.centerY.equalToSuperview()
+            make.width.equalTo(20)
+        }
+    }
+    
     
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -129,7 +165,7 @@ final class NewTaskView: BaseView {
     
     
     override func configure() {
-        [topHorizontalStackView, newTaskTitleTextfield, newTaskImageLabel, newTaskImageView, imageAddButton, imageAddView, startDateStackView, endDateStackView].forEach{ self.addSubview($0) }
+        [topHorizontalStackView, newTaskTitleTextfield, newTaskImageLabel, newTaskImageView, imageAddButton, imageAddView, startDateStackView, endDateStackView, successLabel, successStackView].forEach{ self.addSubview($0) }
     }
     //MARK: Constraints 
     override func setConstraints() {
@@ -157,7 +193,7 @@ final class NewTaskView: BaseView {
             make.top.equalTo(newTaskImageLabel.snp.bottom).offset(16)
             make.centerX.equalToSuperview()
             make.width.equalTo(topHorizontalStackView.snp.width)
-            make.height.equalTo(UIScreen.main.bounds.height / 2.8)
+            make.height.equalTo(UIScreen.main.bounds.height / 3)
         }
         
         imageAddButton.snp.makeConstraints { make in
@@ -170,17 +206,30 @@ final class NewTaskView: BaseView {
         }
         
         startDateStackView.snp.makeConstraints { make in
-            make.top.equalTo(newTaskImageView.snp.bottom).offset(20)
+            make.top.equalTo(newTaskImageView.snp.bottom).offset(16)
             make.centerX.equalToSuperview()
             make.width.equalTo(topHorizontalStackView.snp.width)
-            make.height.equalTo(44)
+            make.height.equalTo(40)
         }
         
         endDateStackView.snp.makeConstraints { make in
-            make.top.equalTo(startDateStackView.snp.bottom).offset(20)
+            make.top.equalTo(startDateStackView.snp.bottom).offset(16)
             make.centerX.equalToSuperview()
             make.width.equalTo(topHorizontalStackView.snp.width)
-            make.height.equalTo(44)
+            make.height.equalTo(40)
+        }
+        
+        successLabel.snp.makeConstraints { make in
+            make.top.equalTo(endDateStackView.snp.bottom).offset(16)
+            make.width.equalTo(topHorizontalStackView.snp.width)
+            make.centerX.equalToSuperview()
+        }
+        
+        successStackView.snp.makeConstraints { make in
+            make.top.equalTo(successLabel.snp.bottom).offset(16)
+            make.width.equalTo(topHorizontalStackView.snp.width)
+            make.centerX.equalToSuperview()
+            make.height.equalTo(40)
         }
         
     }

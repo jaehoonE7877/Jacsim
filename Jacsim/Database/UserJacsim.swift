@@ -19,11 +19,12 @@ class UserJacsim: Object {
     @Persisted var endDate: Date
     @Persisted var mainImage: String?
     @Persisted var isDone: Bool
-    @Persisted var success: Bool
+    @Persisted var success: Int
+    @Persisted var isSuccess: Bool
 
     @Persisted var memoList: List<Certified>
 
-    convenience init(title: String, startDate: Date, endDate: Date, mainImage: String?, isDone: Bool = false, success: Bool = false) {
+    convenience init(title: String, startDate: Date, endDate: Date, mainImage: String?, isDone: Bool = false, success: Int, isSuccess: Bool = false) {
         self.init()
         self.title = title
         self.startDate = startDate
@@ -31,6 +32,7 @@ class UserJacsim: Object {
         self.mainImage = mainImage
         self.isDone = isDone
         self.success = success
+        self.isSuccess = isSuccess
     }
     
     override class func primaryKey() -> String? {

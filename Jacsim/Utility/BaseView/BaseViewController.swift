@@ -68,8 +68,8 @@ class BaseViewController: UIViewController {
         formatter.dateFormat = "yyyy년 M월 d일 EEEE"
     }
     
-    private func setFormatterTimezone() {
-        formatter.timeZone = TimeZone.autoupdatingCurrent
+    func setFormatterTimezone() {
+        formatter.timeZone = TimeZone(identifier: "ko_KR")
     }
     
     func calculateDays(startDate: Date, endDate: Date) -> Int {

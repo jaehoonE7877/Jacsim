@@ -90,6 +90,7 @@ final class HomeViewController: BaseViewController {
         super.viewWillAppear(animated)
         
         tasks = repository.fetchRealm()
+        repository.checkIsDone(items: tasks)
         
         fsCalendar.reloadData()
         
@@ -226,7 +227,7 @@ extension HomeViewController: UITableViewDelegate, UITableViewDataSource {
         
         let vc = TaskDetailViewController()
         vc.task = tasks?[indexPath.item]
-        self.navigationItem.backButtonTitle = ""
+        vc.title = tasks?[indexPath.item].title
         self.transitionViewController(viewController: vc, transitionStyle: .presentFullNavigation)
     }
     
@@ -263,10 +264,7 @@ extension HomeViewController: FSCalendarDelegate, FSCalendarDataSource {
     }
     
     func calendar(_ calendar: FSCalendar, didSelect date: Date, at monthPosition: FSCalendarMonthPosition) {
-        formatter.timeZone = TimeZone.autoupdatingCurrent
-        formatter.dateFormat = "yyyy년 MM월 dd일"
-        print(formatter.string(from: date))
-        print(date)
+        
         tasks = repository.fetchDate(date: date)
         
         if monthPosition == .previous || monthPosition == .next {

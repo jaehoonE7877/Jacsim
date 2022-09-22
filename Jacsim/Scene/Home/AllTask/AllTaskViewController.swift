@@ -37,7 +37,15 @@ final class AllTaskViewController: BaseViewController {
         }
     }
     
-    var doneTasks: Results<UserJacsim>!{
+    var successTasks: Results<UserJacsim>!{
+        didSet {
+            DispatchQueue.main.async {
+                self.tableView.reloadData()
+            }
+        }
+    }
+    
+    var failTasks: Results<UserJacsim>!{
         didSet {
             DispatchQueue.main.async {
                 self.tableView.reloadData()
@@ -50,7 +58,9 @@ final class AllTaskViewController: BaseViewController {
         super.viewDidLoad()
         view.backgroundColor = .systemBackground
         tasks = repository.fetchRealm()
-        doneTasks = repository.fetchIsDone()
+        
+        successTasks = repository.fetchIsSuccess()
+        failTasks = repository.fetchIsFail()
     }
     
     // MARK: Navigation title
@@ -102,9 +112,9 @@ extension AllTaskViewController: UITableViewDelegate, UITableViewDataSource {
         case 0:
             return tasks?.count ?? 0
         case 1:
-            return doneTasks?.count ?? 0
+            return successTasks?.count ?? 0
         case 2:
-            return 1
+            return failTasks?.count ?? 0
         default:
             return 0
         }
@@ -148,9 +158,9 @@ extension AllTaskViewController: UITableViewDelegate, UITableViewDataSource {
         case 0:
             cell.titleLabel.text = tasks[indexPath.item].title
         case 1:
-            cell.titleLabel.text = doneTasks[indexPath.item].title
+            cell.titleLabel.text = successTasks[indexPath.item].title
         case 2:
-            cell.titleLabel.text = ""
+            cell.titleLabel.text = failTasks[indexPath.item].title
         default:
             cell.titleLabel.text = ""
         }

@@ -21,24 +21,63 @@ private protocol JacsimRepositoryProtocol: AnyObject {
 
 final class JacsimRepository: JacsimRepositoryProtocol {
     
+    let formatter = DateFormatter()
+    let calendar = Calendar.current
+    let now = Date()
+    
+    
     let localRealm = try! Realm()
     
     func fetchRealm() -> Results<UserJacsim>! {
         return localRealm.objects(UserJacsim.self).where { $0.isDone == false }.sorted(byKeyPath: "startDate", ascending: true)
     }
-    
+    // 이후엔 안 쓸 것
     func fetchIsDone() -> Results<UserJacsim>! {
         return localRealm.objects(UserJacsim.self).where { $0.isDone == true }.sorted(byKeyPath: "startDate", ascending: true)
     }
     
+    func fetchIsSuccess() -> Results<UserJacsim>! {
+        return localRealm.objects(UserJacsim.self).where { $0.isDone == true }.where { $0.isSuccess == true }.sorted(byKeyPath: "startDate", ascending: true)
+    }
+    
+    func fetchIsFail() -> Results<UserJacsim>! {
+        return localRealm.objects(UserJacsim.self).where { $0.isDone == true }.where { $0.isSuccess == false }.sorted(byKeyPath: "startDate", ascending: true)
+    }
+    
     func fetchIsNotDone() -> Int {
-        return localRealm.objects(UserJacsim.self).where({$0.isDone == false }).count 
+        return localRealm.objects(UserJacsim.self).where({$0.isDone == false }).count
     }
     
     // Home View에서 TableView에 보여주는 task
     func fetchDate(date: Date) -> Results<UserJacsim>! {
         //NSPredicate
         return localRealm.objects(UserJacsim.self).where{ $0.isDone == false }.filter("endDate >= %@ AND startDate < %@", date, Date(timeInterval: 86400, since: date)).sorted(byKeyPath: "startDate", ascending: true)
+    }
+    
+    func fetchAlarm() -> Bool {
+        let nowDay = calendar.dateComponents([.day], from: now).day ?? 1
+        let tasks = localRealm.objects(UserJacsim.self).where{ $0.isDone == false }
+        var value = true
+        var arr: [Date] = []
+        var day = 0
+//        if day == nowDay {
+//            task.memoList[].check == true {
+//                value = true
+//            }
+//        }
+        
+        tasks.forEach { task in
+            for date in stride(from: task.startDate, to: task.endDate + 86400, by: 86400 ){
+                arr.append(date)
+                day = calendar.dateComponents([.day], from: date).day ??
+            }
+            
+            for index in 0...arr.count - 1 {
+                
+            }
+            
+        }
+        return value
     }
 
     func addJacsim(item: UserJacsim) {
@@ -99,7 +138,7 @@ final class JacsimRepository: JacsimRepositoryProtocol {
             }
         }
     }
-    
+    //종료일 전에 인증 개수로 isDone 정의
     func checkIsDone(item: UserJacsim, count: Int) {
         var cnt = 0
         item.memoList.forEach { value in
@@ -117,6 +156,26 @@ final class JacsimRepository: JacsimRepositoryProtocol {
             }
         }
     }
+    // 종료일이 지남으로서 isDone 정의
+    func checkIsDone(items: Results<UserJacsim>!) {
+        formatter.dateFormat = "yyyy년 M월 d일 EEEE"
+        formatter.string(from: now)
+        
+        items.forEach { task in
+            let end = task.endDate + 86400
+            print(now, end )
+            if now - end >= 0 {
+                do {
+                    try localRealm.write{
+                        task.isDone = true
+                    }
+                } catch let error {
+                    print(error)
+                }
+            }
+        }
+    }
+
     //인증 개수 확인
     func checkCertified(item: UserJacsim) -> Int {
         var cnt = 0
@@ -127,5 +186,18 @@ final class JacsimRepository: JacsimRepositoryProtocol {
         }
         return cnt
     }
-
+    
+    func checkIsSuccess(item: UserJacsim) {
+        
+        if self.checkCertified(item: item) >= item.success {
+            do {
+                try localRealm.write{
+                    item.isSuccess = true
+                    
+                }
+            } catch let error {
+                print(error)
+            }
+        }
+    }
 }

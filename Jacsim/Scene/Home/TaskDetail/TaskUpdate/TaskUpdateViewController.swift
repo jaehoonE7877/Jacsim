@@ -39,7 +39,7 @@ final class TaskUpdateViewController: BaseViewController {
     override func loadView() {
         self.view = mainView
     }
-    
+    //MARK: View Life Cycle
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -60,7 +60,7 @@ final class TaskUpdateViewController: BaseViewController {
         NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillShowNotification, object: nil)
         NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillHideNotification, object: nil)
     }
-    
+    //MARK: Configure
     override func configure() {
         
         mainView.memoTextfield.delegate = self
@@ -69,7 +69,7 @@ final class TaskUpdateViewController: BaseViewController {
         mainView.imageAddButton.menu = addImageButtonTapped()
         
     }
-    
+    //MARK: Set Navigation
     override func setNavigationController() {
         let appearance = UINavigationBarAppearance()
         appearance.configureWithOpaqueBackground()

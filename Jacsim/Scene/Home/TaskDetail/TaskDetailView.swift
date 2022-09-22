@@ -15,11 +15,6 @@ class TaskDetailView: BaseView {
         $0.contentMode = .scaleToFill
     }
     
-    let titleLabel = UILabel().then {
-        $0.font = .boldSystemFont(ofSize: 20)
-        $0.text = "작심 제목"
-    }
-    
     let startLabel = UILabel().then {
         $0.font = .boldSystemFont(ofSize: 16)
         $0.text = "시작일"
@@ -38,6 +33,11 @@ class TaskDetailView: BaseView {
     let endDateLabel = UILabel().then {
         $0.font = .systemFont(ofSize: 16)
         $0.textAlignment = .right
+    }
+    
+    let successLabel = UILabel().then {
+        $0.textAlignment = .center
+        $0.font = .boldSystemFont(ofSize: 18)
     }
     
     let lineView = UIView().then {
@@ -88,7 +88,7 @@ class TaskDetailView: BaseView {
     }
     
     override func configure() {
-        [mainImage, titleLabel, startStackView, endStackView, lineView, certifyLabel, collectionView].forEach { self.addSubview($0) }
+        [mainImage, startStackView, endStackView, successLabel, lineView, certifyLabel, collectionView].forEach { self.addSubview($0) }
     }
     
     override func setConstraints() {
@@ -98,13 +98,8 @@ class TaskDetailView: BaseView {
             make.height.equalTo(self).multipliedBy(0.35)
         }
         
-        titleLabel.snp.makeConstraints { make in
-            make.top.equalTo(mainImage.snp.bottom).offset(16)
-            make.leading.equalTo(self.safeAreaLayoutGuide).offset(16)
-        }
-        
         startStackView.snp.makeConstraints { make in
-            make.top.equalTo(titleLabel.snp.bottom).offset(16)
+            make.top.equalTo(mainImage.snp.bottom).offset(16)
             make.centerX.equalToSuperview()
             make.width.equalTo(self).multipliedBy(0.88)
         }
@@ -115,11 +110,17 @@ class TaskDetailView: BaseView {
             make.width.equalTo(startStackView)
         }
         
+        successLabel.snp.makeConstraints { make in
+            make.top.equalTo(endStackView.snp.bottom).offset(16)
+            make.centerX.equalToSuperview()
+            make.width.equalTo(startStackView)
+        }
+        
         lineView.snp.makeConstraints { make in
-            make.top.equalTo(endStackView.snp.bottom).offset(12)
+            make.top.equalTo(successLabel.snp.bottom).offset(12)
             make.height.equalTo(1)
             make.centerX.equalToSuperview()
-            make.width.equalTo(startStackView.snp.width)
+            make.width.equalTo(startStackView)
         }
         
         certifyLabel.snp.makeConstraints { make in
@@ -128,7 +129,7 @@ class TaskDetailView: BaseView {
         }
         
         collectionView.snp.makeConstraints { make in
-            make.top.equalTo(certifyLabel.snp.bottom).offset(8)
+            make.top.equalTo(certifyLabel.snp.bottom)//.offset(8)
             make.leading.trailing.bottom.equalTo(self.safeAreaLayoutGuide)
         }
         

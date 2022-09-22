@@ -68,7 +68,8 @@ extension SettingViewController: UITableViewDelegate, UITableViewDataSource {
         
             switch indexPath.row {
             case 0:
-                return
+                let vc = AlarmViewController()
+                self.transitionViewController(viewController: vc, transitionStyle: .push)
             case 1:
                 return
             case 2:
