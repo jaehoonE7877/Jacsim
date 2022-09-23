@@ -43,7 +43,7 @@ final class TaskUpdateViewController: BaseViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        view.backgroundColor = .white
+        
         mainView.certifyButton.addTarget(self, action: #selector(certifyButtonTapped), for: .touchUpInside)
     }
     
@@ -62,21 +62,13 @@ final class TaskUpdateViewController: BaseViewController {
     }
     //MARK: Configure
     override func configure() {
+        view.backgroundColor = Constant.BaseColor.backgroundColor
         
         mainView.memoTextfield.delegate = self
         tapGesture()
         
         mainView.imageAddButton.menu = addImageButtonTapped()
         
-    }
-    //MARK: Set Navigation
-    override func setNavigationController() {
-        let appearance = UINavigationBarAppearance()
-        appearance.configureWithOpaqueBackground()
-        appearance.backgroundColor = .white
-        navigationController?.navigationBar.standardAppearance = appearance
-        navigationController?.navigationBar.scrollEdgeAppearance = appearance
-        navigationController?.navigationBar.tintColor = Constant.BaseColor.buttonColor
     }
     
     private func addImageButtonTapped() -> UIMenu {

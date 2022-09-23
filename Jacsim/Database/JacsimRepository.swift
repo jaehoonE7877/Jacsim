@@ -25,7 +25,6 @@ final class JacsimRepository: JacsimRepositoryProtocol {
     let calendar = Calendar.current
     let now = Date()
     
-    
     let localRealm = try! Realm()
     
     func fetchRealm() -> Results<UserJacsim>! {
@@ -54,30 +53,32 @@ final class JacsimRepository: JacsimRepositoryProtocol {
         return localRealm.objects(UserJacsim.self).where{ $0.isDone == false }.filter("endDate >= %@ AND startDate < %@", date, Date(timeInterval: 86400, since: date)).sorted(byKeyPath: "startDate", ascending: true)
     }
     
-    func fetchAlarm() -> Bool {
-        let nowDay = calendar.dateComponents([.day], from: now).day ?? 1
-        let tasks = localRealm.objects(UserJacsim.self).where{ $0.isDone == false }
-        var value = true
-        var arr: [Date] = []
-        var day = 0
-//        if day == nowDay {
-//            task.memoList[].check == true {
-//                value = true
-//            }
-//        }
+    func fetchAlarm(task: UserJacsim) -> Bool {
+       
+        var dayArray: [Date] = []
         
-        tasks.forEach { task in
-            for date in stride(from: task.startDate, to: task.endDate + 86400, by: 86400 ){
-                arr.append(date)
-                day = calendar.dateComponents([.day], from: date).day ??
-            }
-            
-            for index in 0...arr.count - 1 {
-                
-            }
-            
+        for date in stride(from: task.startDate, to: task.endDate + 86400, by: 86400 ){
+            dayArray.append(date)
         }
-        return value
+        print(dayArray)
+        print(now)
+        var check: Bool = true
+        
+        print("시작일이 현재시간보다 빠르면 트루 \(now - task.startDate >= 0)")
+        print("종료일 \(task.endDate - now >= 0)")
+        
+        if (now - task.startDate >= 0) && (task.endDate - now >= 0) {
+            
+            for index in 0...dayArray.count - 1 {
+                
+                if dayArray[index].toString() == now.toString() {
+                    print(dayArray[index])
+                    print(task.memoList[index].check)
+                    check = task.memoList[index].check
+                }
+            }
+        }
+        return check
     }
 
     func addJacsim(item: UserJacsim) {
@@ -163,7 +164,7 @@ final class JacsimRepository: JacsimRepositoryProtocol {
         
         items.forEach { task in
             let end = task.endDate + 86400
-            print(now, end )
+           // print(now, end )
             if now - end >= 0 {
                 do {
                     try localRealm.write{

@@ -11,42 +11,48 @@ class TaskDetailView: BaseView {
     
     //MARK: UIImage, UILabel, [UILabel, UILabel], [UILabel, UILabel], UICollectionView
     let mainImage = UIImageView().then {
-        $0.backgroundColor = .lightGray
+        $0.backgroundColor = Constant.BaseColor.placeholderColor
         $0.contentMode = .scaleToFill
     }
     
     let startLabel = UILabel().then {
-        $0.font = .boldSystemFont(ofSize: 16)
+        $0.font = UIFont.gothic(style: .Medium, size: 16)
+        $0.textColor = Constant.BaseColor.textColor
         $0.text = "시작일"
     }
     
     let startDateLabel = UILabel().then {
-        $0.font = .systemFont(ofSize: 16)
+        $0.font = UIFont.gothic(style: .Medium, size: 16)
+        $0.textColor = Constant.BaseColor.textColor
         $0.textAlignment = .right
     }
     
     let endLabel = UILabel().then {
-        $0.font = .boldSystemFont(ofSize: 16)
+        $0.font = UIFont.gothic(style: .Medium, size: 16)
+        $0.textColor = Constant.BaseColor.textColor
         $0.text = "종료일"
     }
     
     let endDateLabel = UILabel().then {
-        $0.font = .systemFont(ofSize: 16)
+        $0.font = UIFont.gothic(style: .Medium, size: 16)
+        $0.textColor = Constant.BaseColor.textColor
         $0.textAlignment = .right
     }
     
     let successLabel = UILabel().then {
         $0.textAlignment = .center
-        $0.font = .boldSystemFont(ofSize: 18)
+        $0.font = UIFont.gothic(style: .Medium, size: 20)
+        $0.textColor = Constant.BaseColor.textColor
     }
     
     let lineView = UIView().then {
-        $0.backgroundColor = .black
+        $0.backgroundColor = Constant.BaseColor.textColor
     }
     
     let certifyLabel = UILabel().then {
         $0.text = "인증 사진"
-        $0.font = .boldSystemFont(ofSize: 18)
+        $0.font = UIFont.gothic(style: .Medium, size: 20)
+        $0.textColor = Constant.BaseColor.textColor
     }
     
     let collectionView: UICollectionView = {

@@ -12,16 +12,18 @@ class TaskDetailCollectionViewCell: BaseCollectionViewCell {
     
     //MARK: UIImage, UILabel
     let dateLabel = UILabel().then {
-        $0.font = .boldSystemFont(ofSize: 14)
+        $0.font = UIFont.gothic(style: .Medium, size: 14)
+        $0.textColor = Constant.BaseColor.textColor
     }
     
     let certifiedImageView = UIImageView().then {
-        $0.backgroundColor = .lightGray
+        $0.backgroundColor = Constant.BaseColor.placeholderColor
         $0.contentMode = .scaleToFill
     }
     
     let certifiedMemo = UILabel().then {
-        $0.font = .systemFont(ofSize: 12)
+        $0.font = UIFont.gothic(style: .Light, size: 14)
+        $0.textColor = Constant.BaseColor.textColor
     }
     
     override init(frame: CGRect) {

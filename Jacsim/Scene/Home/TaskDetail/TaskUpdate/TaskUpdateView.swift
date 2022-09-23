@@ -12,36 +12,39 @@ final class TaskUpdateView: BaseView {
     //MARK: Property
     
     let certifyImageView = UIImageView().then {
-        $0.backgroundColor = .lightGray
+        $0.backgroundColor = Constant.BaseColor.placeholderColor
     }
     
     let imageAddButton = UIButton(type: .system).then {
-        $0.setImage(UIImage(systemName: "plus.circle.fill", withConfiguration: UIImage.SymbolConfiguration(pointSize: 36)), for: .normal)
+        $0.setImage(UIImage(systemName: "plus.circle.fill", withConfiguration: UIImage.SymbolConfiguration(pointSize: 40)), for: .normal)
         $0.showsMenuAsPrimaryAction = true
         $0.tintColor = Constant.BaseColor.buttonColor
     }
     
     let memoLabel = UILabel().then {
-        $0.font = .boldSystemFont(ofSize: 20)
+        $0.font = .gothic(style: .Medium, size: 20)
+        $0.textColor = Constant.BaseColor.textColor
         $0.text = "한 줄 메모"
     }
     
     let memoCountLabel = UILabel().then {
-        $0.font = .systemFont(ofSize: 14)
+        $0.font = .gothic(style: .Light, size: 14)
+        $0.textColor = Constant.BaseColor.textColor
         $0.text = "0/20"
         $0.textAlignment = .right
     }
     
     let memoTextfield = UITextField().then {
-        $0.backgroundColor = .lightGray
-        $0.placeholder = "한 줄 메모를 입력해주세요"
+        $0.backgroundColor = Constant.BaseColor.placeholderColor
+        $0.setPlaceholder(text: "한 줄 메모를 입력해주세요")
         $0.textAlignment = .center
-        $0.font = .systemFont(ofSize: 14)
+        $0.textColor = Constant.BaseColor.placeholderText
+        $0.font = UIFont.gothic(style: .Light, size: 14)
     }
     
     let certifyButton = UIButton().then {
         $0.setTitle("인증하겠습니다!", for: .normal)
-        $0.tintColor = .black
+        $0.tintColor = Constant.BaseColor.textColor
         $0.backgroundColor = Constant.BaseColor.buttonColor
     }
     

@@ -45,6 +45,7 @@ final class ImageSearchViewController: BaseViewController {
     }
     
     override func setNavigationController() {
+        navigationController?.navigationBar.tintColor = Constant.BaseColor.textColor
         navigationItem.rightBarButtonItem = UIBarButtonItem(title: "선택", style: .plain, target: self, action: #selector(selectButtonTapped))
     }
     
@@ -105,7 +106,7 @@ extension ImageSearchViewController: UICollectionViewDelegate, UICollectionViewD
         cell.setData(imageURL: url)
         
         cell.layer.borderWidth = selectedIndexPath == indexPath ? 4 : 0
-        cell.layer.borderColor = selectedIndexPath == indexPath ? UIColor.tintColor.cgColor : nil
+        cell.layer.borderColor = selectedIndexPath == indexPath ? Constant.BaseColor.buttonColor?.cgColor : nil
         return cell
     }
     

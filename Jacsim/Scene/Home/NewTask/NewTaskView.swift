@@ -12,29 +12,33 @@ final class NewTaskView: BaseView {
             // MARK: Property
     
     let newTaskTitleLabel = UILabel().then {
-        $0.font = .boldSystemFont(ofSize: 16)
+        $0.font = UIFont.gothic(style: .Medium, size: 18)
+        $0.textColor = Constant.BaseColor.textColor
         $0.text = "작심한 일의 제목을 입력해주세요."
     }
     
     let titleCountLabel = UILabel().then {
-        $0.font = .systemFont(ofSize: 13)
+        $0.font = .gothic(style: .Light, size: 14)
+        $0.textColor = Constant.BaseColor.textColor
         $0.text = "0/20"
     }
     
     let newTaskTitleTextfield = UITextField().then {
-        $0.backgroundColor = .lightGray
-        $0.placeholder = "예시 - 아침에 일어나서 물 마시기"
+        $0.backgroundColor = Constant.BaseColor.placeholderColor
+        $0.setPlaceholder(text: "예시 - 아침에 일어나서 물 마시기")
         $0.textAlignment = .center
-        $0.font = .systemFont(ofSize: 14)
+        $0.textColor = Constant.BaseColor.placeholderText
+        $0.font = UIFont.gothic(style: .Light, size: 14)
     }
     
     let newTaskImageLabel = UILabel().then {
-        $0.font = .boldSystemFont(ofSize: 16)
+        $0.font = .gothic(style: .Medium, size: 18)
+        $0.textColor = Constant.BaseColor.textColor
         $0.text = "작심한 일의 대표 이미지를 정해주세요."
     }
     
     let newTaskImageView = UIImageView().then {
-        $0.backgroundColor = .lightGray
+        $0.backgroundColor = Constant.BaseColor.placeholderColor
     }
     
     let imageAddButton = UIButton(type: .system).then {
@@ -42,49 +46,56 @@ final class NewTaskView: BaseView {
     }
     
     let imageAddView = UIImageView().then {
-        $0.image = UIImage(systemName: "plus.circle.fill", withConfiguration: UIImage.SymbolConfiguration(pointSize: 36))
+        $0.image = UIImage(systemName: "plus.circle.fill", withConfiguration: UIImage.SymbolConfiguration(pointSize: 40))
         $0.tintColor = Constant.BaseColor.buttonColor
     }
     
     let startDateLabel = UILabel().then {
-        $0.font = .boldSystemFont(ofSize: 16)
+        $0.font = .gothic(style: .Medium, size: 18)
+        $0.textColor = Constant.BaseColor.textColor
         $0.text = "시작일"
     }
     
     let startDateTextField = UITextField().then {
-        $0.placeholder = "시작일을 정해주세요."
-        $0.font = .systemFont(ofSize: 14)
+        $0.setPlaceholder(text: "시작일을 정해주세요")
+        $0.textColor = Constant.BaseColor.placeholderText
+        $0.font = UIFont.gothic(style: .Light, size: 14)
         $0.textAlignment = .center
-        $0.backgroundColor = .lightGray
+        $0.backgroundColor = Constant.BaseColor.placeholderColor
     }
     
     let endDateLabel = UILabel().then {
-        $0.font = .boldSystemFont(ofSize: 16)
+        $0.font = .gothic(style: .Medium, size: 18)
+        $0.textColor = Constant.BaseColor.textColor
         $0.text = "종료일"
     }
     
     let endDateTextField = UITextField().then {
-        $0.placeholder = "종료일을 정해주세요."
-        $0.font = .systemFont(ofSize: 14)
+        $0.textColor = Constant.BaseColor.placeholderText
+        $0.font = UIFont.gothic(style: .Light, size: 14)
         $0.textAlignment = .center
-        $0.backgroundColor = .lightGray
+        $0.setPlaceholder(text: "종료일을 정해주세요")
+        $0.backgroundColor = Constant.BaseColor.placeholderColor
     }
     
     let successLabel = UILabel().then {
         $0.text = "성공 기준 횟수를 정해주세요."
-        $0.font = .boldSystemFont(ofSize: 16)
+        $0.font = .gothic(style: .Medium, size: 18)
+        $0.textColor = Constant.BaseColor.textColor
     }
     
     let successTextField = UITextField().then {
         $0.textAlignment = .center
-        $0.backgroundColor = .lightGray
+        $0.backgroundColor = Constant.BaseColor.placeholderColor
         $0.keyboardType = .numberPad
         $0.addDoneButtonOnKeyboard()
         $0.text = "1"
-        $0.font = .systemFont(ofSize: 14)
+        $0.textColor = Constant.BaseColor.placeholderText
+        $0.font = UIFont.gothic(style: .Light, size: 16)
     }
     let successCountLabel = UILabel().then {
-        $0.font = .boldSystemFont(ofSize: 14)
+        $0.font = UIFont.gothic(style: .Medium, size: 16)
+        $0.textColor = Constant.BaseColor.textColor
         $0.text = "회"
     }
     

@@ -10,7 +10,7 @@ import UIKit
 class ImageSearchView: BaseView {
     
     lazy var searchBar = UISearchBar().then {
-        $0.backgroundColor = .lightGray
+        $0.backgroundColor = Constant.BaseColor.placeholderColor
     }
     
     let collectionView: UICollectionView = {
@@ -18,7 +18,7 @@ class ImageSearchView: BaseView {
         let width = UIScreen.main.bounds.width / 3
         
         layout.scrollDirection = .vertical
-        layout.itemSize = CGSize(width: width, height: width * 1.1)
+        layout.itemSize = CGSize(width: width, height: width)
         layout.minimumLineSpacing = 0
         layout.minimumInteritemSpacing = 0
         layout.sectionInset = UIEdgeInsets.zero

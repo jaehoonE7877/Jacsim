@@ -15,14 +15,14 @@ class AlarmTableViewCell : BaseTableViewCell {
     
     let meridiumLabel = UILabel().then {
         $0.text = "오전"
-        $0.font = .systemFont(ofSize: 24)
-        $0.textColor = .label
+        $0.font = UIFont.gothic(style: .Light, size: 24)
+        $0.textColor = Constant.BaseColor.textColor
     }
     
     let timeLabel = UILabel().then {
         $0.text = "88:88"
-        $0.font = .systemFont(ofSize: 40)
-        $0.textColor = .label
+        $0.font = UIFont.gothic(style: .Medium, size: 40)
+        $0.textColor = Constant.BaseColor.textColor
     }
     
     let alertSwitch = UISwitch().then {
@@ -55,7 +55,7 @@ class AlarmTableViewCell : BaseTableViewCell {
         }
         
         alertSwitch.snp.makeConstraints { make in
-            make.trailing.equalTo(contentView).offset(-24)
+            make.trailing.equalTo(contentView).offset(-20)
             make.centerY.equalToSuperview()
             make.width.equalTo(44)
             make.height.equalTo(24)
@@ -70,7 +70,6 @@ class AlarmTableViewCell : BaseTableViewCell {
         UserDefaults.standard.set(try? PropertyListEncoder().encode(alarms), forKey: "alarms")
         
         if sender.isOn {
-            
             userNotificationCenter.sendNotificationRequest(by: alarms[sender.tag])
             
         } else {
@@ -78,5 +77,4 @@ class AlarmTableViewCell : BaseTableViewCell {
         }
         
     }
-    
 }

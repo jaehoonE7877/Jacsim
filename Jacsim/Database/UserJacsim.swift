@@ -54,5 +54,4 @@ class Certified: Object {
         self.memo = memo
         self.check = false
     }
-    
 }

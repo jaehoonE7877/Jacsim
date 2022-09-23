@@ -34,7 +34,13 @@ class BaseViewController: UIViewController {
     
     func setConstraint() {}
     
-    func setNavigationController() {}
+    func setNavigationController() {
+        let appearance = UINavigationBarAppearance()
+        appearance.configureWithOpaqueBackground()
+        appearance.backgroundColor = Constant.BaseColor.backgroundColor
+        navigationController?.navigationBar.standardAppearance = appearance
+        navigationController?.navigationBar.scrollEdgeAppearance = appearance
+    }
     
     func showAlertMessage(title: String, message: String ,button: String, cancel: String, completion: @escaping (UIAlertAction) -> Void) {
         let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
@@ -96,7 +102,7 @@ extension BaseViewController {
                    loadingView = UIActivityIndicatorView(style: .large)
                    
                    loadingView.frame = window.frame
-                   loadingView.color = Constant.BaseColor.customCellColor
+                   loadingView.color = Constant.BaseColor.buttonColor
                    window.addSubview(loadingView)
                }
                loadingView.startAnimating()

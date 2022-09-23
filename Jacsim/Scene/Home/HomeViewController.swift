@@ -26,17 +26,18 @@ final class HomeViewController: BaseViewController {
         $0.headerHeight = 40
         $0.appearance.subtitleOffset = CGPoint(x: 0, y: 6)
         $0.appearance.headerDateFormat = "yyyy년 M월"
+        $0.scope = .month
         $0.clipsToBounds = true
     }
     
     lazy var infoButton = UIButton().then {
         $0.setImage(UIImage(systemName: "questionmark.circle", withConfiguration: UIImage.SymbolConfiguration(pointSize: 20)), for: .normal)
-        $0.tintColor = .darkGray
+        $0.tintColor = Constant.BaseColor.textColor
     }
     
     lazy var sortButton = UIButton().then {
         $0.setImage(UIImage(systemName: "text.justify", withConfiguration: UIImage.SymbolConfiguration(pointSize: 20)), for: .normal)
-        $0.tintColor = .darkGray
+        $0.tintColor = Constant.BaseColor.textColor
     }
     
     lazy var tableView = UITableView(frame: CGRect.zero, style: .grouped).then {
@@ -48,7 +49,8 @@ final class HomeViewController: BaseViewController {
         $0.sectionFooterHeight = 0
         $0.sectionHeaderHeight = 40
         $0.separatorStyle = UITableViewCell.SeparatorStyle.none
-        $0.backgroundColor = .clear
+        $0.panGestureRecognizer.require(toFail: self.scopeGesture)
+        $0.backgroundColor = Constant.BaseColor.backgroundColor
     }
     
     
@@ -62,8 +64,9 @@ final class HomeViewController: BaseViewController {
     
     lazy var floaty = Floaty().then {
         $0.paddingY = UIScreen.main.bounds.height / 12
-        $0.buttonColor = .systemMint
-        $0.itemTitleColor = .systemGray6
+        $0.buttonColor = Constant.BaseColor.buttonColor!
+        $0.itemTitleColor = Constant.BaseColor.textColor!
+        $0.size = 44
         $0.fabDelegate = self
     }
     
@@ -80,10 +83,8 @@ final class HomeViewController: BaseViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        view.backgroundColor = .systemBackground
-        
         fsCalendar.reloadData()
- 
+        
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -100,16 +101,17 @@ final class HomeViewController: BaseViewController {
     override func configure() {
         
         [fsCalendar, tableView, infoButton, sortButton, floaty].forEach { view.addSubview($0) }
-        setFloatyButton()
+        
         
         setFSCalendar()
+        setFloatyButton()
         
         infoButton.addTarget(self, action: #selector(infoButtonTapped), for: .touchUpInside)
         sortButton.addTarget(self, action: #selector(sortButtonTapped), for: .touchUpInside)
         
-        self.view.addGestureRecognizer(self.scopeGesture)
-        self.tableView.panGestureRecognizer.require(toFail: self.scopeGesture)
-        self.fsCalendar.scope = .month
+        view.addGestureRecognizer(self.scopeGesture)
+        view.backgroundColor = Constant.BaseColor.backgroundColor
+        
     }
     
     override func setConstraint() {
@@ -140,19 +142,21 @@ final class HomeViewController: BaseViewController {
     }
     
     override func setNavigationController() {
-        self.title = "작심일지"
-        let appearance = UINavigationBarAppearance()
-        appearance.configureWithOpaqueBackground()
-        appearance.backgroundColor = .white
-        navigationController?.navigationBar.standardAppearance = appearance
-        navigationController?.navigationBar.scrollEdgeAppearance = appearance
+        title = "작심일지"
+        //navigationController?.navigationBar.titleTextAttributes = [NSAttributedString.Key.font: UIFont.gothic(style: .Light, size: 20) ]
+        navigationController?.navigationBar.tintColor = Constant.BaseColor.textColor
         navigationItem.rightBarButtonItem = UIBarButtonItem(image: UIImage(systemName: "gearshape.fill"), style: .plain, target: self, action: #selector(moveToSetting))
-        navigationItem.rightBarButtonItem?.tintColor = .systemMint
     }
     
     
     // MARK: Floaty Button Customize
     private func setFloatyButton(){
+        
+        floaty.plusColor = Constant.BaseColor.textColor!
+        floaty.itemButtonColor = Constant.BaseColor.buttonColor!
+        floaty.itemTitleColor = Constant.BaseColor.textColor!
+        floaty.tintColor = Constant.BaseColor.textColor
+        
         
         floaty.addItem("새로운 작심", icon: UIImage(systemName: "square.and.pencil")) { item in
             self.transitionViewController(viewController: NewTaskViewController(), transitionStyle: .presentFullNavigation)
@@ -167,14 +171,21 @@ final class HomeViewController: BaseViewController {
     
     // MARK: FSCalendar Customize
     private func setFSCalendar(){
-        fsCalendar.backgroundColor = .systemBackground
-        fsCalendar.appearance.headerTitleColor = .black
-        fsCalendar.appearance.weekdayTextColor = .black
-        fsCalendar.appearance.todayColor = .clear
+        fsCalendar.backgroundColor = Constant.BaseColor.backgroundColor
+        fsCalendar.appearance.headerTitleColor = Constant.BaseColor.textColor
+        fsCalendar.appearance.headerTitleFont = UIFont.gothic(style: .Light, size: 20)
+        fsCalendar.appearance.weekdayFont = UIFont.gothic(style: .Light, size: 16)
+        fsCalendar.appearance.titleFont = UIFont.gothic(style: .Light, size: 16)
+        
+        fsCalendar.appearance.weekdayTextColor = Constant.BaseColor.textColor
+        fsCalendar.appearance.titleDefaultColor = Constant.BaseColor.textColor
+        
+        fsCalendar.appearance.todayColor = Constant.BaseColor.buttonColor
+
         fsCalendar.appearance.todaySelectionColor = .none
-        fsCalendar.appearance.selectionColor = .systemMint
-        fsCalendar.appearance.titleTodayColor = .systemMint
-        fsCalendar.appearance.headerTitleFont = .boldSystemFont(ofSize: 16)
+       
+        fsCalendar.appearance.selectionColor = Constant.BaseColor.buttonColor
+        
     }
     
     
@@ -189,7 +200,7 @@ final class HomeViewController: BaseViewController {
     
     @objc func sortButtonTapped(){
         
-        fsCalendar.deselect(Date())
+       
         fsCalendar.setCurrentPage(Date(), animated: true)
         tasks = repository.fetchRealm()
         
@@ -216,7 +227,7 @@ extension HomeViewController: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         guard let cell = tableView.dequeueReusableCell(withIdentifier: JacsimTableViewCell.reuseIdentifier) as? JacsimTableViewCell else { return UITableViewCell() }
         
-        cell.backgroundColor = .clear
+        cell.backgroundColor = Constant.BaseColor.backgroundColor
         cell.titleLabel.text = tasks?[indexPath.row].title
         
         
@@ -280,6 +291,7 @@ extension HomeViewController: FSCalendarDelegate, FSCalendarDataSource {
             return nil
         }
     }
+    
 }
 
 extension HomeViewController: FloatyDelegate {

@@ -17,17 +17,18 @@ class AddAlarmViewController: BaseViewController {
     
     let timeLabel = UILabel().then {
         $0.text = "시간"
-        $0.font = .systemFont(ofSize: 20)
-        $0.textColor = .label
+        $0.font = UIFont.gothic(style: .Light, size: 28)
+        $0.textColor = Constant.BaseColor.textColor
     }
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        view.backgroundColor = .white
+        
     }
     
     override func configure() {
+        view.backgroundColor = Constant.BaseColor.backgroundColor
         [timeLabel, datePicker].forEach { view.addSubview($0) }
     }
     
@@ -47,12 +48,7 @@ class AddAlarmViewController: BaseViewController {
     
     override func setNavigationController() {
         self.title = "알람설정"
-        let appearance = UINavigationBarAppearance()
-        appearance.configureWithOpaqueBackground()
-        appearance.backgroundColor = .white
-        navigationController?.navigationBar.standardAppearance = appearance
-        navigationController?.navigationBar.scrollEdgeAppearance = appearance
-        navigationController?.navigationBar.tintColor = Constant.BaseColor.buttonColor
+        navigationController?.navigationBar.tintColor = Constant.BaseColor.textColor
         navigationItem.leftBarButtonItem = UIBarButtonItem(image: UIImage(systemName: "xmark"), style: .plain, target: self, action: #selector(backButtonTapped))
         navigationItem.rightBarButtonItem = UIBarButtonItem(title: "저장", style: .plain, target: self, action: #selector(saveButtonTapped))
     }

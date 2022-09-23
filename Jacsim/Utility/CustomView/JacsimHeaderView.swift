@@ -7,19 +7,19 @@
 
 import UIKit
 
-class JacsimHeaderView: UITableViewHeaderFooterView {
+final class JacsimHeaderView: UITableViewHeaderFooterView {
     
     lazy var foldButton = UIButton().then {
         $0.backgroundColor = .clear
     }
     
     let headerLabel = UILabel().then {
-        $0.font = .boldSystemFont(ofSize: 20)
-        $0.textColor = .black
+        $0.font = UIFont.gothic(style: .Medium, size: 24)
+        $0.textColor = Constant.BaseColor.textColor
     }
-    
+
     lazy var foldImage = UIImageView().then {
-        $0.tintColor = .darkGray
+        $0.tintColor = Constant.BaseColor.placeholderColor
     }
     
     override init(reuseIdentifier: String?) {
@@ -40,12 +40,11 @@ class JacsimHeaderView: UITableViewHeaderFooterView {
     
     private func setConstraints() {
         
-        headerLabel.snp.makeConstraints { make in 
-            //make.top.equalTo(self.snp.top).offset(8)
+        headerLabel.snp.makeConstraints { make in
             make.leading.equalTo(self.snp.leading).offset(12)
             make.centerY.equalToSuperview()
         }
-        
+
         foldImage.snp.makeConstraints { make in
             make.centerY.equalToSuperview()
             make.trailing.equalTo(self.snp.trailing).offset(-12)

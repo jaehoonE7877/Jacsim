@@ -48,6 +48,7 @@ extension SettingViewController: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         guard let cell = tableView.dequeueReusableCell(withIdentifier: SettingTableViewCell.reuseIdentifier, for: indexPath) as? SettingTableViewCell else { return UITableViewCell() }
         cell.selectionStyle = .none
+        cell.backgroundColor = Constant.BaseColor.backgroundColor
         
         if indexPath.row == 4 {
             
@@ -58,7 +59,6 @@ extension SettingViewController: UITableViewDelegate, UITableViewDataSource {
                 make.trailing.equalTo(cell.snp.trailing).offset(-24)
             }
         }
-        
         cell.titleLabel.text = SettingModel.allCases[indexPath.row].title
                 
         return cell

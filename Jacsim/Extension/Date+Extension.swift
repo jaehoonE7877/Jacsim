@@ -23,7 +23,7 @@ extension Date : Strideable {
     
     func toString() -> String {
         let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy년 MM월 dd일 EEEE"
+        formatter.dateFormat = "yyyy MM dd"
         formatter.timeZone = TimeZone(identifier: "UTC+9")
         return formatter.string(from: self)
     }
@@ -33,7 +33,7 @@ extension Date : Strideable {
 extension String {
     func toDate() -> Date? {
         let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy년 MM월 dd일 EEEE"
+        formatter.dateFormat = "yyyy MM dd"
         formatter.timeZone = TimeZone(identifier: "UTC+9")
         if let date = formatter.date(from: self) {
             return date

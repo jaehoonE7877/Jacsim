@@ -27,8 +27,7 @@ final class TaskDetailViewController: BaseViewController {
         super.viewDidLoad()
         
         configureDelegate()
-        view.backgroundColor = .white
-        
+
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -58,6 +57,8 @@ final class TaskDetailViewController: BaseViewController {
     // MARK: Configure
     override func configure() {
         
+        view.backgroundColor = Constant.BaseColor.backgroundColor
+        
         guard let task = task else { return }
         
         mainView.startDateLabel.text = formatter.string(from: task.startDate)
@@ -77,19 +78,16 @@ final class TaskDetailViewController: BaseViewController {
         for date in stride(from: task.startDate, to: task.endDate + 86400, by: 86400 ){
             dayArray.append(date)
         }
-        print(dayArray)
     }
     
     override func setNavigationController() {
-        let appearance = UINavigationBarAppearance()
-        appearance.configureWithOpaqueBackground()
-        appearance.backgroundColor = .white
-        navigationController?.navigationBar.standardAppearance = appearance
-        navigationController?.navigationBar.scrollEdgeAppearance = appearance
+        
         navigationItem.leftBarButtonItem = UIBarButtonItem(image: UIImage(systemName: "xmark"), style: .plain, target: self, action: #selector(xButtonTapped))
         navigationItem.rightBarButtonItem = UIBarButtonItem(title: "작심 그만두기", style: .plain, target: self, action: #selector(quitJacsimButtonTapped))
+        //navigationItem.leftBarButtonItem?.tintColor = Constant.BaseColor.textColor
+        
+        navigationController?.navigationBar.tintColor = Constant.BaseColor.textColor
         navigationItem.rightBarButtonItem?.tintColor = .red
-        navigationItem.leftBarButtonItem?.tintColor = Constant.BaseColor.buttonColor
     }
     
     @objc func xButtonTapped(){

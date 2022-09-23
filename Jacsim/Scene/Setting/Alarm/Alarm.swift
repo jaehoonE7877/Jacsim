@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct Alarm:Codable {
+struct Alarm: Codable {
     var id: String = UUID().uuidString
     var date: Date
     var isOn: Bool

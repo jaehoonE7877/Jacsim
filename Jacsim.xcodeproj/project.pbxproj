@@ -63,6 +63,7 @@
 		25FDC51E28CC6174002543CC /* Realm in Frameworks */ = {isa = PBXBuildFile; productRef = 25FDC51D28CC6174002543CC /* Realm */; };
 		25FDC52028CC6174002543CC /* RealmSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 25FDC51F28CC6174002543CC /* RealmSwift */; };
 		25FDC52328CC6186002543CC /* FSCalendar in Frameworks */ = {isa = PBXBuildFile; productRef = 25FDC52228CC6186002543CC /* FSCalendar */; };
+		25FF192128DDE7DD00A45EC4 /* UIFont+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25FF192028DDE7DD00A45EC4 /* UIFont+Extension.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -115,6 +116,7 @@
 		25FCD98E28D5CA15004F48E8 /* JacsimRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JacsimRepository.swift; sourceTree = "<group>"; };
 		25FCD99028D74473004F48E8 /* TaskDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskDetailView.swift; sourceTree = "<group>"; };
 		25FCD99228D77FFF004F48E8 /* FileManager+Extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "FileManager+Extension.swift"; sourceTree = "<group>"; };
+		25FF192028DDE7DD00A45EC4 /* UIFont+Extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIFont+Extension.swift"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -229,6 +231,7 @@
 				25FCD99228D77FFF004F48E8 /* FileManager+Extension.swift */,
 				25D0AD3428D8747F006A918C /* Date+Extension.swift */,
 				25E8467128DCCBCC00E5300B /* UNUserNotificationCenter+Extension.swift */,
+				25FF192028DDE7DD00A45EC4 /* UIFont+Extension.swift */,
 			);
 			path = Extension;
 			sourceTree = "<group>";
@@ -455,6 +458,7 @@
 				25EE099A28CF172200B5B5CA /* TaskUpdateViewController.swift in Sources */,
 				25EE098D28CF14E400B5B5CA /* NewTaskViewController.swift in Sources */,
 				259C4E2428DB7BA20092223A /* SettingModel.swift in Sources */,
+				25FF192128DDE7DD00A45EC4 /* UIFont+Extension.swift in Sources */,
 				25EE099828CF170E00B5B5CA /* TaskDetailViewController.swift in Sources */,
 				25EE099228CF161000B5B5CA /* ImageSearchViewController.swift in Sources */,
 				25636C4C28CC552D00B385AF /* UserJacsim.swift in Sources */,

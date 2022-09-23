@@ -11,14 +11,12 @@ import UserNotifications
 
 class AlarmViewController: BaseViewController {
     
-    let repository = JacsimRepository()
-    
     var alarms: [Alarm] = []
     let userNotificationCenter = UNUserNotificationCenter.current()
         
     lazy var tableView = UITableView(frame: .zero, style: .grouped).then {
         $0.rowHeight = 64
-        $0.backgroundColor = .white
+        $0.backgroundColor = Constant.BaseColor.backgroundColor
         $0.delegate = self
         $0.dataSource = self
         $0.sectionHeaderHeight = 64
@@ -52,7 +50,6 @@ class AlarmViewController: BaseViewController {
     
     override func setNavigationController() {
         navigationItem.rightBarButtonItem = UIBarButtonItem(image: UIImage(systemName: "plus"), style: .plain, target: self, action: #selector(addAlertButtonTapped))
-        navigationItem.rightBarButtonItem?.tintColor = .systemMint
     }
     
     @objc func addAlertButtonTapped(){

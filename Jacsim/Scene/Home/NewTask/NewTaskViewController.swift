@@ -20,7 +20,7 @@ final class NewTaskViewController: BaseViewController {
             let view = UIImagePickerController()
             view.delegate = self
             return view
-        }()
+    }()
     
     let configuration: PHPickerConfiguration = {
         var configuration = PHPickerConfiguration()
@@ -44,10 +44,8 @@ final class NewTaskViewController: BaseViewController {
     // MARK: View Life Cycle
     override func viewDidLoad() {
         super.viewDidLoad()
-        
-        view.backgroundColor = .white
 
-        print("Realm is located at:", repository.localRealm.configuration.fileURL!)
+        //print("Realm is located at:", repository.localRealm.configuration.fileURL!)
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -66,8 +64,11 @@ final class NewTaskViewController: BaseViewController {
     
     override func configure() {
         
+        view.backgroundColor = Constant.BaseColor.backgroundColor
+        
         [mainView.newTaskTitleTextfield, mainView.startDateTextField, mainView.endDateTextField, mainView.successTextField].forEach { $0.delegate = self }
         [mainView.newTaskTitleTextfield, mainView.startDateTextField, mainView.endDateTextField].forEach { $0.returnKeyType = .done }
+        
         tapGesture()
         
         mainView.imageAddButton.menu = addImageButtonTapped()
@@ -78,14 +79,10 @@ final class NewTaskViewController: BaseViewController {
     
     override func setNavigationController() {
         self.title = "새로운 작심"
-        let appearance = UINavigationBarAppearance()
-        appearance.configureWithOpaqueBackground()
-        appearance.backgroundColor = .white
-        navigationController?.navigationBar.standardAppearance = appearance
-        navigationController?.navigationBar.scrollEdgeAppearance = appearance
-        navigationController?.navigationBar.tintColor = Constant.BaseColor.buttonColor
+        navigationController?.navigationBar.tintColor = Constant.BaseColor.textColor
         navigationItem.leftBarButtonItem = UIBarButtonItem(image: UIImage(systemName: "xmark"), style: .plain, target: self, action: #selector(backButtonTapped))
         navigationItem.rightBarButtonItem = UIBarButtonItem(title: "저장", style: .plain, target: self, action: #selector(saveButtonTapped))
+        
     }
     
     private func tapGesture(){
@@ -131,15 +128,19 @@ final class NewTaskViewController: BaseViewController {
     @objc func saveButtonTapped(){
         
         guard let title = mainView.newTaskTitleTextfield.text else { return }
+        
+        if title.trimmingCharacters(in: .whitespacesAndNewlines) == "" {
+            view.makeToast("제목을 입력해주세요! ", duration: 0.8, position: .center, title: nil, image: nil, style: .init()) { _ in
+            }
+            return
+        }
+        
         guard let startDate = formatter.date(from: mainView.startDateTextField.text ?? "") else { return }
         guard let endDate = formatter.date(from: mainView.endDateTextField.text ?? "") else { return }
         
         guard let success = Int(mainView.successTextField.text ?? "") else { return }
         
-        guard let offsetDay = calendar.dateComponents([.day], from: Date(), to: endDate).day else { return }
-        print(endDate)
-        print(Date())
-        print(offsetDay + 1)
+
         if startDate - endDate > 0 {
             view.makeToast("종료일은 시작일보다 빠를 수 없습니다.", duration: 1.0, position: .center, title: nil, image: nil, style: .init()) { _ in
                 DispatchQueue.main.async {
@@ -208,8 +209,11 @@ extension NewTaskViewController: UITextFieldDelegate {
     
     func textFieldDidBeginEditing(_ textField: UITextField) {
         someTextField = textField
+    
         if textField == mainView.startDateTextField || textField == mainView.endDateTextField {
             textField.tintColor = .clear
+        } else if textField == mainView.successTextField {
+            textField.text = ""
         }
     
     }
@@ -232,11 +236,12 @@ extension NewTaskViewController: UITextFieldDelegate {
             if Int(text) ?? 0 < 1 {
                 view.makeToast("성공 횟수는 1보다 커야합니다.", duration: 0.3, position: .center, title: nil, image: nil, style: .init()) { _ in
                     DispatchQueue.main.async {
-                        textField.text = ""
+                        textField.text = "1"
                     }
                 }
                 return
             }
+            
         default:
             return
         }
