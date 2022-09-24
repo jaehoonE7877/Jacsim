@@ -134,6 +134,11 @@ extension TaskDetailViewController: UICollectionViewDelegate, UICollectionViewDa
         
         guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: TaskDetailCollectionViewCell.reuseIdentifier, for: indexPath) as? TaskDetailCollectionViewCell
         else { return UICollectionViewCell() }
+        
+        cell.layer.borderWidth = Constant.Design.borderWidth
+        cell.layer.cornerRadius = Constant.Design.cornerRadius
+        cell.layer.borderColor = Constant.BaseColor.textColor?.cgColor
+        
        
         formatter.dateFormat = "M월 dd일 EEEE"
         let dateText = formatter.string(from: dayArray[indexPath.item])

@@ -42,12 +42,12 @@ class SettingTableViewCell: BaseTableViewCell {
     override func setConstraints() {
         titleLabel.snp.makeConstraints { make in
             make.centerY.equalToSuperview()
-            make.leading.equalTo(contentView).offset(24)
+            make.leading.equalTo(contentView)
         }
         
         pushImage.snp.makeConstraints { make in
             make.centerY.equalToSuperview()
-            make.trailing.equalTo(contentView).offset(-24)
+            make.trailing.equalTo(contentView)
         }
     }
     

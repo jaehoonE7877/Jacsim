@@ -12,6 +12,8 @@ class TaskDetailView: BaseView {
     //MARK: UIImage, UILabel, [UILabel, UILabel], [UILabel, UILabel], UICollectionView
     let mainImage = UIImageView().then {
         $0.backgroundColor = Constant.BaseColor.placeholderColor
+        $0.layer.masksToBounds = true
+        $0.layer.cornerRadius = Constant.Design.cornerRadius
         $0.contentMode = .scaleToFill
     }
     
@@ -60,10 +62,10 @@ class TaskDetailView: BaseView {
         let width = UIScreen.main.bounds.width / 2.5
         let spacing: CGFloat = 16
         layout.scrollDirection = .horizontal
-        layout.itemSize = CGSize(width: width, height: width * 1.36)
+        layout.itemSize = CGSize(width: width, height: width * 1.3)
         layout.minimumLineSpacing = spacing
         layout.minimumInteritemSpacing = spacing
-        layout.sectionInset = UIEdgeInsets(top: 0, left: spacing, bottom: 0, right: spacing)
+        layout.sectionInset = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: spacing)
         
         let collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout)
         
@@ -100,43 +102,45 @@ class TaskDetailView: BaseView {
     override func setConstraints() {
         
         mainImage.snp.makeConstraints { make in
-            make.top.leading.trailing.equalTo(self.safeAreaLayoutGuide)
+            make.top.equalTo(self.safeAreaLayoutGuide).offset(8)
+            make.width.equalTo(self).multipliedBy(0.88)
+            make.centerX.equalToSuperview()
             make.height.equalTo(self).multipliedBy(0.35)
         }
         
         startStackView.snp.makeConstraints { make in
             make.top.equalTo(mainImage.snp.bottom).offset(16)
             make.centerX.equalToSuperview()
-            make.width.equalTo(self).multipliedBy(0.88)
+            make.width.equalTo(mainImage)
         }
         
         endStackView.snp.makeConstraints { make in
             make.top.equalTo(startStackView.snp.bottom).offset(16)
             make.centerX.equalToSuperview()
-            make.width.equalTo(startStackView)
+            make.width.equalTo(mainImage)
         }
         
         successLabel.snp.makeConstraints { make in
             make.top.equalTo(endStackView.snp.bottom).offset(16)
             make.centerX.equalToSuperview()
-            make.width.equalTo(startStackView)
         }
         
         lineView.snp.makeConstraints { make in
             make.top.equalTo(successLabel.snp.bottom).offset(12)
             make.height.equalTo(1)
             make.centerX.equalToSuperview()
-            make.width.equalTo(startStackView)
+            make.width.equalTo(mainImage)
         }
         
         certifyLabel.snp.makeConstraints { make in
             make.top.equalTo(lineView.snp.bottom).offset(12)
-            make.leading.equalTo(self.safeAreaLayoutGuide).offset(16)
+            make.leading.equalTo(mainImage.snp.leading)
         }
         
         collectionView.snp.makeConstraints { make in
             make.top.equalTo(certifyLabel.snp.bottom)//.offset(8)
-            make.leading.trailing.bottom.equalTo(self.safeAreaLayoutGuide)
+            make.leading.equalTo(mainImage.snp.leading)
+            make.trailing.bottom.equalTo(self.safeAreaLayoutGuide)
         }
         
         

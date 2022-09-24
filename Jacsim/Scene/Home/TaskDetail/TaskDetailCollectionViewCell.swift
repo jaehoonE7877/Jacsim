@@ -11,19 +11,27 @@ class TaskDetailCollectionViewCell: BaseCollectionViewCell {
     
     
     //MARK: UIImage, UILabel
-    let dateLabel = UILabel().then {
-        $0.font = UIFont.gothic(style: .Medium, size: 14)
-        $0.textColor = Constant.BaseColor.textColor
-    }
-    
+
     let certifiedImageView = UIImageView().then {
         $0.backgroundColor = Constant.BaseColor.placeholderColor
+        $0.layer.cornerRadius = Constant.Design.cornerRadius
+        $0.layer.masksToBounds = true
         $0.contentMode = .scaleToFill
     }
     
-    let certifiedMemo = UILabel().then {
-        $0.font = UIFont.gothic(style: .Light, size: 14)
+    let lineView = UIView().then {
+        $0.backgroundColor = Constant.BaseColor.textColor
+    }
+    
+    let dateLabel = UILabel().then {
+        $0.font = UIFont.gothic(style: .Medium, size: 12)
         $0.textColor = Constant.BaseColor.textColor
+    }
+    
+    let certifiedMemo = UILabel().then {
+        $0.font = UIFont.gothic(style: .Light, size: 12)
+        $0.textColor = Constant.BaseColor.textColor
+        $0.numberOfLines = 2
     }
     
     override init(frame: CGRect) {
@@ -35,25 +43,35 @@ class TaskDetailCollectionViewCell: BaseCollectionViewCell {
     }
     
     override func configure() {
-        [dateLabel, certifiedImageView, certifiedMemo].forEach { contentView.addSubview($0) }
+        [certifiedImageView, lineView, dateLabel, certifiedMemo].forEach { contentView.addSubview($0) }
     }
     
     override func setConstraints() {
-        dateLabel.snp.makeConstraints { make in
-            make.top.equalToSuperview()
-            make.horizontalEdges.equalToSuperview()
-        }
+        
         
         certifiedImageView.snp.makeConstraints { make in
-            make.top.equalTo(dateLabel.snp.bottom).offset(6)
-            make.horizontalEdges.equalToSuperview()
-            make.height.equalTo(self).multipliedBy(0.74)
+            make.top.leading.equalTo(contentView).offset(8)
+            make.trailing.equalTo(contentView).offset(-8)
+            make.height.equalTo(contentView).multipliedBy(0.6)
+        }
+        
+        lineView.snp.makeConstraints { make in
+            make.top.equalTo(certifiedImageView.snp.bottom).offset(8)
+            make.centerX.equalToSuperview()
+            make.height.equalTo(1)
+            make.width.equalTo(certifiedImageView)
+        }
+        
+        dateLabel.snp.makeConstraints { make in
+            make.top.equalTo(lineView.snp.bottom).offset(8)
+            make.centerX.equalToSuperview()
+            make.width.equalTo(certifiedImageView)
         }
         
         certifiedMemo.snp.makeConstraints { make in
-            make.top.equalTo(certifiedImageView.snp.bottom).offset(8)
-            make.horizontalEdges.bottom.equalToSuperview()
-            
+            make.top.equalTo(dateLabel.snp.bottom).offset(4)
+            make.centerX.equalToSuperview()
+            make.width.equalTo(certifiedImageView)
         }
     }
 }

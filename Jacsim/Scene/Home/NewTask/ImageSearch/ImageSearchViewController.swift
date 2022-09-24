@@ -75,12 +75,13 @@ extension ImageSearchViewController {
             
             guard let self = self else { return }
             data.items.forEach{ self.imageList.append($0.link) }
+            print(data.total)
             self.totalPage = data.total
             
             DispatchQueue.main.async {
                 self.imageSearchView.collectionView.reloadData()
-                self.hideLoading()
             }
+            self.hideLoading()
         }
         
     }
@@ -126,6 +127,7 @@ extension ImageSearchViewController: UICollectionViewDelegate, UICollectionViewD
 extension ImageSearchViewController: UICollectionViewDataSourcePrefetching {
     
     func collectionView(_ collectionView: UICollectionView, prefetchItemsAt indexPaths: [IndexPath]) {
+       
         for indexPath in indexPaths {
             if imageList.count - 1 == indexPath.item && imageList.count < totalPage {
                 showLoading()

@@ -13,6 +13,8 @@ final class TaskUpdateView: BaseView {
     
     let certifyImageView = UIImageView().then {
         $0.backgroundColor = Constant.BaseColor.placeholderColor
+        $0.layer.masksToBounds = true
+        $0.layer.cornerRadius = Constant.Design.cornerRadius
     }
     
     let imageAddButton = UIButton(type: .system).then {
@@ -28,7 +30,7 @@ final class TaskUpdateView: BaseView {
     }
     
     let memoCountLabel = UILabel().then {
-        $0.font = .gothic(style: .Light, size: 14)
+        $0.font = .gothic(style: .Light, size: 12)
         $0.textColor = Constant.BaseColor.textColor
         $0.text = "0/20"
         $0.textAlignment = .right
@@ -38,6 +40,7 @@ final class TaskUpdateView: BaseView {
         $0.backgroundColor = Constant.BaseColor.placeholderColor
         $0.setPlaceholder(text: "한 줄 메모를 입력해주세요")
         $0.textAlignment = .center
+        $0.layer.cornerRadius = Constant.Design.cornerRadius
         $0.textColor = Constant.BaseColor.placeholderText
         $0.font = UIFont.gothic(style: .Light, size: 14)
     }
@@ -45,6 +48,7 @@ final class TaskUpdateView: BaseView {
     let certifyButton = UIButton().then {
         $0.setTitle("인증하겠습니다!", for: .normal)
         $0.tintColor = Constant.BaseColor.textColor
+        $0.layer.cornerRadius = Constant.Design.cornerRadius
         $0.backgroundColor = Constant.BaseColor.buttonColor
     }
     
@@ -78,9 +82,9 @@ final class TaskUpdateView: BaseView {
     override func setConstraints() {
         
         certifyImageView.snp.makeConstraints { make in
-            make.top.equalTo(self.safeAreaLayoutGuide).offset(32)
+            make.top.equalTo(self.safeAreaLayoutGuide).offset(8)
             make.centerX.equalToSuperview()
-            make.width.equalTo(self).multipliedBy(0.8)
+            make.width.equalTo(self).multipliedBy(0.88)
             make.height.equalTo(UIScreen.main.bounds.height / 2.4)
         }
         

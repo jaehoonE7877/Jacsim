@@ -14,12 +14,13 @@ final class NewTaskView: BaseView {
     let newTaskTitleLabel = UILabel().then {
         $0.font = UIFont.gothic(style: .Medium, size: 18)
         $0.textColor = Constant.BaseColor.textColor
-        $0.text = "작심한 일의 제목을 입력해주세요."
+        $0.text = "작심의 이름을 정해주세요"
     }
     
     let titleCountLabel = UILabel().then {
-        $0.font = .gothic(style: .Light, size: 14)
+        $0.font = .gothic(style: .Light, size: 12)
         $0.textColor = Constant.BaseColor.textColor
+        $0.textAlignment = .right
         $0.text = "0/20"
     }
     
@@ -27,6 +28,7 @@ final class NewTaskView: BaseView {
         $0.backgroundColor = Constant.BaseColor.placeholderColor
         $0.setPlaceholder(text: "예시 - 아침에 일어나서 물 마시기")
         $0.textAlignment = .center
+        $0.layer.cornerRadius = Constant.Design.cornerRadius
         $0.textColor = Constant.BaseColor.placeholderText
         $0.font = UIFont.gothic(style: .Light, size: 14)
     }
@@ -34,11 +36,13 @@ final class NewTaskView: BaseView {
     let newTaskImageLabel = UILabel().then {
         $0.font = .gothic(style: .Medium, size: 18)
         $0.textColor = Constant.BaseColor.textColor
-        $0.text = "작심한 일의 대표 이미지를 정해주세요."
+        $0.text = "작심의 대표 이미지를 정해주세요"
     }
     
     let newTaskImageView = UIImageView().then {
         $0.backgroundColor = Constant.BaseColor.placeholderColor
+        $0.layer.masksToBounds = true
+        $0.layer.cornerRadius = Constant.Design.cornerRadius
     }
     
     let imageAddButton = UIButton(type: .system).then {
@@ -61,6 +65,7 @@ final class NewTaskView: BaseView {
         $0.textColor = Constant.BaseColor.placeholderText
         $0.font = UIFont.gothic(style: .Light, size: 14)
         $0.textAlignment = .center
+        $0.layer.cornerRadius = Constant.Design.cornerRadius
         $0.backgroundColor = Constant.BaseColor.placeholderColor
     }
     
@@ -74,6 +79,7 @@ final class NewTaskView: BaseView {
         $0.textColor = Constant.BaseColor.placeholderText
         $0.font = UIFont.gothic(style: .Light, size: 14)
         $0.textAlignment = .center
+        $0.layer.cornerRadius = Constant.Design.cornerRadius
         $0.setPlaceholder(text: "종료일을 정해주세요")
         $0.backgroundColor = Constant.BaseColor.placeholderColor
     }
@@ -88,6 +94,7 @@ final class NewTaskView: BaseView {
         $0.textAlignment = .center
         $0.backgroundColor = Constant.BaseColor.placeholderColor
         $0.keyboardType = .numberPad
+        $0.layer.cornerRadius = Constant.Design.cornerRadius
         $0.addDoneButtonOnKeyboard()
         $0.text = "1"
         $0.textColor = Constant.BaseColor.placeholderText
@@ -182,9 +189,9 @@ final class NewTaskView: BaseView {
     override func setConstraints() {
         
         topHorizontalStackView.snp.makeConstraints { make in
-            make.top.equalTo(self.safeAreaLayoutGuide).offset(16)
+            make.top.equalTo(self.safeAreaLayoutGuide).offset(8)
             make.centerX.equalToSuperview()
-            make.width.equalTo(self).multipliedBy(0.8)
+            make.width.equalTo(self).multipliedBy(0.88)
         }
         
         newTaskTitleTextfield.snp.makeConstraints { make in

@@ -11,11 +11,12 @@ class ImageSearchView: BaseView {
     
     lazy var searchBar = UISearchBar().then {
         $0.backgroundColor = Constant.BaseColor.placeholderColor
+        
     }
     
     let collectionView: UICollectionView = {
         let layout = UICollectionViewFlowLayout()
-        let width = UIScreen.main.bounds.width / 3
+        let width = (UIScreen.main.bounds.width * 0.88 ) / 3
         
         layout.scrollDirection = .vertical
         layout.itemSize = CGSize(width: width, height: width)
@@ -44,13 +45,17 @@ class ImageSearchView: BaseView {
     override func setConstraints() {
         
         searchBar.snp.makeConstraints { make in
-            make.top.leading.trailing.equalTo(self.safeAreaLayoutGuide)
+            make.top.equalTo(self.safeAreaLayoutGuide).offset(8)
+            make.centerX.equalToSuperview()
+            make.width.equalTo(self).multipliedBy(0.88)
             make.height.equalTo(56)
         }
         
         collectionView.snp.makeConstraints { make in
             make.top.equalTo(searchBar.snp.bottom)
-            make.leading.trailing.bottom.equalTo(self.safeAreaLayoutGuide)
+            make.width.equalTo(searchBar)
+            make.centerX.equalToSuperview()
+            make.bottom.equalTo(self.safeAreaLayoutGuide)
         }
     }
 }

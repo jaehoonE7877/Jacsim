@@ -102,7 +102,7 @@ extension BaseViewController {
                    loadingView = UIActivityIndicatorView(style: .large)
                    
                    loadingView.frame = window.frame
-                   loadingView.color = Constant.BaseColor.buttonColor
+                   loadingView.color = UIColor.systemPink
                    window.addSubview(loadingView)
                }
                loadingView.startAnimating()

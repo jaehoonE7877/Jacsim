@@ -45,12 +45,12 @@ final class HomeViewController: BaseViewController {
         $0.dataSource = self
         $0.register(JacsimHeaderView.self, forHeaderFooterViewReuseIdentifier: JacsimHeaderView.reuseIdentifier)
         $0.register(JacsimTableViewCell.self, forCellReuseIdentifier: JacsimTableViewCell.reuseIdentifier)
-        $0.rowHeight = 72
+        $0.rowHeight = 60
         $0.sectionFooterHeight = 0
         $0.sectionHeaderHeight = 40
+        $0.backgroundColor = Constant.BaseColor.backgroundColor
         $0.separatorStyle = UITableViewCell.SeparatorStyle.none
         $0.panGestureRecognizer.require(toFail: self.scopeGesture)
-        $0.backgroundColor = Constant.BaseColor.backgroundColor
     }
     
     
@@ -64,7 +64,7 @@ final class HomeViewController: BaseViewController {
     
     lazy var floaty = Floaty().then {
         $0.paddingY = UIScreen.main.bounds.height / 12
-        $0.buttonColor = Constant.BaseColor.buttonColor!
+        $0.buttonColor = Constant.BaseColor.floatyColor!
         $0.itemTitleColor = Constant.BaseColor.textColor!
         $0.size = 44
         $0.fabDelegate = self
@@ -111,27 +111,29 @@ final class HomeViewController: BaseViewController {
         
         view.addGestureRecognizer(self.scopeGesture)
         view.backgroundColor = Constant.BaseColor.backgroundColor
-        
+       
     }
     
     override func setConstraint() {
         
         // 달력 높이 비율로 잡기
         fsCalendar.snp.makeConstraints { make in
-            make.top.equalTo(view.safeAreaLayoutGuide)
-            make.leading.trailing.equalTo(view.safeAreaLayoutGuide)
+            make.top.equalTo(view.safeAreaLayoutGuide).offset(8)
+            make.width.equalTo(view).multipliedBy(0.94)
+            make.centerX.equalToSuperview()
             make.height.equalTo(UIScreen.main.bounds.height / 2.5)
         }
         
         tableView.snp.makeConstraints { make in
             make.top.equalTo(fsCalendar.snp.bottom)
-            make.leading.trailing.equalTo(view.safeAreaLayoutGuide).inset(4)
+            make.width.equalTo(view).multipliedBy(0.88)
+            make.centerX.equalToSuperview()
             make.bottom.equalTo(view.safeAreaLayoutGuide)
         }
         
         infoButton.snp.makeConstraints { make in
             make.top.equalTo(tableView.snp.top).offset(8)
-            make.trailing.equalTo(tableView.snp.trailing).offset(-12)
+            make.trailing.equalTo(tableView.snp.trailing)
         }
         
         sortButton.snp.makeConstraints { make in
@@ -143,7 +145,6 @@ final class HomeViewController: BaseViewController {
     
     override func setNavigationController() {
         title = "작심일지"
-        //navigationController?.navigationBar.titleTextAttributes = [NSAttributedString.Key.font: UIFont.gothic(style: .Light, size: 20) ]
         navigationController?.navigationBar.tintColor = Constant.BaseColor.textColor
         navigationItem.rightBarButtonItem = UIBarButtonItem(image: UIImage(systemName: "gearshape.fill"), style: .plain, target: self, action: #selector(moveToSetting))
     }
@@ -153,7 +154,7 @@ final class HomeViewController: BaseViewController {
     private func setFloatyButton(){
         
         floaty.plusColor = Constant.BaseColor.textColor!
-        floaty.itemButtonColor = Constant.BaseColor.buttonColor!
+        floaty.itemButtonColor = Constant.BaseColor.floatyColor!
         floaty.itemTitleColor = Constant.BaseColor.textColor!
         floaty.tintColor = Constant.BaseColor.textColor
         
@@ -226,8 +227,7 @@ extension HomeViewController: UITableViewDelegate, UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         guard let cell = tableView.dequeueReusableCell(withIdentifier: JacsimTableViewCell.reuseIdentifier) as? JacsimTableViewCell else { return UITableViewCell() }
-        
-        cell.backgroundColor = Constant.BaseColor.backgroundColor
+        cell.selectionStyle = .none
         cell.titleLabel.text = tasks?[indexPath.row].title
         
         

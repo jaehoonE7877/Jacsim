@@ -10,9 +10,9 @@ import UIKit
 final class JacsimTableViewCell: BaseTableViewCell {
     
     let jacsimContentView = UIView().then {
-        $0.layer.cornerRadius = 8
+        $0.layer.cornerRadius = Constant.Design.cornerRadius
         $0.layer.masksToBounds = true
-        $0.clipsToBounds = true
+        //$0.clipsToBounds = true
         $0.backgroundColor = Constant.BaseColor.buttonColor
     }
     
@@ -30,6 +30,7 @@ final class JacsimTableViewCell: BaseTableViewCell {
     }
     
     override func configure() {
+        contentView.backgroundColor = Constant.BaseColor.backgroundColor
         contentView.addSubview(jacsimContentView)
         jacsimContentView.addSubview(titleLabel)
     }
@@ -38,13 +39,13 @@ final class JacsimTableViewCell: BaseTableViewCell {
         
         jacsimContentView.snp.makeConstraints { make in
             make.center.equalToSuperview()
-            make.width.equalTo(contentView).multipliedBy(0.95)
+            make.width.equalTo(contentView)
             make.height.equalTo(contentView).multipliedBy(0.72)
         }
         
         titleLabel.snp.makeConstraints { make in
-            make.leading.equalTo(jacsimContentView.snp.leading).offset(20)
-            make.centerY.equalToSuperview()
+            make.leading.equalTo(jacsimContentView.snp.leading).offset(12)
+            make.centerY.equalTo(jacsimContentView.snp.centerY)
         }
     }
     

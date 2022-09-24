@@ -29,10 +29,10 @@ final class ImageSearchAPIManager {
         let text = query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed)
         guard let text = text else { return }
         
-        let url = EndPoint.imageSearchURL + "query=\(String(describing: text))&display=20&start=\(page)&sort=sim"
+        let url = EndPoint.imageSearchURL + "query=\(String(describing: text))&display=30&start=\(page)&sort=sim"
         let header: HTTPHeaders = ["X-Naver-Client-Id": APIKey.NAVER_ID, "X-Naver-Client-Secret": APIKey.NAVER_SECRET]
         
-        let request = AF.request(url, method: .get, headers: header).validate(statusCode: 200..<300)
+        let request = AF.request(url, method: .get, headers: header).validate(statusCode: 200..<400)
         request.responseData { (response) in
             switch response.result {
             case .success(let obj):

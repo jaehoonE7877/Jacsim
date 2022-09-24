@@ -11,10 +11,11 @@ import MessageUI
 final class SettingViewController: BaseViewController {
     
     //MARK: Property
-    lazy var tableView = UITableView(frame: .zero, style: .plain).then {
+    lazy var tableView = UITableView(frame: .zero, style: .grouped).then {
         $0.delegate = self
         $0.dataSource = self
         $0.rowHeight = 44
+        $0.separatorInset = .zero
         $0.register(SettingTableViewCell.self, forCellReuseIdentifier: SettingTableViewCell.reuseIdentifier)
     }
     
@@ -25,17 +26,17 @@ final class SettingViewController: BaseViewController {
     }
     
     override func configure() {
-        view.backgroundColor = .white
+        view.backgroundColor = Constant.BaseColor.backgroundColor
         self.view.addSubview(tableView)
     }
     
     override func setConstraint() {
         tableView.snp.makeConstraints { make in
-            make.edges.equalTo(self.view.safeAreaLayoutGuide)
+            make.top.bottom.equalTo(self.view.safeAreaLayoutGuide)
+            make.width.equalTo(view).multipliedBy(0.88)
+            make.centerX.equalToSuperview()
         }
     }
-    
-    
 }
 
 extension SettingViewController: UITableViewDelegate, UITableViewDataSource {

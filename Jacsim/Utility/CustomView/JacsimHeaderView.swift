@@ -41,7 +41,7 @@ final class JacsimHeaderView: UITableViewHeaderFooterView {
     private func setConstraints() {
         
         headerLabel.snp.makeConstraints { make in
-            make.leading.equalTo(self.snp.leading).offset(12)
+            make.leading.equalTo(self.snp.leading)
             make.centerY.equalToSuperview()
         }
 
