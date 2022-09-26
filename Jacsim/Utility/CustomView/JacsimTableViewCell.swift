@@ -17,7 +17,7 @@ final class JacsimTableViewCell: BaseTableViewCell {
     }
     
     let titleLabel = UILabel().then {
-        $0.font = UIFont.gothic(style: .Light, size: 20)
+        $0.font = UIFont.gothic(style: .Light, size: 18)
         $0.textAlignment = .left
     }
     

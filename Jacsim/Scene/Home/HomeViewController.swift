@@ -158,12 +158,11 @@ final class HomeViewController: BaseViewController {
         floaty.itemTitleColor = Constant.BaseColor.textColor!
         floaty.tintColor = Constant.BaseColor.textColor
         
-        
         floaty.addItem("새로운 작심", icon: UIImage(systemName: "square.and.pencil")) { item in
             self.transitionViewController(viewController: NewTaskViewController(), transitionStyle: .presentFullNavigation)
         }
         
-        floaty.addItem("이전 작심", icon: UIImage(systemName: "checkmark.square")) { item in
+        floaty.addItem("작심 모아보기", icon: UIImage(systemName: "list.bullet")) { item in
             self.transitionViewController(viewController: AllTaskViewController(), transitionStyle: .presentFullNavigation)
         }
         
@@ -239,7 +238,7 @@ extension HomeViewController: UITableViewDelegate, UITableViewDataSource {
         let vc = TaskDetailViewController()
         vc.task = tasks?[indexPath.item]
         vc.title = tasks?[indexPath.item].title
-        self.transitionViewController(viewController: vc, transitionStyle: .presentFullNavigation)
+        self.transitionViewController(viewController: vc, transitionStyle: .push)
     }
     
 }

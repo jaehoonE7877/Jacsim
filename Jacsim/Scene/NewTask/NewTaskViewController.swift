@@ -8,12 +8,14 @@
 import UIKit
 import PhotosUI
 
+import CropViewController
+
 final class NewTaskViewController: BaseViewController {
     
     let repository = JacsimRepository()
     
-    var selectedImageURL: String?
     //MARK: Property
+    
     let mainView = NewTaskView()
     
     lazy var imagePicker: UIImagePickerController = {
@@ -65,7 +67,7 @@ final class NewTaskViewController: BaseViewController {
     override func configure() {
         
         view.backgroundColor = Constant.BaseColor.backgroundColor
-        
+
         [mainView.newTaskTitleTextfield, mainView.startDateTextField, mainView.endDateTextField, mainView.successTextField].forEach { $0.delegate = self }
         [mainView.newTaskTitleTextfield, mainView.startDateTextField, mainView.endDateTextField].forEach { $0.returnKeyType = .done }
         
@@ -93,12 +95,7 @@ final class NewTaskViewController: BaseViewController {
     
     //MARK: UIMenu
     private func addImageButtonTapped() -> UIMenu {
-        let search = UIAction(title: "웹으로 검색", image: UIImage(systemName: "magnifyingglass")) { [weak self]_ in
-            let vc = ImageSearchViewController()
-            vc.delegate = self
-            self?.transitionViewController(viewController: vc, transitionStyle: .push)
-            
-        }
+        
         let camera = UIAction(title: "카메라", image: UIImage(systemName: "camera")) { _ in
             guard UIImagePickerController.isSourceTypeAvailable(.camera) else {
                 self.showAlertMessage(title: "카메라 사용이 불가합니다.", button: "확인")
@@ -111,7 +108,7 @@ final class NewTaskViewController: BaseViewController {
         let gallery = UIAction(title: "갤러리", image: UIImage(systemName: "photo.on.rectangle")) { _ in
             self.present(self.phPicker, animated: true)
         }
-        let menu = UIMenu(title: "사진의 경로를 정해주세요.", options: .displayInline, children: [gallery,camera,search])
+        let menu = UIMenu(title: "사진의 경로를 정해주세요.", options: .displayInline, children: [gallery,camera])
        
         return menu
     }
@@ -160,34 +157,21 @@ final class NewTaskViewController: BaseViewController {
             }
         }
         
-        if selectedImageURL != nil {
-            //웹으로 받아왔을 때
-            
-            let task = UserJacsim(title: title, startDate: startDate, endDate: endDate, mainImage: selectedImageURL, success: success)
-            
-            for _ in 0...calculateDays(startDate: startDate, endDate: endDate) - 1 {
-                let certified = Certified(memo: "인증해주세요")
-                task.memoList.append(certified)
-            }
-            
-            repository.addJacsim(item: task)
-            
-        } else {
-            // 디바이스로 받아오거나 없거나 -> imageView 이미지가 있고 없고
-            
-            let task = UserJacsim(title: title, startDate: startDate, endDate: endDate, mainImage: nil, success: success)
-            for _ in 0...calculateDays(startDate: startDate, endDate: endDate) - 1 {
-                let certified = Certified(memo: "인증해주세요")
-                task.memoList.append(certified)
-            }
-
-            guard let baseImage = UIImage(systemName: "xmark") else { return }
-            saveImageToDocument(fileName: "\(String(describing: task.id)).jpg", image: mainView.newTaskImageView.image ?? baseImage)
-            repository.addJacsim(item: task)
+        let task = UserJacsim(title: title, startDate: startDate, endDate: endDate, success: success)
+        for _ in 0...calculateDays(startDate: startDate, endDate: endDate) - 1 {
+            let certified = Certified(memo: "인증해주세요")
+            task.memoList.append(certified)
         }
-
+        
+        guard let baseImage = UIImage(named: "jacsim") else { return }
+        saveImageToDocument(fileName: "\(String(describing: task.id)).jpg", image: mainView.newTaskImageView.image ?? baseImage)
+        repository.addJacsim(item: task)
+        
         dismiss(animated: true)
     }
+    
+    
+    
 }
 
 // MARK: UITextFieldDelegate
@@ -307,9 +291,21 @@ extension NewTaskViewController: UIImagePickerControllerDelegate, UINavigationCo
         }
         
         DispatchQueue.main.async {
-            self.mainView.newTaskImageView.image = newImage
+            
+            guard let newImage = newImage else { return }
+            
+            let crop = CropViewController(image: newImage)
+            
+            crop.delegate = self
+            crop.doneButtonTitle = "완료"
+            crop.cancelButtonTitle = "취소"
+            
+            picker.dismiss(animated: true)
+            
+            self.present(crop, animated: true)
+            
         }
-        picker.dismiss(animated: true)
+        
         
     }
     
@@ -327,25 +323,31 @@ extension NewTaskViewController: PHPickerViewControllerDelegate {
         if let itemProvider = itemProvider, itemProvider.canLoadObject(ofClass: UIImage.self){
             itemProvider.loadObject(ofClass: UIImage.self) { image, error in
                 DispatchQueue.main.async {
-                    self.mainView.newTaskImageView.image = image as? UIImage
+                    
+                    guard let image = image as? UIImage else { return }
+                    
+                    let crop = CropViewController(image: image)
+                    
+                    crop.delegate = self
+                    crop.doneButtonTitle = "완료"
+                    crop.cancelButtonTitle = "취소"
+                    
+                    self.present(crop, animated: true)
+                    
                 }
             }
             
         } else {
-            showAlertMessage(title: "오류 발생으로 사진이 적용되지 않았습니다.", message: "다시 한 번 부탁드릴게요!", button: "확인")
+            showAlertMessage(title: "사진이 적용되지 않았습니다.", message: "다시 한 번 부탁드릴게요!", button: "확인")
         }
     }
 }
 
-protocol SelectImageDelegate {
-    func sendImage(image: UIImage, urlString: String)
-}
-
-extension NewTaskViewController: SelectImageDelegate {
+extension NewTaskViewController: CropViewControllerDelegate {
     
-    func sendImage(image: UIImage, urlString: String) {
+    func cropViewController(_ cropViewController: CropViewController, didCropToImage image: UIImage, withRect cropRect: CGRect, angle: Int) {
         mainView.newTaskImageView.image = image
-        selectedImageURL = urlString
+        self.dismiss(animated: true)
     }
-
+    
 }

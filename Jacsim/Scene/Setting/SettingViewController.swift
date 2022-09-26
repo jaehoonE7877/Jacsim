@@ -16,6 +16,7 @@ final class SettingViewController: BaseViewController {
         $0.dataSource = self
         $0.rowHeight = 44
         $0.separatorInset = .zero
+        $0.backgroundColor = Constant.BaseColor.backgroundColor
         $0.register(SettingTableViewCell.self, forCellReuseIdentifier: SettingTableViewCell.reuseIdentifier)
     }
     
@@ -23,6 +24,7 @@ final class SettingViewController: BaseViewController {
     //MARK: View Life Cycle
     override func viewDidLoad() {
         super.viewDidLoad()
+        
     }
     
     override func configure() {
@@ -110,8 +112,10 @@ extension SettingViewController : MFMailComposeViewControllerDelegate {
         // mail view가 떴을때 정상적으로 보내졌다. 실패했다고 Toast 띄워줄 수 있음
         // 어떤식으로 대응 할 수 있을지 생각해보기
         switch result {
-        case .cancelled, .failed: //사용자가 실패
+        case .failed: //사용자가 실패
             view.makeToast("메일 전송에 실패했습니다.", duration: 1, position: .center, title: nil, image: nil, completion: nil)
+        case .cancelled:
+            view.makeToast("메일 전송을 취소했습니다.", duration: 1, position: .center, title: nil, image: nil, completion: nil)
         case .saved: //임시저장
             view.makeToast("메일을 임시 저장했습니다.", duration: 1, position: .center, title: nil, image: nil, completion: nil)
         case .sent: // 보내짐

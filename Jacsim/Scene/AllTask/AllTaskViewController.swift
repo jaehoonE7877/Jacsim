@@ -22,9 +22,9 @@ final class AllTaskViewController: BaseViewController {
         $0.dataSource = self
         $0.register(JacsimHeaderView.self, forHeaderFooterViewReuseIdentifier: JacsimHeaderView.reuseIdentifier)
         $0.register(JacsimTableViewCell.self, forCellReuseIdentifier: JacsimTableViewCell.reuseIdentifier)
-        $0.rowHeight = 72
+        $0.rowHeight = 60
         $0.sectionFooterHeight = 0
-        $0.sectionHeaderHeight = 60
+        $0.sectionHeaderHeight = 56
         $0.separatorStyle = UITableViewCell.SeparatorStyle.none
         $0.backgroundColor = .clear
     }
@@ -73,8 +73,10 @@ final class AllTaskViewController: BaseViewController {
     override func setConstraint() {
         
         tableView.snp.makeConstraints { make in
-            make.verticalEdges.equalTo(view.safeAreaLayoutGuide)
-            make.horizontalEdges.equalTo(view.safeAreaLayoutGuide).inset(4)
+            make.top.equalTo(view.safeAreaLayoutGuide).offset(8)
+            make.width.equalTo(view).multipliedBy(0.88)
+            make.centerX.equalToSuperview()
+            make.bottom.equalTo(view.safeAreaLayoutGuide)
         }
     }
     

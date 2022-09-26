@@ -14,7 +14,8 @@ extension UITextField {
         let screenWidth = UIScreen.main.bounds.width
         let datePicker = UIDatePicker(frame: CGRect(x: 0, y: 0, width: screenWidth, height: 216))
         datePicker.datePickerMode = .date
-        datePicker.timeZone = TimeZone(identifier: "UTC+9")
+        datePicker.timeZone = TimeZone(identifier: "ko_KR")
+        datePicker.locale = Locale(identifier: "ko_KR")
         datePicker.preferredDatePickerStyle = .wheels
         datePicker.sizeToFit()
         datePicker.minimumDate = Date()

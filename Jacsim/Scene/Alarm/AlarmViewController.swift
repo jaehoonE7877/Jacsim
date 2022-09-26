@@ -20,6 +20,7 @@ class AlarmViewController: BaseViewController {
         $0.delegate = self
         $0.dataSource = self
         $0.sectionHeaderHeight = 64
+        $0.separatorInset = .zero
         $0.register(JacsimHeaderView.self, forHeaderFooterViewReuseIdentifier: JacsimHeaderView.reuseIdentifier)
         $0.register(AlarmTableViewCell.self, forCellReuseIdentifier: AlarmTableViewCell.reuseIdentifier)
     }
@@ -38,13 +39,16 @@ class AlarmViewController: BaseViewController {
     }
     
     override func configure() {
+        view.backgroundColor = Constant.BaseColor.backgroundColor
         view.addSubview(tableView)
         
     }
     
     override func setConstraint() {
         tableView.snp.makeConstraints { make in
-            make.edges.equalToSuperview()
+            make.top.bottom.equalTo(self.view.safeAreaLayoutGuide)
+            make.width.equalTo(view).multipliedBy(0.88)
+            make.centerX.equalToSuperview()
         }
     }
     

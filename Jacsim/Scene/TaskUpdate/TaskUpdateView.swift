@@ -15,6 +15,7 @@ final class TaskUpdateView: BaseView {
         $0.backgroundColor = Constant.BaseColor.placeholderColor
         $0.layer.masksToBounds = true
         $0.layer.cornerRadius = Constant.Design.cornerRadius
+        $0.contentMode = .scaleAspectFill
     }
     
     let imageAddButton = UIButton(type: .system).then {
@@ -41,7 +42,7 @@ final class TaskUpdateView: BaseView {
         $0.setPlaceholder(text: "한 줄 메모를 입력해주세요")
         $0.textAlignment = .center
         $0.layer.cornerRadius = Constant.Design.cornerRadius
-        $0.textColor = Constant.BaseColor.placeholderText
+        $0.textColor = Constant.BaseColor.textColor
         $0.font = UIFont.gothic(style: .Light, size: 14)
     }
     

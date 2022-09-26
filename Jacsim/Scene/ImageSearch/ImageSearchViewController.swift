@@ -10,7 +10,7 @@ import UIKit
 final class ImageSearchViewController: BaseViewController {
     
     // MARK: Property SearchBar, CollectionView
-    var delegate: SelectImageDelegate?
+    //var delegate: SelectImageDelegate?
     let imageSearchView = ImageSearchView()
     let apiManager = ImageSearchAPIManager.shared
     
@@ -51,13 +51,13 @@ final class ImageSearchViewController: BaseViewController {
     
     @objc func selectButtonTapped(){
         
-        guard let selectedImage = selectedImage else {
-            showAlertMessage(title: "사진을 선택해주세요!", button: "확인")
-            return
-        }
-        guard let selectedImageURL = selectedImageURL else { return }
-        delegate?.sendImage(image: selectedImage, urlString: selectedImageURL)
-        self.navigationController?.popViewController(animated: true)
+        //guard let selectedImage = selectedImage else {
+//            showAlertMessage(title: "사진을 선택해주세요!", button: "확인")
+//            return
+//        }
+        //guard let selectedImageURL = selectedImageURL else { return }
+        //delegate?.sendImage(image: selectedImage, urlString: selectedImageURL)
+        //self.navigationController?.popViewController(animated: true)
     }
     
 }

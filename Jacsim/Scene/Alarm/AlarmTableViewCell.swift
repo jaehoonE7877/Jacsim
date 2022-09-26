@@ -40,12 +40,13 @@ class AlarmTableViewCell : BaseTableViewCell {
     }
     
     override func configure() {
+        contentView.backgroundColor = Constant.BaseColor.backgroundColor
         [meridiumLabel, timeLabel, alertSwitch].forEach { contentView.addSubview($0) }
     }
     
     override func setConstraints() {
         meridiumLabel.snp.makeConstraints { make in
-            make.leading.equalTo(contentView).offset(12)
+            make.leading.equalTo(contentView)
             make.centerY.equalToSuperview()
         }
         
@@ -55,10 +56,10 @@ class AlarmTableViewCell : BaseTableViewCell {
         }
         
         alertSwitch.snp.makeConstraints { make in
-            make.trailing.equalTo(contentView).offset(-20)
+            make.trailing.equalTo(contentView).offset(-8)
             make.centerY.equalToSuperview()
             make.width.equalTo(44)
-            make.height.equalTo(24)
+            make.height.equalTo(alertSwitch.snp.width).multipliedBy(0.8)
         }
     }
     

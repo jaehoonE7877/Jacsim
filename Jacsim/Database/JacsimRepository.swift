@@ -115,29 +115,18 @@ final class JacsimRepository: JacsimRepositoryProtocol {
     }
     
     func deleteJacsim(item: UserJacsim){
-        //url로 저자
-        if item.mainImage != nil {
-            do {
-                try localRealm.write{
-                    localRealm.delete(item.memoList)
-                    localRealm.delete(item)
-                }
-            } catch {
-                print(error)
+        
+        removeImageFromDocument(fileName: "\(item.id).jpg")
+        
+        do {
+            try localRealm.write{
+                localRealm.delete(item.memoList)
+                localRealm.delete(item)
             }
-        } else {
-            //이미지 docu에 저장
-            removeImageFromDocument(fileName: "\(item.id).jpg")
-            
-            do {
-                try localRealm.write{
-                    localRealm.delete(item.memoList)
-                    localRealm.delete(item)
-                }
-            } catch {
-                print(error)
-            }
+        } catch {
+            print(error)
         }
+        
     }
     //종료일 전에 인증 개수로 isDone 정의
     func checkIsDone(item: UserJacsim, count: Int) {

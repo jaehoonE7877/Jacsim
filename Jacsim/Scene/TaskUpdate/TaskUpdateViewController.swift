@@ -8,6 +8,8 @@
 import UIKit
 import PhotosUI
 
+import CropViewController
+
 final class TaskUpdateViewController: BaseViewController {
     
     let mainView = TaskUpdateView()
@@ -108,7 +110,7 @@ final class TaskUpdateViewController: BaseViewController {
 
         repository.updateMemo(item: task, index: index, memo: memo)
         
-        guard let baseImage = UIImage(systemName: "xmark") else { return }
+        guard let baseImage = UIImage(named: "jacsim") else { return }
         saveImageToDocument(fileName: "\(task.id)_\(dateText).jpg", image: mainView.certifyImageView.image ?? baseImage)
         
         self.navigationController?.popViewController(animated: true)
@@ -174,9 +176,20 @@ extension TaskUpdateViewController: UIImagePickerControllerDelegate, UINavigatio
         }
         
         DispatchQueue.main.async {
-            self.mainView.certifyImageView.image = newImage
+            
+            guard let newImage = newImage else { return }
+            
+            let crop = CropViewController(image: newImage)
+            
+            crop.delegate = self
+            crop.doneButtonTitle = "완료"
+            crop.cancelButtonTitle = "취소"
+            
+            picker.dismiss(animated: true)
+            
+            self.present(crop, animated: true)
+            
         }
-        picker.dismiss(animated: true)
         
     }
     
@@ -194,12 +207,31 @@ extension TaskUpdateViewController: PHPickerViewControllerDelegate {
         if let itemProvider = itemProvider, itemProvider.canLoadObject(ofClass: UIImage.self){
             itemProvider.loadObject(ofClass: UIImage.self) { image, error in
                 DispatchQueue.main.async {
-                    self.mainView.certifyImageView.image = image as? UIImage
+                    
+                    guard let image = image as? UIImage else { return }
+                    
+                    let crop = CropViewController(image: image)
+                    
+                    crop.delegate = self
+                    crop.doneButtonTitle = "완료"
+                    crop.cancelButtonTitle = "취소"
+                    
+                    self.present(crop, animated: true)
+                    
                 }
             }
             
         } else {
-            showAlertMessage(title: "오류 발생으로 사진이 적용되지 않았습니다.", message: "다시 한 번 부탁드릴게요!", button: "확인")
+            showAlertMessage(title: "사진이 적용되지 않았습니다.", message: "다시 한 번 부탁드릴게요!", button: "확인")
         }
     }
+}
+
+extension TaskUpdateViewController: CropViewControllerDelegate {
+    
+    func cropViewController(_ cropViewController: CropViewController, didCropToImage image: UIImage, withRect cropRect: CGRect, angle: Int) {
+        mainView.certifyImageView.image = image
+        self.dismiss(animated: true)
+    }
+    
 }

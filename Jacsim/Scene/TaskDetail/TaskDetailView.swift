@@ -11,10 +11,9 @@ class TaskDetailView: BaseView {
     
     //MARK: UIImage, UILabel, [UILabel, UILabel], [UILabel, UILabel], UICollectionView
     let mainImage = UIImageView().then {
-        $0.backgroundColor = Constant.BaseColor.placeholderColor
         $0.layer.masksToBounds = true
         $0.layer.cornerRadius = Constant.Design.cornerRadius
-        $0.contentMode = .scaleToFill
+        $0.contentMode = .scaleAspectFill
     }
     
     let startLabel = UILabel().then {
@@ -138,7 +137,7 @@ class TaskDetailView: BaseView {
         }
         
         collectionView.snp.makeConstraints { make in
-            make.top.equalTo(certifyLabel.snp.bottom)//.offset(8)
+            make.top.equalTo(certifyLabel.snp.bottom)
             make.leading.equalTo(mainImage.snp.leading)
             make.trailing.bottom.equalTo(self.safeAreaLayoutGuide)
         }

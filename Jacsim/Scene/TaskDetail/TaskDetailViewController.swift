@@ -64,14 +64,9 @@ final class TaskDetailViewController: BaseViewController {
         mainView.startDateLabel.text = formatter.string(from: task.startDate)
         mainView.endDateLabel.text = formatter.string(from: task.endDate)
         
-        // urlString 값이 있으면 = web에서 저장한 이미지로 띄워주기
-        if let urlString = task.mainImage {
-            let url = URL(string: urlString)
-            mainView.mainImage.kf.setImage(with: url)
-        } else { // 없으면 loadImage 값이 있는지, 없는지
-            guard let image = loadImageFromDocument(fileName: "\(task.id).jpg") else { return }
-            mainView.mainImage.image = image
-        }
+        guard let image = loadImageFromDocument(fileName: "\(task.id).jpg") else { return }
+        mainView.mainImage.image = image
+        
         // collectionView cell개수
         jacsimDays = calculateDays(startDate: task.startDate, endDate: task.endDate)
         
@@ -82,48 +77,57 @@ final class TaskDetailViewController: BaseViewController {
     
     override func setNavigationController() {
         
-        navigationItem.leftBarButtonItem = UIBarButtonItem(image: UIImage(systemName: "xmark"), style: .plain, target: self, action: #selector(xButtonTapped))
-        navigationItem.rightBarButtonItem = UIBarButtonItem(title: "작심 그만두기", style: .plain, target: self, action: #selector(quitJacsimButtonTapped))
-        //navigationItem.leftBarButtonItem?.tintColor = Constant.BaseColor.textColor
+        
+        navigationItem.rightBarButtonItem = UIBarButtonItem(title: nil, image: UIImage(systemName: "ellipsis.circle"), menu: reviseButtonTapped())
+        //UIBarButtonItem(title: "작심 그만두기", style: .plain, target: self, action: #selector(quitJacsimButtonTapped))
         
         navigationController?.navigationBar.tintColor = Constant.BaseColor.textColor
-        navigationItem.rightBarButtonItem?.tintColor = .red
+        //navigationItem.rightBarButtonItem?.tintColor =
     }
     
-    @objc func xButtonTapped(){
-        self.dismiss(animated: true)
-    }
-    
-    @objc func quitJacsimButtonTapped(){
-        // Alert표시 진짜 그만둘건지(저장한 데이터 삭제된다.)
-        showAlertMessage(title: "해당 작심을 그만두실 건가요?", message: "기존에 저장한 데이터들은 사라집니다.", button: "확인", cancel: "취소") { [weak self] _ in
-            guard let self = self else { return }
-            guard let task = self.task else { return }
-            // 인증유무 분기처리
-            self.formatter.dateFormat = "M월 dd일 EEEE"
+    private func reviseButtonTapped() -> UIMenu {
+        
+        let revise = UIAction(title: "대표 이미지 수정", image: UIImage(systemName: "pencil.circle")) { _ in
             
-            if self.repository.checkCertified(item: task) == 0 {
+        }
+        let quit = UIAction(title: "작심 그만두기", image: UIImage(systemName: "trash"), attributes: .destructive) { [weak self]_ in
+            guard let self = self else { return }
+            self.showAlertMessage(title: "해당 작심을 그만두실 건가요?", message: "기존에 저장한 데이터들은 사라집니다.", button: "확인", cancel: "취소") { [weak self] _ in
+                guard let self = self else { return }
+                guard let task = self.task else { return }
+                // 인증유무 분기처리
+                self.formatter.dateFormat = "M월 dd일 EEEE"
                 
-                self.repository.deleteJacsim(item: task)
-                
-            } else {
-                // 인증이 있을 때
-                for index in 0...self.repository.checkCertified(item: task) - 1 {
-                    let dateText = self.formatter.string(from: self.dayArray[index])
-                    self.repository.removeImageFromDocument(fileName: "\(task.id)_\(dateText).jpg")
+                if self.repository.checkCertified(item: task) == 0 {
+                    
+                    self.repository.deleteJacsim(item: task)
+                    
+                } else {
+                    // 인증이 있을 때
+                    for index in 0...self.repository.checkCertified(item: task) - 1 {
+                        let dateText = self.formatter.string(from: self.dayArray[index])
+                        self.repository.removeImageFromDocument(fileName: "\(task.id)_\(dateText).jpg")
+                    }
+                    
+                    self.repository.deleteJacsim(item: task)
+                    
                 }
                 
-                self.repository.deleteJacsim(item: task)
-                
+                self.dismiss(animated: true)
             }
+        }
+        let cancel = UIAction(title: "취소", image: nil, attributes: .destructive) { _ in
             
-            self.dismiss(animated: true)
         }
         
+        let menu = UIMenu(title: "", options: .displayInline, children: [revise,quit,cancel])
+       
+        return menu
     }
     
+    
 }
-// MARK: CollectionView Delegate, Datasource
+//MARK: CollectionView Delegate, Datasource
 extension TaskDetailViewController: UICollectionViewDelegate, UICollectionViewDataSource {
    
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {

@@ -16,7 +16,8 @@ class TaskDetailCollectionViewCell: BaseCollectionViewCell {
         $0.backgroundColor = Constant.BaseColor.placeholderColor
         $0.layer.cornerRadius = Constant.Design.cornerRadius
         $0.layer.masksToBounds = true
-        $0.contentMode = .scaleToFill
+        $0.contentMode = .scaleAspectFill
+
     }
     
     let lineView = UIView().then {
