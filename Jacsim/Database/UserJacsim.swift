@@ -20,6 +20,7 @@ class UserJacsim: Object {
     @Persisted var isDone: Bool
     @Persisted var success: Int
     @Persisted var isSuccess: Bool
+    //@Persisted var alarm: Date?
 
     @Persisted var memoList: List<Certified>
 
@@ -31,6 +32,7 @@ class UserJacsim: Object {
         self.isDone = isDone
         self.success = success
         self.isSuccess = isSuccess
+        //self.alarm = alarm
     }
     
     override class func primaryKey() -> String? {

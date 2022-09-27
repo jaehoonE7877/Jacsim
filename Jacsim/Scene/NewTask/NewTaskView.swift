@@ -107,6 +107,22 @@ final class NewTaskView: BaseView {
         $0.text = "회"
     }
     
+    let alarmLabel = UILabel().then {
+        $0.font = UIFont.gothic(style: .Medium, size: 16)
+        $0.textColor = Constant.BaseColor.textColor
+        $0.text = "알람을 설정해주세요"
+    }
+
+    let alarmSwitch = UISwitch().then {
+        $0.isOn = false
+    }
+    
+    lazy var alarmTimeLabel = UILabel().then {
+        $0.font = .gothic(style: .Light, size: 14)
+        $0.textColor = .tintColor
+        $0.textAlignment = .left
+    }
+    
     // MARK: StackView 생성
     lazy var topHorizontalStackView = UIStackView(arrangedSubviews: [newTaskTitleLabel, titleCountLabel]).then {
         $0.axis = .horizontal
@@ -149,6 +165,23 @@ final class NewTaskView: BaseView {
         }
     }
     
+    lazy var alarmStackView = UIStackView(arrangedSubviews: [alarmLabel, alarmSwitch]).then {
+        $0.axis = .horizontal
+        $0.distribution = .fillProportionally
+        $0.spacing = 12
+        
+        alarmLabel.snp.makeConstraints { make in
+            make.leading.equalToSuperview()
+            make.centerY.equalToSuperview()
+        }
+        
+        alarmSwitch.snp.makeConstraints { make in
+            make.centerY.equalToSuperview()
+            make.width.equalTo(44)
+            make.height.equalTo(alarmSwitch.snp.width).multipliedBy(0.8)
+        }
+    }
+    
     
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -160,7 +193,7 @@ final class NewTaskView: BaseView {
     
     
     override func configure() {
-        [topHorizontalStackView, newTaskTitleTextfield, newTaskImageLabel, newTaskImageView, imageAddButton, imageAddView, dateLabel, datePickStackView, termLabel, successLabel, successStackView].forEach{ self.addSubview($0) }
+        [topHorizontalStackView, newTaskTitleTextfield, newTaskImageLabel, newTaskImageView, imageAddButton, imageAddView, dateLabel, datePickStackView, termLabel, successLabel, successStackView, alarmStackView, alarmTimeLabel].forEach{ self.addSubview($0) }
     }
     //MARK: Constraints 
     override func setConstraints() {
@@ -227,6 +260,17 @@ final class NewTaskView: BaseView {
             make.leading.equalTo(successLabel.snp.trailing).offset(12)
             make.trailing.equalTo(datePickStackView.snp.trailing)
             make.centerY.equalTo(successLabel)
+        }
+        
+        alarmStackView.snp.makeConstraints { make in
+            make.top.equalTo(successStackView.snp.bottom).offset(12)
+            make.centerX.equalToSuperview()
+            make.width.equalTo(topHorizontalStackView.snp.width)
+        }
+        
+        alarmTimeLabel.snp.makeConstraints { make in
+            make.top.equalTo(alarmStackView.snp.bottom)
+            make.leading.equalTo(alarmStackView.snp.leading)
         }
         
     }

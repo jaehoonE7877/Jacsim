@@ -36,10 +36,9 @@ class BaseViewController: UIViewController {
     
     func setNavigationController() {
         let appearance = UINavigationBarAppearance()
-        appearance.configureWithOpaqueBackground()
         appearance.backgroundColor = Constant.BaseColor.backgroundColor
-        navigationController?.navigationBar.standardAppearance = appearance
-        navigationController?.navigationBar.scrollEdgeAppearance = appearance
+        self.navigationController?.navigationBar.standardAppearance = appearance
+        self.navigationController?.navigationBar.scrollEdgeAppearance = appearance
     }
     
     func showAlertMessage(title: String, message: String ,button: String, cancel: String, completion: @escaping (UIAlertAction) -> Void) {

@@ -6,7 +6,6 @@
 //
 
 import UIKit
-import Kingfisher
 
 final class TaskDetailViewController: BaseViewController {
     
@@ -87,7 +86,7 @@ final class TaskDetailViewController: BaseViewController {
     
     private func reviseButtonTapped() -> UIMenu {
         
-        let revise = UIAction(title: "대표 이미지 수정", image: UIImage(systemName: "pencil.circle")) { _ in
+        let revise = UIAction(title: "수정", image: UIImage(systemName: "pencil.circle")) { _ in
             
         }
         let quit = UIAction(title: "작심 그만두기", image: UIImage(systemName: "trash"), attributes: .destructive) { [weak self]_ in
@@ -116,11 +115,8 @@ final class TaskDetailViewController: BaseViewController {
                 self.dismiss(animated: true)
             }
         }
-        let cancel = UIAction(title: "취소", image: nil, attributes: .destructive) { _ in
-            
-        }
         
-        let menu = UIMenu(title: "", options: .displayInline, children: [revise,quit,cancel])
+        let menu = UIMenu(title: "", options: .displayInline, children: [revise,quit])
        
         return menu
     }

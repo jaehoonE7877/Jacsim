@@ -19,15 +19,17 @@ class PageView: BaseView {
     
     let topLabel = UILabel().then {
         $0.font = UIFont.gothic(style: .Medium, size: 16)
-        $0.textColor = Constant.BaseColor.textColor
+        $0.textColor = .black
+        $0.textAlignment = .center
         $0.numberOfLines = 2
         $0.text = "sdadasdadadasafafasfafafasfafafsaa"
     }
     
     let bottomLabel = UILabel().then {
-        $0.font = UIFont.gothic(style: .Medium, size: 16)
-        $0.textColor = Constant.BaseColor.textColor
+        $0.font = UIFont.gothic(style: .Light, size: 16)
+        $0.textColor = .black
         $0.numberOfLines = 2
+        $0.textAlignment = .center
         $0.text = "sdadasdadadasafafasfafafasfafafsaa" 
     }
     

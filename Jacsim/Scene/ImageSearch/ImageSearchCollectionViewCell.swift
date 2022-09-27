@@ -7,8 +7,6 @@
 
 import UIKit
 
-import Kingfisher
-
 class ImageSearchCollectionViewCell: BaseCollectionViewCell {
     
     // MARK: UIImageView
@@ -37,7 +35,7 @@ class ImageSearchCollectionViewCell: BaseCollectionViewCell {
         }
     }
     
-    func setData(imageURL: URL?) {
-        imageView.kf.setImage(with: imageURL)
-    }
+//    func setData(imageURL: URL?) {
+//        imageView.kf.setImage(with: imageURL)
+//    }
 }

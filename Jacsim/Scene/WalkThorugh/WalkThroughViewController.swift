@@ -30,7 +30,7 @@ final class WalkThroughViewController: BaseViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        view.backgroundColor = Constant.BaseColor.backgroundColor
+        view.backgroundColor = .white
         createPageViewController()
         configurePageViewController()
         

@@ -104,7 +104,7 @@ extension ImageSearchViewController: UICollectionViewDelegate, UICollectionViewD
         //cell.backgroundColor = .lightGray
         let url = URL(string: imageList[indexPath.item])
         
-        cell.setData(imageURL: url)
+       // cell.setData(imageURL: url)
         
         cell.layer.borderWidth = selectedIndexPath == indexPath ? 4 : 0
         cell.layer.borderColor = selectedIndexPath == indexPath ? Constant.BaseColor.buttonColor?.cgColor : nil

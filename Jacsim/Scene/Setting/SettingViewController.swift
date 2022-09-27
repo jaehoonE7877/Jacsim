@@ -8,6 +8,7 @@
 import UIKit
 import MessageUI
 
+import AcknowList
 final class SettingViewController: BaseViewController {
     
     //MARK: Property
@@ -59,7 +60,7 @@ extension SettingViewController: UITableViewDelegate, UITableViewDataSource {
             
             cell.versionLabel.snp.remakeConstraints { make in
                 make.centerY.equalToSuperview()
-                make.trailing.equalTo(cell.snp.trailing).offset(-24)
+                make.trailing.equalTo(cell.snp.trailing).offset(-12)
             }
         }
         cell.titleLabel.text = SettingModel.allCases[indexPath.row].title
@@ -82,7 +83,15 @@ extension SettingViewController: UITableViewDelegate, UITableViewDataSource {
             case 4:
                 return
             case 5:
-                return
+                
+                guard let url = Bundle.main.url(forResource: "Package", withExtension: "resolved"),
+                             let data = try? Data(contentsOf: url),
+                             let acknowList = try? AcknowPackageDecoder().decode(from: data) else {
+                           return
+                       }
+                
+                let vc = AcknowListViewController(acknowledgements: acknowList.acknowledgements, style: .insetGrouped)
+                navigationController?.pushViewController(vc, animated: true)
             default:
                 return
             }

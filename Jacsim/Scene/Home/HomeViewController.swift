@@ -66,7 +66,7 @@ final class HomeViewController: BaseViewController {
         $0.paddingY = UIScreen.main.bounds.height / 12
         $0.buttonColor = Constant.BaseColor.floatyColor!
         $0.itemTitleColor = Constant.BaseColor.textColor!
-        $0.size = 44
+        $0.size = 48
         $0.fabDelegate = self
     }
     
@@ -157,11 +157,11 @@ final class HomeViewController: BaseViewController {
         floaty.itemButtonColor = Constant.BaseColor.floatyColor!
         floaty.itemTitleColor = Constant.BaseColor.textColor!
         floaty.tintColor = Constant.BaseColor.textColor
-        
+
         floaty.addItem("새로운 작심", icon: UIImage(systemName: "square.and.pencil")) { item in
             self.transitionViewController(viewController: NewTaskViewController(), transitionStyle: .presentFullNavigation)
         }
-        
+                       
         floaty.addItem("작심 모아보기", icon: UIImage(systemName: "list.bullet")) { item in
             self.transitionViewController(viewController: AllTaskViewController(), transitionStyle: .presentFullNavigation)
         }

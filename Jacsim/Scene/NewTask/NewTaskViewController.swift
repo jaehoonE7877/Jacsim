@@ -7,6 +7,7 @@
 
 import UIKit
 import PhotosUI
+import UserNotifications
 
 import CropViewController
 
@@ -14,6 +15,9 @@ final class NewTaskViewController: BaseViewController {
     
     let repository = JacsimRepository()
     
+    var alarmDate: Date?
+    
+    let notificationCenter = UNUserNotificationCenter.current()
     //MARK: Property
     
     let mainView = NewTaskView()
@@ -47,7 +51,7 @@ final class NewTaskViewController: BaseViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        //print("Realm is located at:", repository.localRealm.configuration.fileURL!)
+        print("Realm is located at:", repository.localRealm.configuration.fileURL!)
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -77,14 +81,21 @@ final class NewTaskViewController: BaseViewController {
         
         mainView.startDateTextField.setInputViewDatePicker(target: self, selector: #selector(startDateTextFieldTapped))
         mainView.endDateTextField.setInputViewDatePicker(target: self, selector: #selector(endDateTextFieldTapped))
+        
+        mainView.alarmSwitch.addTarget(self, action: #selector(alarmSwitchTapped), for: .valueChanged)
     }
     
     override func setNavigationController() {
         self.title = "새로운 작심"
+        
+        
         navigationController?.navigationBar.tintColor = Constant.BaseColor.textColor
         navigationItem.leftBarButtonItem = UIBarButtonItem(image: UIImage(systemName: "xmark"), style: .plain, target: self, action: #selector(backButtonTapped))
         navigationItem.rightBarButtonItem = UIBarButtonItem(title: "저장", style: .plain, target: self, action: #selector(saveButtonTapped))
-        
+        let appearance = UINavigationBarAppearance()
+        appearance.backgroundColor = Constant.BaseColor.backgroundColor
+        self.navigationController?.navigationBar.standardAppearance = appearance
+        self.navigationController?.navigationBar.scrollEdgeAppearance = appearance
     }
     
     private func tapGesture(){
@@ -121,8 +132,35 @@ final class NewTaskViewController: BaseViewController {
         self.dismiss(animated: true)
     }
     
+    @objc func alarmSwitchTapped(){
+        
+        if !mainView.alarmSwitch.isOn {
+            mainView.alarmTimeLabel.text = ""
+            return
+        } else {
+            let vc = AlarmViewController()
+            vc.completion = { date in
+                self.alarmDate = date
+                self.formatter.dateFormat = "a hh:mm"
+                self.mainView.alarmTimeLabel.text = self.formatter.string(from: self.alarmDate ?? Date())
+            }
+            self.present(vc, animated: true)
+        }
+        
+        
+    }
+    
     // MARK: Realm Create
     @objc func saveButtonTapped(){
+        
+        let dateFormatter = DateFormatter()
+        let timeFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy년 M월 d일 EEEE"
+        dateFormatter.locale = Locale(identifier: "ko_KR")
+        dateFormatter.timeZone = TimeZone(identifier: "ko_KR")
+        timeFormatter.dateFormat = "yyyy년 M월 d일 EEEE a hh:mm"
+        timeFormatter.locale = Locale(identifier: "ko_KR")
+        timeFormatter.timeZone = TimeZone(identifier: "ko_KR")
         
         guard let title = mainView.newTaskTitleTextfield.text else { return }
         
@@ -132,8 +170,8 @@ final class NewTaskViewController: BaseViewController {
             return
         }
         
-        guard let startDate = formatter.date(from: mainView.startDateTextField.text ?? "") else { return }
-        guard let endDate = formatter.date(from: mainView.endDateTextField.text ?? "") else { return }
+        guard let startDate = dateFormatter.date(from: mainView.startDateTextField.text ?? "") else { return }
+        guard let endDate = dateFormatter.date(from: mainView.endDateTextField.text ?? "") else { return }
         
         guard let success = Int(mainView.successTextField.text ?? "") else { return }
         
@@ -156,6 +194,11 @@ final class NewTaskViewController: BaseViewController {
                 return
             }
         }
+        
+        guard let alarm = mainView.alarmTimeLabel.text else { return }
+        let valueA = "\(dateFormatter.string(from: startDate)) \(alarm)"
+        let alarmDate = timeFormatter.date(from: valueA)
+        print(alarmDate)
         
         let task = UserJacsim(title: title, startDate: startDate, endDate: endDate, success: success)
         for _ in 0...calculateDays(startDate: startDate, endDate: endDate) - 1 {
@@ -195,6 +238,7 @@ extension NewTaskViewController: UITextFieldDelegate {
         someTextField = textField
     
         if textField == mainView.startDateTextField || textField == mainView.endDateTextField {
+            formatter.dateFormat = "yyyy년 M월 d일 EEEE"
             textField.tintColor = .clear
         } else if textField == mainView.successTextField {
             textField.text = ""
@@ -242,9 +286,9 @@ extension NewTaskViewController: UITextFieldDelegate {
             if someTextField == mainView.endDateTextField {
                 UIView.animate(withDuration: 0.3, animations: { self.view.transform = CGAffineTransform(translationX: 0, y: -keyboardSize.height + 116)}, completion: nil)
             } else if someTextField == mainView.startDateTextField {
-                UIView.animate(withDuration: 0.3, animations: { self.view.transform = CGAffineTransform(translationX: 0, y: -keyboardSize.height + 100)}, completion: nil)
+                UIView.animate(withDuration: 0.3, animations: { self.view.transform = CGAffineTransform(translationX: 0, y: -keyboardSize.height + 116)}, completion: nil)
             } else if someTextField == mainView.successTextField {
-                UIView.animate(withDuration: 0.3, animations: { self.view.transform = CGAffineTransform(translationX: 0, y: -keyboardSize.height)}, completion: nil)
+                UIView.animate(withDuration: 0.3, animations: { self.view.transform = CGAffineTransform(translationX: 0, y: -keyboardSize.height + 100)  }, completion: nil)
             } else {
                 return
             }
@@ -350,4 +394,25 @@ extension NewTaskViewController: CropViewControllerDelegate {
         self.dismiss(animated: true)
     }
     
+}
+
+extension NewTaskViewController {
+    
+    func sendNotificationRequest(title: String, alarm: Date, index: Int) {
+        
+        let content = UNMutableNotificationContent()
+        
+        content.title = title
+        content.body = "확인해주세요"
+        content.sound = .default
+        content.badge = 1
+        
+        let component = Calendar.current.dateComponents([.year, .month, .day , .hour, .minute], from: alarm)
+        
+        let trigger = UNCalendarNotificationTrigger(dateMatching: component, repeats: true)
+        
+        let request = UNNotificationRequest(identifier: title + "\(alarm)", content: content, trigger: trigger)
+        
+        notificationCenter.add(request)
+    }
 }

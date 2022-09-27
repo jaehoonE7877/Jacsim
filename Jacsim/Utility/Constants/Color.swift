@@ -14,6 +14,6 @@ extension Constant {
         static let floatyColor = UIColor(named: "Floaty")
         static let placeholderColor = UIColor(named: "Else")
         static let backgroundColor = UIColor(named: "Background")
-        static let placeholderText = UIColor.darkGray
+        static let placeholderText = UIColor.systemGray
     }
 }
