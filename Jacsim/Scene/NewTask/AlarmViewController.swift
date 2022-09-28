@@ -11,7 +11,7 @@ final class AlarmViewController: UIViewController {
     
     let mainView = AlarmView()
     
-    var completion: ((Date) -> ())?
+    var completion: ((Date?) -> ())?
     
     var alarmDate: Date?
     
@@ -31,6 +31,8 @@ final class AlarmViewController: UIViewController {
     }
     
     @objc private func xButtonTapped() {
+        guard let completion = completion else { return }
+        completion(nil)
         self.dismiss(animated: true)
     }
     

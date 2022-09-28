@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import UserNotifications
 
 import RealmSwift
 import SnapKit
@@ -16,6 +17,7 @@ class BaseViewController: UIViewController {
     
     let formatter = DateFormatter()
     let calendar = Calendar.current
+    let notificationCenter = UNUserNotificationCenter.current()
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -26,7 +28,6 @@ class BaseViewController: UIViewController {
         configure()
         setConstraint()
         setNavigationController()
-        
     }
     
     
@@ -66,7 +67,7 @@ class BaseViewController: UIViewController {
     }
     // (다국어 대응에 따라서 국가별로)
     func setFormatterLocale(){
-        formatter.locale = Locale(identifier: "ko-KR")
+        formatter.locale = Locale(identifier: "ko_KR")
     }
     
     func setFormatter(){
@@ -79,6 +80,23 @@ class BaseViewController: UIViewController {
     
     func calculateDays(startDate: Date, endDate: Date) -> Int {
         return (calendar.dateComponents([.day], from: startDate, to: endDate).day ?? 1) + 1
+    }
+    
+    func showAlertCamera() {
+        
+        let message = "작심이(가) 카메라 접근 허용되어 있지 않습니다. \r\n 설정화면으로 가시겠습니까?"
+        let alert = UIAlertController(title: "설정", message: message, preferredStyle: .alert)
+            
+        let cancel = UIAlertAction(title: "취소", style: .default)
+
+        let confirm = UIAlertAction(title: "확인", style: .default) { action in
+            UIApplication.shared.open(URL(string: UIApplication.openSettingsURLString)!)
+        }
+        
+        alert.addAction(cancel)
+        alert.addAction(confirm)
+        
+        self.present(alert, animated: true)
     }
     
 }

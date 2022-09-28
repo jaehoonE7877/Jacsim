@@ -76,13 +76,29 @@ final class TaskUpdateViewController: BaseViewController {
     private func addImageButtonTapped() -> UIMenu {
         
         let camera = UIAction(title: "카메라", image: UIImage(systemName: "camera")) { _ in
-            guard UIImagePickerController.isSourceTypeAvailable(.camera) else {
-                self.showAlertMessage(title: "카메라 사용이 불가합니다.", button: "확인")
-                return
+            switch AVCaptureDevice.authorizationStatus(for: .video) {
+            case .authorized:
+                guard UIImagePickerController.isSourceTypeAvailable(.camera) else {
+                    self.showAlertMessage(title: "카메라 사용이 불가합니다.", button: "확인")
+                    return
+                }
+                self.imagePicker.sourceType = .camera
+                self.imagePicker.allowsEditing = true
+                self.present(self.imagePicker, animated: true)
+            case .notDetermined:
+                AVCaptureDevice.requestAccess(for: .video) { [weak self] granted in
+                    guard let self = self else { return }
+                    if granted {
+                        DispatchQueue.main.async {
+                            self.imagePicker.sourceType = .camera
+                            self.imagePicker.allowsEditing = true
+                            self.present(self.imagePicker, animated: true)
+                        }
+                    }
+                }
+            default:
+                self.showAlertCamera()
             }
-            self.imagePicker.sourceType = .camera
-            self.imagePicker.allowsEditing = true
-            self.present(self.imagePicker, animated: true)
         }
         let gallery = UIAction(title: "갤러리", image: UIImage(systemName: "photo.on.rectangle")) { _ in
             self.present(self.phPicker, animated: true)
@@ -147,10 +163,11 @@ extension TaskUpdateViewController: UITextFieldDelegate {
     
     func textFieldDidEndEditing(_ textField: UITextField) {
         guard let text = textField.text else { return }
-        if text.count <= 2 {
+        if text.trimmingCharacters(in: .whitespacesAndNewlines).count < 2 {
             view.makeToast("한 줄 메모는 2글자 이상으로 남겨주세요!", duration: 0.4, position: .center, title: nil, image: nil, style: .init()) { _ in
                 DispatchQueue.main.async {
                     textField.text = ""
+                    self.mainView.memoCountLabel.text = "0/20"
                 }
             }
             return

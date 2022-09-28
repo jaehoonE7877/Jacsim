@@ -75,15 +75,23 @@ extension SettingViewController: UITableViewDelegate, UITableViewDataSource {
                 let vc = AlarmViewController()
                 self.transitionViewController(viewController: vc, transitionStyle: .push)
             case 1:
-                return
+                showAlertMessage(title: "업데이트 예정입니다.", button: "확인")
             case 2:
                 sendMail()
             case 3:
-                return
+                if let appstoreUrl = URL(string: "https://apps.apple.com/app/id6443532893}") {
+                    var urlComp = URLComponents(url: appstoreUrl, resolvingAgainstBaseURL: false)
+                    urlComp?.queryItems = [
+                        URLQueryItem(name: "action", value: "write-review")
+                    ]
+                    guard let reviewUrl = urlComp?.url else {
+                        return
+                    }
+                    UIApplication.shared.open(reviewUrl, options: [:], completionHandler: nil)
+                }
             case 4:
                 return
             case 5:
-                
                 guard let url = Bundle.main.url(forResource: "Package", withExtension: "resolved"),
                              let data = try? Data(contentsOf: url),
                              let acknowList = try? AcknowPackageDecoder().decode(from: data) else {

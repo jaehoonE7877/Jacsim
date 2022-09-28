@@ -6,8 +6,8 @@
 //
 
 import UIKit
+import Photos
 import PhotosUI
-import UserNotifications
 
 import CropViewController
 
@@ -15,9 +15,8 @@ final class NewTaskViewController: BaseViewController {
     
     let repository = JacsimRepository()
     
-    var alarmDate: Date?
+    var alarm: Date?
     
-    let notificationCenter = UNUserNotificationCenter.current()
     //MARK: Property
     
     let mainView = NewTaskView()
@@ -88,7 +87,6 @@ final class NewTaskViewController: BaseViewController {
     override func setNavigationController() {
         self.title = "새로운 작심"
         
-        
         navigationController?.navigationBar.tintColor = Constant.BaseColor.textColor
         navigationItem.leftBarButtonItem = UIBarButtonItem(image: UIImage(systemName: "xmark"), style: .plain, target: self, action: #selector(backButtonTapped))
         navigationItem.rightBarButtonItem = UIBarButtonItem(title: "저장", style: .plain, target: self, action: #selector(saveButtonTapped))
@@ -103,18 +101,34 @@ final class NewTaskViewController: BaseViewController {
         view.addGestureRecognizer(tap)
     }
     
-    
     //MARK: UIMenu
     private func addImageButtonTapped() -> UIMenu {
         
         let camera = UIAction(title: "카메라", image: UIImage(systemName: "camera")) { _ in
-            guard UIImagePickerController.isSourceTypeAvailable(.camera) else {
-                self.showAlertMessage(title: "카메라 사용이 불가합니다.", button: "확인")
-                return
+            switch AVCaptureDevice.authorizationStatus(for: .video) {
+            case .authorized:
+                guard UIImagePickerController.isSourceTypeAvailable(.camera) else {
+                    self.showAlertMessage(title: "카메라 사용이 불가합니다.", button: "확인")
+                    return
+                }
+                self.imagePicker.sourceType = .camera
+                self.imagePicker.allowsEditing = true
+                self.present(self.imagePicker, animated: true)
+            case .notDetermined:
+                AVCaptureDevice.requestAccess(for: .video) { [weak self] granted in
+                    guard let self = self else { return }
+                    if granted {
+                        DispatchQueue.main.async {
+                            self.imagePicker.sourceType = .camera
+                            self.imagePicker.allowsEditing = true
+                            self.present(self.imagePicker, animated: true)
+                        }
+                    }
+                }
+            default:
+                self.showAlertCamera()
             }
-            self.imagePicker.sourceType = .camera
-            self.imagePicker.allowsEditing = true
-            self.present(self.imagePicker, animated: true)
+            
         }
         let gallery = UIAction(title: "갤러리", image: UIImage(systemName: "photo.on.rectangle")) { _ in
             self.present(self.phPicker, animated: true)
@@ -131,51 +145,60 @@ final class NewTaskViewController: BaseViewController {
     @objc func backButtonTapped(){
         self.dismiss(animated: true)
     }
-    
+    // 수정 화면에서 알람이 등록되어 있을 때, 알림이 없을 때로 나눠서 생각해보기
     @objc func alarmSwitchTapped(){
         
         if !mainView.alarmSwitch.isOn {
-            mainView.alarmTimeLabel.text = ""
+            //notificationCenter.removePendingNotificationRequests(withIdentifiers: "")
+            mainView.alarmTimeLabel.text = nil
             return
         } else {
             let vc = AlarmViewController()
+            
             vc.completion = { date in
-                self.alarmDate = date
+                
+                guard let date = date else {
+                    self.mainView.alarmSwitch.isOn = false
+                    return
+                }
+
                 self.formatter.dateFormat = "a hh:mm"
-                self.mainView.alarmTimeLabel.text = self.formatter.string(from: self.alarmDate ?? Date())
+                DispatchQueue.main.async {
+                    self.mainView.alarmTimeLabel.text = self.formatter.string(from: date)
+                }
             }
+            
             self.present(vc, animated: true)
         }
-        
-        
     }
     
     // MARK: Realm Create
     @objc func saveButtonTapped(){
         
-        let dateFormatter = DateFormatter()
         let timeFormatter = DateFormatter()
-        dateFormatter.dateFormat = "yyyy년 M월 d일 EEEE"
-        dateFormatter.locale = Locale(identifier: "ko_KR")
-        dateFormatter.timeZone = TimeZone(identifier: "ko_KR")
         timeFormatter.dateFormat = "yyyy년 M월 d일 EEEE a hh:mm"
         timeFormatter.locale = Locale(identifier: "ko_KR")
         timeFormatter.timeZone = TimeZone(identifier: "ko_KR")
         
-        guard let title = mainView.newTaskTitleTextfield.text else { return }
-        
-        if title.trimmingCharacters(in: .whitespacesAndNewlines) == "" {
-            view.makeToast("제목을 입력해주세요! ", duration: 0.8, position: .center, title: nil, image: nil, style: .init()) { _ in
+        if mainView.newTaskTitleTextfield.text == "" {
+            view.makeToast("제목을 입력해주세요!", duration: 0.8, position: .center, title: nil, image: nil, style: .init()) { _ in
+            }
+            return
+        } else if mainView.startDateTextField.text == "" {
+            view.makeToast("시작일을 입력해주세요!", duration: 0.8, position: .center, title: nil, image: nil, style: .init()) { _ in
+            }
+            return
+        } else if mainView.endDateTextField.text == "" {
+            view.makeToast("종료일을 입력해주세요!", duration: 0.8, position: .center, title: nil, image: nil, style: .init()) { _ in
             }
             return
         }
-        
-        guard let startDate = dateFormatter.date(from: mainView.startDateTextField.text ?? "") else { return }
-        guard let endDate = dateFormatter.date(from: mainView.endDateTextField.text ?? "") else { return }
-        
+        formatter.dateFormat = "yyyy년 M월 d일 EEEE"
+        guard let title = mainView.newTaskTitleTextfield.text else { return }
+        //print(formatter.date(from: mainView.startDateTextField.text ?? ""))
+        guard let startDate = formatter.date(from: mainView.startDateTextField.text ?? "") else { return }
+        guard let endDate = formatter.date(from: mainView.endDateTextField.text ?? "") else { return }
         guard let success = Int(mainView.successTextField.text ?? "") else { return }
-        
-
         if startDate - endDate > 0 {
             view.makeToast("종료일은 시작일보다 빠를 수 없습니다.", duration: 1.0, position: .center, title: nil, image: nil, style: .init()) { _ in
                 DispatchQueue.main.async {
@@ -195,26 +218,41 @@ final class NewTaskViewController: BaseViewController {
             }
         }
         
-        guard let alarm = mainView.alarmTimeLabel.text else { return }
-        let valueA = "\(dateFormatter.string(from: startDate)) \(alarm)"
-        let alarmDate = timeFormatter.date(from: valueA)
-        print(alarmDate)
-        
-        let task = UserJacsim(title: title, startDate: startDate, endDate: endDate, success: success)
-        for _ in 0...calculateDays(startDate: startDate, endDate: endDate) - 1 {
-            let certified = Certified(memo: "인증해주세요")
-            task.memoList.append(certified)
+        if let alarm = mainView.alarmTimeLabel.text {
+            
+            let valueA = "\(formatter.string(from: startDate)) \(alarm)"
+            guard let fireDate = timeFormatter.date(from: valueA) else { return }
+            print("\(fireDate): 알림 시작일")
+            
+            let task = UserJacsim(title: title, startDate: startDate, endDate: endDate, success: success, alarm: fireDate)
+            for _ in 0...calculateDays(startDate: startDate, endDate: endDate) - 1 {
+                let certified = Certified(memo: "인증해주세요")
+                task.memoList.append(certified)
+            }
+            
+            guard let baseImage = UIImage(named: "jacsim") else { return }
+            saveImageToDocument(fileName: "\(String(describing: task.id)).jpg", image: mainView.newTaskImageView.image ?? baseImage)
+            repository.addJacsim(item: task)
+            
+            scheduleNotification(title: title, fireDate: fireDate)
+            
+            dismiss(animated: true)
+        } else {
+           
+            let task = UserJacsim(title: title, startDate: startDate, endDate: endDate, success: success, alarm: nil)
+            for _ in 0...calculateDays(startDate: startDate, endDate: endDate) - 1 {
+                let certified = Certified(memo: "인증해주세요")
+                task.memoList.append(certified)
+            }
+            
+            guard let baseImage = UIImage(named: "jacsim") else { return }
+            saveImageToDocument(fileName: "\(String(describing: task.id)).jpg", image: mainView.newTaskImageView.image ?? baseImage)
+            repository.addJacsim(item: task)
+            
+            dismiss(animated: true)
         }
         
-        guard let baseImage = UIImage(named: "jacsim") else { return }
-        saveImageToDocument(fileName: "\(String(describing: task.id)).jpg", image: mainView.newTaskImageView.image ?? baseImage)
-        repository.addJacsim(item: task)
-        
-        dismiss(animated: true)
     }
-    
-    
-    
 }
 
 // MARK: UITextFieldDelegate
@@ -251,10 +289,11 @@ extension NewTaskViewController: UITextFieldDelegate {
         switch textField {
         case mainView.newTaskTitleTextfield:
             guard let text = textField.text else { return }
-            if text.count <= 2 {
+            if text.trimmingCharacters(in: .whitespacesAndNewlines).count < 2 {
                 view.makeToast("작심한 일의 제목은 2글자 이상이어야 합니다!", duration: 0.4, position: .center, title: nil, image: nil, style: .init()) { _ in
                     DispatchQueue.main.async {
                         textField.text = ""
+                        self.mainView.titleCountLabel.text = "0/20"
                     }
                 }
                 return
@@ -273,12 +312,7 @@ extension NewTaskViewController: UITextFieldDelegate {
         default:
             return
         }
-        
-        
-        
-        
     }
-    
     @objc func keyboardWillShow(_ sender: Notification){
         
         if let keyboardSize = (sender.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? NSValue)?.cgRectValue {
@@ -314,7 +348,6 @@ extension NewTaskViewController: UITextFieldDelegate {
         }
         self.mainView.endDateTextField.resignFirstResponder()
     }
-    
 }
 
 //MARK: UIImagePickerControllerDelegate, UINavigationControllerDelegate
@@ -398,21 +431,49 @@ extension NewTaskViewController: CropViewControllerDelegate {
 
 extension NewTaskViewController {
     
-    func sendNotificationRequest(title: String, alarm: Date, index: Int) {
-        
+    func scheduleNotification(title: String, fireDate: Date) {
+
         let content = UNMutableNotificationContent()
-        
         content.title = title
-        content.body = "확인해주세요"
+        content.body = "\(title) 작심을 확인해주세요"
         content.sound = .default
-        content.badge = 1
-        
-        let component = Calendar.current.dateComponents([.year, .month, .day , .hour, .minute], from: alarm)
-        
-        let trigger = UNCalendarNotificationTrigger(dateMatching: component, repeats: true)
-        
-        let request = UNNotificationRequest(identifier: title + "\(alarm)", content: content, trigger: trigger)
-        
-        notificationCenter.add(request)
+        content.categoryIdentifier = "quote.category"
+
+        notificationCenter.requestAuthorization(
+            options: [.alert, .badge, .sound])
+        {
+            (granted, error) in
+
+            if let error = error {
+                print("granted, but Error in notification permission:\(error.localizedDescription)")
+            }
+
+            let fireTrigger = UNTimeIntervalNotificationTrigger(timeInterval: fireDate.timeIntervalSinceNow, repeats: false)
+
+            let fireDateRequest = UNNotificationRequest(identifier: "\(title)\(fireDate).starter", content: content, trigger: fireTrigger)
+
+            UNUserNotificationCenter.current().add(fireDateRequest) {(error) in
+                if let error = error {
+                    print("Error adding firing notification: \(error.localizedDescription)")
+                } else {
+                    
+                    if let firstRepeatingDate = Calendar.current.date(byAdding: .day, value: 1, to: fireDate) {
+                        print("\(firstRepeatingDate): 반복 알림 시작일")
+                        let repeatingTrigger = UNTimeIntervalNotificationTrigger(timeInterval: firstRepeatingDate.timeIntervalSinceNow, repeats: true)
+                        
+                        let repeatingRequest = UNNotificationRequest(identifier: "\(title)\(fireDate).repeater", content: content, trigger: repeatingTrigger)
+                        
+                        UNUserNotificationCenter.current().add(repeatingRequest) { (error) in
+                            if let error = error {
+                                print("Error adding repeating notification: \(error.localizedDescription)")
+                            } else {
+                                print("Successfully scheduled")
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
+    
 }

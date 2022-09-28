@@ -6,6 +6,8 @@
 //
 
 import Foundation
+import UserNotifications
+
 import RealmSwift
 
 private protocol JacsimRepositoryProtocol: AnyObject {
@@ -21,6 +23,7 @@ private protocol JacsimRepositoryProtocol: AnyObject {
 
 final class JacsimRepository: JacsimRepositoryProtocol {
     
+    let notificationCenter = UNUserNotificationCenter.current()
     let formatter = DateFormatter()
     let calendar = Calendar.current
     let now = Date()
@@ -53,33 +56,33 @@ final class JacsimRepository: JacsimRepositoryProtocol {
         return localRealm.objects(UserJacsim.self).where{ $0.isDone == false }.filter("endDate >= %@ AND startDate < %@", date, Date(timeInterval: 86400, since: date)).sorted(byKeyPath: "startDate", ascending: true)
     }
     
-    func fetchAlarm(task: UserJacsim) -> Bool {
-       
-        var dayArray: [Date] = []
-        
-        for date in stride(from: task.startDate, to: task.endDate + 86400, by: 86400 ){
-            dayArray.append(date)
-        }
-        print(dayArray)
-        print(now)
-        var check: Bool = true
-        
-        print("시작일이 현재시간보다 빠르면 트루 \(now - task.startDate >= 0)")
-        print("종료일 \(task.endDate - now >= 0)")
-        
-        if (now - task.startDate >= 0) && (task.endDate - now >= 0) {
-            
-            for index in 0...dayArray.count - 1 {
-                
-                if dayArray[index].toString() == now.toString() {
-                    print(dayArray[index])
-                    print(task.memoList[index].check)
-                    check = task.memoList[index].check
-                }
-            }
-        }
-        return check
-    }
+//    func fetchAlarm(task: UserJacsim) -> Bool {
+//
+//        var dayArray: [Date] = []
+//
+//        for date in stride(from: task.startDate, to: task.endDate + 86400, by: 86400 ){
+//            dayArray.append(date)
+//        }
+//        print(dayArray)
+//        print(now)
+//        var check: Bool = true
+//
+//        print("시작일이 현재시간보다 빠르면 트루 \(now - task.startDate >= 0)")
+//        print("종료일 \(task.endDate - now >= 0)")
+//
+//        if (now - task.startDate >= 0) && (task.endDate - now >= 0) {
+//
+//            for index in 0...dayArray.count - 1 {
+//
+//                if dayArray[index].toString() == now.toString() {
+//                    print(dayArray[index])
+//                    print(task.memoList[index].check)
+//                    check = task.memoList[index].check
+//                }
+//            }
+//        }
+//        return check
+//    }
 
     func addJacsim(item: UserJacsim) {
         do {
@@ -117,7 +120,8 @@ final class JacsimRepository: JacsimRepositoryProtocol {
     func deleteJacsim(item: UserJacsim){
         
         removeImageFromDocument(fileName: "\(item.id).jpg")
-        
+        notificationCenter.removePendingNotificationRequests(withIdentifiers: ["\(item.title)\(String(describing: item.alarm)).starter", "\(item.title)\(String(describing: item.alarm)).repeater"])
+        notificationCenter.removeDeliveredNotifications(withIdentifiers: ["\(item.title)\(String(describing: item.alarm)).starter", "\(item.title)\(String(describing: item.alarm)).repeater"])
         do {
             try localRealm.write{
                 localRealm.delete(item.memoList)
@@ -158,6 +162,8 @@ final class JacsimRepository: JacsimRepositoryProtocol {
                 do {
                     try localRealm.write{
                         task.isDone = true
+                        notificationCenter.removePendingNotificationRequests(withIdentifiers: ["\(task.title)\(String(describing: task.alarm)).repeater"])
+                        notificationCenter.removeDeliveredNotifications(withIdentifiers: ["\(task.title)\(String(describing: task.alarm)).starter", "\(task.title)\(String(describing: task.alarm)).repeater"])
                     }
                 } catch let error {
                     print(error)

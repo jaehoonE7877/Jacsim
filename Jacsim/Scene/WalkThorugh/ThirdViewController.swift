@@ -21,7 +21,8 @@ class ThirdViewController: BaseViewController {
     }
     
     override func configure() {
-        
+        mainView.topLabel.text = "도전하고 싶은 챌린지를 기록해보세요"
+        mainView.bottomLabel.text = ""
     }
     
 }

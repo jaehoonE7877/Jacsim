@@ -17,13 +17,21 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         guard let scene = (scene as? UIWindowScene) else { return }
         window = UIWindow(windowScene: scene)
         
-        let vc = HomeViewController()
-        let nav = UINavigationController(rootViewController: vc)
+        let onbording = UserDefaults.standard.bool(forKey: "onboarding")
+        if onbording {
+            let vc = HomeViewController()
+            let nav = UINavigationController(rootViewController: vc)
+            
+            window?.rootViewController = nav
+            window?.makeKeyAndVisible()
+        } else {
+            let vc1 = WalkThroughViewController()
+            
+            window?.rootViewController = vc1
+            window?.makeKeyAndVisible()
+        }
         
-        let vc1 = WalkThroughViewController()
         
-        window?.rootViewController = vc1
-        window?.makeKeyAndVisible()
         
         
     }

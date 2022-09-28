@@ -84,7 +84,13 @@ final class HomeViewController: BaseViewController {
         super.viewDidLoad()
         
         fsCalendar.reloadData()
-        
+        //notificationCenter.delegate = self
+        notificationCenter.getPendingNotificationRequests { items in
+            print(items)
+        }
+        notificationCenter.getDeliveredNotifications { items in
+            print(items)
+        }
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -304,3 +310,18 @@ extension HomeViewController: FloatyDelegate {
     }
     
 }
+
+//extension HomeViewController: UNUserNotificationCenterDelegate {
+//
+//    func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification, withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
+//        print("\(notification.request.identifier): \(Date())")
+//        notificationCenter.getPendingNotificationRequests { (requests) in
+//            for request in requests {
+//                if let timeIntervalTrigger = request.trigger as? UNTimeIntervalNotificationTrigger {
+//                    print(Date(timeIntervalSinceNow: timeIntervalTrigger.timeInterval))
+//                }
+//
+//            }
+//        }
+//    }
+//}
