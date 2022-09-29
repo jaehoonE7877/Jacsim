@@ -52,6 +52,7 @@ final class JacsimTableViewCell: BaseTableViewCell {
         
         titleLabel.snp.makeConstraints { make in
             make.leading.equalTo(jacsimContentView.snp.leading).offset(12)
+            make.width.equalTo(jacsimContentView).multipliedBy(0.84)
             make.centerY.equalTo(jacsimContentView.snp.centerY)
         }
         

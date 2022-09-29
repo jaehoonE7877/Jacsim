@@ -83,7 +83,7 @@ final class TaskDetailViewController: BaseViewController {
     
     override func setNavigationController() {
         
-        
+        navigationController?.navigationBar.backItem?.backButtonTitle = ""
         navigationItem.rightBarButtonItem = UIBarButtonItem(title: nil, image: UIImage(systemName: "ellipsis.circle"), menu: reviseButtonTapped())
         
         navigationController?.navigationBar.tintColor = Constant.BaseColor.textColor

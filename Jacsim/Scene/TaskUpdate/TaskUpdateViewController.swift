@@ -123,9 +123,16 @@ final class TaskUpdateViewController: BaseViewController {
     
     @objc func certifyButtonTapped(){
        
+        if mainView.memoTextfield.text == "" {
+            view.makeToast("한 줄 메모를 입력해주세요!", duration: 0.8, position: .center, title: nil, image: nil, style: .init()) { _ in
+            }
+            return
+        }
+        
         guard let task = task else { return }
         guard let index = index else { return }
         guard let memo = mainView.memoTextfield.text else { return }
+        
         guard let dateText = dateText else { return }
 
         repository.updateMemo(item: task, index: index, memo: memo)

@@ -84,7 +84,7 @@ final class HomeViewController: BaseViewController {
         super.viewDidLoad()
         
         fsCalendar.reloadData()
-
+        
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -115,6 +115,10 @@ final class HomeViewController: BaseViewController {
         
         view.addGestureRecognizer(self.scopeGesture)
         view.backgroundColor = Constant.BaseColor.backgroundColor
+        
+        let backButton = UIBarButtonItem()
+        backButton.title = ""
+        self.navigationController?.navigationBar.topItem?.backBarButtonItem = backButton
        
     }
     

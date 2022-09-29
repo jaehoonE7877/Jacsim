@@ -75,27 +75,19 @@ extension SettingViewController: UITableViewDelegate, UITableViewDataSource {
             case 0:
                 sendMail()
             case 1:
-                if #available(iOS 14.0, *){
-                    guard let scene = UIApplication
-                        .shared
-                        .connectedScenes
-                        .first(where: {
-                            $0.activationState == .foregroundActive
-                        }) as? UIWindowScene else { return }
-                    SKStoreReviewController.requestReview(in: scene)
-                } else {
-                    SKStoreReviewController.requestReview()
-                }
-                if let appstoreUrl = URL(string: "https://apps.apple.com/app/id6443532893}") {
-                    var urlComp = URLComponents(url: appstoreUrl, resolvingAgainstBaseURL: false)
-                    urlComp?.queryItems = [
-                        URLQueryItem(name: "action", value: "write-review")
-                    ]
-                    guard let reviewUrl = urlComp?.url else {
-                        return
-                    }
-                    UIApplication.shared.open(reviewUrl, options: [:], completionHandler: nil)
-                }
+                moveToReview()
+//                if #available(iOS 14.0, *){
+//                    guard let scene = UIApplication
+//                        .shared
+//                        .connectedScenes
+//                        .first(where: {
+//                            $0.activationState == .foregroundActive
+//                        }) as? UIWindowScene else { return }
+//                    SKStoreReviewController.requestReview(in: scene)
+//                } else {
+//                    SKStoreReviewController.requestReview()
+//                }
+                
             case 2:
                 return
             case 3:
@@ -111,6 +103,13 @@ extension SettingViewController: UITableViewDelegate, UITableViewDataSource {
                 return
             }
     }
+    
+    private func moveToReview() {
+                if let reviewURL = URL(string: "itms-apps://itunes.apple.com/app/itunes-u/id\(6443532893)?ls=1&mt=8&action=write-review"), UIApplication.shared.canOpenURL(reviewURL) {
+                    UIApplication.shared.open(reviewURL, options: [:], completionHandler: nil)
+                }
+            }
+    
 }
 
 // Mail문의
