@@ -94,6 +94,10 @@ final class HomeViewController: BaseViewController {
         repository.checkIsDone(items: tasks)
         
         fsCalendar.reloadData()
+        
+        notificationCenter.getPendingNotificationRequests { items in
+            print(items)
+        }
    
     }
     

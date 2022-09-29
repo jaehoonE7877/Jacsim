@@ -17,20 +17,23 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         guard let scene = (scene as? UIWindowScene) else { return }
         window = UIWindow(windowScene: scene)
         
-        let onbording = UserDefaults.standard.bool(forKey: "onboarding")
-        if onbording {
-            let vc = HomeViewController()
-            let nav = UINavigationController(rootViewController: vc)
-            
-            window?.rootViewController = nav
-           
-        } else {
-            let vc1 = WalkThroughViewController()
-            
-            window?.rootViewController = vc1
-           
-        }
-
+//        let onbording = UserDefaults.standard.bool(forKey: "onboarding")
+//        if onbording {
+//            let vc = HomeViewController()
+//            let nav = UINavigationController(rootViewController: vc)
+//            
+//            window?.rootViewController = nav
+//           
+//        } else {
+//            let vc1 = WalkThroughViewController()
+//            
+//            window?.rootViewController = vc1
+//           
+//        }
+        let vc = HomeViewController()
+        let nav = UINavigationController(rootViewController: vc)
+        
+        window?.rootViewController = nav
         window?.makeKeyAndVisible()
         
     }
@@ -45,7 +48,6 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     func sceneDidBecomeActive(_ scene: UIScene) {
         // Called when the scene has moved from an inactive state to an active state.
         // Use this method to restart any tasks that were paused (or not yet started) when the scene was inactive.
-        UIApplication.shared.applicationIconBadgeNumber = 0
     }
 
     func sceneWillResignActive(_ scene: UIScene) {
@@ -56,6 +58,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     func sceneWillEnterForeground(_ scene: UIScene) {
         // Called as the scene transitions from the background to the foreground.
         // Use this method to undo the changes made on entering the background.
+        
     }
 
     func sceneDidEnterBackground(_ scene: UIScene) {

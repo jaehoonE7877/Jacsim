@@ -63,6 +63,13 @@ final class TaskDetailViewController: BaseViewController {
         mainView.startDateLabel.text = formatter.string(from: task.startDate)
         mainView.endDateLabel.text = formatter.string(from: task.endDate)
         
+        if let alarm = task.alarm {
+            formatter.dateFormat = "a hh:mm"
+            mainView.alarmTimeLabel.text = formatter.string(from: alarm)
+        } else {
+            mainView.alarmTimeLabel.text = "설정된 알람이 없습니다."
+        }
+        
         guard let image = loadImageFromDocument(fileName: "\(task.id).jpg") else { return }
         mainView.mainImage.image = image
         
@@ -113,6 +120,17 @@ final class TaskDetailViewController: BaseViewController {
 //            self.transitionViewController(viewController: vc, transitionStyle: .presentFullNavigation)
             
 //        }
+        let deletealarm = UIAction(title: "알람 끄기", image: UIImage(systemName: "bell.slash.fill")) { [weak self]_ in
+            guard let self = self else { return }
+            guard let task = self.task else { return }
+            self.showAlertMessage(title: "알람을 끄시겠습니까?", message: nil, button: "확인", cancel: "취소") { _ in
+                
+                self.repository.deleteAlarm(item: task)
+                
+                self.navigationController?.popViewController(animated: true)
+            }
+            
+        }
         
         let quit = UIAction(title: "작심 그만두기", image: UIImage(systemName: "trash"), attributes: .destructive) { [weak self]_ in
             guard let self = self else { return }
@@ -141,7 +159,14 @@ final class TaskDetailViewController: BaseViewController {
            
         }
         
-        let menu = UIMenu(title: "", options: .displayInline, children: [quit])
+        var items: [UIMenuElement] = []
+        if task?.alarm != nil {
+            items = [deletealarm, quit]
+        } else {
+            items = [quit]
+        }
+        
+        let menu = UIMenu(title: "", options: .displayInline, children: items)
        
         return menu
     }

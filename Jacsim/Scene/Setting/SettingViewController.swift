@@ -7,6 +7,7 @@
 
 import UIKit
 import MessageUI
+import StoreKit
 
 import AcknowList
 final class SettingViewController: BaseViewController {
@@ -54,7 +55,7 @@ extension SettingViewController: UITableViewDelegate, UITableViewDataSource {
         cell.selectionStyle = .none
         cell.backgroundColor = Constant.BaseColor.backgroundColor
         
-        if indexPath.row == 4 {
+        if indexPath.row == 2 {
             
             cell.pushImage.removeFromSuperview()
             
@@ -72,18 +73,19 @@ extension SettingViewController: UITableViewDelegate, UITableViewDataSource {
         
             switch indexPath.row {
             case 0:
-                showAlertMessage(title: "알람 초기화", message: "모든 알람을 삭제합니다.\n정말 삭제 하시겠습니까?", button: "확인", cancel: "취소") { [weak self]_ in
-                    guard let self = self else { return }
-                    self.notificationCenter.removeAllPendingNotificationRequests()
-                    self.notificationCenter.removeAllDeliveredNotifications()
-                    self.view.makeToast("알람을 초기화 됐습니다.", duration: 0.5, position: .center ,style: .init(), completion: nil)
-                }
-                
-            case 1:
-                showAlertMessage(title: "업데이트 예정입니다.", button: "확인")
-            case 2:
                 sendMail()
-            case 3:
+            case 1:
+                if #available(iOS 14.0, *){
+                    guard let scene = UIApplication
+                        .shared
+                        .connectedScenes
+                        .first(where: {
+                            $0.activationState == .foregroundActive
+                        }) as? UIWindowScene else { return }
+                    SKStoreReviewController.requestReview(in: scene)
+                } else {
+                    SKStoreReviewController.requestReview()
+                }
                 if let appstoreUrl = URL(string: "https://apps.apple.com/app/id6443532893}") {
                     var urlComp = URLComponents(url: appstoreUrl, resolvingAgainstBaseURL: false)
                     urlComp?.queryItems = [
@@ -94,9 +96,9 @@ extension SettingViewController: UITableViewDelegate, UITableViewDataSource {
                     }
                     UIApplication.shared.open(reviewUrl, options: [:], completionHandler: nil)
                 }
-            case 4:
+            case 2:
                 return
-            case 5:
+            case 3:
                 guard let url = Bundle.main.url(forResource: "Package", withExtension: "resolved"),
                              let data = try? Data(contentsOf: url),
                              let acknowList = try? AcknowPackageDecoder().decode(from: data) else {

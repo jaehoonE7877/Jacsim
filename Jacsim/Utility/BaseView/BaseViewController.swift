@@ -42,7 +42,7 @@ class BaseViewController: UIViewController {
         self.navigationController?.navigationBar.scrollEdgeAppearance = appearance
     }
     
-    func showAlertMessage(title: String, message: String ,button: String, cancel: String, completion: @escaping (UIAlertAction) -> Void) {
+    func showAlertMessage(title: String, message: String? ,button: String, cancel: String, completion: @escaping (UIAlertAction) -> Void) {
         let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
         let ok = UIAlertAction(title: button, style: .destructive, handler: completion)
         let cancel = UIAlertAction(title: cancel, style: .cancel)

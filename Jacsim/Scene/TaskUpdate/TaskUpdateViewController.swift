@@ -83,9 +83,11 @@ final class TaskUpdateViewController: BaseViewController {
                     self.showAlertMessage(title: "카메라 사용이 불가합니다.", button: "확인")
                     return
                 }
-                self.imagePicker.sourceType = .camera
-                self.imagePicker.allowsEditing = true
-                self.present(self.imagePicker, animated: true)
+                DispatchQueue.main.async {
+                    self.imagePicker.sourceType = .camera
+                    self.imagePicker.allowsEditing = true
+                    self.present(self.imagePicker, animated: true)
+                }
             case .notDetermined:
                 AVCaptureDevice.requestAccess(for: .video) { [weak self] granted in
                     guard let self = self else { return }

@@ -94,6 +94,23 @@ class JacsimRepository: JacsimRepositoryProtocol {
         }
     }
     
+    func deleteAlarm(item: UserJacsim){
+       
+        guard let alarm = item.alarm else { return }
+        formatter.locale = Locale(identifier: "ko_KR")
+        formatter.dateFormat = "yyyy년 M월 d일 EEEE a hh:mm"
+        let alarmString = formatter.string(from: alarm)
+        notificationCenter.removePendingNotificationRequests(withIdentifiers: ["\(item.title)\(alarmString).starter", "\(item.title)\(alarmString).repeater"])
+        
+        do {
+            try localRealm.write{
+                item.alarm = nil
+            }
+        } catch let error {
+            print(error)
+        }
+    }
+    
     func updateMemo(item: UserJacsim, index: Int, memo: String){
         do {
             try localRealm.write{
@@ -124,9 +141,9 @@ class JacsimRepository: JacsimRepositoryProtocol {
             formatter.locale = Locale(identifier: "ko_KR")
             formatter.dateFormat = "yyyy년 M월 d일 EEEE a hh:mm"
             let alarmString = formatter.string(from: alarm)
-            print("\(item.title)\(alarmString).starter", "\(item.title)\(alarmString).repeater")
+            //print("\(item.title)\(alarmString).starter", "\(item.title)\(alarmString).repeater")
             notificationCenter.removePendingNotificationRequests(withIdentifiers: ["\(item.title)\(alarmString).starter", "\(item.title)\(alarmString).repeater"])
-            notificationCenter.removeDeliveredNotifications(withIdentifiers: ["\(item.title)\(alarmString)).starter"])
+            
             do {
                 try localRealm.write{
                     localRealm.delete(item.memoList)
@@ -185,7 +202,6 @@ class JacsimRepository: JacsimRepositoryProtocol {
                             formatter.locale = Locale(identifier: "ko_KR")
                             let alarmString = formatter.string(from: alarm)
                             notificationCenter.removePendingNotificationRequests(withIdentifiers: ["\(task.title)\(alarmString).repeater"])
-                            notificationCenter.removeDeliveredNotifications(withIdentifiers: ["\(task.title)\(alarmString).starter"])
                         }
                         
                     }

@@ -20,7 +20,7 @@ class SettingTableViewCell: BaseTableViewCell {
     }
     
     lazy var versionLabel = UILabel().then {
-        $0.text = "1.0.3"
+        $0.text = "1.0.9"
         $0.font = .systemFont(ofSize: 14)
     }
     

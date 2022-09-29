@@ -8,14 +8,10 @@
 import Foundation
 
 enum SettingModel: Int, CaseIterable {
-    case alarm, backup, inquiry, review, version, licence
+    case inquiry, review, version, licence
     
     var title: String {
         switch self {
-        case .alarm:
-            return "알람 초기화"
-        case .backup:
-            return "백업 및 복구"
         case .inquiry:
             return "문의하기"
         case .review:

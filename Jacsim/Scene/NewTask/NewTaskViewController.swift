@@ -114,9 +114,12 @@ final class NewTaskViewController: BaseViewController {
                     self.showAlertMessage(title: "카메라 사용이 불가합니다.", button: "확인")
                     return
                 }
-                self.imagePicker.sourceType = .camera
-                self.imagePicker.allowsEditing = true
-                self.present(self.imagePicker, animated: true)
+                DispatchQueue.main.async {
+                    self.imagePicker.sourceType = .camera
+                    self.imagePicker.allowsEditing = true
+                    self.present(self.imagePicker, animated: true)
+                }
+                
             case .notDetermined:
                 AVCaptureDevice.requestAccess(for: .video) { [weak self] granted in
                     guard let self = self else { return }
@@ -336,9 +339,10 @@ extension NewTaskViewController: UITextFieldDelegate {
         case mainView.successTextField:
             guard let text = textField.text else { return }
             if Int(text) ?? 0 < 1 {
-                view.makeToast("성공 횟수는 1보다 커야합니다.", duration: 0.3, position: .center, title: nil, image: nil, style: .init()) { _ in
+                view.makeToast("성공 횟수는 1보다 커야합니다.", duration: 0.3, position: .center, title: nil, image: nil, style: .init()) { [weak self]_ in
+                    guard let self = self else { return }
                     DispatchQueue.main.async {
-                        textField.text = "1"
+                        self.mainView.successTextField.text = "1"
                     }
                 }
                 return
@@ -473,11 +477,10 @@ extension NewTaskViewController {
         content.title = title
         content.body = "\(title) 작심을 확인해주세요"
         content.sound = .default
-        content.badge = 1
-        content.categoryIdentifier = "quote.category"
+        
 
         notificationCenter.requestAuthorization(
-            options: [.alert, .badge, .sound])
+            options: [.alert, .badge ,.sound])
         {
             (granted, error) in
 

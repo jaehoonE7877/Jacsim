@@ -17,32 +17,44 @@ class TaskDetailView: BaseView {
     }
     
     let startLabel = UILabel().then {
-        $0.font = UIFont.gothic(style: .Medium, size: 16)
+        $0.font = UIFont.gothic(style: .Medium, size: 14)
         $0.textColor = Constant.BaseColor.textColor
         $0.text = "시작일"
     }
     
     let startDateLabel = UILabel().then {
-        $0.font = UIFont.gothic(style: .Medium, size: 16)
+        $0.font = UIFont.gothic(style: .Medium, size: 14)
         $0.textColor = Constant.BaseColor.textColor
         $0.textAlignment = .right
     }
     
     let endLabel = UILabel().then {
-        $0.font = UIFont.gothic(style: .Medium, size: 16)
+        $0.font = UIFont.gothic(style: .Medium, size: 14)
         $0.textColor = Constant.BaseColor.textColor
         $0.text = "종료일"
     }
     
     let endDateLabel = UILabel().then {
-        $0.font = UIFont.gothic(style: .Medium, size: 16)
+        $0.font = UIFont.gothic(style: .Medium, size: 14)
+        $0.textColor = Constant.BaseColor.textColor
+        $0.textAlignment = .right
+    }
+    
+    let alarmLabel = UILabel().then {
+        $0.font = UIFont.gothic(style: .Medium, size: 14)
+        $0.textColor = Constant.BaseColor.textColor
+        $0.text = "알람 시간"
+    }
+    
+    let alarmTimeLabel = UILabel().then {
+        $0.font = UIFont.gothic(style: .Medium, size: 14)
         $0.textColor = Constant.BaseColor.textColor
         $0.textAlignment = .right
     }
     
     let successLabel = UILabel().then {
         $0.textAlignment = .center
-        $0.font = UIFont.gothic(style: .Medium, size: 20)
+        $0.font = UIFont.gothic(style: .Medium, size: 18)
         $0.textColor = Constant.BaseColor.textColor
     }
     
@@ -52,7 +64,7 @@ class TaskDetailView: BaseView {
     
     let certifyLabel = UILabel().then {
         $0.text = "인증 사진"
-        $0.font = UIFont.gothic(style: .Medium, size: 20)
+        $0.font = UIFont.gothic(style: .Medium, size: 18)
         $0.textColor = Constant.BaseColor.textColor
     }
     
@@ -61,7 +73,7 @@ class TaskDetailView: BaseView {
         let width = UIScreen.main.bounds.width / 2.5
         let spacing: CGFloat = 16
         layout.scrollDirection = .horizontal
-        layout.itemSize = CGSize(width: width, height: width * 1.3)
+        layout.itemSize = CGSize(width: width, height: width * 1.28)
         layout.minimumLineSpacing = spacing
         layout.minimumInteritemSpacing = spacing
         layout.sectionInset = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: spacing)
@@ -85,6 +97,13 @@ class TaskDetailView: BaseView {
         
     }
     
+    lazy var alarmStackView = UIStackView(arrangedSubviews: [alarmLabel, alarmTimeLabel]).then {
+        $0.axis = .horizontal
+        $0.distribution = .fillProportionally
+        $0.spacing = 12
+        
+    }
+    
     
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -95,7 +114,7 @@ class TaskDetailView: BaseView {
     }
     
     override func configure() {
-        [mainImage, startStackView, endStackView, successLabel, lineView, certifyLabel, collectionView].forEach { self.addSubview($0) }
+        [mainImage, startStackView, endStackView, alarmStackView, successLabel, lineView, certifyLabel, collectionView].forEach { self.addSubview($0) }
     }
     
     override func setConstraints() {
@@ -108,24 +127,30 @@ class TaskDetailView: BaseView {
         }
         
         startStackView.snp.makeConstraints { make in
-            make.top.equalTo(mainImage.snp.bottom).offset(16)
+            make.top.equalTo(mainImage.snp.bottom).offset(12)
             make.centerX.equalToSuperview()
             make.width.equalTo(mainImage)
         }
         
         endStackView.snp.makeConstraints { make in
-            make.top.equalTo(startStackView.snp.bottom).offset(16)
+            make.top.equalTo(startStackView.snp.bottom).offset(12)
+            make.centerX.equalToSuperview()
+            make.width.equalTo(mainImage)
+        }
+        
+        alarmStackView.snp.makeConstraints { make in
+            make.top.equalTo(endStackView.snp.bottom).offset(12)
             make.centerX.equalToSuperview()
             make.width.equalTo(mainImage)
         }
         
         successLabel.snp.makeConstraints { make in
-            make.top.equalTo(endStackView.snp.bottom).offset(16)
+            make.top.equalTo(alarmStackView.snp.bottom).offset(12)
             make.centerX.equalToSuperview()
         }
         
         lineView.snp.makeConstraints { make in
-            make.top.equalTo(successLabel.snp.bottom).offset(12)
+            make.top.equalTo(successLabel.snp.bottom).offset(6)
             make.height.equalTo(1)
             make.centerX.equalToSuperview()
             make.width.equalTo(mainImage)
