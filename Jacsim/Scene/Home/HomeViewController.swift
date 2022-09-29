@@ -84,13 +84,7 @@ final class HomeViewController: BaseViewController {
         super.viewDidLoad()
         
         fsCalendar.reloadData()
-        //notificationCenter.delegate = self
-        notificationCenter.getPendingNotificationRequests { items in
-            print(items)
-        }
-        notificationCenter.getDeliveredNotifications { items in
-            print(items)
-        }
+
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -100,7 +94,7 @@ final class HomeViewController: BaseViewController {
         repository.checkIsDone(items: tasks)
         
         fsCalendar.reloadData()
-        
+   
     }
     
     // MARK: Set UI, Constraints
@@ -150,7 +144,7 @@ final class HomeViewController: BaseViewController {
     }
     
     override func setNavigationController() {
-        title = "작심일지"
+        title = "작심"
         navigationController?.navigationBar.tintColor = Constant.BaseColor.textColor
         navigationItem.rightBarButtonItem = UIBarButtonItem(image: UIImage(systemName: "gearshape.fill"), style: .plain, target: self, action: #selector(moveToSetting))
     }
@@ -206,8 +200,9 @@ final class HomeViewController: BaseViewController {
     
     @objc func sortButtonTapped(){
         
-       
         fsCalendar.setCurrentPage(Date(), animated: true)
+        fsCalendar.select(Date(), scrollToDate: true)
+        //fsCalendar(fsCalendar, didSelect: fsCalendar.today ?? Date() , at: .current)
         tasks = repository.fetchRealm()
         
     }
@@ -234,6 +229,11 @@ extension HomeViewController: UITableViewDelegate, UITableViewDataSource {
         guard let cell = tableView.dequeueReusableCell(withIdentifier: JacsimTableViewCell.reuseIdentifier) as? JacsimTableViewCell else { return UITableViewCell() }
         cell.selectionStyle = .none
         cell.titleLabel.text = tasks?[indexPath.row].title
+        if tasks?[indexPath.row].alarm != nil {
+            cell.alarmImageView.isHidden = false
+        } else {
+            cell.alarmImageView.isHidden = true
+        }
         
         
         return cell
@@ -308,7 +308,6 @@ extension HomeViewController: FloatyDelegate {
             floaty.items[0].isHidden = false
         }
     }
-    
 }
 
 //extension HomeViewController: UNUserNotificationCenterDelegate {

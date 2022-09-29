@@ -49,7 +49,6 @@
 		25C3F56428E1CB330062EDA9 /* PageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25C3F56328E1CB330062EDA9 /* PageView.swift */; };
 		25D0AD3528D8747F006A918C /* Date+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25D0AD3428D8747F006A918C /* Date+Extension.swift */; };
 		25D0AD3728D8C5B0006A918C /* TaskUpdateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25D0AD3628D8C5B0006A918C /* TaskUpdateView.swift */; };
-		25E8467028DCC46A00E5300B /* Alarm.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25E8466F28DCC46A00E5300B /* Alarm.swift */; };
 		25EE098228CF0CF600B5B5CA /* HomeViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25EE098128CF0CF600B5B5CA /* HomeViewController.swift */; };
 		25EE098428CF0D0800B5B5CA /* JacsimTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25EE098328CF0D0800B5B5CA /* JacsimTableViewCell.swift */; };
 		25EE098828CF104100B5B5CA /* AllTaskViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25EE098728CF104100B5B5CA /* AllTaskViewController.swift */; };
@@ -107,7 +106,6 @@
 		25C3F56328E1CB330062EDA9 /* PageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PageView.swift; sourceTree = "<group>"; };
 		25D0AD3428D8747F006A918C /* Date+Extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Date+Extension.swift"; sourceTree = "<group>"; };
 		25D0AD3628D8C5B0006A918C /* TaskUpdateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskUpdateView.swift; sourceTree = "<group>"; };
-		25E8466F28DCC46A00E5300B /* Alarm.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Alarm.swift; sourceTree = "<group>"; };
 		25EE098128CF0CF600B5B5CA /* HomeViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeViewController.swift; sourceTree = "<group>"; };
 		25EE098328CF0D0800B5B5CA /* JacsimTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JacsimTableViewCell.swift; sourceTree = "<group>"; };
 		25EE098728CF104100B5B5CA /* AllTaskViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AllTaskViewController.swift; sourceTree = "<group>"; };
@@ -207,7 +205,6 @@
 				25EE099028CF15F400B5B5CA /* ImageSearch */,
 				25EE098528CF101D00B5B5CA /* AllTask */,
 				25EE098628CF102B00B5B5CA /* Setting */,
-				25E8466A28DCB7BD00E5300B /* Alarm */,
 			);
 			path = Scene;
 			sourceTree = "<group>";
@@ -299,14 +296,6 @@
 				25C3F56328E1CB330062EDA9 /* PageView.swift */,
 			);
 			path = WalkThorugh;
-			sourceTree = "<group>";
-		};
-		25E8466A28DCB7BD00E5300B /* Alarm */ = {
-			isa = PBXGroup;
-			children = (
-				25E8466F28DCC46A00E5300B /* Alarm.swift */,
-			);
-			path = Alarm;
 			sourceTree = "<group>";
 		};
 		25EE098028CF0CE100B5B5CA /* Home */ = {
@@ -478,7 +467,6 @@
 				25EE098F28CF153200B5B5CA /* NewTaskView.swift in Sources */,
 				2547132528CC4B670049D952 /* ViewController.swift in Sources */,
 				25636C4728CC544A00B385AF /* BaseCollectionViewCell.swift in Sources */,
-				25E8467028DCC46A00E5300B /* Alarm.swift in Sources */,
 				25FCD98F28D5CA15004F48E8 /* JacsimRepository.swift in Sources */,
 				25EE099A28CF172200B5B5CA /* TaskUpdateViewController.swift in Sources */,
 				25EE098D28CF14E400B5B5CA /* NewTaskViewController.swift in Sources */,
@@ -664,13 +652,12 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 3;
+				CURRENT_PROJECT_VERSION = 7;
 				DEVELOPMENT_TEAM = RFHV927M8S;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Jacsim/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "작심";
 				INFOPLIST_KEY_NSCameraUsageDescription = "작심 이미지를 적용하기 위해서는 카메라 권한이 필요합니다. ";
-				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "작심한 일의 배경, 인증 사진을 적용하기 위해 사용됩니다.";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UIMainStoryboardFile = Main;
@@ -700,13 +687,12 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 3;
+				CURRENT_PROJECT_VERSION = 7;
 				DEVELOPMENT_TEAM = RFHV927M8S;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Jacsim/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "작심";
 				INFOPLIST_KEY_NSCameraUsageDescription = "작심 이미지를 적용하기 위해서는 카메라 권한이 필요합니다. ";
-				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "작심한 일의 배경, 인증 사진을 적용하기 위해 사용됩니다.";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UIMainStoryboardFile = Main;

@@ -13,7 +13,7 @@ enum SettingModel: Int, CaseIterable {
     var title: String {
         switch self {
         case .alarm:
-            return "알람"
+            return "알람 초기화"
         case .backup:
             return "백업 및 복구"
         case .inquiry:

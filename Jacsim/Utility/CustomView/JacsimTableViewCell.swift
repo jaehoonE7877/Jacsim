@@ -21,6 +21,12 @@ final class JacsimTableViewCell: BaseTableViewCell {
         $0.textAlignment = .left
     }
     
+    lazy var alarmImageView = UIImageView().then {
+        $0.isHidden = true
+        $0.image = UIImage(systemName: "bell.fill", withConfiguration: UIImage.SymbolConfiguration(pointSize: 18))
+        $0.tintColor = Constant.BaseColor.textColor
+    }
+    
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
     }
@@ -32,7 +38,8 @@ final class JacsimTableViewCell: BaseTableViewCell {
     override func configure() {
         contentView.backgroundColor = Constant.BaseColor.backgroundColor
         contentView.addSubview(jacsimContentView)
-        jacsimContentView.addSubview(titleLabel)
+        [titleLabel, alarmImageView].forEach { jacsimContentView.addSubview($0) }
+        
     }
     
     override func setConstraints() {
@@ -46,6 +53,11 @@ final class JacsimTableViewCell: BaseTableViewCell {
         titleLabel.snp.makeConstraints { make in
             make.leading.equalTo(jacsimContentView.snp.leading).offset(12)
             make.centerY.equalTo(jacsimContentView.snp.centerY)
+        }
+        
+        alarmImageView.snp.makeConstraints { make in
+            make.trailing.equalTo(jacsimContentView.snp.trailing).offset(-12)
+            make.centerY.equalTo(titleLabel.snp.centerY)
         }
     }
     

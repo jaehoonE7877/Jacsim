@@ -48,7 +48,7 @@ final class TaskUpdateView: BaseView {
     
     let certifyButton = UIButton().then {
         $0.setTitle("인증하겠습니다!", for: .normal)
-        $0.tintColor = Constant.BaseColor.textColor
+        //$0.tintColor = Constant.BaseColor.textColor
         $0.layer.cornerRadius = Constant.Design.cornerRadius
         $0.backgroundColor = Constant.BaseColor.buttonColor
     }

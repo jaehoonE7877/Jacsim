@@ -78,21 +78,46 @@ final class TaskDetailViewController: BaseViewController {
         
         
         navigationItem.rightBarButtonItem = UIBarButtonItem(title: nil, image: UIImage(systemName: "ellipsis.circle"), menu: reviseButtonTapped())
-        //UIBarButtonItem(title: "작심 그만두기", style: .plain, target: self, action: #selector(quitJacsimButtonTapped))
         
         navigationController?.navigationBar.tintColor = Constant.BaseColor.textColor
-        //navigationItem.rightBarButtonItem?.tintColor =
     }
     
     private func reviseButtonTapped() -> UIMenu {
         
-        let revise = UIAction(title: "수정", image: UIImage(systemName: "pencil.circle")) { _ in
+//        let revise = UIAction(title: "수정", image: UIImage(systemName: "pencil.circle")) { _ in
+//            guard let self = self else { return }
+//            guard let title = self.task?.title else { return }
+//            guard let success = self.task?.success else { return }
+//            guard let id = self.task?.id else { return }
+//            
+//            let vc = NewTaskViewController()
+//            vc.mainView.newTaskTitleTextfield.text = title
+//            vc.mainView.titleCountLabel.text = "\(title.count)/20"
+//            
+//            vc.mainView.startDateTextField.text = self.mainView.startDateLabel.text
+//            vc.mainView.endDateTextField.text = self.mainView.endDateLabel.text
+//            vc.mainView.startDateTextField.isUserInteractionEnabled = false
+//            vc.mainView.endDateTextField.isUserInteractionEnabled = false
+//            
+//            vc.mainView.successTextField.text = "\(success)"
+//            
+//            if let alarm = self.task?.alarm {
+//                vc.mainView.alarmSwitch.isOn = true
+//                self.formatter.dateFormat = "a hh:mm"
+//                vc.mainView.alarmTimeLabel.text = self.formatter.string(from: alarm)
+//            }
+//            
+//            vc.mainView.newTaskImageView.image = self.loadImageFromDocument(fileName: "\(String(describing: id)).jpg")
+//            
+//            vc.task = self.task
+//            self.transitionViewController(viewController: vc, transitionStyle: .presentFullNavigation)
             
-        }
+//        }
+        
         let quit = UIAction(title: "작심 그만두기", image: UIImage(systemName: "trash"), attributes: .destructive) { [weak self]_ in
             guard let self = self else { return }
-            self.showAlertMessage(title: "해당 작심을 그만두실 건가요?", message: "기존에 저장한 데이터들은 사라집니다.", button: "확인", cancel: "취소") { [weak self] _ in
-                guard let self = self else { return }
+            self.showAlertMessage(title: "해당 작심을 그만두실 건가요?", message: "기존에 저장한 데이터들은 사라집니다.", button: "확인", cancel: "취소") { _ in
+               
                 guard let task = self.task else { return }
                 // 인증유무 분기처리
                 self.formatter.dateFormat = "M월 dd일 EEEE"
@@ -111,12 +136,12 @@ final class TaskDetailViewController: BaseViewController {
                     self.repository.deleteJacsim(item: task)
                     
                 }
-                
-                self.dismiss(animated: true)
+                self.navigationController?.popViewController(animated: true)
             }
+           
         }
         
-        let menu = UIMenu(title: "", options: .displayInline, children: [revise,quit])
+        let menu = UIMenu(title: "", options: .displayInline, children: [quit])
        
         return menu
     }
@@ -153,12 +178,20 @@ extension TaskDetailViewController: UICollectionViewDelegate, UICollectionViewDa
     }
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        
         guard let cell = collectionView.cellForItem(at: indexPath) as? TaskDetailCollectionViewCell else { return }
         
         let vc = TaskUpdateViewController()
         guard let task = task else { return }
         let dateText = formatter.string(from: dayArray[indexPath.item])
-        // 인증처음 할 때
+        
+        let now = Date()
+        formatter.dateFormat = "M월 dd일 EEEE"
+        guard formatter.string(from: now) == dateText else {
+            showAlertMessage(title: "작심 인증하기", message: "인증 날짜가 아닙니다.\n확인해주세요!", button: "확인")
+            return
+        }
+        
         if !task.memoList[indexPath.item].check {
             vc.dateText = cell.dateLabel.text
             vc.task = task

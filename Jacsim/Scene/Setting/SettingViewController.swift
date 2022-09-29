@@ -72,8 +72,13 @@ extension SettingViewController: UITableViewDelegate, UITableViewDataSource {
         
             switch indexPath.row {
             case 0:
-                let vc = AlarmViewController()
-                self.transitionViewController(viewController: vc, transitionStyle: .push)
+                showAlertMessage(title: "알람 초기화", message: "모든 알람을 삭제합니다.\n정말 삭제 하시겠습니까?", button: "확인", cancel: "취소") { [weak self]_ in
+                    guard let self = self else { return }
+                    self.notificationCenter.removeAllPendingNotificationRequests()
+                    self.notificationCenter.removeAllDeliveredNotifications()
+                    self.view.makeToast("알람을 초기화 됐습니다.", duration: 0.5, position: .center ,style: .init(), completion: nil)
+                }
+                
             case 1:
                 showAlertMessage(title: "업데이트 예정입니다.", button: "확인")
             case 2:

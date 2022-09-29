@@ -21,11 +21,11 @@ private protocol JacsimRepositoryProtocol: AnyObject {
     func checkCertified(item: UserJacsim) -> Int
 }
 
-final class JacsimRepository: JacsimRepositoryProtocol {
+class JacsimRepository: JacsimRepositoryProtocol {
     
     let notificationCenter = UNUserNotificationCenter.current()
     let formatter = DateFormatter()
-    let calendar = Calendar.current
+    //let calendar = Calendar.current
     let now = Date()
     
     let localRealm = try! Realm()
@@ -119,16 +119,33 @@ final class JacsimRepository: JacsimRepositoryProtocol {
     
     func deleteJacsim(item: UserJacsim){
         
-        removeImageFromDocument(fileName: "\(item.id).jpg")
-        notificationCenter.removePendingNotificationRequests(withIdentifiers: ["\(item.title)\(String(describing: item.alarm)).starter", "\(item.title)\(String(describing: item.alarm)).repeater"])
-        notificationCenter.removeDeliveredNotifications(withIdentifiers: ["\(item.title)\(String(describing: item.alarm)).starter", "\(item.title)\(String(describing: item.alarm)).repeater"])
-        do {
-            try localRealm.write{
-                localRealm.delete(item.memoList)
-                localRealm.delete(item)
+        if let alarm = item.alarm {
+            removeImageFromDocument(fileName: "\(item.id).jpg")
+            formatter.locale = Locale(identifier: "ko_KR")
+            formatter.dateFormat = "yyyy년 M월 d일 EEEE a hh:mm"
+            let alarmString = formatter.string(from: alarm)
+            print("\(item.title)\(alarmString).starter", "\(item.title)\(alarmString).repeater")
+            notificationCenter.removePendingNotificationRequests(withIdentifiers: ["\(item.title)\(alarmString).starter", "\(item.title)\(alarmString).repeater"])
+            notificationCenter.removeDeliveredNotifications(withIdentifiers: ["\(item.title)\(alarmString)).starter"])
+            do {
+                try localRealm.write{
+                    localRealm.delete(item.memoList)
+                    localRealm.delete(item)
+                }
+            } catch {
+                print(error)
             }
-        } catch {
-            print(error)
+        } else {
+            removeImageFromDocument(fileName: "\(item.id).jpg")
+            
+            do {
+                try localRealm.write{
+                    localRealm.delete(item.memoList)
+                    localRealm.delete(item)
+                }
+            } catch {
+                print(error)
+            }
         }
         
     }
@@ -162,8 +179,15 @@ final class JacsimRepository: JacsimRepositoryProtocol {
                 do {
                     try localRealm.write{
                         task.isDone = true
-                        notificationCenter.removePendingNotificationRequests(withIdentifiers: ["\(task.title)\(String(describing: task.alarm)).repeater"])
-                        notificationCenter.removeDeliveredNotifications(withIdentifiers: ["\(task.title)\(String(describing: task.alarm)).starter", "\(task.title)\(String(describing: task.alarm)).repeater"])
+                        
+                        if let alarm = task.alarm {
+                            formatter.dateFormat = "yyyy년 M월 d일 EEEE a hh:mm"
+                            formatter.locale = Locale(identifier: "ko_KR")
+                            let alarmString = formatter.string(from: alarm)
+                            notificationCenter.removePendingNotificationRequests(withIdentifiers: ["\(task.title)\(alarmString).repeater"])
+                            notificationCenter.removeDeliveredNotifications(withIdentifiers: ["\(task.title)\(alarmString).starter"])
+                        }
+                        
                     }
                 } catch let error {
                     print(error)

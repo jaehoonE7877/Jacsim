@@ -75,7 +75,8 @@ final class TaskUpdateViewController: BaseViewController {
     
     private func addImageButtonTapped() -> UIMenu {
         
-        let camera = UIAction(title: "카메라", image: UIImage(systemName: "camera")) { _ in
+        let camera = UIAction(title: "카메라", image: UIImage(systemName: "camera")) { [weak self]_ in
+            guard let self = self else { return }
             switch AVCaptureDevice.authorizationStatus(for: .video) {
             case .authorized:
                 guard UIImagePickerController.isSourceTypeAvailable(.camera) else {
@@ -97,10 +98,11 @@ final class TaskUpdateViewController: BaseViewController {
                     }
                 }
             default:
-                self.showAlertCamera()
+                self.showAlertSetting(message: "작심이(가) 카메라 접근 허용되어 있지 않습니다. \r\n 설정화면으로 가시겠습니까?")
             }
         }
-        let gallery = UIAction(title: "갤러리", image: UIImage(systemName: "photo.on.rectangle")) { _ in
+        let gallery = UIAction(title: "갤러리", image: UIImage(systemName: "photo.on.rectangle")) { [weak self] _ in
+            guard let self = self else { return }
             self.present(self.phPicker, animated: true)
         }
         let menu = UIMenu(title: "사진의 경로를 정해주세요.", options: .displayInline, children: [camera,gallery])
@@ -133,7 +135,7 @@ final class TaskUpdateViewController: BaseViewController {
     }
     
 }
-
+//MARK: TextField Delegate
 extension TaskUpdateViewController: UITextFieldDelegate {
     
     func textFieldShouldReturn(_ textField: UITextField) -> Bool {
@@ -164,7 +166,8 @@ extension TaskUpdateViewController: UITextFieldDelegate {
     func textFieldDidEndEditing(_ textField: UITextField) {
         guard let text = textField.text else { return }
         if text.trimmingCharacters(in: .whitespacesAndNewlines).count < 2 {
-            view.makeToast("한 줄 메모는 2글자 이상으로 남겨주세요!", duration: 0.4, position: .center, title: nil, image: nil, style: .init()) { _ in
+            view.makeToast("한 줄 메모는 2글자 이상으로 남겨주세요!", duration: 0.5, position: .center, title: nil, image: nil, style: .init()) { [weak self]_ in
+                guard let self = self else { return }
                 DispatchQueue.main.async {
                     textField.text = ""
                     self.mainView.memoCountLabel.text = "0/20"
@@ -222,7 +225,8 @@ extension TaskUpdateViewController: PHPickerViewControllerDelegate {
         let itemProvider = results.first?.itemProvider
         
         if let itemProvider = itemProvider, itemProvider.canLoadObject(ofClass: UIImage.self){
-            itemProvider.loadObject(ofClass: UIImage.self) { image, error in
+            itemProvider.loadObject(ofClass: UIImage.self) { [weak self] image, error in
+                guard let self = self else { return }
                 DispatchQueue.main.async {
                     
                     guard let image = image as? UIImage else { return }

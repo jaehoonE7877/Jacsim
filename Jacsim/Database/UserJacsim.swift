@@ -24,7 +24,7 @@ class UserJacsim: Object {
 
     @Persisted var memoList: List<Certified>
 
-    convenience init(title: String, startDate: Date, endDate: Date, isDone: Bool = false, success: Int, isSuccess: Bool = false, alarm: Date?) {
+    convenience init(title: String, startDate: Date, endDate: Date, isDone: Bool = false, success: Int, isSuccess: Bool = false, alarm: Date?){
         self.init()
         self.title = title
         self.startDate = startDate

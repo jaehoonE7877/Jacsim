@@ -17,6 +17,8 @@ final class NewTaskViewController: BaseViewController {
     
     var alarm: Date?
     
+    let timeFormatter = DateFormatter()
+    
     //MARK: Property
     
     let mainView = NewTaskView()
@@ -50,7 +52,7 @@ final class NewTaskViewController: BaseViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        print("Realm is located at:", repository.localRealm.configuration.fileURL!)
+        //print("Realm is located at:", repository.localRealm.configuration.fileURL!)
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -104,7 +106,8 @@ final class NewTaskViewController: BaseViewController {
     //MARK: UIMenu
     private func addImageButtonTapped() -> UIMenu {
         
-        let camera = UIAction(title: "카메라", image: UIImage(systemName: "camera")) { _ in
+        let camera = UIAction(title: "카메라", image: UIImage(systemName: "camera")) { [weak self]_ in
+            guard let self = self else { return }
             switch AVCaptureDevice.authorizationStatus(for: .video) {
             case .authorized:
                 guard UIImagePickerController.isSourceTypeAvailable(.camera) else {
@@ -126,11 +129,12 @@ final class NewTaskViewController: BaseViewController {
                     }
                 }
             default:
-                self.showAlertCamera()
+                self.showAlertSetting(message: "작심이(가) 카메라 접근 허용되어 있지 않습니다. \r\n 설정화면으로 가시겠습니까?")
             }
             
         }
-        let gallery = UIAction(title: "갤러리", image: UIImage(systemName: "photo.on.rectangle")) { _ in
+        let gallery = UIAction(title: "갤러리", image: UIImage(systemName: "photo.on.rectangle")) {[weak self] _ in
+            guard let self = self else { return }
             self.present(self.phPicker, animated: true)
         }
         let menu = UIMenu(title: "사진의 경로를 정해주세요.", options: .displayInline, children: [gallery,camera])
@@ -149,33 +153,56 @@ final class NewTaskViewController: BaseViewController {
     @objc func alarmSwitchTapped(){
         
         if !mainView.alarmSwitch.isOn {
-            //notificationCenter.removePendingNotificationRequests(withIdentifiers: "")
+            
             mainView.alarmTimeLabel.text = nil
             return
-        } else {
-            let vc = AlarmViewController()
             
-            vc.completion = { date in
+        } else {
+            
+            notificationCenter.requestAuthorization(options: [.alert, .badge, .sound]) { [weak self] (granted, error) in
+                guard let self = self else { return }
                 
-                guard let date = date else {
-                    self.mainView.alarmSwitch.isOn = false
-                    return
+                if let error = error {
+                    print("granted, but Error in notification permission:\(error.localizedDescription)")
                 }
-
-                self.formatter.dateFormat = "a hh:mm"
-                DispatchQueue.main.async {
-                    self.mainView.alarmTimeLabel.text = self.formatter.string(from: date)
+                
+                if granted {
+                    
+                    DispatchQueue.main.async {
+                        let vc = AlarmViewController()
+                        
+                        vc.completion = { date in
+                            
+                            guard let date = date else {
+                                self.mainView.alarmSwitch.isOn = false
+                                return
+                            }
+                            
+                            self.formatter.dateFormat = "a hh:mm"
+                            DispatchQueue.main.async {
+                                self.mainView.alarmTimeLabel.text = self.formatter.string(from: date)
+                            }
+                        }
+                        
+                        self.present(vc, animated: true)
+                    }
+                    
+                    
+                } else {
+                    
+                    DispatchQueue.main.async {
+                        self.mainView.alarmSwitch.isOn = false
+                        self.showAlertSetting(message: "작심이(가) 알림 허용되어 있지 않습니다. \r\n '설정>개인정보 보호'에서 알림 설정을 허용으로 설정해주세요")
+                    }
+                    
                 }
             }
-            
-            self.present(vc, animated: true)
         }
     }
     
     // MARK: Realm Create
     @objc func saveButtonTapped(){
         
-        let timeFormatter = DateFormatter()
         timeFormatter.dateFormat = "yyyy년 M월 d일 EEEE a hh:mm"
         timeFormatter.locale = Locale(identifier: "ko_KR")
         timeFormatter.timeZone = TimeZone(identifier: "ko_KR")
@@ -200,7 +227,8 @@ final class NewTaskViewController: BaseViewController {
         guard let endDate = formatter.date(from: mainView.endDateTextField.text ?? "") else { return }
         guard let success = Int(mainView.successTextField.text ?? "") else { return }
         if startDate - endDate > 0 {
-            view.makeToast("종료일은 시작일보다 빠를 수 없습니다.", duration: 1.0, position: .center, title: nil, image: nil, style: .init()) { _ in
+            view.makeToast("종료일은 시작일보다 빠를 수 없습니다.", duration: 1.0, position: .center, title: nil, image: nil, style: .init()) { [weak self]_ in
+                guard let self = self else { return }
                 DispatchQueue.main.async {
                     self.mainView.endDateTextField.text = ""
                 }
@@ -209,7 +237,8 @@ final class NewTaskViewController: BaseViewController {
         } else {
             let days = calculateDays(startDate: startDate, endDate: endDate)
             if success > days || success <= 0 {
-                view.makeToast("최소 성공 횟수는 작심 진행 일수 보다 많을 수 없습니다.", duration: 2.0, position: .center, title: nil, image: nil, style: .init()) { _ in
+                view.makeToast("최소 성공 횟수는 작심 진행 일수 보다 많을 수 없습니다.", duration: 2.0, position: .center, title: nil, image: nil, style: .init()) { [weak self]_ in
+                    guard let self = self else { return }
                     DispatchQueue.main.async {
                         self.mainView.successTextField.text = ""
                     }
@@ -224,6 +253,11 @@ final class NewTaskViewController: BaseViewController {
             guard let fireDate = timeFormatter.date(from: valueA) else { return }
             print("\(fireDate): 알림 시작일")
             
+            guard fireDate.timeIntervalSinceNow > 0 else {
+                self.showAlertMessage(title: "알람 시간이 이미 지난 날짜 입니다", message: "알람을 다시 설정해주세요" ,button: "확인")
+                return
+            }
+            
             let task = UserJacsim(title: title, startDate: startDate, endDate: endDate, success: success, alarm: fireDate)
             for _ in 0...calculateDays(startDate: startDate, endDate: endDate) - 1 {
                 let certified = Certified(memo: "인증해주세요")
@@ -235,7 +269,7 @@ final class NewTaskViewController: BaseViewController {
             repository.addJacsim(item: task)
             
             scheduleNotification(title: title, fireDate: fireDate)
-            
+           
             dismiss(animated: true)
         } else {
            
@@ -290,7 +324,8 @@ extension NewTaskViewController: UITextFieldDelegate {
         case mainView.newTaskTitleTextfield:
             guard let text = textField.text else { return }
             if text.trimmingCharacters(in: .whitespacesAndNewlines).count < 2 {
-                view.makeToast("작심한 일의 제목은 2글자 이상이어야 합니다!", duration: 0.4, position: .center, title: nil, image: nil, style: .init()) { _ in
+                view.makeToast("작심한 일의 제목은 2글자 이상이어야 합니다!", duration: 0.4, position: .center, title: nil, image: nil, style: .init()) { [weak self] _ in
+                    guard let self = self else { return }
                     DispatchQueue.main.async {
                         textField.text = ""
                         self.mainView.titleCountLabel.text = "0/20"
@@ -398,7 +433,8 @@ extension NewTaskViewController: PHPickerViewControllerDelegate {
         let itemProvider = results.first?.itemProvider
         
         if let itemProvider = itemProvider, itemProvider.canLoadObject(ofClass: UIImage.self){
-            itemProvider.loadObject(ofClass: UIImage.self) { image, error in
+            itemProvider.loadObject(ofClass: UIImage.self) { [weak self]image, error in
+                guard let self = self else { return }
                 DispatchQueue.main.async {
                     
                     guard let image = image as? UIImage else { return }
@@ -437,6 +473,7 @@ extension NewTaskViewController {
         content.title = title
         content.body = "\(title) 작심을 확인해주세요"
         content.sound = .default
+        content.badge = 1
         content.categoryIdentifier = "quote.category"
 
         notificationCenter.requestAuthorization(
@@ -447,10 +484,11 @@ extension NewTaskViewController {
             if let error = error {
                 print("granted, but Error in notification permission:\(error.localizedDescription)")
             }
+            self.formatter.dateFormat = "yyyy년 M월 d일 EEEE a hh:mm"
+            let dateString = self.formatter.string(from: fireDate)
+            let fireTrigger = UNTimeIntervalNotificationTrigger(timeInterval: fireDate.timeIntervalSinceNow , repeats: false)
 
-            let fireTrigger = UNTimeIntervalNotificationTrigger(timeInterval: fireDate.timeIntervalSinceNow, repeats: false)
-
-            let fireDateRequest = UNNotificationRequest(identifier: "\(title)\(fireDate).starter", content: content, trigger: fireTrigger)
+            let fireDateRequest = UNNotificationRequest(identifier: "\(title)\(dateString).starter", content: content, trigger: fireTrigger)
 
             UNUserNotificationCenter.current().add(fireDateRequest) {(error) in
                 if let error = error {
@@ -461,7 +499,7 @@ extension NewTaskViewController {
                         print("\(firstRepeatingDate): 반복 알림 시작일")
                         let repeatingTrigger = UNTimeIntervalNotificationTrigger(timeInterval: firstRepeatingDate.timeIntervalSinceNow, repeats: true)
                         
-                        let repeatingRequest = UNNotificationRequest(identifier: "\(title)\(fireDate).repeater", content: content, trigger: repeatingTrigger)
+                        let repeatingRequest = UNNotificationRequest(identifier: "\(title)\(dateString).repeater", content: content, trigger: repeatingTrigger)
                         
                         UNUserNotificationCenter.current().add(repeatingRequest) { (error) in
                             if let error = error {

@@ -23,16 +23,15 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
             let nav = UINavigationController(rootViewController: vc)
             
             window?.rootViewController = nav
-            window?.makeKeyAndVisible()
+           
         } else {
             let vc1 = WalkThroughViewController()
             
             window?.rootViewController = vc1
-            window?.makeKeyAndVisible()
+           
         }
-        
-        
-        
+
+        window?.makeKeyAndVisible()
         
     }
 

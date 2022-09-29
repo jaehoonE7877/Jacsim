@@ -82,14 +82,13 @@ class BaseViewController: UIViewController {
         return (calendar.dateComponents([.day], from: startDate, to: endDate).day ?? 1) + 1
     }
     
-    func showAlertCamera() {
+    func showAlertSetting(message: String) {
         
-        let message = "작심이(가) 카메라 접근 허용되어 있지 않습니다. \r\n 설정화면으로 가시겠습니까?"
         let alert = UIAlertController(title: "설정", message: message, preferredStyle: .alert)
             
         let cancel = UIAlertAction(title: "취소", style: .default)
 
-        let confirm = UIAlertAction(title: "확인", style: .default) { action in
+        let confirm = UIAlertAction(title: "설정", style: .default) { action in
             UIApplication.shared.open(URL(string: UIApplication.openSettingsURLString)!)
         }
         
