@@ -46,8 +46,8 @@ final class WalkThroughViewController: BaseViewController {
         let vc1 = FirstViewController()
         let vc2 = SecondViewController()
         let vc3 = ThirdViewController()
-        
-        pageViewControllerList = [vc1, vc2, vc3]
+        let vc4 = FourthViewController()
+        pageViewControllerList = [vc1, vc2, vc3, vc4]
     }
     
     private func configurePageViewController() {
@@ -69,7 +69,7 @@ final class WalkThroughViewController: BaseViewController {
             transitionViewController(viewController: HomeViewController(), transitionStyle: .presentFullNavigation)
         }
         
-        if pageControl.currentPage == 2{
+        if pageControl.currentPage == 3{
             continueButton.setTitle("시작하기", for: .normal)
         }
     }

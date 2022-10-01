@@ -355,14 +355,13 @@ extension NewTaskViewController: UITextFieldDelegate {
     @objc func keyboardWillShow(_ sender: Notification){
         
         if let keyboardSize = (sender.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? NSValue)?.cgRectValue {
-
-            if someTextField == mainView.endDateTextField {
+            
+            switch someTextField {
+            case mainView.startDateTextField, mainView.endDateTextField:
                 UIView.animate(withDuration: 0.3, animations: { self.view.transform = CGAffineTransform(translationX: 0, y: -keyboardSize.height + 116)}, completion: nil)
-            } else if someTextField == mainView.startDateTextField {
-                UIView.animate(withDuration: 0.3, animations: { self.view.transform = CGAffineTransform(translationX: 0, y: -keyboardSize.height + 116)}, completion: nil)
-            } else if someTextField == mainView.successTextField {
+            case mainView.successTextField:
                 UIView.animate(withDuration: 0.3, animations: { self.view.transform = CGAffineTransform(translationX: 0, y: -keyboardSize.height + 100)  }, completion: nil)
-            } else {
+            default:
                 return
             }
         }
@@ -490,7 +489,7 @@ extension NewTaskViewController {
             self.formatter.dateFormat = "yyyy년 M월 d일 EEEE a hh:mm"
             let dateString = self.formatter.string(from: fireDate)
             let fireTrigger = UNTimeIntervalNotificationTrigger(timeInterval: fireDate.timeIntervalSinceNow , repeats: false)
-
+            //print(fireDate.timeIntervalSinceNow)
             let fireDateRequest = UNNotificationRequest(identifier: "\(title)\(dateString).starter", content: content, trigger: fireTrigger)
 
             UNUserNotificationCenter.current().add(fireDateRequest) {(error) in
@@ -501,7 +500,7 @@ extension NewTaskViewController {
                     if let firstRepeatingDate = Calendar.current.date(byAdding: .day, value: 1, to: fireDate) {
                         print("\(firstRepeatingDate): 반복 알림 시작일")
                         let repeatingTrigger = UNTimeIntervalNotificationTrigger(timeInterval: firstRepeatingDate.timeIntervalSinceNow, repeats: true)
-                        
+                        //print(firstRepeatingDate.timeIntervalSinceNow)
                         let repeatingRequest = UNNotificationRequest(identifier: "\(title)\(dateString).repeater", content: content, trigger: repeatingTrigger)
                         
                         UNUserNotificationCenter.current().add(repeatingRequest) { (error) in

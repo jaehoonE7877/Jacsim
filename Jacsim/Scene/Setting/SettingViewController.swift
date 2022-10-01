@@ -22,7 +22,6 @@ final class SettingViewController: BaseViewController {
         $0.register(SettingTableViewCell.self, forCellReuseIdentifier: SettingTableViewCell.reuseIdentifier)
     }
     
-    
     //MARK: View Life Cycle
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -76,18 +75,6 @@ extension SettingViewController: UITableViewDelegate, UITableViewDataSource {
                 sendMail()
             case 1:
                 moveToReview()
-//                if #available(iOS 14.0, *){
-//                    guard let scene = UIApplication
-//                        .shared
-//                        .connectedScenes
-//                        .first(where: {
-//                            $0.activationState == .foregroundActive
-//                        }) as? UIWindowScene else { return }
-//                    SKStoreReviewController.requestReview(in: scene)
-//                } else {
-//                    SKStoreReviewController.requestReview()
-//                }
-                
             case 2:
                 return
             case 3:
@@ -105,10 +92,10 @@ extension SettingViewController: UITableViewDelegate, UITableViewDataSource {
     }
     
     private func moveToReview() {
-                if let reviewURL = URL(string: "itms-apps://itunes.apple.com/app/itunes-u/id\(6443532893)?ls=1&mt=8&action=write-review"), UIApplication.shared.canOpenURL(reviewURL) {
-                    UIApplication.shared.open(reviewURL, options: [:], completionHandler: nil)
-                }
-            }
+        if let reviewURL = URL(string: "itms-apps://itunes.apple.com/app/itunes-u/id\(6443532893)?ls=1&mt=8&action=write-review"), UIApplication.shared.canOpenURL(reviewURL) {
+            UIApplication.shared.open(reviewURL, options: [:], completionHandler: nil)
+        }
+    }
     
 }
 
@@ -121,11 +108,11 @@ extension SettingViewController : MFMailComposeViewControllerDelegate {
             let mail = MFMailComposeViewController()
             mail.setToRecipients(["sjh7877@naver.com"])
             mail.setSubject("작심 문의사항 -")
-            mail.mailComposeDelegate = self   //
+            mail.mailComposeDelegate = self
+            
             self.present(mail, animated: true)
             
         } else {
-            
             showAlertMessage(title: "메일 등록을 해주시거나 sjh7877@naver.com으로 문의주세요.", button: "확인")
         }
     }

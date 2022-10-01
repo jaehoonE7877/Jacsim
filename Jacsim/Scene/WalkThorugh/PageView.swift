@@ -17,22 +17,6 @@ class PageView: BaseView {
         $0.image = UIImage(named: "jacsim")
     }
     
-    let topLabel = UILabel().then {
-        $0.font = UIFont.gothic(style: .Medium, size: 16)
-        $0.textColor = .black
-        $0.textAlignment = .center
-        $0.numberOfLines = 2
-        $0.text = "sdadasdadadasafafasfafafasfafafsaa"
-    }
-    
-    let bottomLabel = UILabel().then {
-        $0.font = UIFont.gothic(style: .Light, size: 16)
-        $0.textColor = .black
-        $0.numberOfLines = 2
-        $0.textAlignment = .center
-        $0.text = "sdadasdadadasafafasfafafasfafafsaa" 
-    }
-    
     
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -44,27 +28,17 @@ class PageView: BaseView {
     }
     
     override func configure() {
-        [mainImageView, topLabel, bottomLabel].forEach { self.addSubview($0) }
+        [mainImageView].forEach { self.addSubview($0) }
     }
     
     override func setConstraints() {
         mainImageView.snp.makeConstraints { make in
-            make.top.equalTo(self.safeAreaLayoutGuide).offset(8)
-            make.width.equalTo(self).multipliedBy(0.88)
+            make.top.equalTo(self.safeAreaLayoutGuide).offset(40)
+            make.width.equalTo(self).multipliedBy(0.92)
             make.centerX.equalToSuperview()
-            make.height.equalTo(self).multipliedBy(0.6)
+            make.height.equalTo(self).multipliedBy(0.72)
         }
         
-        topLabel.snp.makeConstraints { make in
-            make.top.equalTo(mainImageView.snp.bottom).offset(16)
-            make.width.equalTo(mainImageView)
-            make.centerX.equalToSuperview()
-        }
         
-        bottomLabel.snp.makeConstraints { make in
-            make.top.equalTo(topLabel.snp.bottom).offset(16)
-            make.width.equalTo(mainImageView)
-            make.centerX.equalToSuperview()
-        }
     }
 }

@@ -1,13 +1,14 @@
 //
-//  FirstViewController.swift
+//  FourthViewController.swift
 //  Jacsim
 //
-//  Created by Seo Jae Hoon on 2022/09/26.
+//  Created by Seo Jae Hoon on 2022/10/01.
 //
 
 import UIKit
 
-class FirstViewController: BaseViewController {
+class FourthViewController: BaseViewController {
+    
     
     private let mainView = PageView()
     

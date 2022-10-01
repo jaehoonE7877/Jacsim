@@ -90,10 +90,12 @@ final class HomeViewController: BaseViewController {
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         
+        fsCalendar.setCurrentPage(Date(), animated: false)
+        fsCalendar.select(Date(), scrollToDate: false)
+        
         tasks = repository.fetchRealm()
         repository.checkIsDone(items: tasks)
         
-        fsCalendar.reloadData()
         
         notificationCenter.getPendingNotificationRequests { items in
             print(items)
@@ -317,18 +319,3 @@ extension HomeViewController: FloatyDelegate {
         }
     }
 }
-
-//extension HomeViewController: UNUserNotificationCenterDelegate {
-//
-//    func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification, withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
-//        print("\(notification.request.identifier): \(Date())")
-//        notificationCenter.getPendingNotificationRequests { (requests) in
-//            for request in requests {
-//                if let timeIntervalTrigger = request.trigger as? UNTimeIntervalNotificationTrigger {
-//                    print(Date(timeIntervalSinceNow: timeIntervalTrigger.timeInterval))
-//                }
-//
-//            }
-//        }
-//    }
-//}

@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		2507301A28E81794003D6F6F /* FourthViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2507301928E81794003D6F6F /* FourthViewController.swift */; };
 		2514094228E28F49009CEDE9 /* AcknowList in Frameworks */ = {isa = PBXBuildFile; productRef = 2514094128E28F49009CEDE9 /* AcknowList */; };
 		2514094428E2C73D009CEDE9 /* AlarmView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2514094328E2C73D009CEDE9 /* AlarmView.swift */; };
 		2514094628E2D420009CEDE9 /* AlarmViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2514094528E2D420009CEDE9 /* AlarmViewController.swift */; };
@@ -15,6 +16,7 @@
 		2532672B28E3DBBA00F0D5D5 /* RealmSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 2532672A28E3DBBA00F0D5D5 /* RealmSwift */; };
 		2535270028D20F190086383E /* Shadow+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 253526FF28D20F180086383E /* Shadow+Extension.swift */; };
 		2535270228D222BD0086383E /* UITextField+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2535270128D222BD0086383E /* UITextField+Extension.swift */; };
+		2545F13928E73FEF00C6046B /* UIScreen+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2545F13828E73FEF00C6046B /* UIScreen+Extension.swift */; };
 		2547132128CC4B670049D952 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2547132028CC4B670049D952 /* AppDelegate.swift */; };
 		2547132328CC4B670049D952 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2547132228CC4B670049D952 /* SceneDelegate.swift */; };
 		2547132528CC4B670049D952 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2547132428CC4B670049D952 /* ViewController.swift */; };
@@ -71,11 +73,13 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		2507301928E81794003D6F6F /* FourthViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FourthViewController.swift; sourceTree = "<group>"; };
 		2514094328E2C73D009CEDE9 /* AlarmView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlarmView.swift; sourceTree = "<group>"; };
 		2514094528E2D420009CEDE9 /* AlarmViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlarmViewController.swift; sourceTree = "<group>"; };
 		2514094728E2DD21009CEDE9 /* Package.resolved */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = Package.resolved; path = Jacsim.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved; sourceTree = "<group>"; };
 		253526FF28D20F180086383E /* Shadow+Extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Shadow+Extension.swift"; sourceTree = "<group>"; };
 		2535270128D222BD0086383E /* UITextField+Extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UITextField+Extension.swift"; sourceTree = "<group>"; };
+		2545F13828E73FEF00C6046B /* UIScreen+Extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIScreen+Extension.swift"; sourceTree = "<group>"; };
 		2547131D28CC4B670049D952 /* Jacsim.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Jacsim.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		2547132028CC4B670049D952 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		2547132228CC4B670049D952 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
@@ -245,6 +249,7 @@
 				25FCD99228D77FFF004F48E8 /* FileManager+Extension.swift */,
 				25D0AD3428D8747F006A918C /* Date+Extension.swift */,
 				25FF192028DDE7DD00A45EC4 /* UIFont+Extension.swift */,
+				2545F13828E73FEF00C6046B /* UIScreen+Extension.swift */,
 			);
 			path = Extension;
 			sourceTree = "<group>";
@@ -293,6 +298,7 @@
 				25C3F55828E1AD7C0062EDA9 /* FirstViewController.swift */,
 				25C3F55A28E1ADC50062EDA9 /* SecondViewController.swift */,
 				25C3F55C28E1AE0B0062EDA9 /* ThirdViewController.swift */,
+				2507301928E81794003D6F6F /* FourthViewController.swift */,
 				25C3F56328E1CB330062EDA9 /* PageView.swift */,
 			);
 			path = WalkThorugh;
@@ -482,6 +488,7 @@
 				2547132128CC4B670049D952 /* AppDelegate.swift in Sources */,
 				25C3F56428E1CB330062EDA9 /* PageView.swift in Sources */,
 				2535270228D222BD0086383E /* UITextField+Extension.swift in Sources */,
+				2507301A28E81794003D6F6F /* FourthViewController.swift in Sources */,
 				2547134628CC50F10049D952 /* BaseView.swift in Sources */,
 				25EE099E28CF198000B5B5CA /* JacsimHeaderView.swift in Sources */,
 				2535270028D20F190086383E /* Shadow+Extension.swift in Sources */,
@@ -505,6 +512,7 @@
 				25FCD99128D74473004F48E8 /* TaskDetailView.swift in Sources */,
 				259C4E2128DB77750092223A /* SettingTableViewCell.swift in Sources */,
 				256070CB28D396C400A1F553 /* ImageModel.swift in Sources */,
+				2545F13928E73FEF00C6046B /* UIScreen+Extension.swift in Sources */,
 				25C3F55D28E1AE0B0062EDA9 /* ThirdViewController.swift in Sources */,
 				25C3F55928E1AD7C0062EDA9 /* FirstViewController.swift in Sources */,
 			);
@@ -652,7 +660,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 9;
+				CURRENT_PROJECT_VERSION = 12;
 				DEVELOPMENT_TEAM = RFHV927M8S;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Jacsim/Info.plist;
@@ -687,7 +695,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 9;
+				CURRENT_PROJECT_VERSION = 12;
 				DEVELOPMENT_TEAM = RFHV927M8S;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Jacsim/Info.plist;
