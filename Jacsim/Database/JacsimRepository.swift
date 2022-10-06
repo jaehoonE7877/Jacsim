@@ -21,14 +21,11 @@ private protocol JacsimRepositoryProtocol: AnyObject {
     func checkCertified(item: UserJacsim) -> Int
 }
 
-class JacsimRepository: JacsimRepositoryProtocol {
+final class JacsimRepository: JacsimRepositoryProtocol {
     
     let notificationCenter = UNUserNotificationCenter.current()
-    let formatter = DateFormatter()
-    //let calendar = Calendar.current
-    let now = Date()
     
-    let localRealm = try! Realm()
+    private let localRealm = try! Realm()
     
     func fetchRealm() -> Results<UserJacsim>! {
         return localRealm.objects(UserJacsim.self).where { $0.isDone == false }.sorted(byKeyPath: "startDate", ascending: true)
@@ -55,34 +52,6 @@ class JacsimRepository: JacsimRepositoryProtocol {
         //NSPredicate
         return localRealm.objects(UserJacsim.self).where{ $0.isDone == false }.filter("endDate >= %@ AND startDate < %@", date, Date(timeInterval: 86400, since: date)).sorted(byKeyPath: "startDate", ascending: true)
     }
-    
-//    func fetchAlarm(task: UserJacsim) -> Bool {
-//
-//        var dayArray: [Date] = []
-//
-//        for date in stride(from: task.startDate, to: task.endDate + 86400, by: 86400 ){
-//            dayArray.append(date)
-//        }
-//        print(dayArray)
-//        print(now)
-//        var check: Bool = true
-//
-//        print("시작일이 현재시간보다 빠르면 트루 \(now - task.startDate >= 0)")
-//        print("종료일 \(task.endDate - now >= 0)")
-//
-//        if (now - task.startDate >= 0) && (task.endDate - now >= 0) {
-//
-//            for index in 0...dayArray.count - 1 {
-//
-//                if dayArray[index].toString() == now.toString() {
-//                    print(dayArray[index])
-//                    print(task.memoList[index].check)
-//                    check = task.memoList[index].check
-//                }
-//            }
-//        }
-//        return check
-//    }
 
     func addJacsim(item: UserJacsim) {
         do {
@@ -97,9 +66,7 @@ class JacsimRepository: JacsimRepositoryProtocol {
     func deleteAlarm(item: UserJacsim){
        
         guard let alarm = item.alarm else { return }
-        formatter.locale = Locale(identifier: "ko_KR")
-        formatter.dateFormat = "yyyy년 M월 d일 EEEE a hh:mm"
-        let alarmString = formatter.string(from: alarm)
+        let alarmString = DateFormatType.toString(alarm, to: .fullWithTime)
         notificationCenter.removePendingNotificationRequests(withIdentifiers: ["\(item.title)\(alarmString).starter", "\(item.title)\(alarmString).repeater"])
         
         do {
@@ -138,9 +105,7 @@ class JacsimRepository: JacsimRepositoryProtocol {
         
         if let alarm = item.alarm {
             removeImageFromDocument(fileName: "\(item.id).jpg")
-            formatter.locale = Locale(identifier: "ko_KR")
-            formatter.dateFormat = "yyyy년 M월 d일 EEEE a hh:mm"
-            let alarmString = formatter.string(from: alarm)
+            let alarmString = DateFormatType.toString(alarm, to: .fullWithTime)
             //print("\(item.title)\(alarmString).starter", "\(item.title)\(alarmString).repeater")
             notificationCenter.removePendingNotificationRequests(withIdentifiers: ["\(item.title)\(alarmString).starter", "\(item.title)\(alarmString).repeater"])
             
@@ -186,21 +151,17 @@ class JacsimRepository: JacsimRepositoryProtocol {
     }
     // 종료일이 지남으로서 isDone 정의
     func checkIsDone(items: Results<UserJacsim>!) {
-        formatter.dateFormat = "yyyy년 M월 d일 EEEE"
-        formatter.string(from: now)
         
         items.forEach { task in
             let end = task.endDate + 86400
            // print(now, end )
-            if now - end >= 0 {
+            if Date() - end >= 0 {
                 do {
                     try localRealm.write{
                         task.isDone = true
                         
                         if let alarm = task.alarm {
-                            formatter.dateFormat = "yyyy년 M월 d일 EEEE a hh:mm"
-                            formatter.locale = Locale(identifier: "ko_KR")
-                            let alarmString = formatter.string(from: alarm)
+                            let alarmString = DateFormatType.toString(alarm, to: .fullWithTime)
                             notificationCenter.removePendingNotificationRequests(withIdentifiers: ["\(task.title)\(alarmString).repeater"])
                         }
                         

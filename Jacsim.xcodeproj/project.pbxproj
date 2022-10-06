@@ -14,7 +14,6 @@
 		2514094828E2DD21009CEDE9 /* Package.resolved in Resources */ = {isa = PBXBuildFile; fileRef = 2514094728E2DD21009CEDE9 /* Package.resolved */; };
 		2532672928E3DBBA00F0D5D5 /* Realm in Frameworks */ = {isa = PBXBuildFile; productRef = 2532672828E3DBBA00F0D5D5 /* Realm */; };
 		2532672B28E3DBBA00F0D5D5 /* RealmSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 2532672A28E3DBBA00F0D5D5 /* RealmSwift */; };
-		2535270028D20F190086383E /* Shadow+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 253526FF28D20F180086383E /* Shadow+Extension.swift */; };
 		2535270228D222BD0086383E /* UITextField+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2535270128D222BD0086383E /* UITextField+Extension.swift */; };
 		2545F13928E73FEF00C6046B /* UIScreen+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2545F13828E73FEF00C6046B /* UIScreen+Extension.swift */; };
 		2547132128CC4B670049D952 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2547132028CC4B670049D952 /* AppDelegate.swift */; };
@@ -33,6 +32,7 @@
 		2547134F28CC521C0049D952 /* Then in Frameworks */ = {isa = PBXBuildFile; productRef = 2547134E28CC521C0049D952 /* Then */; };
 		2547135228CC522E0049D952 /* Alamofire in Frameworks */ = {isa = PBXBuildFile; productRef = 2547135128CC522E0049D952 /* Alamofire */; };
 		2547135528CC52410049D952 /* Toast in Frameworks */ = {isa = PBXBuildFile; productRef = 2547135428CC52410049D952 /* Toast */; };
+		255C1ABF28EEAD7300C205E7 /* DateFormatType.swift in Sources */ = {isa = PBXBuildFile; fileRef = 255C1ABE28EEAD7300C205E7 /* DateFormatType.swift */; };
 		256070CB28D396C400A1F553 /* ImageModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 256070CA28D396C400A1F553 /* ImageModel.swift */; };
 		25636C4728CC544A00B385AF /* BaseCollectionViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25636C4628CC544A00B385AF /* BaseCollectionViewCell.swift */; };
 		25636C4928CC54A200B385AF /* BaseTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25636C4828CC54A200B385AF /* BaseTableViewCell.swift */; };
@@ -77,7 +77,6 @@
 		2514094328E2C73D009CEDE9 /* AlarmView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlarmView.swift; sourceTree = "<group>"; };
 		2514094528E2D420009CEDE9 /* AlarmViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlarmViewController.swift; sourceTree = "<group>"; };
 		2514094728E2DD21009CEDE9 /* Package.resolved */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = Package.resolved; path = Jacsim.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved; sourceTree = "<group>"; };
-		253526FF28D20F180086383E /* Shadow+Extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Shadow+Extension.swift"; sourceTree = "<group>"; };
 		2535270128D222BD0086383E /* UITextField+Extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UITextField+Extension.swift"; sourceTree = "<group>"; };
 		2545F13828E73FEF00C6046B /* UIScreen+Extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIScreen+Extension.swift"; sourceTree = "<group>"; };
 		2547131D28CC4B670049D952 /* Jacsim.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Jacsim.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -94,6 +93,7 @@
 		2547134128CC4D780049D952 /* Transition+Extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Transition+Extension.swift"; sourceTree = "<group>"; };
 		2547134528CC50F10049D952 /* BaseView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BaseView.swift; sourceTree = "<group>"; };
 		2547134828CC51E30049D952 /* BaseViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BaseViewController.swift; sourceTree = "<group>"; };
+		255C1ABE28EEAD7300C205E7 /* DateFormatType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DateFormatType.swift; sourceTree = "<group>"; };
 		256070CA28D396C400A1F553 /* ImageModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageModel.swift; sourceTree = "<group>"; };
 		25636C4628CC544A00B385AF /* BaseCollectionViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BaseCollectionViewCell.swift; sourceTree = "<group>"; };
 		25636C4828CC54A200B385AF /* BaseTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BaseTableViewCell.swift; sourceTree = "<group>"; };
@@ -244,7 +244,6 @@
 			isa = PBXGroup;
 			children = (
 				2547134128CC4D780049D952 /* Transition+Extension.swift */,
-				253526FF28D20F180086383E /* Shadow+Extension.swift */,
 				2535270128D222BD0086383E /* UITextField+Extension.swift */,
 				25FCD99228D77FFF004F48E8 /* FileManager+Extension.swift */,
 				25D0AD3428D8747F006A918C /* Date+Extension.swift */,
@@ -267,6 +266,7 @@
 			children = (
 				25EE09A128CF1A7300B5B5CA /* Constant.swift */,
 				25EE099F28CF1A6200B5B5CA /* Color.swift */,
+				255C1ABE28EEAD7300C205E7 /* DateFormatType.swift */,
 			);
 			path = Constants;
 			sourceTree = "<group>";
@@ -475,6 +475,7 @@
 				25636C4728CC544A00B385AF /* BaseCollectionViewCell.swift in Sources */,
 				25FCD98F28D5CA15004F48E8 /* JacsimRepository.swift in Sources */,
 				25EE099A28CF172200B5B5CA /* TaskUpdateViewController.swift in Sources */,
+				255C1ABF28EEAD7300C205E7 /* DateFormatType.swift in Sources */,
 				25EE098D28CF14E400B5B5CA /* NewTaskViewController.swift in Sources */,
 				259C4E2428DB7BA20092223A /* SettingModel.swift in Sources */,
 				25FF192128DDE7DD00A45EC4 /* UIFont+Extension.swift in Sources */,
@@ -491,7 +492,6 @@
 				2507301A28E81794003D6F6F /* FourthViewController.swift in Sources */,
 				2547134628CC50F10049D952 /* BaseView.swift in Sources */,
 				25EE099E28CF198000B5B5CA /* JacsimHeaderView.swift in Sources */,
-				2535270028D20F190086383E /* Shadow+Extension.swift in Sources */,
 				25EE09A028CF1A6200B5B5CA /* Color.swift in Sources */,
 				2547134928CC51E30049D952 /* BaseViewController.swift in Sources */,
 				2547133828CC4BCE0049D952 /* APIKey.swift in Sources */,

@@ -15,16 +15,12 @@ import Then
 
 class BaseViewController: UIViewController {
     
-    let formatter = DateFormatter()
     let calendar = Calendar.current
     let notificationCenter = UNUserNotificationCenter.current()
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        setFormatterTimezone()
-        setFormatterLocale()
-        setFormatter()
         configure()
         setConstraint()
         setNavigationController()
@@ -64,18 +60,6 @@ class BaseViewController: UIViewController {
         let ok = UIAlertAction(title: button, style: .default)
         alert.addAction(ok)
         present(alert, animated: true)
-    }
-    // (다국어 대응에 따라서 국가별로)
-    func setFormatterLocale(){
-        formatter.locale = Locale(identifier: "ko_KR")
-    }
-    
-    func setFormatter(){
-        formatter.dateFormat = "yyyy년 M월 d일 EEEE"
-    }
-    
-    func setFormatterTimezone() {
-        formatter.timeZone = TimeZone(identifier: "ko_KR")
     }
     
     func calculateDays(startDate: Date, endDate: Date) -> Int {

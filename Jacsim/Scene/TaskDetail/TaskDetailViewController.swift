@@ -64,8 +64,7 @@ final class TaskDetailViewController: BaseViewController {
         mainView.endDateLabel.text = formatter.string(from: task.endDate)
         
         if let alarm = task.alarm {
-            formatter.dateFormat = "a hh:mm"
-            mainView.alarmTimeLabel.text = formatter.string(from: alarm)
+            mainView.alarmTimeLabel.text = DateFormatType.toString(alarm, to: .time)
         } else {
             mainView.alarmTimeLabel.text = "설정된 알람이 없습니다."
         }
@@ -118,7 +117,6 @@ final class TaskDetailViewController: BaseViewController {
 //            
 //            vc.task = self.task
 //            self.transitionViewController(viewController: vc, transitionStyle: .presentFullNavigation)
-            
 //        }
         let deletealarm = UIAction(title: "알람 끄기", image: UIImage(systemName: "bell.slash.fill")) { [weak self]_ in
             guard let self = self else { return }
@@ -138,7 +136,6 @@ final class TaskDetailViewController: BaseViewController {
                
                 guard let task = self.task else { return }
                 // 인증유무 분기처리
-                self.formatter.dateFormat = "M월 dd일 EEEE"
                 
                 if self.repository.checkCertified(item: task) == 0 {
                     
@@ -147,7 +144,7 @@ final class TaskDetailViewController: BaseViewController {
                 } else {
                     // 인증이 있을 때
                     for index in 0...self.repository.checkCertified(item: task) - 1 {
-                        let dateText = self.formatter.string(from: self.dayArray[index])
+                        let dateText = DateFormatType.toString(self.dayArray[index], to: .fullWithoutYear)
                         self.repository.removeImageFromDocument(fileName: "\(task.id)_\(dateText).jpg")
                     }
                     
@@ -189,9 +186,7 @@ extension TaskDetailViewController: UICollectionViewDelegate, UICollectionViewDa
         cell.layer.cornerRadius = Constant.Design.cornerRadius
         cell.layer.borderColor = Constant.BaseColor.textColor?.cgColor
         
-       
-        formatter.dateFormat = "M월 dd일 EEEE"
-        let dateText = formatter.string(from: dayArray[indexPath.item])
+        let dateText = DateFormatType.toString(dayArray[indexPath.item], to: .fullWithoutYear)
         guard let objectId = task?.id else { return UICollectionViewCell() }
         cell.dateLabel.text = dateText
         cell.certifiedMemo.text = task?.memoList[indexPath.row].memo
@@ -210,9 +205,7 @@ extension TaskDetailViewController: UICollectionViewDelegate, UICollectionViewDa
         guard let task = task else { return }
         let dateText = formatter.string(from: dayArray[indexPath.item])
         
-        let now = Date()
-        formatter.dateFormat = "M월 dd일 EEEE"
-        guard formatter.string(from: now) == dateText else {
+        guard DateFormatType.toString(Date(), to: .fullWithoutYear) == dateText else {
             showAlertMessage(title: "작심 인증하기", message: "인증 날짜가 아닙니다.\n확인해주세요!", button: "확인")
             return
         }

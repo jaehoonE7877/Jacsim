@@ -17,8 +17,6 @@ final class NewTaskViewController: BaseViewController {
     
     var alarm: Date?
     
-    let timeFormatter = DateFormatter()
-    
     //MARK: Property
     
     let mainView = NewTaskView()
@@ -181,9 +179,8 @@ final class NewTaskViewController: BaseViewController {
                                 return
                             }
                             
-                            self.formatter.dateFormat = "a hh:mm"
                             DispatchQueue.main.async {
-                                self.mainView.alarmTimeLabel.text = self.formatter.string(from: date)
+                                self.mainView.alarmTimeLabel.text = DateFormatType.toString(date, to: .time)
                             }
                         }
                         
@@ -206,10 +203,6 @@ final class NewTaskViewController: BaseViewController {
     // MARK: Realm Create
     @objc func saveButtonTapped(){
         
-        timeFormatter.dateFormat = "yyyy년 M월 d일 EEEE a hh:mm"
-        timeFormatter.locale = Locale(identifier: "ko_KR")
-        timeFormatter.timeZone = TimeZone(identifier: "ko_KR")
-        
         if mainView.newTaskTitleTextfield.text == "" {
             view.makeToast("제목을 입력해주세요!", duration: 0.8, position: .center, title: nil, image: nil, style: .init()) { _ in
             }
@@ -223,12 +216,13 @@ final class NewTaskViewController: BaseViewController {
             }
             return
         }
-        formatter.dateFormat = "yyyy년 M월 d일 EEEE"
+    
         guard let title = mainView.newTaskTitleTextfield.text else { return }
-        //print(formatter.date(from: mainView.startDateTextField.text ?? ""))
-        guard let startDate = formatter.date(from: mainView.startDateTextField.text ?? "") else { return }
-        guard let endDate = formatter.date(from: mainView.endDateTextField.text ?? "") else { return }
+        guard let stringStartDate = mainView.startDateTextField.text, let stringEndDate = mainView.endDateTextField.text else { return }
+        guard let startDate = DateFormatType.toDate(stringStartDate, to: .full) else { return }
+        guard let endDate = DateFormatType.toDate(stringEndDate, to: .full) else { return }
         guard let success = Int(mainView.successTextField.text ?? "") else { return }
+        
         if startDate - endDate > 0 {
             view.makeToast("종료일은 시작일보다 빠를 수 없습니다.", duration: 1.0, position: .center, title: nil, image: nil, style: .init()) { [weak self]_ in
                 guard let self = self else { return }
@@ -252,8 +246,8 @@ final class NewTaskViewController: BaseViewController {
         
         if let alarm = mainView.alarmTimeLabel.text {
             
-            let valueA = "\(formatter.string(from: startDate)) \(alarm)"
-            guard let fireDate = timeFormatter.date(from: valueA) else { return }
+            let valueA = "\(DateFormatType.toString(startDate, to: .full)) \(alarm)"
+            guard let fireDate = DateFormatType.toDate(valueA, to: .fullWithTime) else { return }
             print("\(fireDate): 알림 시작일")
             
             guard fireDate.timeIntervalSinceNow > 0 else {
@@ -313,7 +307,6 @@ extension NewTaskViewController: UITextFieldDelegate {
         someTextField = textField
     
         if textField == mainView.startDateTextField || textField == mainView.endDateTextField {
-            formatter.dateFormat = "yyyy년 M월 d일 EEEE"
             textField.tintColor = .clear
         } else if textField == mainView.successTextField {
             textField.text = ""
@@ -480,19 +473,19 @@ extension NewTaskViewController {
 
         notificationCenter.requestAuthorization(
             options: [.alert, .badge ,.sound])
-        {
+        { [weak self]
             (granted, error) in
-
+            guard let self = self else { return }
             if let error = error {
                 print("granted, but Error in notification permission:\(error.localizedDescription)")
             }
-            self.formatter.dateFormat = "yyyy년 M월 d일 EEEE a hh:mm"
-            let dateString = self.formatter.string(from: fireDate)
+            
+            let dateString = DateFormatType.toString(fireDate, to: .fullWithTime)
             let fireTrigger = UNTimeIntervalNotificationTrigger(timeInterval: fireDate.timeIntervalSinceNow , repeats: false)
             //print(fireDate.timeIntervalSinceNow)
             let fireDateRequest = UNNotificationRequest(identifier: "\(title)\(dateString).starter", content: content, trigger: fireTrigger)
 
-            UNUserNotificationCenter.current().add(fireDateRequest) {(error) in
+            self.notificationCenter.add(fireDateRequest) {(error) in
                 if let error = error {
                     print("Error adding firing notification: \(error.localizedDescription)")
                 } else {
@@ -503,7 +496,7 @@ extension NewTaskViewController {
                         //print(firstRepeatingDate.timeIntervalSinceNow)
                         let repeatingRequest = UNNotificationRequest(identifier: "\(title)\(dateString).repeater", content: content, trigger: repeatingTrigger)
                         
-                        UNUserNotificationCenter.current().add(repeatingRequest) { (error) in
+                        self.notificationCenter.add(repeatingRequest) { (error) in
                             if let error = error {
                                 print("Error adding repeating notification: \(error.localizedDescription)")
                             } else {
