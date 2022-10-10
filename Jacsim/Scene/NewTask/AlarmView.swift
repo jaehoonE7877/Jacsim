@@ -20,7 +20,7 @@ final class AlarmView: BaseView {
     }
     
     let xButton = UIButton().then {
-        $0.setImage(UIImage(systemName: "xmark", withConfiguration: UIImage.SymbolConfiguration(pointSize: 20)), for: .normal)
+        $0.setImage(UIImage.xmark, for: .normal)
         $0.tintColor = Constant.BaseColor.textColor
     }
     

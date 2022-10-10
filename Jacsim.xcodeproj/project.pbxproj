@@ -33,6 +33,7 @@
 		2547135228CC522E0049D952 /* Alamofire in Frameworks */ = {isa = PBXBuildFile; productRef = 2547135128CC522E0049D952 /* Alamofire */; };
 		2547135528CC52410049D952 /* Toast in Frameworks */ = {isa = PBXBuildFile; productRef = 2547135428CC52410049D952 /* Toast */; };
 		255C1ABF28EEAD7300C205E7 /* DateFormatType.swift in Sources */ = {isa = PBXBuildFile; fileRef = 255C1ABE28EEAD7300C205E7 /* DateFormatType.swift */; };
+		255C1AC128EECBE600C205E7 /* UIImage+.swift in Sources */ = {isa = PBXBuildFile; fileRef = 255C1AC028EECBE600C205E7 /* UIImage+.swift */; };
 		256070CB28D396C400A1F553 /* ImageModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 256070CA28D396C400A1F553 /* ImageModel.swift */; };
 		25636C4728CC544A00B385AF /* BaseCollectionViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25636C4628CC544A00B385AF /* BaseCollectionViewCell.swift */; };
 		25636C4928CC54A200B385AF /* BaseTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25636C4828CC54A200B385AF /* BaseTableViewCell.swift */; };
@@ -94,6 +95,7 @@
 		2547134528CC50F10049D952 /* BaseView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BaseView.swift; sourceTree = "<group>"; };
 		2547134828CC51E30049D952 /* BaseViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BaseViewController.swift; sourceTree = "<group>"; };
 		255C1ABE28EEAD7300C205E7 /* DateFormatType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DateFormatType.swift; sourceTree = "<group>"; };
+		255C1AC028EECBE600C205E7 /* UIImage+.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIImage+.swift"; sourceTree = "<group>"; };
 		256070CA28D396C400A1F553 /* ImageModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageModel.swift; sourceTree = "<group>"; };
 		25636C4628CC544A00B385AF /* BaseCollectionViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BaseCollectionViewCell.swift; sourceTree = "<group>"; };
 		25636C4828CC54A200B385AF /* BaseTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BaseTableViewCell.swift; sourceTree = "<group>"; };
@@ -249,6 +251,7 @@
 				25D0AD3428D8747F006A918C /* Date+Extension.swift */,
 				25FF192028DDE7DD00A45EC4 /* UIFont+Extension.swift */,
 				2545F13828E73FEF00C6046B /* UIScreen+Extension.swift */,
+				255C1AC028EECBE600C205E7 /* UIImage+.swift */,
 			);
 			path = Extension;
 			sourceTree = "<group>";
@@ -489,6 +492,7 @@
 				2547132128CC4B670049D952 /* AppDelegate.swift in Sources */,
 				25C3F56428E1CB330062EDA9 /* PageView.swift in Sources */,
 				2535270228D222BD0086383E /* UITextField+Extension.swift in Sources */,
+				255C1AC128EECBE600C205E7 /* UIImage+.swift in Sources */,
 				2507301A28E81794003D6F6F /* FourthViewController.swift in Sources */,
 				2547134628CC50F10049D952 /* BaseView.swift in Sources */,
 				25EE099E28CF198000B5B5CA /* JacsimHeaderView.swift in Sources */,
@@ -660,7 +664,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 12;
+				CURRENT_PROJECT_VERSION = "1 ";
 				DEVELOPMENT_TEAM = RFHV927M8S;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Jacsim/Info.plist;
@@ -677,7 +681,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.jaehoon.jaksim;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -695,7 +699,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 12;
+				CURRENT_PROJECT_VERSION = "1 ";
 				DEVELOPMENT_TEAM = RFHV927M8S;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Jacsim/Info.plist;
@@ -712,7 +716,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.jaehoon.jaksim;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";

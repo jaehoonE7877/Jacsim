@@ -88,7 +88,7 @@ final class NewTaskViewController: BaseViewController {
         self.title = "새로운 작심"
         
         navigationController?.navigationBar.tintColor = Constant.BaseColor.textColor
-        navigationItem.leftBarButtonItem = UIBarButtonItem(image: UIImage(systemName: "xmark"), style: .plain, target: self, action: #selector(backButtonTapped))
+        navigationItem.leftBarButtonItem = UIBarButtonItem(image: UIImage.xmark, style: .plain, target: self, action: #selector(backButtonTapped))
         navigationItem.rightBarButtonItem = UIBarButtonItem(title: "저장", style: .plain, target: self, action: #selector(saveButtonTapped))
         let appearance = UINavigationBarAppearance()
         appearance.backgroundColor = Constant.BaseColor.backgroundColor
@@ -104,7 +104,7 @@ final class NewTaskViewController: BaseViewController {
     //MARK: UIMenu
     private func addImageButtonTapped() -> UIMenu {
         
-        let camera = UIAction(title: "카메라", image: UIImage(systemName: "camera")) { [weak self]_ in
+        let camera = UIAction(title: "카메라", image: UIImage.camera) { [weak self]_ in
             guard let self = self else { return }
             switch AVCaptureDevice.authorizationStatus(for: .video) {
             case .authorized:
@@ -134,7 +134,7 @@ final class NewTaskViewController: BaseViewController {
             }
             
         }
-        let gallery = UIAction(title: "갤러리", image: UIImage(systemName: "photo.on.rectangle")) {[weak self] _ in
+        let gallery = UIAction(title: "갤러리", image: UIImage.photo) { [weak self] _ in
             guard let self = self else { return }
             self.present(self.phPicker, animated: true)
         }
@@ -261,8 +261,7 @@ final class NewTaskViewController: BaseViewController {
                 task.memoList.append(certified)
             }
             
-            guard let baseImage = UIImage(named: "jacsim") else { return }
-            saveImageToDocument(fileName: "\(String(describing: task.id)).jpg", image: mainView.newTaskImageView.image ?? baseImage)
+            saveImageToDocument(fileName: "\(String(describing: task.id)).jpg", image: mainView.newTaskImageView.image ?? UIImage.jacsimImage)
             repository.addJacsim(item: task)
             
             scheduleNotification(title: title, fireDate: fireDate)
@@ -276,8 +275,7 @@ final class NewTaskViewController: BaseViewController {
                 task.memoList.append(certified)
             }
             
-            guard let baseImage = UIImage(named: "jacsim") else { return }
-            saveImageToDocument(fileName: "\(String(describing: task.id)).jpg", image: mainView.newTaskImageView.image ?? baseImage)
+            saveImageToDocument(fileName: "\(String(describing: task.id)).jpg", image: mainView.newTaskImageView.image ?? UIImage.jacsimImage)
             repository.addJacsim(item: task)
             
             dismiss(animated: true)
@@ -367,7 +365,7 @@ extension NewTaskViewController: UITextFieldDelegate {
     @objc func startDateTextFieldTapped(){
         if let datePicker = self.mainView.startDateTextField.inputView as? UIDatePicker {
             
-            self.mainView.startDateTextField.text = formatter.string(from: datePicker.date)
+            self.mainView.startDateTextField.text = DateFormatType.toString(datePicker.date, to: .full)
         }
         self.mainView.startDateTextField.resignFirstResponder()
     }
@@ -375,7 +373,7 @@ extension NewTaskViewController: UITextFieldDelegate {
     @objc func endDateTextFieldTapped(){
         if let datePicker = self.mainView.endDateTextField.inputView as? UIDatePicker {
             
-            self.mainView.endDateTextField.text = formatter.string(from: datePicker.date)
+            self.mainView.endDateTextField.text = DateFormatType.toString(datePicker.date, to: .full)
         }
         self.mainView.endDateTextField.resignFirstResponder()
     }
@@ -485,12 +483,13 @@ extension NewTaskViewController {
             //print(fireDate.timeIntervalSinceNow)
             let fireDateRequest = UNNotificationRequest(identifier: "\(title)\(dateString).starter", content: content, trigger: fireTrigger)
 
-            self.notificationCenter.add(fireDateRequest) {(error) in
+            self.notificationCenter.add(fireDateRequest) { (error) in
+                
                 if let error = error {
                     print("Error adding firing notification: \(error.localizedDescription)")
                 } else {
                     
-                    if let firstRepeatingDate = Calendar.current.date(byAdding: .day, value: 1, to: fireDate) {
+                    if let firstRepeatingDate = Calendar.current.date(byAdding: .minute, value: 1440, to: fireDate) {
                         print("\(firstRepeatingDate): 반복 알림 시작일")
                         let repeatingTrigger = UNTimeIntervalNotificationTrigger(timeInterval: firstRepeatingDate.timeIntervalSinceNow, repeats: true)
                         //print(firstRepeatingDate.timeIntervalSinceNow)

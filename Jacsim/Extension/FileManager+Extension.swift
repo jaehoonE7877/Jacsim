@@ -75,7 +75,7 @@ extension UIViewController {
             return UIImage(contentsOfFile: fileURL.path)
             
         } else {
-            return UIImage(named: "jacsim")
+            return UIImage.jacsimImage
         }
 
         

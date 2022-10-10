@@ -15,7 +15,7 @@ class SettingTableViewCell: BaseTableViewCell {
     }
     
     lazy var pushImage = UIImageView().then {
-        $0.image = UIImage(systemName: "chevron.right", withConfiguration: UIImage.SymbolConfiguration(pointSize: 20))
+        $0.image = UIImage.chevornRight
         $0.tintColor = .darkGray
     }
     

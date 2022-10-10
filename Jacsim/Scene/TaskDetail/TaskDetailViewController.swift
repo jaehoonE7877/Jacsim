@@ -60,8 +60,8 @@ final class TaskDetailViewController: BaseViewController {
         
         guard let task = task else { return }
         
-        mainView.startDateLabel.text = formatter.string(from: task.startDate)
-        mainView.endDateLabel.text = formatter.string(from: task.endDate)
+        mainView.startDateLabel.text = DateFormatType.toString(task.startDate, to: .full)
+        mainView.endDateLabel.text = DateFormatType.toString(task.endDate, to: .full)
         
         if let alarm = task.alarm {
             mainView.alarmTimeLabel.text = DateFormatType.toString(alarm, to: .time)
@@ -83,7 +83,7 @@ final class TaskDetailViewController: BaseViewController {
     override func setNavigationController() {
         
         navigationController?.navigationBar.backItem?.backButtonTitle = ""
-        navigationItem.rightBarButtonItem = UIBarButtonItem(title: nil, image: UIImage(systemName: "ellipsis.circle"), menu: reviseButtonTapped())
+        navigationItem.rightBarButtonItem = UIBarButtonItem(title: nil, image: UIImage.menu, menu: reviseButtonTapped())
         
         navigationController?.navigationBar.tintColor = Constant.BaseColor.textColor
     }
@@ -118,7 +118,7 @@ final class TaskDetailViewController: BaseViewController {
 //            vc.task = self.task
 //            self.transitionViewController(viewController: vc, transitionStyle: .presentFullNavigation)
 //        }
-        let deletealarm = UIAction(title: "알람 끄기", image: UIImage(systemName: "bell.slash.fill")) { [weak self]_ in
+        let deletealarm = UIAction(title: "알람 끄기", image: UIImage.alarmDelete) { [weak self]_ in
             guard let self = self else { return }
             guard let task = self.task else { return }
             self.showAlertMessage(title: "알람을 끄시겠습니까?", message: nil, button: "확인", cancel: "취소") { _ in
@@ -130,7 +130,7 @@ final class TaskDetailViewController: BaseViewController {
             
         }
         
-        let quit = UIAction(title: "작심 그만두기", image: UIImage(systemName: "trash"), attributes: .destructive) { [weak self]_ in
+        let quit = UIAction(title: "작심 그만두기", image: UIImage.trash , attributes: .destructive) { [weak self]_ in
             guard let self = self else { return }
             self.showAlertMessage(title: "해당 작심을 그만두실 건가요?", message: "기존에 저장한 데이터들은 사라집니다.", button: "확인", cancel: "취소") { _ in
                
@@ -203,7 +203,7 @@ extension TaskDetailViewController: UICollectionViewDelegate, UICollectionViewDa
         
         let vc = TaskUpdateViewController()
         guard let task = task else { return }
-        let dateText = formatter.string(from: dayArray[indexPath.item])
+        let dateText = DateFormatType.toString(dayArray[indexPath.item], to: .fullWithoutYear)
         
         guard DateFormatType.toString(Date(), to: .fullWithoutYear) == dateText else {
             showAlertMessage(title: "작심 인증하기", message: "인증 날짜가 아닙니다.\n확인해주세요!", button: "확인")

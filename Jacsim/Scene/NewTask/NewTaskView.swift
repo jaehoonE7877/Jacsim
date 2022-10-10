@@ -51,7 +51,7 @@ final class NewTaskView: BaseView {
     }
     
     let imageAddView = UIImageView().then {
-        $0.image = UIImage(systemName: "plus.circle.fill", withConfiguration: UIImage.SymbolConfiguration(pointSize: 40))
+        $0.image = UIImage.addButton
         $0.tintColor = Constant.BaseColor.buttonColor
     }
     

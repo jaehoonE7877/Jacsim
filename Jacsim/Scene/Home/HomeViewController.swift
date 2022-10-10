@@ -31,12 +31,12 @@ final class HomeViewController: BaseViewController {
     }
     
     lazy var infoButton = UIButton().then {
-        $0.setImage(UIImage(systemName: "questionmark.circle", withConfiguration: UIImage.SymbolConfiguration(pointSize: 20)), for: .normal)
+        $0.setImage(UIImage.question, for: .normal)
         $0.tintColor = Constant.BaseColor.textColor
     }
     
     lazy var sortButton = UIButton().then {
-        $0.setImage(UIImage(systemName: "text.justify", withConfiguration: UIImage.SymbolConfiguration(pointSize: 20)), for: .normal)
+        $0.setImage(UIImage.sort, for: .normal)
         $0.tintColor = Constant.BaseColor.textColor
     }
     
@@ -156,7 +156,7 @@ final class HomeViewController: BaseViewController {
     override func setNavigationController() {
         title = "작심"
         navigationController?.navigationBar.tintColor = Constant.BaseColor.textColor
-        navigationItem.rightBarButtonItem = UIBarButtonItem(image: UIImage(systemName: "gearshape.fill"), style: .plain, target: self, action: #selector(moveToSetting))
+        navigationItem.rightBarButtonItem = UIBarButtonItem(image: .gear, style: .plain, target: self, action: #selector(moveToSetting))
     }
     
     
@@ -168,11 +168,11 @@ final class HomeViewController: BaseViewController {
         floaty.itemTitleColor = Constant.BaseColor.textColor!
         floaty.tintColor = Constant.BaseColor.textColor
 
-        floaty.addItem("새로운 작심", icon: UIImage(systemName: "square.and.pencil")) { item in
+        floaty.addItem("새로운 작심", icon: UIImage.write) { item in
             self.transitionViewController(viewController: NewTaskViewController(), transitionStyle: .presentFullNavigation)
         }
                        
-        floaty.addItem("작심 모아보기", icon: UIImage(systemName: "list.bullet")) { item in
+        floaty.addItem("작심 모아보기", icon: UIImage.list) { item in
             self.transitionViewController(viewController: AllTaskViewController(), transitionStyle: .presentFullNavigation)
         }
         
@@ -299,8 +299,9 @@ extension HomeViewController: FSCalendarDelegate, FSCalendarDataSource {
     }
     
     func calendar(_ calendar: FSCalendar, titleFor date: Date) -> String? {
-        switch formatter.string(from: date) {
-        case formatter.string(from: Date()):
+        //let now = Date()
+        switch date {
+        case .now:
             return "오늘"
         default:
             return nil

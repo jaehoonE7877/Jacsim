@@ -19,7 +19,7 @@ final class TaskUpdateView: BaseView {
     }
     
     let imageAddButton = UIButton(type: .system).then {
-        $0.setImage(UIImage(systemName: "plus.circle.fill", withConfiguration: UIImage.SymbolConfiguration(pointSize: 40)), for: .normal)
+        $0.setImage(UIImage.addButton, for: .normal)
         $0.showsMenuAsPrimaryAction = true
         $0.tintColor = Constant.BaseColor.buttonColor
     }

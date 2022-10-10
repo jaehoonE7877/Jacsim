@@ -83,7 +83,7 @@ final class AllTaskViewController: BaseViewController {
     override func setNavigationController() {
         self.title = "작심 모아보기"
         navigationController?.navigationBar.tintColor = Constant.BaseColor.textColor
-        navigationItem.leftBarButtonItem = UIBarButtonItem(image: UIImage(systemName: "xmark"), style: .plain, target: self, action: #selector(xButtonTapped))
+        navigationItem.leftBarButtonItem = UIBarButtonItem(image: UIImage.xmark, style: .plain, target: self, action: #selector(xButtonTapped))
     }
     
     @objc func xButtonTapped(){
@@ -137,9 +137,9 @@ extension AllTaskViewController: UITableViewDelegate, UITableViewDataSource {
         }
         
         if foldValue[section] {
-            headerView.foldImage.image = UIImage(systemName: "chevron.up", withConfiguration: UIImage.SymbolConfiguration(pointSize: 20))
+            headerView.foldImage.image = UIImage.chevornUp
         } else {
-            headerView.foldImage.image = UIImage(systemName: "chevron.down", withConfiguration: UIImage.SymbolConfiguration(pointSize: 20))
+            headerView.foldImage.image = UIImage.chevornDown
         }
         
         return headerView

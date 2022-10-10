@@ -75,7 +75,7 @@ final class TaskUpdateViewController: BaseViewController {
     
     private func addImageButtonTapped() -> UIMenu {
         
-        let camera = UIAction(title: "카메라", image: UIImage(systemName: "camera")) { [weak self]_ in
+        let camera = UIAction(title: "카메라", image: UIImage.camera) { [weak self]_ in
             guard let self = self else { return }
             switch AVCaptureDevice.authorizationStatus(for: .video) {
             case .authorized:
@@ -103,7 +103,7 @@ final class TaskUpdateViewController: BaseViewController {
                 self.showAlertSetting(message: "작심이(가) 카메라 접근 허용되어 있지 않습니다. \r\n 설정화면으로 가시겠습니까?")
             }
         }
-        let gallery = UIAction(title: "갤러리", image: UIImage(systemName: "photo.on.rectangle")) { [weak self] _ in
+        let gallery = UIAction(title: "갤러리", image: UIImage.photo) { [weak self] _ in
             guard let self = self else { return }
             self.present(self.phPicker, animated: true)
         }
@@ -137,8 +137,7 @@ final class TaskUpdateViewController: BaseViewController {
 
         repository.updateMemo(item: task, index: index, memo: memo)
         
-        guard let baseImage = UIImage(named: "jacsim") else { return }
-        saveImageToDocument(fileName: "\(task.id)_\(dateText).jpg", image: mainView.certifyImageView.image ?? baseImage)
+        saveImageToDocument(fileName: "\(task.id)_\(dateText).jpg", image: mainView.certifyImageView.image ?? UIImage.jacsimImage)
         
         self.navigationController?.popViewController(animated: true)
     }
