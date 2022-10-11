@@ -50,6 +50,10 @@
 		25C3F56028E1B62D0062EDA9 /* CropViewController in Frameworks */ = {isa = PBXBuildFile; productRef = 25C3F55F28E1B62D0062EDA9 /* CropViewController */; };
 		25C3F56228E1B62D0062EDA9 /* TOCropViewController in Frameworks */ = {isa = PBXBuildFile; productRef = 25C3F56128E1B62D0062EDA9 /* TOCropViewController */; };
 		25C3F56428E1CB330062EDA9 /* PageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25C3F56328E1CB330062EDA9 /* PageView.swift */; };
+		25C6F16828F527E1008BD901 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 25C6F16728F527E0008BD901 /* GoogleService-Info.plist */; };
+		25C6F16B28F5285B008BD901 /* FirebaseAnalyticsWithoutAdIdSupport in Frameworks */ = {isa = PBXBuildFile; productRef = 25C6F16A28F5285B008BD901 /* FirebaseAnalyticsWithoutAdIdSupport */; };
+		25C6F16D28F5285B008BD901 /* FirebaseCrashlytics in Frameworks */ = {isa = PBXBuildFile; productRef = 25C6F16C28F5285B008BD901 /* FirebaseCrashlytics */; };
+		25C6F16F28F5285B008BD901 /* FirebaseMessaging in Frameworks */ = {isa = PBXBuildFile; productRef = 25C6F16E28F5285B008BD901 /* FirebaseMessaging */; };
 		25D0AD3528D8747F006A918C /* Date+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25D0AD3428D8747F006A918C /* Date+Extension.swift */; };
 		25D0AD3728D8C5B0006A918C /* TaskUpdateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25D0AD3628D8C5B0006A918C /* TaskUpdateView.swift */; };
 		25EE098228CF0CF600B5B5CA /* HomeViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25EE098128CF0CF600B5B5CA /* HomeViewController.swift */; };
@@ -110,6 +114,8 @@
 		25C3F55A28E1ADC50062EDA9 /* SecondViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecondViewController.swift; sourceTree = "<group>"; };
 		25C3F55C28E1AE0B0062EDA9 /* ThirdViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThirdViewController.swift; sourceTree = "<group>"; };
 		25C3F56328E1CB330062EDA9 /* PageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PageView.swift; sourceTree = "<group>"; };
+		25C6F16728F527E0008BD901 /* GoogleService-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
+		25C6F17028F54AAD008BD901 /* Jacsim.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Jacsim.entitlements; sourceTree = "<group>"; };
 		25D0AD3428D8747F006A918C /* Date+Extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Date+Extension.swift"; sourceTree = "<group>"; };
 		25D0AD3628D8C5B0006A918C /* TaskUpdateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskUpdateView.swift; sourceTree = "<group>"; };
 		25EE098128CF0CF600B5B5CA /* HomeViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeViewController.swift; sourceTree = "<group>"; };
@@ -138,12 +144,15 @@
 			files = (
 				2547135528CC52410049D952 /* Toast in Frameworks */,
 				2547135228CC522E0049D952 /* Alamofire in Frameworks */,
+				25C6F16F28F5285B008BD901 /* FirebaseMessaging in Frameworks */,
 				25C3F56028E1B62D0062EDA9 /* CropViewController in Frameworks */,
 				2547134C28CC520D0049D952 /* SnapKit in Frameworks */,
 				2532672928E3DBBA00F0D5D5 /* Realm in Frameworks */,
 				2547134F28CC521C0049D952 /* Then in Frameworks */,
 				25EE09A728D0AE6300B5B5CA /* Floaty in Frameworks */,
+				25C6F16B28F5285B008BD901 /* FirebaseAnalyticsWithoutAdIdSupport in Frameworks */,
 				25FDC52328CC6186002543CC /* FSCalendar in Frameworks */,
+				25C6F16D28F5285B008BD901 /* FirebaseCrashlytics in Frameworks */,
 				2532672B28E3DBBA00F0D5D5 /* RealmSwift in Frameworks */,
 				25C3F56228E1B62D0062EDA9 /* TOCropViewController in Frameworks */,
 				2514094228E28F49009CEDE9 /* AcknowList in Frameworks */,
@@ -174,6 +183,7 @@
 		2547131F28CC4B670049D952 /* Jacsim */ = {
 			isa = PBXGroup;
 			children = (
+				25C6F17028F54AAD008BD901 /* Jacsim.entitlements */,
 				2547133A28CC4C310049D952 /* Database */,
 				2547133B28CC4C4B0049D952 /* APIManager */,
 				2547133928CC4C1A0049D952 /* Scene */,
@@ -188,6 +198,7 @@
 				2547132928CC4B6A0049D952 /* Assets.xcassets */,
 				2547132B28CC4B6A0049D952 /* LaunchScreen.storyboard */,
 				2547132E28CC4B6A0049D952 /* Info.plist */,
+				25C6F16728F527E0008BD901 /* GoogleService-Info.plist */,
 			);
 			path = Jacsim;
 			sourceTree = "<group>";
@@ -402,6 +413,9 @@
 				2514094128E28F49009CEDE9 /* AcknowList */,
 				2532672828E3DBBA00F0D5D5 /* Realm */,
 				2532672A28E3DBBA00F0D5D5 /* RealmSwift */,
+				25C6F16A28F5285B008BD901 /* FirebaseAnalyticsWithoutAdIdSupport */,
+				25C6F16C28F5285B008BD901 /* FirebaseCrashlytics */,
+				25C6F16E28F5285B008BD901 /* FirebaseMessaging */,
 			);
 			productName = Jacsim;
 			productReference = 2547131D28CC4B670049D952 /* Jacsim.app */;
@@ -441,6 +455,7 @@
 				25C3F55E28E1B62D0062EDA9 /* XCRemoteSwiftPackageReference "TOCropViewController" */,
 				2514094028E28F49009CEDE9 /* XCRemoteSwiftPackageReference "AcknowList" */,
 				2532672728E3DBBA00F0D5D5 /* XCRemoteSwiftPackageReference "realm-swift" */,
+				25C6F16928F5285B008BD901 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
 			);
 			productRefGroup = 2547131E28CC4B670049D952 /* Products */;
 			projectDirPath = "";
@@ -457,6 +472,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				2547133528CC4BA80049D952 /* .gitignore in Resources */,
+				25C6F16828F527E1008BD901 /* GoogleService-Info.plist in Resources */,
 				2514094828E2DD21009CEDE9 /* Package.resolved in Resources */,
 				2547132D28CC4B6A0049D952 /* LaunchScreen.storyboard in Resources */,
 				2547132A28CC4B6A0049D952 /* Assets.xcassets in Resources */,
@@ -663,8 +679,9 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Jacsim/Jacsim.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = "1 ";
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = RFHV927M8S;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Jacsim/Info.plist;
@@ -698,8 +715,9 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Jacsim/Jacsim.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = "1 ";
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = RFHV927M8S;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Jacsim/Info.plist;
@@ -808,6 +826,14 @@
 				minimumVersion = 2.0.0;
 			};
 		};
+		25C6F16928F5285B008BD901 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 9.0.0;
+			};
+		};
 		25EE09A528D0AE6300B5B5CA /* XCRemoteSwiftPackageReference "Floaty" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/kciter/Floaty.git";
@@ -871,6 +897,21 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 25C3F55E28E1B62D0062EDA9 /* XCRemoteSwiftPackageReference "TOCropViewController" */;
 			productName = TOCropViewController;
+		};
+		25C6F16A28F5285B008BD901 /* FirebaseAnalyticsWithoutAdIdSupport */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 25C6F16928F5285B008BD901 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAnalyticsWithoutAdIdSupport;
+		};
+		25C6F16C28F5285B008BD901 /* FirebaseCrashlytics */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 25C6F16928F5285B008BD901 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseCrashlytics;
+		};
+		25C6F16E28F5285B008BD901 /* FirebaseMessaging */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 25C6F16928F5285B008BD901 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseMessaging;
 		};
 		25EE09A628D0AE6300B5B5CA /* Floaty */ = {
 			isa = XCSwiftPackageProductDependency;

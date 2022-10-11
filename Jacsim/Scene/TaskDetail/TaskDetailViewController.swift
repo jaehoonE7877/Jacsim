@@ -220,6 +220,7 @@ extension TaskDetailViewController: UICollectionViewDelegate, UICollectionViewDa
             vc.task = task
             vc.index = indexPath.item
             vc.mainView.memoTextfield.text = task.memoList[indexPath.item].memo
+            vc.mainView.memoCountLabel.text = "\(task.memoList[indexPath.item].memo.count)/20"
             vc.mainView.certifyImageView.image = loadImageFromDocument(fileName: "\(task.id)_\(dateText).jpg")
             self.transitionViewController(viewController: vc, transitionStyle: .push)
         }

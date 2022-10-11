@@ -7,10 +7,9 @@
 
 import UIKit
 
-import RealmSwift
 import FSCalendar
 import Floaty
-
+import RealmSwift
 
 final class HomeViewController: BaseViewController {
         
@@ -299,9 +298,9 @@ extension HomeViewController: FSCalendarDelegate, FSCalendarDataSource {
     }
     
     func calendar(_ calendar: FSCalendar, titleFor date: Date) -> String? {
-        //let now = Date()
-        switch date {
-        case .now:
+        
+        switch DateFormatType.toString(date, to: .full) {
+        case DateFormatType.toString(Date(), to: .full):
             return "오늘"
         default:
             return nil
