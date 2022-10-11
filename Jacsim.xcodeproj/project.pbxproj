@@ -15,7 +15,6 @@
 		2532672928E3DBBA00F0D5D5 /* Realm in Frameworks */ = {isa = PBXBuildFile; productRef = 2532672828E3DBBA00F0D5D5 /* Realm */; };
 		2532672B28E3DBBA00F0D5D5 /* RealmSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 2532672A28E3DBBA00F0D5D5 /* RealmSwift */; };
 		2535270228D222BD0086383E /* UITextField+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2535270128D222BD0086383E /* UITextField+Extension.swift */; };
-		2545F13928E73FEF00C6046B /* UIScreen+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2545F13828E73FEF00C6046B /* UIScreen+Extension.swift */; };
 		2547132128CC4B670049D952 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2547132028CC4B670049D952 /* AppDelegate.swift */; };
 		2547132328CC4B670049D952 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2547132228CC4B670049D952 /* SceneDelegate.swift */; };
 		2547132528CC4B670049D952 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2547132428CC4B670049D952 /* ViewController.swift */; };
@@ -54,6 +53,8 @@
 		25C6F16B28F5285B008BD901 /* FirebaseAnalyticsWithoutAdIdSupport in Frameworks */ = {isa = PBXBuildFile; productRef = 25C6F16A28F5285B008BD901 /* FirebaseAnalyticsWithoutAdIdSupport */; };
 		25C6F16D28F5285B008BD901 /* FirebaseCrashlytics in Frameworks */ = {isa = PBXBuildFile; productRef = 25C6F16C28F5285B008BD901 /* FirebaseCrashlytics */; };
 		25C6F16F28F5285B008BD901 /* FirebaseMessaging in Frameworks */ = {isa = PBXBuildFile; productRef = 25C6F16E28F5285B008BD901 /* FirebaseMessaging */; };
+		25C6F17528F5A7A4008BD901 /* AllTaskViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25C6F17428F5A7A4008BD901 /* AllTaskViewModel.swift */; };
+		25C6F17728F5AD47008BD901 /* Observable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25C6F17628F5AD47008BD901 /* Observable.swift */; };
 		25D0AD3528D8747F006A918C /* Date+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25D0AD3428D8747F006A918C /* Date+Extension.swift */; };
 		25D0AD3728D8C5B0006A918C /* TaskUpdateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25D0AD3628D8C5B0006A918C /* TaskUpdateView.swift */; };
 		25EE098228CF0CF600B5B5CA /* HomeViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25EE098128CF0CF600B5B5CA /* HomeViewController.swift */; };
@@ -83,7 +84,6 @@
 		2514094528E2D420009CEDE9 /* AlarmViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlarmViewController.swift; sourceTree = "<group>"; };
 		2514094728E2DD21009CEDE9 /* Package.resolved */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = Package.resolved; path = Jacsim.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved; sourceTree = "<group>"; };
 		2535270128D222BD0086383E /* UITextField+Extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UITextField+Extension.swift"; sourceTree = "<group>"; };
-		2545F13828E73FEF00C6046B /* UIScreen+Extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIScreen+Extension.swift"; sourceTree = "<group>"; };
 		2547131D28CC4B670049D952 /* Jacsim.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Jacsim.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		2547132028CC4B670049D952 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		2547132228CC4B670049D952 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
@@ -116,6 +116,8 @@
 		25C3F56328E1CB330062EDA9 /* PageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PageView.swift; sourceTree = "<group>"; };
 		25C6F16728F527E0008BD901 /* GoogleService-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		25C6F17028F54AAD008BD901 /* Jacsim.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Jacsim.entitlements; sourceTree = "<group>"; };
+		25C6F17428F5A7A4008BD901 /* AllTaskViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AllTaskViewModel.swift; sourceTree = "<group>"; };
+		25C6F17628F5AD47008BD901 /* Observable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Observable.swift; sourceTree = "<group>"; };
 		25D0AD3428D8747F006A918C /* Date+Extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Date+Extension.swift"; sourceTree = "<group>"; };
 		25D0AD3628D8C5B0006A918C /* TaskUpdateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskUpdateView.swift; sourceTree = "<group>"; };
 		25EE098128CF0CF600B5B5CA /* HomeViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeViewController.swift; sourceTree = "<group>"; };
@@ -186,7 +188,7 @@
 				25C6F17028F54AAD008BD901 /* Jacsim.entitlements */,
 				2547133A28CC4C310049D952 /* Database */,
 				2547133B28CC4C4B0049D952 /* APIManager */,
-				2547133928CC4C1A0049D952 /* Scene */,
+				2547133928CC4C1A0049D952 /* Presentation */,
 				2547133C28CC4C580049D952 /* Utility */,
 				2547133D28CC4C650049D952 /* Extension */,
 				2547133E28CC4C6D0049D952 /* Protocol */,
@@ -211,7 +213,7 @@
 			path = Resources;
 			sourceTree = "<group>";
 		};
-		2547133928CC4C1A0049D952 /* Scene */ = {
+		2547133928CC4C1A0049D952 /* Presentation */ = {
 			isa = PBXGroup;
 			children = (
 				25C3F52E28E04A0A0062EDA9 /* WalkThorugh */,
@@ -223,7 +225,7 @@
 				25EE098528CF101D00B5B5CA /* AllTask */,
 				25EE098628CF102B00B5B5CA /* Setting */,
 			);
-			path = Scene;
+			path = Presentation;
 			sourceTree = "<group>";
 		};
 		2547133A28CC4C310049D952 /* Database */ = {
@@ -249,6 +251,7 @@
 				2547134428CC50E20049D952 /* CustomView */,
 				2547134328CC50C90049D952 /* Constants */,
 				2547134728CC51A60049D952 /* BaseView */,
+				25C6F17628F5AD47008BD901 /* Observable.swift */,
 			);
 			path = Utility;
 			sourceTree = "<group>";
@@ -261,7 +264,6 @@
 				25FCD99228D77FFF004F48E8 /* FileManager+Extension.swift */,
 				25D0AD3428D8747F006A918C /* Date+Extension.swift */,
 				25FF192028DDE7DD00A45EC4 /* UIFont+Extension.swift */,
-				2545F13828E73FEF00C6046B /* UIScreen+Extension.swift */,
 				255C1AC028EECBE600C205E7 /* UIImage+.swift */,
 			);
 			path = Extension;
@@ -318,6 +320,22 @@
 			path = WalkThorugh;
 			sourceTree = "<group>";
 		};
+		25C6F17228F5A787008BD901 /* ViewModel */ = {
+			isa = PBXGroup;
+			children = (
+				25C6F17428F5A7A4008BD901 /* AllTaskViewModel.swift */,
+			);
+			path = ViewModel;
+			sourceTree = "<group>";
+		};
+		25C6F17328F5A78F008BD901 /* View */ = {
+			isa = PBXGroup;
+			children = (
+				25EE098728CF104100B5B5CA /* AllTaskViewController.swift */,
+			);
+			path = View;
+			sourceTree = "<group>";
+		};
 		25EE098028CF0CE100B5B5CA /* Home */ = {
 			isa = PBXGroup;
 			children = (
@@ -329,7 +347,8 @@
 		25EE098528CF101D00B5B5CA /* AllTask */ = {
 			isa = PBXGroup;
 			children = (
-				25EE098728CF104100B5B5CA /* AllTaskViewController.swift */,
+				25C6F17328F5A78F008BD901 /* View */,
+				25C6F17228F5A787008BD901 /* ViewModel */,
 			);
 			path = AllTask;
 			sourceTree = "<group>";
@@ -395,6 +414,7 @@
 				2547131928CC4B670049D952 /* Sources */,
 				2547131A28CC4B670049D952 /* Frameworks */,
 				2547131B28CC4B670049D952 /* Resources */,
+				25C6F17128F575BC008BD901 /* ShellScript */,
 			);
 			buildRules = (
 			);
@@ -482,6 +502,28 @@
 		};
 /* End PBXResourcesBuildPhase section */
 
+/* Begin PBXShellScriptBuildPhase section */
+		25C6F17128F575BC008BD901 /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${DWARF_DSYM_FOLDER_PATH}/${DWARF_DSYM_FILE_NAME}/Contents/Resources/DWARF/${TARGET_NAME}",
+				"$(SRCROOT)/$(BUILT_PRODUCTS_DIR)/$(INFOPLIST_PATH)",
+			);
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# Type a script or drag a script file from your workspace to insert its path.\n\"${BUILD_DIR%/Build/*}/SourcePackages/checkouts/firebase-ios-sdk/Crashlytics/run\"\n";
+		};
+/* End PBXShellScriptBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
 		2547131928CC4B670049D952 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
@@ -490,12 +532,14 @@
 				25C3F53128E04A310062EDA9 /* WalkThroughViewController.swift in Sources */,
 				2547134228CC4D780049D952 /* Transition+Extension.swift in Sources */,
 				25EE098F28CF153200B5B5CA /* NewTaskView.swift in Sources */,
+				25C6F17728F5AD47008BD901 /* Observable.swift in Sources */,
 				2547132528CC4B670049D952 /* ViewController.swift in Sources */,
 				25636C4728CC544A00B385AF /* BaseCollectionViewCell.swift in Sources */,
 				25FCD98F28D5CA15004F48E8 /* JacsimRepository.swift in Sources */,
 				25EE099A28CF172200B5B5CA /* TaskUpdateViewController.swift in Sources */,
 				255C1ABF28EEAD7300C205E7 /* DateFormatType.swift in Sources */,
 				25EE098D28CF14E400B5B5CA /* NewTaskViewController.swift in Sources */,
+				25C6F17528F5A7A4008BD901 /* AllTaskViewModel.swift in Sources */,
 				259C4E2428DB7BA20092223A /* SettingModel.swift in Sources */,
 				25FF192128DDE7DD00A45EC4 /* UIFont+Extension.swift in Sources */,
 				2514094428E2C73D009CEDE9 /* AlarmView.swift in Sources */,
@@ -532,7 +576,6 @@
 				25FCD99128D74473004F48E8 /* TaskDetailView.swift in Sources */,
 				259C4E2128DB77750092223A /* SettingTableViewCell.swift in Sources */,
 				256070CB28D396C400A1F553 /* ImageModel.swift in Sources */,
-				2545F13928E73FEF00C6046B /* UIScreen+Extension.swift in Sources */,
 				25C3F55D28E1AE0B0062EDA9 /* ThirdViewController.swift in Sources */,
 				25C3F55928E1AD7C0062EDA9 /* FirstViewController.swift in Sources */,
 			);
@@ -682,6 +725,7 @@
 				CODE_SIGN_ENTITLEMENTS = Jacsim/Jacsim.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 2;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = RFHV927M8S;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Jacsim/Info.plist;
@@ -718,6 +762,7 @@
 				CODE_SIGN_ENTITLEMENTS = Jacsim/Jacsim.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 2;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = RFHV927M8S;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Jacsim/Info.plist;

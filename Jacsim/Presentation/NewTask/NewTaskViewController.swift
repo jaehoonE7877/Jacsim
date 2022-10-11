@@ -187,7 +187,6 @@ final class NewTaskViewController: BaseViewController {
                         self.present(vc, animated: true)
                     }
                     
-                    
                 } else {
                     
                     DispatchQueue.main.async {
@@ -372,7 +371,7 @@ extension NewTaskViewController: UITextFieldDelegate {
     
     @objc func endDateTextFieldTapped(){
         if let datePicker = self.mainView.endDateTextField.inputView as? UIDatePicker {
-            
+
             self.mainView.endDateTextField.text = DateFormatType.toString(datePicker.date, to: .full)
         }
         self.mainView.endDateTextField.resignFirstResponder()

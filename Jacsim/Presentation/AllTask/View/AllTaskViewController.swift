@@ -7,13 +7,13 @@
 
 import UIKit
 
-
 import RealmSwift
 
 final class AllTaskViewController: BaseViewController {
     
     // MARK: 객체 선언 TableView
-    let repository = JacsimRepository()
+    
+    let viewModel = AllTaskViewModel()
     
     var foldValue = [false, false, false]
     
@@ -29,38 +29,11 @@ final class AllTaskViewController: BaseViewController {
         $0.backgroundColor = .clear
     }
     
-    var tasks: Results<UserJacsim>!{
-        didSet {
-            DispatchQueue.main.async {
-                self.tableView.reloadData()
-            }
-        }
-    }
-    
-    var successTasks: Results<UserJacsim>!{
-        didSet {
-            DispatchQueue.main.async {
-                self.tableView.reloadData()
-            }
-        }
-    }
-    
-    var failTasks: Results<UserJacsim>!{
-        didSet {
-            DispatchQueue.main.async {
-                self.tableView.reloadData()
-            }
-        }
-    }
-    
     // MARK: View Life Cycle
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .systemBackground
-        tasks = repository.fetchRealm()
-        
-        successTasks = repository.fetchIsSuccess()
-        failTasks = repository.fetchIsFail()
+
     }
     
     // MARK: Navigation title
@@ -106,16 +79,7 @@ extension AllTaskViewController: UITableViewDelegate, UITableViewDataSource {
     }
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        switch section {
-        case 0:
-            return tasks?.count ?? 0
-        case 1:
-            return successTasks?.count ?? 0
-        case 2:
-            return failTasks?.count ?? 0
-        default:
-            return 0
-        }
+        return viewModel.numberOfRowsInSection(section: section)
     }
     
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
@@ -148,21 +112,7 @@ extension AllTaskViewController: UITableViewDelegate, UITableViewDataSource {
     
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        guard let cell = tableView.dequeueReusableCell(withIdentifier: JacsimTableViewCell.reuseIdentifier) as? JacsimTableViewCell else { return UITableViewCell() }
-        
-        cell.backgroundColor = .clear
-        
-        switch indexPath.section {
-        case 0:
-            cell.titleLabel.text = tasks[indexPath.item].title
-        case 1:
-            cell.titleLabel.text = successTasks[indexPath.item].title
-        case 2:
-            cell.titleLabel.text = failTasks[indexPath.item].title
-        default:
-            cell.titleLabel.text = ""
-        }
-        return cell
+        viewModel.cellForRowAt(tableView, indexPath: indexPath)
     }
     
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
@@ -176,4 +126,3 @@ extension AllTaskViewController: UITableViewDelegate, UITableViewDataSource {
     }
     
 }
-
