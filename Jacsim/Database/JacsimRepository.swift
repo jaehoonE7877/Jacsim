@@ -150,7 +150,7 @@ final class JacsimRepository: JacsimRepositoryProtocol {
         }
     }
     // 종료일이 지남으로서 isDone 정의
-    func checkIsDone(items: Results<UserJacsim>!) {
+    func checkIsDone(items: [UserJacsim]) {
         
         items.forEach { task in
             let end = task.endDate + 86400

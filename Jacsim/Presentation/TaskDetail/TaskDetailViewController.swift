@@ -213,7 +213,9 @@ extension TaskDetailViewController: UICollectionViewDelegate, UICollectionViewDa
         if !task.memoList[indexPath.item].check {
             vc.dateText = cell.dateLabel.text
             vc.task = task
+            //vc.viewModel.task.value = task
             vc.index = indexPath.item
+            //vc.viewModel.memoList.value = task.memoList[indexPath.item]
             self.transitionViewController(viewController: vc, transitionStyle: .push)
         } else {
             vc.dateText = cell.dateLabel.text

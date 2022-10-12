@@ -316,6 +316,7 @@ extension NewTaskViewController: UITextFieldDelegate {
         switch textField {
         case mainView.newTaskTitleTextfield:
             guard let text = textField.text else { return }
+            
             if text.trimmingCharacters(in: .whitespacesAndNewlines).count < 2 {
                 view.makeToast("작심한 일의 제목은 2글자 이상이어야 합니다!", duration: 0.4, position: .center, title: nil, image: nil, style: .init()) { [weak self] _ in
                     guard let self = self else { return }
@@ -328,6 +329,7 @@ extension NewTaskViewController: UITextFieldDelegate {
             }
         case mainView.successTextField:
             guard let text = textField.text else { return }
+            
             if Int(text) ?? 0 < 1 {
                 view.makeToast("성공 횟수는 1보다 커야합니다.", duration: 0.3, position: .center, title: nil, image: nil, style: .init()) { [weak self]_ in
                     guard let self = self else { return }
@@ -371,7 +373,7 @@ extension NewTaskViewController: UITextFieldDelegate {
     
     @objc func endDateTextFieldTapped(){
         if let datePicker = self.mainView.endDateTextField.inputView as? UIDatePicker {
-
+            
             self.mainView.endDateTextField.text = DateFormatType.toString(datePicker.date, to: .full)
         }
         self.mainView.endDateTextField.resignFirstResponder()

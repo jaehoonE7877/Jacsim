@@ -15,6 +15,8 @@ final class TaskUpdateViewController: BaseViewController {
     let mainView = TaskUpdateView()
     let repository = JacsimRepository()
     
+    let viewModel = TaskUpdateViewModel()
+    
     var task: UserJacsim?
     var dateText: String? //image 저장시에 objectId_dateText로 넣어주기
     var index: Int? //realm memo의 해당하는 index에 textfield 데이터 넣어주기
@@ -44,9 +46,7 @@ final class TaskUpdateViewController: BaseViewController {
     //MARK: View Life Cycle
     override func viewDidLoad() {
         super.viewDidLoad()
-        
-        
-        mainView.certifyButton.addTarget(self, action: #selector(certifyButtonTapped), for: .touchUpInside)
+
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -68,8 +68,16 @@ final class TaskUpdateViewController: BaseViewController {
         
         mainView.memoTextfield.delegate = self
         tapGesture()
-        
+        mainView.certifyButton.addTarget(self, action: #selector(certifyButtonTapped), for: .touchUpInside)
         mainView.imageAddButton.menu = addImageButtonTapped()
+        
+    }
+    
+    private func setBinding() {
+        
+        viewModel.memoList.bind { task in
+            self.mainView.memoTextfield.text = task.memo
+        }
         
     }
     
@@ -173,6 +181,7 @@ extension TaskUpdateViewController: UITextFieldDelegate {
     
     func textFieldDidEndEditing(_ textField: UITextField) {
         guard let text = textField.text else { return }
+        
         if text.trimmingCharacters(in: .whitespacesAndNewlines).count < 2 {
             view.makeToast("한 줄 메모는 2글자 이상으로 남겨주세요!", duration: 0.5, position: .center, title: nil, image: nil, style: .init()) { [weak self]_ in
                 guard let self = self else { return }
