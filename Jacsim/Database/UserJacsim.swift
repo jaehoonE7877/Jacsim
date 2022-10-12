@@ -5,8 +5,6 @@
 //  Created by Seo Jae Hoon on 2022/09/10.
 //
 
-import Foundation
-
 import RealmSwift
 import UIKit
 

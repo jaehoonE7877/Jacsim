@@ -13,8 +13,9 @@ import RealmSwift
 
 final class HomeViewController: BaseViewController {
         
-    let repository = JacsimRepository()
+    //let repository = JacsimRepository()
     
+    private let viewModel = HomeViewModel()
     // MARK: Property
     
     lazy var fsCalendar = FSCalendar(frame: .zero).then {
@@ -69,19 +70,20 @@ final class HomeViewController: BaseViewController {
         $0.fabDelegate = self
     }
     
-    var tasks: Results<UserJacsim>!{
-        didSet {
-            DispatchQueue.main.async {
-                self.tableView.reloadData()
-            }
-        }
-    }
+//    var tasks: Results<UserJacsim>!{
+//        didSet {
+//            DispatchQueue.main.async {
+//                self.tableView.reloadData()
+//            }
+//        }
+//    }
     
     
     // MARK: View LifeCycle
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        setBinding()
         fsCalendar.reloadData()
         
     }
@@ -92,8 +94,10 @@ final class HomeViewController: BaseViewController {
         fsCalendar.setCurrentPage(Date(), animated: false)
         fsCalendar.select(Date(), scrollToDate: false)
         
-        tasks = repository.fetchRealm()
-        repository.checkIsDone(items: tasks)
+        viewModel.fetch()
+        viewModel.checkIsDone()
+//        tasks = repository.fetchRealm()
+//        repository.checkIsDone(items: tasks)
         
         
         notificationCenter.getPendingNotificationRequests { items in
@@ -102,11 +106,20 @@ final class HomeViewController: BaseViewController {
    
     }
     
+    private func setBinding() {
+        
+        viewModel.tasks.bind { _ in
+            DispatchQueue.main.async {
+                self.tableView.reloadData()
+            }
+        }
+        
+    }
+    
     // MARK: Set UI, Constraints
     override func configure() {
         
         [fsCalendar, tableView, infoButton, sortButton, floaty].forEach { view.addSubview($0) }
-        
         
         setFSCalendar()
         setFloatyButton()
@@ -212,7 +225,8 @@ final class HomeViewController: BaseViewController {
         fsCalendar.setCurrentPage(Date(), animated: true)
         fsCalendar.select(Date(), scrollToDate: true)
         //fsCalendar(fsCalendar, didSelect: fsCalendar.today ?? Date() , at: .current)
-        tasks = repository.fetchRealm()
+        //tasks = repository.fetchRealm()
+        viewModel.fetch()
         
     }
     
@@ -222,7 +236,7 @@ final class HomeViewController: BaseViewController {
 extension HomeViewController: UITableViewDelegate, UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return tasks?.count ?? 0
+        return viewModel.numberOfRowsInSection(tableView, section: section)
     }
     
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
@@ -235,24 +249,25 @@ extension HomeViewController: UITableViewDelegate, UITableViewDataSource {
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        guard let cell = tableView.dequeueReusableCell(withIdentifier: JacsimTableViewCell.reuseIdentifier) as? JacsimTableViewCell else { return UITableViewCell() }
-        cell.selectionStyle = .none
-        cell.titleLabel.text = tasks?[indexPath.row].title
-        if tasks?[indexPath.row].alarm != nil {
-            cell.alarmImageView.isHidden = false
-        } else {
-            cell.alarmImageView.isHidden = true
-        }
-        
-        
-        return cell
+        viewModel.cellForRowAt(tableView, indexPath: indexPath)
+//        guard let cell = tableView.dequeueReusableCell(withIdentifier: JacsimTableViewCell.reuseIdentifier) as? JacsimTableViewCell else { return UITableViewCell() }
+//        cell.selectionStyle = .none
+//        cell.titleLabel.text = tasks?[indexPath.row].title
+//        if tasks?[indexPath.row].alarm != nil {
+//            cell.alarmImageView.isHidden = false
+//        } else {
+//            cell.alarmImageView.isHidden = true
+//        }
+//
+//
+//        return cell
     }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         
         let vc = TaskDetailViewController()
-        vc.task = tasks?[indexPath.item]
-        vc.title = tasks?[indexPath.item].title
+//        vc.task = tasks?[indexPath.item]
+//        vc.title = tasks?[indexPath.item].title
         self.transitionViewController(viewController: vc, transitionStyle: .push)
     }
     
@@ -290,7 +305,9 @@ extension HomeViewController: FSCalendarDelegate, FSCalendarDataSource {
     
     func calendar(_ calendar: FSCalendar, didSelect date: Date, at monthPosition: FSCalendarMonthPosition) {
         
-        tasks = repository.fetchDate(date: date)
+        //tasks = repository.fetchDate(date: date)
+        viewModel.fetchDate(date: date)
+        
         
         if monthPosition == .previous || monthPosition == .next {
             calendar.setCurrentPage(date, animated: true)
@@ -312,7 +329,7 @@ extension HomeViewController: FSCalendarDelegate, FSCalendarDataSource {
 extension HomeViewController: FloatyDelegate {
     
     func floatyWillOpen(_ floaty: Floaty) {
-        if repository.fetchIsNotDone() >= 5 {
+        if  viewModel.repository.fetchIsNotDone() >= 5 {
             floaty.items[0].isHidden = true
         } else {
             floaty.items[0].isHidden = false

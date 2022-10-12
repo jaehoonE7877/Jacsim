@@ -71,6 +71,8 @@
 		25EE09A028CF1A6200B5B5CA /* Color.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25EE099F28CF1A6200B5B5CA /* Color.swift */; };
 		25EE09A228CF1A7300B5B5CA /* Constant.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25EE09A128CF1A7300B5B5CA /* Constant.swift */; };
 		25EE09A728D0AE6300B5B5CA /* Floaty in Frameworks */ = {isa = PBXBuildFile; productRef = 25EE09A628D0AE6300B5B5CA /* Floaty */; };
+		25FA7AEA28F68C04000F0774 /* TaskUpdateViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25FA7AE928F68C04000F0774 /* TaskUpdateViewModel.swift */; };
+		25FA7AEF28F6A94F000F0774 /* HomeViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25FA7AEE28F6A94F000F0774 /* HomeViewModel.swift */; };
 		25FCD98F28D5CA15004F48E8 /* JacsimRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25FCD98E28D5CA15004F48E8 /* JacsimRepository.swift */; };
 		25FCD99128D74473004F48E8 /* TaskDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25FCD99028D74473004F48E8 /* TaskDetailView.swift */; };
 		25FCD99328D77FFF004F48E8 /* FileManager+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25FCD99228D77FFF004F48E8 /* FileManager+Extension.swift */; };
@@ -133,6 +135,8 @@
 		25EE099D28CF198000B5B5CA /* JacsimHeaderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JacsimHeaderView.swift; sourceTree = "<group>"; };
 		25EE099F28CF1A6200B5B5CA /* Color.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Color.swift; sourceTree = "<group>"; };
 		25EE09A128CF1A7300B5B5CA /* Constant.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Constant.swift; sourceTree = "<group>"; };
+		25FA7AE928F68C04000F0774 /* TaskUpdateViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskUpdateViewModel.swift; sourceTree = "<group>"; };
+		25FA7AEE28F6A94F000F0774 /* HomeViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeViewModel.swift; sourceTree = "<group>"; };
 		25FCD98E28D5CA15004F48E8 /* JacsimRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JacsimRepository.swift; sourceTree = "<group>"; };
 		25FCD99028D74473004F48E8 /* TaskDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskDetailView.swift; sourceTree = "<group>"; };
 		25FCD99228D77FFF004F48E8 /* FileManager+Extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "FileManager+Extension.swift"; sourceTree = "<group>"; };
@@ -186,6 +190,7 @@
 			isa = PBXGroup;
 			children = (
 				25C6F17028F54AAD008BD901 /* Jacsim.entitlements */,
+				25FA7AE628F68B5D000F0774 /* Application */,
 				2547133A28CC4C310049D952 /* Database */,
 				2547133B28CC4C4B0049D952 /* APIManager */,
 				2547133928CC4C1A0049D952 /* Presentation */,
@@ -193,12 +198,8 @@
 				2547133D28CC4C650049D952 /* Extension */,
 				2547133E28CC4C6D0049D952 /* Protocol */,
 				2547133628CC4BC00049D952 /* Resources */,
-				2547132028CC4B670049D952 /* AppDelegate.swift */,
-				2547132228CC4B670049D952 /* SceneDelegate.swift */,
 				2547132428CC4B670049D952 /* ViewController.swift */,
 				2547132628CC4B670049D952 /* Main.storyboard */,
-				2547132928CC4B6A0049D952 /* Assets.xcassets */,
-				2547132B28CC4B6A0049D952 /* LaunchScreen.storyboard */,
 				2547132E28CC4B6A0049D952 /* Info.plist */,
 				25C6F16728F527E0008BD901 /* GoogleService-Info.plist */,
 			);
@@ -208,6 +209,8 @@
 		2547133628CC4BC00049D952 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				2547132928CC4B6A0049D952 /* Assets.xcassets */,
+				2547132B28CC4B6A0049D952 /* LaunchScreen.storyboard */,
 				2547133728CC4BCE0049D952 /* APIKey.swift */,
 			);
 			path = Resources;
@@ -339,7 +342,8 @@
 		25EE098028CF0CE100B5B5CA /* Home */ = {
 			isa = PBXGroup;
 			children = (
-				25EE098128CF0CF600B5B5CA /* HomeViewController.swift */,
+				25FA7AEC28F6A92E000F0774 /* ViewModel */,
+				25FA7AEB28F6A91F000F0774 /* View */,
 			);
 			path = Home;
 			sourceTree = "<group>";
@@ -347,8 +351,8 @@
 		25EE098528CF101D00B5B5CA /* AllTask */ = {
 			isa = PBXGroup;
 			children = (
-				25C6F17328F5A78F008BD901 /* View */,
 				25C6F17228F5A787008BD901 /* ViewModel */,
+				25C6F17328F5A78F008BD901 /* View */,
 			);
 			path = AllTask;
 			sourceTree = "<group>";
@@ -398,10 +402,52 @@
 		25EE099628CF16E900B5B5CA /* TaskUpdate */ = {
 			isa = PBXGroup;
 			children = (
+				25FA7AE828F68BE0000F0774 /* ViewModel */,
+				25FA7AE728F68BD6000F0774 /* View */,
+			);
+			path = TaskUpdate;
+			sourceTree = "<group>";
+		};
+		25FA7AE628F68B5D000F0774 /* Application */ = {
+			isa = PBXGroup;
+			children = (
+				2547132228CC4B670049D952 /* SceneDelegate.swift */,
+				2547132028CC4B670049D952 /* AppDelegate.swift */,
+			);
+			path = Application;
+			sourceTree = "<group>";
+		};
+		25FA7AE728F68BD6000F0774 /* View */ = {
+			isa = PBXGroup;
+			children = (
 				25EE099928CF172200B5B5CA /* TaskUpdateViewController.swift */,
 				25D0AD3628D8C5B0006A918C /* TaskUpdateView.swift */,
 			);
-			path = TaskUpdate;
+			path = View;
+			sourceTree = "<group>";
+		};
+		25FA7AE828F68BE0000F0774 /* ViewModel */ = {
+			isa = PBXGroup;
+			children = (
+				25FA7AE928F68C04000F0774 /* TaskUpdateViewModel.swift */,
+			);
+			path = ViewModel;
+			sourceTree = "<group>";
+		};
+		25FA7AEB28F6A91F000F0774 /* View */ = {
+			isa = PBXGroup;
+			children = (
+				25EE098128CF0CF600B5B5CA /* HomeViewController.swift */,
+			);
+			path = View;
+			sourceTree = "<group>";
+		};
+		25FA7AEC28F6A92E000F0774 /* ViewModel */ = {
+			isa = PBXGroup;
+			children = (
+				25FA7AEE28F6A94F000F0774 /* HomeViewModel.swift */,
+			);
+			path = ViewModel;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -563,10 +609,12 @@
 				259C4E1F28DB77680092223A /* SettingViewController.swift in Sources */,
 				25D0AD3728D8C5B0006A918C /* TaskUpdateView.swift in Sources */,
 				25EE099C28CF175F00B5B5CA /* TaskDetailCollectionViewCell.swift in Sources */,
+				25FA7AEF28F6A94F000F0774 /* HomeViewModel.swift in Sources */,
 				25D0AD3528D8747F006A918C /* Date+Extension.swift in Sources */,
 				25FCD99328D77FFF004F48E8 /* FileManager+Extension.swift in Sources */,
 				2514094628E2D420009CEDE9 /* AlarmViewController.swift in Sources */,
 				25636C5128CC580400B385AF /* APIManager.swift in Sources */,
+				25FA7AEA28F68C04000F0774 /* TaskUpdateViewModel.swift in Sources */,
 				25636C4928CC54A200B385AF /* BaseTableViewCell.swift in Sources */,
 				2547132328CC4B670049D952 /* SceneDelegate.swift in Sources */,
 				25EE099428CF165D00B5B5CA /* ImageSearchCollectionViewCell.swift in Sources */,

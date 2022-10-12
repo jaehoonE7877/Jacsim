@@ -13,7 +13,7 @@ final class AllTaskViewController: BaseViewController {
     
     // MARK: 객체 선언 TableView
     
-    let viewModel = AllTaskViewModel()
+    private var viewModel = AllTaskViewModel()
     
     var foldValue = [false, false, false]
     
