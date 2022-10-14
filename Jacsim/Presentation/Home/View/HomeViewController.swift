@@ -15,7 +15,7 @@ final class HomeViewController: BaseViewController {
         
     //let repository = JacsimRepository()
     
-    private let viewModel = HomeViewModel()
+    let viewModel = HomeViewModel()
     // MARK: Property
     
     lazy var fsCalendar = FSCalendar(frame: .zero).then {
@@ -329,7 +329,7 @@ extension HomeViewController: FSCalendarDelegate, FSCalendarDataSource {
 extension HomeViewController: FloatyDelegate {
     
     func floatyWillOpen(_ floaty: Floaty) {
-        if  viewModel.repository.fetchIsNotDone() >= 5 {
+        if  viewModel.fetchIsNotDone() >= 5 {
             floaty.items[0].isHidden = true
         } else {
             floaty.items[0].isHidden = false

@@ -9,7 +9,7 @@ import UIKit
 
 final class HomeViewModel {
     
-    private let repository: JacsimRepositoryProtocol = JacsimRepository() 
+    private let repository = JacsimRepository()
     
     var tasks = Observable([UserJacsim]())
     
@@ -41,11 +41,11 @@ extension HomeViewModel {
     }
     
     func checkIsDone() {
-        repository.checkIsDone(item: tasks.value.count)
+        repository.checkIsDone(items: tasks.value)
     }
     
-    func fetchIsNotDone() {
-        
+    func fetchIsNotDone() -> Int {
+        return repository.fetchIsNotDone()
     }
     
 }
