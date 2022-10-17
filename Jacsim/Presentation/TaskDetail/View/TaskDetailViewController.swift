@@ -80,16 +80,16 @@ final class TaskDetailViewController: BaseViewController {
         //
         //        guard let image = loadImageFromDocument(fileName: "\(task.id).jpg") else { return }
         //        mainView.mainImage.image = image
-        guard let image = loadImageFromDocument(fileName: viewModel.loadMainImage) else { return }
-        mainView.mainImage.image = image
+//        guard let image = loadImageFromDocument(fileName: viewModel.loadMainImage) else { return }
+        mainView.mainImage.image = viewModel.loadMainImage
         
         
         // collectionView cell개수
-        jacsimDays = calculateDays(startDate: task.startDate, endDate: task.endDate)
-        
-        for date in stride(from: task.startDate, to: task.endDate + 86400, by: 86400 ){
-            dayArray.append(date)
-        }
+//        jacsimDays = calculateDays(startDate: task.startDate, endDate: task.endDate)
+//
+//        for date in stride(from: task.startDate, to: task.endDate + 86400, by: 86400 ){
+//            dayArray.append(date)
+//        }
     }
     
     override func setNavigationController() {
@@ -102,12 +102,12 @@ final class TaskDetailViewController: BaseViewController {
     
     private func reviseButtonTapped() -> UIMenu {
         
-        let deletealarm = UIAction(title: "알람 끄기", image: UIImage.alarmDelete) { [weak self]_ in
+        let deleteAlarm = UIAction(title: "알람 끄기", image: UIImage.alarmDelete) { [weak self]_ in
             guard let self = self else { return }
-            guard let task = self.task else { return }
+            
             self.showAlertMessage(title: "알람을 끄시겠습니까?", message: nil, button: "확인", cancel: "취소") { _ in
                 
-                self.repository.deleteAlarm(item: task)
+                self.viewModel.deleteAlarm()
                 
                 self.navigationController?.popViewController(animated: true)
             }
@@ -118,31 +118,32 @@ final class TaskDetailViewController: BaseViewController {
             guard let self = self else { return }
             self.showAlertMessage(title: "해당 작심을 그만두실 건가요?", message: "기존에 저장한 데이터들은 사라집니다.", button: "확인", cancel: "취소") { _ in
                 
-                guard let task = self.task else { return }
-                // 인증유무 분기처리
-                
-                if self.repository.checkCertified(item: task) == 0 {
-                    
-                    self.repository.deleteJacsim(item: task)
-                    
-                } else {
-                    // 인증이 있을 때
-                    for index in 0...self.repository.checkCertified(item: task) - 1 {
-                        let dateText = DateFormatType.toString(self.dayArray[index], to: .fullWithoutYear)
-                        self.repository.removeImageFromDocument(fileName: "\(task.id)_\(dateText).jpg")
-                    }
-                    
-                    self.repository.deleteJacsim(item: task)
-                    
-                }
-                self.navigationController?.popViewController(animated: true)
+                self.viewModel.deleteJacsim()
+                //                guard let task = self.task else { return }
+                //                // 인증유무 분기처리
+                //
+                //                if self.repository.checkCertified(item: task) == 0 {
+                //
+                //                    self.repository.deleteJacsim(item: task)
+                //
+                //                } else {
+                //                    // 인증이 있을 때
+                //                    for index in 0...self.repository.checkCertified(item: task) - 1 {
+                //                        let dateText = DateFormatType.toString(self.dayArray[index], to: .fullWithoutYear)
+                //                        self.repository.removeImageFromDocument(fileName: "\(task.id)_\(dateText).jpg")
+                //                    }
+                //
+                //                    self.repository.deleteJacsim(item: task)
+                //
             }
-            
+            self.navigationController?.popViewController(animated: true)
         }
         
+        
+        
         var items: [UIMenuElement] = []
-        if task?.alarm != nil {
-            items = [deletealarm, quit]
+        if viewModel.task?.alarm != nil {
+            items = [deleteAlarm, quit]
         } else {
             items = [quit]
         }
@@ -151,34 +152,36 @@ final class TaskDetailViewController: BaseViewController {
         
         return menu
     }
-    
+
 
 }
 //MARK: CollectionView Delegate, Datasource
 extension TaskDetailViewController: UICollectionViewDelegate, UICollectionViewDataSource {
     
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return jacsimDays
+        return viewModel.numberOfItemsInSection()
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         
-        guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: TaskDetailCollectionViewCell.reuseIdentifier, for: indexPath) as? TaskDetailCollectionViewCell
-        else { return UICollectionViewCell() }
+        viewModel.cellForItemAt(collectionView, indexPath: indexPath)
         
-        cell.layer.borderWidth = Constant.Design.borderWidth
-        cell.layer.cornerRadius = Constant.Design.cornerRadius
-        cell.layer.borderColor = Constant.BaseColor.textColor?.cgColor
-        
-        let dateText = DateFormatType.toString(dayArray[indexPath.item], to: .fullWithoutYear)
-        guard let objectId = task?.id else { return UICollectionViewCell() }
-        cell.dateLabel.text = dateText
-        cell.certifiedMemo.text = task?.memoList[indexPath.row].memo
-        
-        guard let image = loadImageFromDocument(fileName: "\(objectId)_\(dateText).jpg") else { return UICollectionViewCell()}
-        cell.certifiedImageView.image = image
-        
-        return cell
+//        guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: TaskDetailCollectionViewCell.reuseIdentifier, for: indexPath) as? TaskDetailCollectionViewCell
+//        else { return UICollectionViewCell() }
+//
+//        cell.layer.borderWidth = Constant.Design.borderWidth
+//        cell.layer.cornerRadius = Constant.Design.cornerRadius
+//        cell.layer.borderColor = Constant.BaseColor.textColor?.cgColor
+//
+//        let dateText = DateFormatType.toString(dayArray[indexPath.item], to: .fullWithoutYear)
+//        guard let objectId = task?.id else { return UICollectionViewCell() }
+//        cell.dateLabel.text = dateText
+//        cell.certifiedMemo.text = task?.memoList[indexPath.row].memo
+//
+//        guard let image = loadImageFromDocument(fileName: "\(objectId)_\(dateText).jpg") else { return UICollectionViewCell()}
+//        cell.certifiedImageView.image = image
+//
+//        return cell
     }
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {

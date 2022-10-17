@@ -14,7 +14,7 @@ import CropViewController
 final class NewTaskViewController: BaseViewController {
     
     let repository = JacsimRepository()
-    
+    let documentManager = DocumentManager.shared
     var alarm: Date?
     
     //MARK: Property
@@ -260,7 +260,7 @@ final class NewTaskViewController: BaseViewController {
                 task.memoList.append(certified)
             }
             
-            saveImageToDocument(fileName: "\(String(describing: task.id)).jpg", image: mainView.newTaskImageView.image ?? UIImage.jacsimImage)
+            self.documentManager.saveImageToDocument(fileName: "\(String(describing: task.id)).jpg", image: mainView.newTaskImageView.image ?? UIImage.jacsimImage)
             repository.addJacsim(item: task)
             
             scheduleNotification(title: title, fireDate: fireDate)
@@ -274,7 +274,7 @@ final class NewTaskViewController: BaseViewController {
                 task.memoList.append(certified)
             }
             
-            saveImageToDocument(fileName: "\(String(describing: task.id)).jpg", image: mainView.newTaskImageView.image ?? UIImage.jacsimImage)
+            self.documentManager.saveImageToDocument(fileName: "\(String(describing: task.id)).jpg", image: mainView.newTaskImageView.image ?? UIImage.jacsimImage)
             repository.addJacsim(item: task)
             
             dismiss(animated: true)

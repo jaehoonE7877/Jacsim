@@ -13,7 +13,9 @@ import CropViewController
 final class TaskUpdateViewController: BaseViewController {
     
     let mainView = TaskUpdateView()
+    
     let repository = JacsimRepository()
+    let documentManager = DocumentManager.shared
     
     let viewModel = TaskUpdateViewModel()
     
@@ -145,7 +147,7 @@ final class TaskUpdateViewController: BaseViewController {
 
         repository.updateMemo(item: task, index: index, memo: memo)
         
-        saveImageToDocument(fileName: "\(task.id)_\(dateText).jpg", image: mainView.certifyImageView.image ?? UIImage.jacsimImage)
+        self.documentManager.saveImageToDocument(fileName: "\(task.id)_\(dateText).jpg", image: mainView.certifyImageView.image ?? UIImage.jacsimImage)
         
         self.navigationController?.popViewController(animated: true)
     }
