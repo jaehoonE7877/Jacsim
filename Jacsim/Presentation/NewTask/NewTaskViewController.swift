@@ -331,10 +331,11 @@ extension NewTaskViewController: UITextFieldDelegate {
             guard let text = textField.text else { return }
             
             if Int(text) ?? 0 < 1 {
-                view.makeToast("성공 횟수는 1보다 커야합니다.", duration: 0.3, position: .center, title: nil, image: nil, style: .init()) { [weak self]_ in
+                view.makeToast("성공 횟수는 1보다 커야합니다.", duration: 0.3, position: .center, title: nil, image: nil, style: .init()) { [weak self] _ in
                     guard let self = self else { return }
                     DispatchQueue.main.async {
                         self.mainView.successTextField.text = "1"
+                        self.view.endEditing(true)
                     }
                 }
                 return

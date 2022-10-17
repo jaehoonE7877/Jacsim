@@ -266,6 +266,8 @@ extension HomeViewController: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         
         let vc = TaskDetailViewController()
+        vc.viewModel.task = viewModel.tasks.value[indexPath.row]
+        vc.title = viewModel.tasks.value[indexPath.item].title
 //        vc.task = tasks?[indexPath.item]
 //        vc.title = tasks?[indexPath.item].title
         self.transitionViewController(viewController: vc, transitionStyle: .push)

@@ -11,7 +11,7 @@ final class HomeViewModel {
     
     private let repository = JacsimRepository()
     
-    var tasks = Observable([UserJacsim]())
+    var tasks: Observable<[UserJacsim]> = Observable([UserJacsim]())
     
 }
 

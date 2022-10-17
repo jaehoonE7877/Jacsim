@@ -10,13 +10,14 @@ import UIKit
 final class TaskDetailViewController: BaseViewController {
     
     //MARK: Property
+    let viewModel = TaskDetailViewModel()
+    
     let mainView = TaskDetailView()
-    let repository = JacsimRepository()
     
     var jacsimDays: Int = 0
     var dayArray: [Date] = []
     
-    var task: UserJacsim?
+    //var task: UserJacsim?
     
     override func loadView() {
         self.view = mainView
@@ -26,21 +27,25 @@ final class TaskDetailViewController: BaseViewController {
         super.viewDidLoad()
         
         configureDelegate()
-
+        
     }
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         
-        guard let task = task else { return }
-        repository.checkIsDone(item: task, count: jacsimDays)
-        repository.checkIsSuccess(item: task)
+        //        guard let task = task else { return }
+        //        repository.checkIsDone(item: task, count: jacsimDays)
+        //        repository.checkIsSuccess(item: task)
         
-        if task.success - repository.checkCertified(item: task) > 0 {
-            mainView.successLabel.text = "작심 성공까지 \(task.success - repository.checkCertified(item: task))회 남았습니다!"
-        } else {
-            mainView.successLabel.text = "목표를 달성했습니다! 끝까지 힘내세요!!"
-        }
+        viewModel.checkIsSuccess()
+        
+        //        if task.success - repository.checkCertified(item: task) > 0 {
+        //            mainView.successLabel.text = "작심 성공까지 \(task.success - repository.checkCertified(item: task))회 남았습니다!"
+        //        } else {
+        //            mainView.successLabel.text = "목표를 달성했습니다! 끝까지 힘내세요!!"
+        //        }
+        
+        mainView.successLabel.text = viewModel.showCertified
         
         DispatchQueue.main.async {
             self.mainView.collectionView.reloadData()
@@ -58,19 +63,26 @@ final class TaskDetailViewController: BaseViewController {
         
         view.backgroundColor = Constant.BaseColor.backgroundColor
         
-        guard let task = task else { return }
+        //        guard let task = task else { return }
+        //
+        //        mainView.startDateLabel.text = DateFormatType.toString(task.startDate, to: .full)
+        //        mainView.endDateLabel.text = DateFormatType.toString(task.endDate, to: .full)
         
-        mainView.startDateLabel.text = DateFormatType.toString(task.startDate, to: .full)
-        mainView.endDateLabel.text = DateFormatType.toString(task.endDate, to: .full)
+        mainView.startDateLabel.text = viewModel.showStartDate
+        mainView.endDateLabel.text = viewModel.showEndDate
         
-        if let alarm = task.alarm {
-            mainView.alarmTimeLabel.text = DateFormatType.toString(alarm, to: .time)
-        } else {
-            mainView.alarmTimeLabel.text = "설정된 알람이 없습니다."
-        }
-        
-        guard let image = loadImageFromDocument(fileName: "\(task.id).jpg") else { return }
+        mainView.alarmLabel.text = viewModel.showAlarm
+        //        if let alarm = task.alarm {
+        //            mainView.alarmTimeLabel.text = DateFormatType.toString(alarm, to: .time)
+        //        } else {
+        //            mainView.alarmTimeLabel.text = "설정된 알람이 없습니다."
+        //        }
+        //
+        //        guard let image = loadImageFromDocument(fileName: "\(task.id).jpg") else { return }
+        //        mainView.mainImage.image = image
+        guard let image = loadImageFromDocument(fileName: viewModel.loadMainImage) else { return }
         mainView.mainImage.image = image
+        
         
         // collectionView cell개수
         jacsimDays = calculateDays(startDate: task.startDate, endDate: task.endDate)
@@ -90,34 +102,6 @@ final class TaskDetailViewController: BaseViewController {
     
     private func reviseButtonTapped() -> UIMenu {
         
-//        let revise = UIAction(title: "수정", image: UIImage(systemName: "pencil.circle")) { _ in
-//            guard let self = self else { return }
-//            guard let title = self.task?.title else { return }
-//            guard let success = self.task?.success else { return }
-//            guard let id = self.task?.id else { return }
-//            
-//            let vc = NewTaskViewController()
-//            vc.mainView.newTaskTitleTextfield.text = title
-//            vc.mainView.titleCountLabel.text = "\(title.count)/20"
-//            
-//            vc.mainView.startDateTextField.text = self.mainView.startDateLabel.text
-//            vc.mainView.endDateTextField.text = self.mainView.endDateLabel.text
-//            vc.mainView.startDateTextField.isUserInteractionEnabled = false
-//            vc.mainView.endDateTextField.isUserInteractionEnabled = false
-//            
-//            vc.mainView.successTextField.text = "\(success)"
-//            
-//            if let alarm = self.task?.alarm {
-//                vc.mainView.alarmSwitch.isOn = true
-//                self.formatter.dateFormat = "a hh:mm"
-//                vc.mainView.alarmTimeLabel.text = self.formatter.string(from: alarm)
-//            }
-//            
-//            vc.mainView.newTaskImageView.image = self.loadImageFromDocument(fileName: "\(String(describing: id)).jpg")
-//            
-//            vc.task = self.task
-//            self.transitionViewController(viewController: vc, transitionStyle: .presentFullNavigation)
-//        }
         let deletealarm = UIAction(title: "알람 끄기", image: UIImage.alarmDelete) { [weak self]_ in
             guard let self = self else { return }
             guard let task = self.task else { return }
@@ -133,7 +117,7 @@ final class TaskDetailViewController: BaseViewController {
         let quit = UIAction(title: "작심 그만두기", image: UIImage.trash , attributes: .destructive) { [weak self]_ in
             guard let self = self else { return }
             self.showAlertMessage(title: "해당 작심을 그만두실 건가요?", message: "기존에 저장한 데이터들은 사라집니다.", button: "확인", cancel: "취소") { _ in
-               
+                
                 guard let task = self.task else { return }
                 // 인증유무 분기처리
                 
@@ -153,7 +137,7 @@ final class TaskDetailViewController: BaseViewController {
                 }
                 self.navigationController?.popViewController(animated: true)
             }
-           
+            
         }
         
         var items: [UIMenuElement] = []
@@ -164,15 +148,15 @@ final class TaskDetailViewController: BaseViewController {
         }
         
         let menu = UIMenu(title: "", options: .displayInline, children: items)
-       
+        
         return menu
     }
     
-    
+
 }
 //MARK: CollectionView Delegate, Datasource
 extension TaskDetailViewController: UICollectionViewDelegate, UICollectionViewDataSource {
-   
+    
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         return jacsimDays
     }

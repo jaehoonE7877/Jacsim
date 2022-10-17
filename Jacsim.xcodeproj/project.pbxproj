@@ -57,6 +57,7 @@
 		25C6F17728F5AD47008BD901 /* Observable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25C6F17628F5AD47008BD901 /* Observable.swift */; };
 		25D0AD3528D8747F006A918C /* Date+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25D0AD3428D8747F006A918C /* Date+Extension.swift */; };
 		25D0AD3728D8C5B0006A918C /* TaskUpdateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25D0AD3628D8C5B0006A918C /* TaskUpdateView.swift */; };
+		25E1614228F93ED7000B31A8 /* TaskDetailViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25E1614128F93ED7000B31A8 /* TaskDetailViewModel.swift */; };
 		25EE098228CF0CF600B5B5CA /* HomeViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25EE098128CF0CF600B5B5CA /* HomeViewController.swift */; };
 		25EE098428CF0D0800B5B5CA /* JacsimTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25EE098328CF0D0800B5B5CA /* JacsimTableViewCell.swift */; };
 		25EE098828CF104100B5B5CA /* AllTaskViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25EE098728CF104100B5B5CA /* AllTaskViewController.swift */; };
@@ -122,6 +123,7 @@
 		25C6F17628F5AD47008BD901 /* Observable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Observable.swift; sourceTree = "<group>"; };
 		25D0AD3428D8747F006A918C /* Date+Extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Date+Extension.swift"; sourceTree = "<group>"; };
 		25D0AD3628D8C5B0006A918C /* TaskUpdateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskUpdateView.swift; sourceTree = "<group>"; };
+		25E1614128F93ED7000B31A8 /* TaskDetailViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskDetailViewModel.swift; sourceTree = "<group>"; };
 		25EE098128CF0CF600B5B5CA /* HomeViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeViewController.swift; sourceTree = "<group>"; };
 		25EE098328CF0D0800B5B5CA /* JacsimTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JacsimTableViewCell.swift; sourceTree = "<group>"; };
 		25EE098728CF104100B5B5CA /* AllTaskViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AllTaskViewController.swift; sourceTree = "<group>"; };
@@ -339,6 +341,31 @@
 			path = View;
 			sourceTree = "<group>";
 		};
+		25E1613E28F93E9E000B31A8 /* Cell */ = {
+			isa = PBXGroup;
+			children = (
+				25EE099B28CF175F00B5B5CA /* TaskDetailCollectionViewCell.swift */,
+			);
+			path = Cell;
+			sourceTree = "<group>";
+		};
+		25E1613F28F93EA6000B31A8 /* View */ = {
+			isa = PBXGroup;
+			children = (
+				25EE099728CF170E00B5B5CA /* TaskDetailViewController.swift */,
+				25FCD99028D74473004F48E8 /* TaskDetailView.swift */,
+			);
+			path = View;
+			sourceTree = "<group>";
+		};
+		25E1614028F93EB8000B31A8 /* TaskDetailViewModel */ = {
+			isa = PBXGroup;
+			children = (
+				25E1614128F93ED7000B31A8 /* TaskDetailViewModel.swift */,
+			);
+			path = TaskDetailViewModel;
+			sourceTree = "<group>";
+		};
 		25EE098028CF0CE100B5B5CA /* Home */ = {
 			isa = PBXGroup;
 			children = (
@@ -392,9 +419,9 @@
 		25EE099528CF16C600B5B5CA /* TaskDetail */ = {
 			isa = PBXGroup;
 			children = (
-				25EE099728CF170E00B5B5CA /* TaskDetailViewController.swift */,
-				25FCD99028D74473004F48E8 /* TaskDetailView.swift */,
-				25EE099B28CF175F00B5B5CA /* TaskDetailCollectionViewCell.swift */,
+				25E1614028F93EB8000B31A8 /* TaskDetailViewModel */,
+				25E1613F28F93EA6000B31A8 /* View */,
+				25E1613E28F93E9E000B31A8 /* Cell */,
 			);
 			path = TaskDetail;
 			sourceTree = "<group>";
@@ -593,6 +620,7 @@
 				25EE099228CF161000B5B5CA /* ImageSearchViewController.swift in Sources */,
 				25636C4C28CC552D00B385AF /* UserJacsim.swift in Sources */,
 				25EE098228CF0CF600B5B5CA /* HomeViewController.swift in Sources */,
+				25E1614228F93ED7000B31A8 /* TaskDetailViewModel.swift in Sources */,
 				25EE098428CF0D0800B5B5CA /* JacsimTableViewCell.swift in Sources */,
 				2547134028CC4C970049D952 /* ReusableViewProtocol.swift in Sources */,
 				2547132128CC4B670049D952 /* AppDelegate.swift in Sources */,
