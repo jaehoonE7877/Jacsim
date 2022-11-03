@@ -14,8 +14,8 @@ final class TaskDetailViewController: BaseViewController {
     
     let mainView = TaskDetailView()
     
-    var jacsimDays: Int = 0
-    var dayArray: [Date] = []
+//    var jacsimDays: Int = 0
+//    var dayArray: [Date] = []
     
     //var task: UserJacsim?
     
@@ -36,6 +36,11 @@ final class TaskDetailViewController: BaseViewController {
         //        guard let task = task else { return }
         //        repository.checkIsDone(item: task, count: jacsimDays)
         //        repository.checkIsSuccess(item: task)
+        viewModel.task.bind { task in
+            DispatchQueue.main.async {
+                self.mainView.collectionView.reloadData()
+            }
+        }
         
         viewModel.checkIsSuccess()
         
@@ -47,9 +52,7 @@ final class TaskDetailViewController: BaseViewController {
         
         mainView.successLabel.text = viewModel.showCertified
         
-        DispatchQueue.main.async {
-            self.mainView.collectionView.reloadData()
-        }
+        
     }
     // MARK: Delegate
     private func configureDelegate() {
@@ -142,7 +145,7 @@ final class TaskDetailViewController: BaseViewController {
         
         
         var items: [UIMenuElement] = []
-        if viewModel.task?.alarm != nil {
+        if viewModel.task.value.alarm != nil {
             items = [deleteAlarm, quit]
         } else {
             items = [quit]
@@ -185,32 +188,30 @@ extension TaskDetailViewController: UICollectionViewDelegate, UICollectionViewDa
     }
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        
+
         guard let cell = collectionView.cellForItem(at: indexPath) as? TaskDetailCollectionViewCell else { return }
+
+        let task = viewModel.task.value
         
         let vc = TaskUpdateViewController()
-        guard let task = task else { return }
-        let dateText = DateFormatType.toString(dayArray[indexPath.item], to: .fullWithoutYear)
-        
-        guard DateFormatType.toString(Date(), to: .fullWithoutYear) == dateText else {
+
+        guard viewModel.checkIsToday(indexPath: indexPath) else {
             showAlertMessage(title: "작심 인증하기", message: "인증 날짜가 아닙니다.\n확인해주세요!", button: "확인")
             return
         }
-        
+        // 처음 작성
         if !task.memoList[indexPath.item].check {
             vc.dateText = cell.dateLabel.text
             vc.task = task
-            //vc.viewModel.task.value = task
             vc.index = indexPath.item
-            //vc.viewModel.memoList.value = task.memoList[indexPath.item]
             self.transitionViewController(viewController: vc, transitionStyle: .push)
-        } else {
+        } else { // 기존 작성 수정
             vc.dateText = cell.dateLabel.text
             vc.task = task
             vc.index = indexPath.item
             vc.mainView.memoTextfield.text = task.memoList[indexPath.item].memo
             vc.mainView.memoCountLabel.text = "\(task.memoList[indexPath.item].memo.count)/20"
-            vc.mainView.certifyImageView.image = loadImageFromDocument(fileName: "\(task.id)_\(dateText).jpg")
+            vc.mainView.certifyImageView.image = viewModel.fetchTodayImage(index: indexPath.item)
             self.transitionViewController(viewController: vc, transitionStyle: .push)
         }
     }

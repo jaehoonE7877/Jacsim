@@ -10,6 +10,10 @@ import UserNotifications
 
 import RealmSwift
 
+/*
+ 레포의 역할 
+ */
+
 protocol JacsimRepositoryProtocol: AnyObject {
     func fetchRealm() -> Results<UserJacsim>!
     func fetchDate(date: Date) -> Results<UserJacsim>!
@@ -26,6 +30,10 @@ final class JacsimRepository: JacsimRepositoryProtocol {
     let notificationCenter = UNUserNotificationCenter.current()
     
     private let localRealm = try! Realm()
+    
+    func fetchId(id: ObjectId) -> Results<UserJacsim>! {
+        return localRealm.objects(UserJacsim.self).where { $0.id == id }
+    }
     
     func fetchRealm() -> Results<UserJacsim>! {
         return localRealm.objects(UserJacsim.self).where { $0.isDone == false }.sorted(byKeyPath: "startDate", ascending: true)

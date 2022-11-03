@@ -11,13 +11,12 @@ final class TaskUpdateViewModel {
     
     private let repository = JacsimRepository()
     
-    // 필요한 거 : UserJacsim 1개
-    // Jacsim.memoList[indexPath.row]
-    var task = Observable([UserJacsim]())
-    var memoList = Observable(Certified())
-    var memo = Observable("")
-    var check = Observable(false)
+    var task: Observable<UserJacsim> = Observable(UserJacsim())
     
+    private let documentManager = DocumentManager.shared
+    
+    var dateText: String? //image 저장시에 objectId_dateText로 넣어주기
+    var index: Int?
 }
 
 extension TaskUpdateViewModel {
@@ -28,8 +27,4 @@ extension TaskUpdateViewModel {
         
     }
     
-    func saveImageToDocument(fileName: String, image: UIImage?) {
-        
-        
-    }
 }

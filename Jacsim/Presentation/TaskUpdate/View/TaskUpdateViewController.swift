@@ -48,7 +48,7 @@ final class TaskUpdateViewController: BaseViewController {
     //MARK: View Life Cycle
     override func viewDidLoad() {
         super.viewDidLoad()
-
+        setBinding()
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -77,9 +77,9 @@ final class TaskUpdateViewController: BaseViewController {
     
     private func setBinding() {
         
-        viewModel.memoList.bind { task in
-            self.mainView.memoTextfield.text = task.memo
-        }
+//        viewModel.task.bind { task in
+//            self.mainView.memoTextfield.text = task.memoList.memo
+//        }
         
     }
     
