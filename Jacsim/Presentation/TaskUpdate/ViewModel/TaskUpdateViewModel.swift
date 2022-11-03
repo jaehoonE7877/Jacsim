@@ -11,6 +11,7 @@ final class TaskUpdateViewModel {
     
     private let repository = JacsimRepository()
     
+
     var task: Observable<UserJacsim> = Observable(UserJacsim())
     
     private let documentManager = DocumentManager.shared
@@ -27,4 +28,9 @@ extension TaskUpdateViewModel {
         
     }
     
+    func saveImageToDocument(fileName: String, image: UIImage?) {
+        
+        
+    }
+
 }

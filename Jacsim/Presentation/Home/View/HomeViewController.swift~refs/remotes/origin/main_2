@@ -266,14 +266,6 @@ extension HomeViewController: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         
         let vc = TaskDetailViewController()
-<<<<<<< HEAD
-        
-        //객체지향적으로 bad
-        // 캡슐화()
-        vc.viewModel.task.value = viewModel.tasks.value[indexPath.row]
-        vc.title = viewModel.tasks.value[indexPath.item].title
-=======
->>>>>>> service
 //        vc.task = tasks?[indexPath.item]
 //        vc.title = tasks?[indexPath.item].title
         self.transitionViewController(viewController: vc, transitionStyle: .push)
@@ -337,7 +329,7 @@ extension HomeViewController: FSCalendarDelegate, FSCalendarDataSource {
 extension HomeViewController: FloatyDelegate {
     
     func floatyWillOpen(_ floaty: Floaty) {
-        if  viewModel.fetchIsNotDone() >= 5 {
+        if repository.fetchIsNotDone() >= 5 {
             floaty.items[0].isHidden = true
         } else {
             floaty.items[0].isHidden = false

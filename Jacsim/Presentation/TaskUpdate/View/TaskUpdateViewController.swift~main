@@ -13,11 +13,7 @@ import CropViewController
 final class TaskUpdateViewController: BaseViewController {
     
     let mainView = TaskUpdateView()
-    
     let repository = JacsimRepository()
-    let documentManager = DocumentManager.shared
-    
-    let viewModel = TaskUpdateViewModel()
     
     let viewModel = TaskUpdateViewModel()
     
@@ -51,8 +47,6 @@ final class TaskUpdateViewController: BaseViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        setBinding()
-
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -81,13 +75,9 @@ final class TaskUpdateViewController: BaseViewController {
     
     private func setBinding() {
         
-
-//        viewModel.task.bind { task in
-//            self.mainView.memoTextfield.text = task.memoList.memo
-//        }
-
+        viewModel.memoList.bind { task in
+            self.mainView.memoTextfield.text = task.memo
         }
-
         
     }
     
@@ -155,7 +145,7 @@ final class TaskUpdateViewController: BaseViewController {
 
         repository.updateMemo(item: task, index: index, memo: memo)
         
-        self.documentManager.saveImageToDocument(fileName: "\(task.id)_\(dateText).jpg", image: mainView.certifyImageView.image ?? UIImage.jacsimImage)
+        saveImageToDocument(fileName: "\(task.id)_\(dateText).jpg", image: mainView.certifyImageView.image ?? UIImage.jacsimImage)
         
         self.navigationController?.popViewController(animated: true)
     }
