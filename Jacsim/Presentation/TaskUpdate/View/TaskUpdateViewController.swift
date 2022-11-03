@@ -19,17 +19,15 @@ final class TaskUpdateViewController: BaseViewController {
     
     let viewModel = TaskUpdateViewModel()
     
-    let viewModel = TaskUpdateViewModel()
-    
     var task: UserJacsim?
     var dateText: String? //image 저장시에 objectId_dateText로 넣어주기
     var index: Int? //realm memo의 해당하는 index에 textfield 데이터 넣어주기
-
+    
     lazy var imagePicker: UIImagePickerController = {
-            let view = UIImagePickerController()
-            view.delegate = self
-            return view
-        }()
+        let view = UIImagePickerController()
+        view.delegate = self
+        return view
+    }()
     
     let configuration: PHPickerConfiguration = {
         var configuration = PHPickerConfiguration()
@@ -50,24 +48,9 @@ final class TaskUpdateViewController: BaseViewController {
     //MARK: View Life Cycle
     override func viewDidLoad() {
         super.viewDidLoad()
-
-        setBinding()
-
-    }
-    
-    override func viewWillAppear(_ animated: Bool) {
-        super.viewWillAppear(animated)
-        NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillShow(_:)), name: UIResponder.keyboardWillShowNotification, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillHide(_:)), name: UIResponder.keyboardWillHideNotification, object: nil)
         
     }
     
-    override func viewWillDisappear(_ animated: Bool) {
-        super.viewWillDisappear(animated)
-        
-        NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillShowNotification, object: nil)
-        NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillHideNotification, object: nil)
-    }
     //MARK: Configure
     override func configure() {
         view.backgroundColor = Constant.BaseColor.backgroundColor
@@ -76,18 +59,6 @@ final class TaskUpdateViewController: BaseViewController {
         tapGesture()
         mainView.certifyButton.addTarget(self, action: #selector(certifyButtonTapped), for: .touchUpInside)
         mainView.imageAddButton.menu = addImageButtonTapped()
-        
-    }
-    
-    private func setBinding() {
-        
-
-//        viewModel.task.bind { task in
-//            self.mainView.memoTextfield.text = task.memoList.memo
-//        }
-
-        }
-
         
     }
     
@@ -121,12 +92,13 @@ final class TaskUpdateViewController: BaseViewController {
                 self.showAlertSetting(message: "작심이(가) 카메라 접근 허용되어 있지 않습니다. \r\n 설정화면으로 가시겠습니까?")
             }
         }
+        
         let gallery = UIAction(title: "갤러리", image: UIImage.photo) { [weak self] _ in
             guard let self = self else { return }
             self.present(self.phPicker, animated: true)
         }
         let menu = UIMenu(title: "사진의 경로를 정해주세요.", options: .displayInline, children: [camera,gallery])
-       
+        
         return menu
     }
     
@@ -140,7 +112,7 @@ final class TaskUpdateViewController: BaseViewController {
     }
     
     @objc func certifyButtonTapped(){
-       
+        
         if mainView.memoTextfield.text == "" {
             view.makeToast("한 줄 메모를 입력해주세요!", duration: 0.8, position: .center, title: nil, image: nil, style: .init()) { _ in
             }
@@ -152,14 +124,13 @@ final class TaskUpdateViewController: BaseViewController {
         guard let memo = mainView.memoTextfield.text else { return }
         
         guard let dateText = dateText else { return }
-
+        
         repository.updateMemo(item: task, index: index, memo: memo)
         
         self.documentManager.saveImageToDocument(fileName: "\(task.id)_\(dateText).jpg", image: mainView.certifyImageView.image ?? UIImage.jacsimImage)
         
         self.navigationController?.popViewController(animated: true)
     }
-    
 }
 //MARK: TextField Delegate
 extension TaskUpdateViewController: UITextFieldDelegate {
@@ -167,17 +138,6 @@ extension TaskUpdateViewController: UITextFieldDelegate {
     func textFieldShouldReturn(_ textField: UITextField) -> Bool {
         textField.resignFirstResponder()
         return true
-    }
-    
-    @objc func keyboardWillShow(_ sender: Notification){
-        
-        if let keyboardSize = (sender.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? NSValue)?.cgRectValue {
-            UIView.animate(withDuration: 0.3, animations: { self.view.transform = CGAffineTransform(translationX: 0, y: -keyboardSize.height + 110)}, completion: nil)
-        }
-    }
-    
-    @objc func keyboardWillHide(_ sender: Notification){
-        self.view.transform = .identity
     }
     
     func textField(_ textField: UITextField, shouldChangeCharactersIn range: NSRange, replacementString string: String) -> Bool {
@@ -202,84 +162,84 @@ extension TaskUpdateViewController: UITextFieldDelegate {
             }
             return
         }
+        
     }
 }
-
-//MARK: UIImagePickerControllerDelegate, UINavigationControllerDelegate
+    //MARK: UIImagePickerControllerDelegate, UINavigationControllerDelegate
 extension TaskUpdateViewController: UIImagePickerControllerDelegate, UINavigationControllerDelegate {
-    
-    func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
-        dismiss(animated: true)
-    }
-    
-    func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
         
-        var newImage: UIImage? = nil
-        
-        if let possibleImage = info[UIImagePickerController.InfoKey.editedImage] as? UIImage {
-            newImage = possibleImage
-        } else if let possibleImage = info[UIImagePickerController.InfoKey.originalImage] as? UIImage {
-            newImage = possibleImage
+        func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
+            dismiss(animated: true)
         }
         
-        DispatchQueue.main.async {
+        func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
             
-            guard let newImage = newImage else { return }
+            var newImage: UIImage? = nil
             
-            let crop = CropViewController(image: newImage)
+            if let possibleImage = info[UIImagePickerController.InfoKey.editedImage] as? UIImage {
+                newImage = possibleImage
+            } else if let possibleImage = info[UIImagePickerController.InfoKey.originalImage] as? UIImage {
+                newImage = possibleImage
+            }
             
-            crop.delegate = self
-            crop.doneButtonTitle = "완료"
-            crop.cancelButtonTitle = "취소"
+            DispatchQueue.main.async {
+                
+                guard let newImage = newImage else { return }
+                
+                let crop = CropViewController(image: newImage)
+                
+                crop.delegate = self
+                crop.doneButtonTitle = "완료"
+                crop.cancelButtonTitle = "취소"
+                
+                picker.dismiss(animated: true)
+                
+                self.present(crop, animated: true)
+                
+            }
+            
+        }
+        
+    }
+    
+    //MARK: PHPickerViewControllerDelegate
+    extension TaskUpdateViewController: PHPickerViewControllerDelegate {
+        
+        func picker(_ picker: PHPickerViewController, didFinishPicking results: [PHPickerResult]) {
             
             picker.dismiss(animated: true)
             
-            self.present(crop, animated: true)
+            let itemProvider = results.first?.itemProvider
             
-        }
-        
-    }
-    
-}
-
-//MARK: PHPickerViewControllerDelegate
-extension TaskUpdateViewController: PHPickerViewControllerDelegate {
-    
-    func picker(_ picker: PHPickerViewController, didFinishPicking results: [PHPickerResult]) {
-        
-        picker.dismiss(animated: true)
-        
-        let itemProvider = results.first?.itemProvider
-        
-        if let itemProvider = itemProvider, itemProvider.canLoadObject(ofClass: UIImage.self){
-            itemProvider.loadObject(ofClass: UIImage.self) { [weak self] image, error in
-                guard let self = self else { return }
-                DispatchQueue.main.async {
-                    
-                    guard let image = image as? UIImage else { return }
-                    
-                    let crop = CropViewController(image: image)
-                    
-                    crop.delegate = self
-                    crop.doneButtonTitle = "완료"
-                    crop.cancelButtonTitle = "취소"
-                    
-                    self.present(crop, animated: true)
-                    
+            if let itemProvider = itemProvider, itemProvider.canLoadObject(ofClass: UIImage.self){
+                itemProvider.loadObject(ofClass: UIImage.self) { [weak self] image, error in
+                    guard let self = self else { return }
+                    DispatchQueue.main.async {
+                        
+                        guard let image = image as? UIImage else { return }
+                        
+                        let crop = CropViewController(image: image)
+                        
+                        crop.delegate = self
+                        crop.doneButtonTitle = "완료"
+                        crop.cancelButtonTitle = "취소"
+                        
+                        self.present(crop, animated: true)
+                        
+                    }
                 }
+                
+            } else {
+                showAlertMessage(title: "사진이 적용되지 않았습니다.", message: "다시 한 번 부탁드릴게요!", button: "확인")
             }
-            
-        } else {
-            showAlertMessage(title: "사진이 적용되지 않았습니다.", message: "다시 한 번 부탁드릴게요!", button: "확인")
         }
     }
-}
-
-extension TaskUpdateViewController: CropViewControllerDelegate {
     
-    func cropViewController(_ cropViewController: CropViewController, didCropToImage image: UIImage, withRect cropRect: CGRect, angle: Int) {
-        mainView.certifyImageView.image = image
-        self.dismiss(animated: true)
+    extension TaskUpdateViewController: CropViewControllerDelegate {
+        
+        func cropViewController(_ cropViewController: CropViewController, didCropToImage image: UIImage, withRect cropRect: CGRect, angle: Int) {
+            mainView.certifyImageView.image = image
+            self.dismiss(animated: true)
+        }
+        
     }
-    
-}

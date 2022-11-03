@@ -53,20 +53,6 @@ final class NewTaskViewController: BaseViewController {
         //print("Realm is located at:", repository.localRealm.configuration.fileURL!)
     }
     
-    override func viewWillAppear(_ animated: Bool) {
-        super.viewWillAppear(animated)
-        NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillShow(_:)), name: UIResponder.keyboardWillShowNotification, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillHide(_:)), name: UIResponder.keyboardWillHideNotification, object: nil)
-        
-    }
-    
-    override func viewWillDisappear(_ animated: Bool) {
-        super.viewWillDisappear(animated)
-        
-        NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillShowNotification, object: nil)
-        NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillHideNotification, object: nil)
-    }
-    
     override func configure() {
         
         view.backgroundColor = Constant.BaseColor.backgroundColor
@@ -74,7 +60,7 @@ final class NewTaskViewController: BaseViewController {
         [mainView.newTaskTitleTextfield, mainView.startDateTextField, mainView.endDateTextField, mainView.successTextField].forEach { $0.delegate = self }
         [mainView.newTaskTitleTextfield, mainView.startDateTextField, mainView.endDateTextField].forEach { $0.returnKeyType = .done }
         
-        tapGesture()
+        //tapGesture()
         
         mainView.imageAddButton.menu = addImageButtonTapped()
         
@@ -345,25 +331,7 @@ extension NewTaskViewController: UITextFieldDelegate {
             return
         }
     }
-    @objc func keyboardWillShow(_ sender: Notification){
-        
-        if let keyboardSize = (sender.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? NSValue)?.cgRectValue {
-            
-            switch someTextField {
-            case mainView.startDateTextField, mainView.endDateTextField:
-                UIView.animate(withDuration: 0.3, animations: { self.view.transform = CGAffineTransform(translationX: 0, y: -keyboardSize.height + 116)}, completion: nil)
-            case mainView.successTextField:
-                UIView.animate(withDuration: 0.3, animations: { self.view.transform = CGAffineTransform(translationX: 0, y: -keyboardSize.height + 100)  }, completion: nil)
-            default:
-                return
-            }
-        }
-    }
-    
-    @objc func keyboardWillHide(_ sender: Notification){
-        self.view.transform = .identity
-    }
-    // start와 end textfield는 중복이 되는데, parameter를 이용해서 줄일 수 있는 방법 찾기!
+   
     @objc func startDateTextFieldTapped(){
         if let datePicker = self.mainView.startDateTextField.inputView as? UIDatePicker {
             
@@ -413,10 +381,7 @@ extension NewTaskViewController: UIImagePickerControllerDelegate, UINavigationCo
             self.present(crop, animated: true)
             
         }
-        
-        
     }
-    
 }
 
 //MARK: PHPickerViewControllerDelegate
@@ -442,7 +407,6 @@ extension NewTaskViewController: PHPickerViewControllerDelegate {
                     crop.cancelButtonTitle = "취소"
                     
                     self.present(crop, animated: true)
-                    
                 }
             }
             

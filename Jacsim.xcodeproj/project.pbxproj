@@ -15,6 +15,7 @@
 		2532672928E3DBBA00F0D5D5 /* Realm in Frameworks */ = {isa = PBXBuildFile; productRef = 2532672828E3DBBA00F0D5D5 /* Realm */; };
 		2532672B28E3DBBA00F0D5D5 /* RealmSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 2532672A28E3DBBA00F0D5D5 /* RealmSwift */; };
 		2535270228D222BD0086383E /* UITextField+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2535270128D222BD0086383E /* UITextField+Extension.swift */; };
+		254354232914277300F8616C /* IQKeyboardManagerSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 254354222914277300F8616C /* IQKeyboardManagerSwift */; };
 		2547132128CC4B670049D952 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2547132028CC4B670049D952 /* AppDelegate.swift */; };
 		2547132328CC4B670049D952 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2547132228CC4B670049D952 /* SceneDelegate.swift */; };
 		2547132528CC4B670049D952 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2547132428CC4B670049D952 /* ViewController.swift */; };
@@ -155,6 +156,7 @@
 				25C6F16F28F5285B008BD901 /* FirebaseMessaging in Frameworks */,
 				25C3F56028E1B62D0062EDA9 /* CropViewController in Frameworks */,
 				2547134C28CC520D0049D952 /* SnapKit in Frameworks */,
+				254354232914277300F8616C /* IQKeyboardManagerSwift in Frameworks */,
 				2532672928E3DBBA00F0D5D5 /* Realm in Frameworks */,
 				2547134F28CC521C0049D952 /* Then in Frameworks */,
 				25EE09A728D0AE6300B5B5CA /* Floaty in Frameworks */,
@@ -509,6 +511,7 @@
 				25C6F16A28F5285B008BD901 /* FirebaseAnalyticsWithoutAdIdSupport */,
 				25C6F16C28F5285B008BD901 /* FirebaseCrashlytics */,
 				25C6F16E28F5285B008BD901 /* FirebaseMessaging */,
+				254354222914277300F8616C /* IQKeyboardManagerSwift */,
 			);
 			productName = Jacsim;
 			productReference = 2547131D28CC4B670049D952 /* Jacsim.app */;
@@ -549,6 +552,7 @@
 				2514094028E28F49009CEDE9 /* XCRemoteSwiftPackageReference "AcknowList" */,
 				2532672728E3DBBA00F0D5D5 /* XCRemoteSwiftPackageReference "realm-swift" */,
 				25C6F16928F5285B008BD901 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+				254354212914277300F8616C /* XCRemoteSwiftPackageReference "IQKeyboardManager" */,
 			);
 			productRefGroup = 2547131E28CC4B670049D952 /* Products */;
 			projectDirPath = "";
@@ -907,6 +911,14 @@
 				version = 10.30.0;
 			};
 		};
+		254354212914277300F8616C /* XCRemoteSwiftPackageReference "IQKeyboardManager" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/hackiftekhar/IQKeyboardManager.git";
+			requirement = {
+				kind = exactVersion;
+				version = 6.5.0;
+			};
+		};
 		2547134A28CC520D0049D952 /* XCRemoteSwiftPackageReference "SnapKit" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/SnapKit/SnapKit.git";
@@ -988,6 +1000,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 2532672728E3DBBA00F0D5D5 /* XCRemoteSwiftPackageReference "realm-swift" */;
 			productName = RealmSwift;
+		};
+		254354222914277300F8616C /* IQKeyboardManagerSwift */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 254354212914277300F8616C /* XCRemoteSwiftPackageReference "IQKeyboardManager" */;
+			productName = IQKeyboardManagerSwift;
 		};
 		2547134B28CC520D0049D952 /* SnapKit */ = {
 			isa = XCSwiftPackageProductDependency;

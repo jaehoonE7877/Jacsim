@@ -266,14 +266,11 @@ extension HomeViewController: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         
         let vc = TaskDetailViewController()
-<<<<<<< HEAD
-        
         //객체지향적으로 bad
         // 캡슐화()
         vc.viewModel.task.value = viewModel.tasks.value[indexPath.row]
         vc.title = viewModel.tasks.value[indexPath.item].title
-=======
->>>>>>> service
+
 //        vc.task = tasks?[indexPath.item]
 //        vc.title = tasks?[indexPath.item].title
         self.transitionViewController(viewController: vc, transitionStyle: .push)
