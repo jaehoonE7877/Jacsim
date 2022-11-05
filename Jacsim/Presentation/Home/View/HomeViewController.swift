@@ -18,7 +18,7 @@ final class HomeViewController: BaseViewController {
     private let viewModel = HomeViewModel()
     // MARK: Property
     
-    lazy var fsCalendar = FSCalendar(frame: .zero).then {
+    private lazy var fsCalendar = FSCalendar(frame: .zero).then {
         $0.delegate = self
         $0.dataSource = self
         $0.appearance.headerMinimumDissolvedAlpha = 0.0
@@ -30,17 +30,17 @@ final class HomeViewController: BaseViewController {
         $0.clipsToBounds = true
     }
     
-    lazy var infoButton = UIButton().then {
+    private lazy var infoButton = UIButton().then {
         $0.setImage(UIImage.question, for: .normal)
         $0.tintColor = Constant.BaseColor.textColor
     }
     
-    lazy var sortButton = UIButton().then {
+    private lazy var sortButton = UIButton().then {
         $0.setImage(UIImage.sort, for: .normal)
         $0.tintColor = Constant.BaseColor.textColor
     }
     
-    lazy var tableView = UITableView(frame: CGRect.zero, style: .grouped).then {
+    private lazy var tableView = UITableView(frame: CGRect.zero, style: .grouped).then {
         $0.delegate = self
         $0.dataSource = self
         $0.register(JacsimHeaderView.self, forHeaderFooterViewReuseIdentifier: JacsimHeaderView.reuseIdentifier)
@@ -54,7 +54,7 @@ final class HomeViewController: BaseViewController {
     }
     
     
-    lazy var scopeGesture: UIPanGestureRecognizer = { [unowned self] in
+    private lazy var scopeGesture: UIPanGestureRecognizer = { [unowned self] in
         let panGesture = UIPanGestureRecognizer(target: self.fsCalendar, action: #selector(self.fsCalendar.handleScopeGesture(_:)))
         panGesture.delegate = self
         panGesture.minimumNumberOfTouches = 1
@@ -62,22 +62,13 @@ final class HomeViewController: BaseViewController {
         return panGesture
     }()
     
-    lazy var floaty = Floaty().then {
+    private lazy var floaty = Floaty().then {
         $0.paddingY = UIScreen.main.bounds.height / 12
         $0.buttonColor = Constant.BaseColor.floatyColor!
         $0.itemTitleColor = Constant.BaseColor.textColor!
         $0.size = 48
         $0.fabDelegate = self
     }
-    
-//    var tasks: Results<UserJacsim>!{
-//        didSet {
-//            DispatchQueue.main.async {
-//                self.tableView.reloadData()
-//            }
-//        }
-//    }
-    
     
     // MARK: View LifeCycle
     override func viewDidLoad() {
@@ -96,13 +87,10 @@ final class HomeViewController: BaseViewController {
         
         viewModel.fetch()
         viewModel.checkIsDone()
-//        tasks = repository.fetchRealm()
-//        repository.checkIsDone(items: tasks)
         
-        
-        notificationCenter.getPendingNotificationRequests { items in
-            print(items)
-        }
+//        notificationCenter.getPendingNotificationRequests { items in
+//            print(items)
+//        }
    
     }
     
@@ -250,17 +238,6 @@ extension HomeViewController: UITableViewDelegate, UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         viewModel.cellForRowAt(tableView, indexPath: indexPath)
-//        guard let cell = tableView.dequeueReusableCell(withIdentifier: JacsimTableViewCell.reuseIdentifier) as? JacsimTableViewCell else { return UITableViewCell() }
-//        cell.selectionStyle = .none
-//        cell.titleLabel.text = tasks?[indexPath.row].title
-//        if tasks?[indexPath.row].alarm != nil {
-//            cell.alarmImageView.isHidden = false
-//        } else {
-//            cell.alarmImageView.isHidden = true
-//        }
-//
-//
-//        return cell
     }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
@@ -270,9 +247,7 @@ extension HomeViewController: UITableViewDelegate, UITableViewDataSource {
         // 캡슐화()
         vc.viewModel.task.value = viewModel.tasks.value[indexPath.row]
         vc.title = viewModel.tasks.value[indexPath.item].title
-
-//        vc.task = tasks?[indexPath.item]
-//        vc.title = tasks?[indexPath.item].title
+        
         self.transitionViewController(viewController: vc, transitionStyle: .push)
     }
     
@@ -310,7 +285,6 @@ extension HomeViewController: FSCalendarDelegate, FSCalendarDataSource {
     
     func calendar(_ calendar: FSCalendar, didSelect date: Date, at monthPosition: FSCalendarMonthPosition) {
         
-        //tasks = repository.fetchDate(date: date)
         viewModel.fetchDate(date: date)
         
         

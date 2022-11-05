@@ -44,12 +44,6 @@ final class TaskDetailViewController: BaseViewController {
         
         viewModel.checkIsSuccess()
         
-        //        if task.success - repository.checkCertified(item: task) > 0 {
-        //            mainView.successLabel.text = "작심 성공까지 \(task.success - repository.checkCertified(item: task))회 남았습니다!"
-        //        } else {
-        //            mainView.successLabel.text = "목표를 달성했습니다! 끝까지 힘내세요!!"
-        //        }
-        
         mainView.successLabel.text = viewModel.showCertified
         
         
@@ -66,11 +60,6 @@ final class TaskDetailViewController: BaseViewController {
         
         view.backgroundColor = Constant.BaseColor.backgroundColor
         
-        //        guard let task = task else { return }
-        //
-        //        mainView.startDateLabel.text = DateFormatType.toString(task.startDate, to: .full)
-        //        mainView.endDateLabel.text = DateFormatType.toString(task.endDate, to: .full)
-        
         mainView.startDateLabel.text = viewModel.showStartDate
         mainView.endDateLabel.text = viewModel.showEndDate
         
@@ -86,13 +75,6 @@ final class TaskDetailViewController: BaseViewController {
 //        guard let image = loadImageFromDocument(fileName: viewModel.loadMainImage) else { return }
         mainView.mainImage.image = viewModel.loadMainImage
         
-        
-        // collectionView cell개수
-//        jacsimDays = calculateDays(startDate: task.startDate, endDate: task.endDate)
-//
-//        for date in stride(from: task.startDate, to: task.endDate + 86400, by: 86400 ){
-//            dayArray.append(date)
-//        }
     }
     
     override func setNavigationController() {
@@ -200,6 +182,7 @@ extension TaskDetailViewController: UICollectionViewDelegate, UICollectionViewDa
             return
         }
         // 처음 작성
+        // vc -> vc.viewModel.task, dateText, index???
         if !task.memoList[indexPath.item].check {
             vc.dateText = cell.dateLabel.text
             vc.task = task
