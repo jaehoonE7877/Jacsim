@@ -87,10 +87,6 @@ final class HomeViewController: BaseViewController {
         
         viewModel.fetch()
         viewModel.checkIsDone()
-        
-//        notificationCenter.getPendingNotificationRequests { items in
-//            print(items)
-//        }
    
     }
     

@@ -14,11 +14,6 @@ final class TaskDetailViewController: BaseViewController {
     
     let mainView = TaskDetailView()
     
-//    var jacsimDays: Int = 0
-//    var dayArray: [Date] = []
-    
-    //var task: UserJacsim?
-    
     override func loadView() {
         self.view = mainView
     }
@@ -64,15 +59,7 @@ final class TaskDetailViewController: BaseViewController {
         mainView.endDateLabel.text = viewModel.showEndDate
         
         mainView.alarmLabel.text = viewModel.showAlarm
-        //        if let alarm = task.alarm {
-        //            mainView.alarmTimeLabel.text = DateFormatType.toString(alarm, to: .time)
-        //        } else {
-        //            mainView.alarmTimeLabel.text = "설정된 알람이 없습니다."
-        //        }
-        //
-        //        guard let image = loadImageFromDocument(fileName: "\(task.id).jpg") else { return }
-        //        mainView.mainImage.image = image
-//        guard let image = loadImageFromDocument(fileName: viewModel.loadMainImage) else { return }
+
         mainView.mainImage.image = viewModel.loadMainImage
         
     }
@@ -104,22 +91,7 @@ final class TaskDetailViewController: BaseViewController {
             self.showAlertMessage(title: "해당 작심을 그만두실 건가요?", message: "기존에 저장한 데이터들은 사라집니다.", button: "확인", cancel: "취소") { _ in
                 
                 self.viewModel.deleteJacsim()
-                //                guard let task = self.task else { return }
-                //                // 인증유무 분기처리
-                //
-                //                if self.repository.checkCertified(item: task) == 0 {
-                //
-                //                    self.repository.deleteJacsim(item: task)
-                //
-                //                } else {
-                //                    // 인증이 있을 때
-                //                    for index in 0...self.repository.checkCertified(item: task) - 1 {
-                //                        let dateText = DateFormatType.toString(self.dayArray[index], to: .fullWithoutYear)
-                //                        self.repository.removeImageFromDocument(fileName: "\(task.id)_\(dateText).jpg")
-                //                    }
-                //
-                //                    self.repository.deleteJacsim(item: task)
-                //
+  
             }
             self.navigationController?.popViewController(animated: true)
         }

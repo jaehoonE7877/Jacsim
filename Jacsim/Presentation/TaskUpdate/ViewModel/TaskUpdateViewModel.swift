@@ -22,15 +22,15 @@ final class TaskUpdateViewModel {
 
 extension TaskUpdateViewModel {
     
-    func updateMemo(task: UserJacsim, index: Int, memo: String) {
+    private func updateMemo(task: UserJacsim, index: Int, memo: String) {
         
         repository.updateMemo(item: task, index: index, memo: memo)
         
     }
     
-    func saveImageToDocument(fileName: String, image: UIImage?) {
-        
-        
-    }
+//    func saveImageToDocument(fileName: String, image: UIImage?) {
+//
+//
+//    }
 
 }
