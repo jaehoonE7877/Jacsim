@@ -27,8 +27,6 @@ final class TaskDetailViewModel {
         return dayArray
     }
     
-    
-    
 }
 
 extension TaskDetailViewModel {

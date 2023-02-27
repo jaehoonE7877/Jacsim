@@ -21,7 +21,7 @@ class ThirdViewController: BaseViewController {
     }
     
     override func configure() {
-        
+        mainView.mainImageView.image = UIImage(named: "onboarding_img3")
     }
     
 }

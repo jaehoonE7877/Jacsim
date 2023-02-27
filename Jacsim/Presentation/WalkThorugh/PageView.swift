@@ -11,7 +11,7 @@ class PageView: BaseView {
     
     //MARK: Property
     let mainImageView = UIImageView().then {
-        $0.contentMode = .scaleAspectFill
+        $0.contentMode = .scaleAspectFit
         $0.layer.masksToBounds = true
         $0.layer.cornerRadius = Constant.Design.cornerRadius
         $0.image = UIImage(named: "jacsim")
@@ -28,7 +28,7 @@ class PageView: BaseView {
     }
     
     override func configure() {
-        [mainImageView].forEach { self.addSubview($0) }
+        self.addSubview(mainImageView)
     }
     
     override func setConstraints() {

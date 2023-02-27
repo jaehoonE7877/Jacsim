@@ -22,7 +22,7 @@ class FourthViewController: BaseViewController {
     }
     
     override func configure() {
-        
+        mainView.mainImageView.image = UIImage(named: "onboarding_img4")
     }
     
 }

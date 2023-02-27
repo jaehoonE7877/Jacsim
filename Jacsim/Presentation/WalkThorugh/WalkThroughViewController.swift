@@ -14,7 +14,7 @@ final class WalkThroughViewController: BaseViewController {
         $0.currentPageIndicatorTintColor = Constant.BaseColor.buttonColor
     }
     
-    private let continueButton = UIButton().then {
+    let continueButton = UIButton().then {
         $0.backgroundColor = Constant.BaseColor.buttonColor
         $0.setTitle("계속하기", for: .normal)
         $0.setTitleColor(Constant.BaseColor.textColor, for: .normal)
@@ -124,7 +124,7 @@ extension WalkThroughViewController: UIPageViewControllerDelegate, UIPageViewCon
         
         pageControl.currentPage = index
         
-        if pageControl.currentPage == 2 {
+        if pageControl.currentPage == 3 {
             continueButton.setTitle("시작하기", for: .normal)
         } else {
             continueButton.setTitle("계속하기", for: .normal)

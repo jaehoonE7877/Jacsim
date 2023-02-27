@@ -22,15 +22,11 @@ final class TaskDetailViewController: BaseViewController {
         super.viewDidLoad()
         
         configureDelegate()
-        
     }
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        
-        //        guard let task = task else { return }
-        //        repository.checkIsDone(item: task, count: jacsimDays)
-        //        repository.checkIsSuccess(item: task)
+
         viewModel.task.bind { task in
             DispatchQueue.main.async {
                 self.mainView.collectionView.reloadData()
@@ -40,7 +36,6 @@ final class TaskDetailViewController: BaseViewController {
         viewModel.checkIsSuccess()
         
         mainView.successLabel.text = viewModel.showCertified
-        
         
     }
     // MARK: Delegate
@@ -86,7 +81,7 @@ final class TaskDetailViewController: BaseViewController {
             
         }
         
-        let quit = UIAction(title: "작심 그만두기", image: UIImage.trash , attributes: .destructive) { [weak self]_ in
+        let quit = UIAction(title: "작심 그만두기", image: UIImage.trash , attributes: .destructive) { [weak self] _ in
             guard let self = self else { return }
             self.showAlertMessage(title: "해당 작심을 그만두실 건가요?", message: "기존에 저장한 데이터들은 사라집니다.", button: "확인", cancel: "취소") { _ in
                 
@@ -95,8 +90,6 @@ final class TaskDetailViewController: BaseViewController {
             }
             self.navigationController?.popViewController(animated: true)
         }
-        
-        
         
         var items: [UIMenuElement] = []
         if viewModel.task.value.alarm != nil {

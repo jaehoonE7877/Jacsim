@@ -18,7 +18,6 @@
 		254354232914277300F8616C /* IQKeyboardManagerSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 254354222914277300F8616C /* IQKeyboardManagerSwift */; };
 		2547132128CC4B670049D952 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2547132028CC4B670049D952 /* AppDelegate.swift */; };
 		2547132328CC4B670049D952 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2547132228CC4B670049D952 /* SceneDelegate.swift */; };
-		2547132528CC4B670049D952 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2547132428CC4B670049D952 /* ViewController.swift */; };
 		2547132828CC4B670049D952 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 2547132628CC4B670049D952 /* Main.storyboard */; };
 		2547132A28CC4B6A0049D952 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 2547132928CC4B6A0049D952 /* Assets.xcassets */; };
 		2547132D28CC4B6A0049D952 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 2547132B28CC4B6A0049D952 /* LaunchScreen.storyboard */; };
@@ -34,12 +33,10 @@
 		2547135528CC52410049D952 /* Toast in Frameworks */ = {isa = PBXBuildFile; productRef = 2547135428CC52410049D952 /* Toast */; };
 		255C1ABF28EEAD7300C205E7 /* DateFormatType.swift in Sources */ = {isa = PBXBuildFile; fileRef = 255C1ABE28EEAD7300C205E7 /* DateFormatType.swift */; };
 		255C1AC128EECBE600C205E7 /* UIImage+.swift in Sources */ = {isa = PBXBuildFile; fileRef = 255C1AC028EECBE600C205E7 /* UIImage+.swift */; };
-		256070CB28D396C400A1F553 /* ImageModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 256070CA28D396C400A1F553 /* ImageModel.swift */; };
 		25636C4728CC544A00B385AF /* BaseCollectionViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25636C4628CC544A00B385AF /* BaseCollectionViewCell.swift */; };
 		25636C4928CC54A200B385AF /* BaseTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25636C4828CC54A200B385AF /* BaseTableViewCell.swift */; };
 		25636C4C28CC552D00B385AF /* UserJacsim.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25636C4B28CC552D00B385AF /* UserJacsim.swift */; };
 		25636C5128CC580400B385AF /* APIManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25636C5028CC580400B385AF /* APIManager.swift */; };
-		258A47F328D38D0A009F0F95 /* ImageSearchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 258A47F228D38D0A009F0F95 /* ImageSearchView.swift */; };
 		259C4E1F28DB77680092223A /* SettingViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 259C4E1E28DB77680092223A /* SettingViewController.swift */; };
 		259C4E2128DB77750092223A /* SettingTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 259C4E2028DB77750092223A /* SettingTableViewCell.swift */; };
 		259C4E2428DB7BA20092223A /* SettingModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 259C4E2328DB7BA20092223A /* SettingModel.swift */; };
@@ -64,8 +61,6 @@
 		25EE098828CF104100B5B5CA /* AllTaskViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25EE098728CF104100B5B5CA /* AllTaskViewController.swift */; };
 		25EE098D28CF14E400B5B5CA /* NewTaskViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25EE098C28CF14E400B5B5CA /* NewTaskViewController.swift */; };
 		25EE098F28CF153200B5B5CA /* NewTaskView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25EE098E28CF153200B5B5CA /* NewTaskView.swift */; };
-		25EE099228CF161000B5B5CA /* ImageSearchViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25EE099128CF160F00B5B5CA /* ImageSearchViewController.swift */; };
-		25EE099428CF165D00B5B5CA /* ImageSearchCollectionViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25EE099328CF165D00B5B5CA /* ImageSearchCollectionViewCell.swift */; };
 		25EE099828CF170E00B5B5CA /* TaskDetailViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25EE099728CF170E00B5B5CA /* TaskDetailViewController.swift */; };
 		25EE099A28CF172200B5B5CA /* TaskUpdateViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25EE099928CF172200B5B5CA /* TaskUpdateViewController.swift */; };
 		25EE099C28CF175F00B5B5CA /* TaskDetailCollectionViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25EE099B28CF175F00B5B5CA /* TaskDetailCollectionViewCell.swift */; };
@@ -91,7 +86,6 @@
 		2547131D28CC4B670049D952 /* Jacsim.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Jacsim.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		2547132028CC4B670049D952 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		2547132228CC4B670049D952 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
-		2547132428CC4B670049D952 /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
 		2547132728CC4B670049D952 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		2547132928CC4B6A0049D952 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		2547132C28CC4B6A0049D952 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
@@ -104,12 +98,10 @@
 		2547134828CC51E30049D952 /* BaseViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BaseViewController.swift; sourceTree = "<group>"; };
 		255C1ABE28EEAD7300C205E7 /* DateFormatType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DateFormatType.swift; sourceTree = "<group>"; };
 		255C1AC028EECBE600C205E7 /* UIImage+.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIImage+.swift"; sourceTree = "<group>"; };
-		256070CA28D396C400A1F553 /* ImageModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageModel.swift; sourceTree = "<group>"; };
 		25636C4628CC544A00B385AF /* BaseCollectionViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BaseCollectionViewCell.swift; sourceTree = "<group>"; };
 		25636C4828CC54A200B385AF /* BaseTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BaseTableViewCell.swift; sourceTree = "<group>"; };
 		25636C4B28CC552D00B385AF /* UserJacsim.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserJacsim.swift; sourceTree = "<group>"; };
 		25636C5028CC580400B385AF /* APIManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIManager.swift; sourceTree = "<group>"; };
-		258A47F228D38D0A009F0F95 /* ImageSearchView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageSearchView.swift; sourceTree = "<group>"; };
 		259C4E1E28DB77680092223A /* SettingViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingViewController.swift; sourceTree = "<group>"; };
 		259C4E2028DB77750092223A /* SettingTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingTableViewCell.swift; sourceTree = "<group>"; };
 		259C4E2328DB7BA20092223A /* SettingModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingModel.swift; sourceTree = "<group>"; };
@@ -130,8 +122,6 @@
 		25EE098728CF104100B5B5CA /* AllTaskViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AllTaskViewController.swift; sourceTree = "<group>"; };
 		25EE098C28CF14E400B5B5CA /* NewTaskViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewTaskViewController.swift; sourceTree = "<group>"; };
 		25EE098E28CF153200B5B5CA /* NewTaskView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewTaskView.swift; sourceTree = "<group>"; };
-		25EE099128CF160F00B5B5CA /* ImageSearchViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageSearchViewController.swift; sourceTree = "<group>"; };
-		25EE099328CF165D00B5B5CA /* ImageSearchCollectionViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageSearchCollectionViewCell.swift; sourceTree = "<group>"; };
 		25EE099728CF170E00B5B5CA /* TaskDetailViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskDetailViewController.swift; sourceTree = "<group>"; };
 		25EE099928CF172200B5B5CA /* TaskUpdateViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskUpdateViewController.swift; sourceTree = "<group>"; };
 		25EE099B28CF175F00B5B5CA /* TaskDetailCollectionViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskDetailCollectionViewCell.swift; sourceTree = "<group>"; };
@@ -202,7 +192,6 @@
 				2547133D28CC4C650049D952 /* Extension */,
 				2547133E28CC4C6D0049D952 /* Protocol */,
 				2547133628CC4BC00049D952 /* Resources */,
-				2547132428CC4B670049D952 /* ViewController.swift */,
 				2547132628CC4B670049D952 /* Main.storyboard */,
 				2547132E28CC4B6A0049D952 /* Info.plist */,
 				25C6F16728F527E0008BD901 /* GoogleService-Info.plist */,
@@ -228,7 +217,6 @@
 				25EE099528CF16C600B5B5CA /* TaskDetail */,
 				25EE099628CF16E900B5B5CA /* TaskUpdate */,
 				25EE098B28CF149100B5B5CA /* NewTask */,
-				25EE099028CF15F400B5B5CA /* ImageSearch */,
 				25EE098528CF101D00B5B5CA /* AllTask */,
 				25EE098628CF102B00B5B5CA /* Setting */,
 			);
@@ -405,17 +393,6 @@
 				2514094328E2C73D009CEDE9 /* AlarmView.swift */,
 			);
 			path = NewTask;
-			sourceTree = "<group>";
-		};
-		25EE099028CF15F400B5B5CA /* ImageSearch */ = {
-			isa = PBXGroup;
-			children = (
-				25EE099128CF160F00B5B5CA /* ImageSearchViewController.swift */,
-				258A47F228D38D0A009F0F95 /* ImageSearchView.swift */,
-				25EE099328CF165D00B5B5CA /* ImageSearchCollectionViewCell.swift */,
-				256070CA28D396C400A1F553 /* ImageModel.swift */,
-			);
-			path = ImageSearch;
 			sourceTree = "<group>";
 		};
 		25EE099528CF16C600B5B5CA /* TaskDetail */ = {
@@ -610,7 +587,6 @@
 				2547134228CC4D780049D952 /* Transition+Extension.swift in Sources */,
 				25EE098F28CF153200B5B5CA /* NewTaskView.swift in Sources */,
 				25C6F17728F5AD47008BD901 /* Observable.swift in Sources */,
-				2547132528CC4B670049D952 /* ViewController.swift in Sources */,
 				25636C4728CC544A00B385AF /* BaseCollectionViewCell.swift in Sources */,
 				25FCD98F28D5CA15004F48E8 /* JacsimRepository.swift in Sources */,
 				25EE099A28CF172200B5B5CA /* TaskUpdateViewController.swift in Sources */,
@@ -621,7 +597,6 @@
 				25FF192128DDE7DD00A45EC4 /* UIFont+Extension.swift in Sources */,
 				2514094428E2C73D009CEDE9 /* AlarmView.swift in Sources */,
 				25EE099828CF170E00B5B5CA /* TaskDetailViewController.swift in Sources */,
-				25EE099228CF161000B5B5CA /* ImageSearchViewController.swift in Sources */,
 				25636C4C28CC552D00B385AF /* UserJacsim.swift in Sources */,
 				25EE098228CF0CF600B5B5CA /* HomeViewController.swift in Sources */,
 				25E1614228F93ED7000B31A8 /* TaskDetailViewModel.swift in Sources */,
@@ -637,7 +612,6 @@
 				25EE09A028CF1A6200B5B5CA /* Color.swift in Sources */,
 				2547134928CC51E30049D952 /* BaseViewController.swift in Sources */,
 				2547133828CC4BCE0049D952 /* APIKey.swift in Sources */,
-				258A47F328D38D0A009F0F95 /* ImageSearchView.swift in Sources */,
 				259C4E1F28DB77680092223A /* SettingViewController.swift in Sources */,
 				25D0AD3728D8C5B0006A918C /* TaskUpdateView.swift in Sources */,
 				25EE099C28CF175F00B5B5CA /* TaskDetailCollectionViewCell.swift in Sources */,
@@ -649,13 +623,11 @@
 				25FA7AEA28F68C04000F0774 /* TaskUpdateViewModel.swift in Sources */,
 				25636C4928CC54A200B385AF /* BaseTableViewCell.swift in Sources */,
 				2547132328CC4B670049D952 /* SceneDelegate.swift in Sources */,
-				25EE099428CF165D00B5B5CA /* ImageSearchCollectionViewCell.swift in Sources */,
 				25EE098828CF104100B5B5CA /* AllTaskViewController.swift in Sources */,
 				25C3F55B28E1ADC50062EDA9 /* SecondViewController.swift in Sources */,
 				25EE09A228CF1A7300B5B5CA /* Constant.swift in Sources */,
 				25FCD99128D74473004F48E8 /* TaskDetailView.swift in Sources */,
 				259C4E2128DB77750092223A /* SettingTableViewCell.swift in Sources */,
-				256070CB28D396C400A1F553 /* ImageModel.swift in Sources */,
 				25C3F55D28E1AE0B0062EDA9 /* ThirdViewController.swift in Sources */,
 				25C3F55928E1AD7C0062EDA9 /* FirstViewController.swift in Sources */,
 			);
@@ -804,7 +776,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = Jacsim/Jacsim.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 0;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = RFHV927M8S;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -822,7 +794,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.2;
+				MARKETING_VERSION = 1.3;
 				PRODUCT_BUNDLE_IDENTIFIER = com.jaehoon.jaksim;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -841,7 +813,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = Jacsim/Jacsim.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 0;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = RFHV927M8S;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -859,7 +831,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.2;
+				MARKETING_VERSION = 1.3;
 				PRODUCT_BUNDLE_IDENTIFIER = com.jaehoon.jaksim;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";

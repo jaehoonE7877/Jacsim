@@ -473,5 +473,4 @@ extension NewTaskViewController {
             }
         }
     }
-    
 }

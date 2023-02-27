@@ -54,7 +54,7 @@ extension SettingViewController: UITableViewDelegate, UITableViewDataSource {
         cell.selectionStyle = .none
         cell.backgroundColor = Constant.BaseColor.backgroundColor
         
-        if indexPath.row == 2 {
+        if indexPath.row == 3 {
             
             cell.pushImage.removeFromSuperview()
             
@@ -72,12 +72,14 @@ extension SettingViewController: UITableViewDelegate, UITableViewDataSource {
         
             switch indexPath.row {
             case 0:
-                sendMail()
+                showUseCase()
             case 1:
-                moveToReview()
+                sendMail()
             case 2:
-                return
+                moveToReview()
             case 3:
+                return
+            case 4:
                 guard let url = Bundle.main.url(forResource: "Package", withExtension: "resolved"),
                              let data = try? Data(contentsOf: url),
                              let acknowList = try? AcknowPackageDecoder().decode(from: data) else {
@@ -135,5 +137,11 @@ extension SettingViewController : MFMailComposeViewControllerDelegate {
         }
         
         controller.dismiss(animated: true)
+    }
+    
+    private func showUseCase(){
+        let vc = WalkThroughViewController()
+        vc.continueButton.isHidden = true
+        self.transitionViewController(viewController: vc, transitionStyle: .push)
     }
 }

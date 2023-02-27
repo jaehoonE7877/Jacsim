@@ -8,10 +8,12 @@
 import Foundation
 
 enum SettingModel: Int, CaseIterable {
-    case inquiry, review, version, licence
+    case usecase, inquiry, review, version, licence
     
     var title: String {
         switch self {
+        case .usecase:
+            return "사용법"
         case .inquiry:
             return "문의하기"
         case .review:
