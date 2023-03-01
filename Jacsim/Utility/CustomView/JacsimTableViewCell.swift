@@ -30,7 +30,7 @@ final class JacsimTableViewCell: BaseTableViewCell {
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
     }
-    
+
     required init?(coder: NSCoder) {
         fatalError()
     }
@@ -59,6 +59,16 @@ final class JacsimTableViewCell: BaseTableViewCell {
         alarmImageView.snp.makeConstraints { make in
             make.trailing.equalTo(jacsimContentView.snp.trailing).offset(-12)
             make.centerY.equalTo(titleLabel.snp.centerY)
+        }
+    }
+    
+    func setCellStyle(title: String, alarm: Date?) {
+        self.selectionStyle = .none
+        self.titleLabel.text = title
+        if alarm != nil {
+            self.alarmImageView.isHidden = false
+        } else {
+            self.alarmImageView.isHidden = true
         }
     }
     

@@ -5,7 +5,7 @@
 //  Created by Seo Jae Hoon on 2022/10/12.
 //
 
-import UIKit
+import Foundation
 
 final class HomeViewModel {
     
@@ -48,27 +48,3 @@ extension HomeViewModel {
     }
     
 }
-
-extension HomeViewModel {
-    
-    func numberOfRowsInSection(_ tableView: UITableView, section: Int) -> Int {
-        return tasks.value.count
-    }
-    
-    func cellForRowAt(_ tableView: UITableView, indexPath: IndexPath) -> UITableViewCell {
-        guard let cell = tableView.dequeueReusableCell(withIdentifier: JacsimTableViewCell.reuseIdentifier) as? JacsimTableViewCell else { return UITableViewCell() }
-        cell.selectionStyle = .none
-        cell.titleLabel.text = tasks.value[indexPath.row].title
-        if tasks.value[indexPath.row].alarm != nil {
-            cell.alarmImageView.isHidden = false
-        } else {
-            cell.alarmImageView.isHidden = true
-        }
-        
-        return cell
-    }
-    
-}
-
-
-

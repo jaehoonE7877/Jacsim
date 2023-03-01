@@ -201,7 +201,13 @@ final class HomeViewController: BaseViewController {
     }
     
     @objc func infoButtonTapped(){
-        showAlertMessage(title: "작심한 일은...", message: "좋은 습관을 만들어주기 위해\n최대 5개의 목표를 다루고 있습니다!", button: "확인")
+        showAlertMessage(
+            title: "작심한 일은...",
+            message: """
+            좋은 습관을 만들어주기 위해
+            최대 5개의 목표를 다루고 있습니다!
+            """,
+            button: "확인")
     }
     
     @objc func sortButtonTapped(){
@@ -220,7 +226,7 @@ final class HomeViewController: BaseViewController {
 extension HomeViewController: UITableViewDelegate, UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return viewModel.numberOfRowsInSection(tableView, section: section)
+        return viewModel.tasks.value.count
     }
     
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
@@ -233,7 +239,12 @@ extension HomeViewController: UITableViewDelegate, UITableViewDataSource {
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        viewModel.cellForRowAt(tableView, indexPath: indexPath)
+        guard let cell = tableView.dequeueReusableCell(withIdentifier: JacsimTableViewCell.reuseIdentifier, for: indexPath) as? JacsimTableViewCell else { return UITableViewCell() }
+        
+        cell.setCellStyle(title: viewModel.tasks.value[indexPath.row].title,
+                          alarm: viewModel.tasks.value[indexPath.row].alarm)
+        
+        return cell
     }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {

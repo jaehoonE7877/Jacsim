@@ -86,9 +86,8 @@ final class TaskDetailViewController: BaseViewController {
             self.showAlertMessage(title: "해당 작심을 그만두실 건가요?", message: "기존에 저장한 데이터들은 사라집니다.", button: "확인", cancel: "취소") { _ in
                 
                 self.viewModel.deleteJacsim()
-  
+                self.navigationController?.popViewController(animated: true)
             }
-            self.navigationController?.popViewController(animated: true)
         }
         
         var items: [UIMenuElement] = []
