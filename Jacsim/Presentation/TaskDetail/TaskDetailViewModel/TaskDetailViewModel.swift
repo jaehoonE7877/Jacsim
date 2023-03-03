@@ -60,8 +60,6 @@ extension TaskDetailViewModel {
         }
     }
     
-    
-    
     func checkIsToday(indexPath: IndexPath) -> Bool {
         
         let dayArray = configCellTitle()
@@ -69,6 +67,23 @@ extension TaskDetailViewModel {
         let dateText = DateFormatType.toString(dayArray[indexPath.item], to: .fullWithoutYear)
         
         return DateFormatType.toString(Date(), to: .fullWithoutYear) == dateText
+    }
+    
+    //오늘인지 확인해서 맞으면
+    func checkDate() -> Int {
+        // 시작일이 오늘과 같거나, 다음 날이면 그대로 이후면 이후 날짜(순서 2번)를 왼쪽으로
+        let now = Date()
+        let dateArray = configCellTitle()
+        var count = 0
+        
+        for index in 0...dateArray.count - 1 {
+            if dateArray[index].year == now.year,
+               dateArray[index].month == now.month,
+               dateArray[index].day == now.month {
+                count = index
+            }
+        }
+        return count
     }
     
     func fetchTodayImage(index: Int) -> UIImage {
@@ -89,21 +104,22 @@ extension TaskDetailViewModel {
         
         // 인증유무 분기처리
         
+        
         if self.repository.checkCertified(item: task.value) == 0 {
             
             self.repository.deleteJacsim(item: task.value)
             
         } else {
             // 인증이 있을 때
+            let dayArray = configCellTitle()
             
             for index in 0...self.repository.checkCertified(item: task.value) - 1 {
-                let dayArray = configCellTitle()
+        
                 let dateText = DateFormatType.toString(dayArray[index], to: .fullWithoutYear)
                 self.repository.removeImageFromDocument(fileName: "\(task.value.id)_\(dateText).jpg")
             }
             
             self.repository.deleteJacsim(item: task.value)
-            
         }
     }
 }

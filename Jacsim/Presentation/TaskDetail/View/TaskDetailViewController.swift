@@ -28,8 +28,10 @@ final class TaskDetailViewController: BaseViewController {
         super.viewWillAppear(animated)
 
         viewModel.task.bind { task in
-            DispatchQueue.main.async {
+            DispatchQueue.main.async { [weak self] in
+                guard let self else { return }
                 self.mainView.collectionView.reloadData()
+                self.mainView.collectionView.scrollToItem(at: IndexPath(item: self.viewModel.checkDate(), section: 0), at: .right, animated: false)
             }
         }
         
