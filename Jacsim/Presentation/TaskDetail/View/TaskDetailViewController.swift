@@ -31,7 +31,7 @@ final class TaskDetailViewController: BaseViewController {
             DispatchQueue.main.async { [weak self] in
                 guard let self else { return }
                 self.mainView.collectionView.reloadData()
-                self.mainView.collectionView.scrollToItem(at: IndexPath(item: self.viewModel.checkDate(), section: 0), at: .right, animated: false)
+                self.mainView.collectionView.scrollToItem(at: IndexPath(item: self.viewModel.scrollToCurrentDate, section: 0), at: .centeredHorizontally, animated: false)
             }
         }
         
@@ -77,8 +77,7 @@ final class TaskDetailViewController: BaseViewController {
             self.showAlertMessage(title: "알람을 끄시겠습니까?", message: nil, button: "확인", cancel: "취소") { _ in
                 
                 self.viewModel.deleteAlarm()
-                
-                self.navigationController?.popViewController(animated: true)
+                self.mainView.alarmLabel.text = self.viewModel.showAlarm
             }
             
         }
@@ -92,12 +91,7 @@ final class TaskDetailViewController: BaseViewController {
             }
         }
         
-        var items: [UIMenuElement] = []
-        if viewModel.task.value.alarm != nil {
-            items = [deleteAlarm, quit]
-        } else {
-            items = [quit]
-        }
+        let items = viewModel.task.value.alarm != nil ? [deleteAlarm, quit] : [quit]
         
         let menu = UIMenu(title: "", options: .displayInline, children: items)
         
@@ -110,7 +104,9 @@ final class TaskDetailViewController: BaseViewController {
 extension TaskDetailViewController: UICollectionViewDelegate, UICollectionViewDataSource {
     
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return viewModel.numberOfItemsInSection()
+        return (Calendar.current.dateComponents([.day],
+                                                from: viewModel.task.value.startDate,
+                                                to: viewModel.task.value.endDate).day ?? 1) + 1
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
@@ -120,9 +116,6 @@ extension TaskDetailViewController: UICollectionViewDelegate, UICollectionViewDa
 //        guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: TaskDetailCollectionViewCell.reuseIdentifier, for: indexPath) as? TaskDetailCollectionViewCell
 //        else { return UICollectionViewCell() }
 //
-//        cell.layer.borderWidth = Constant.Design.borderWidth
-//        cell.layer.cornerRadius = Constant.Design.cornerRadius
-//        cell.layer.borderColor = Constant.BaseColor.textColor?.cgColor
 //
 //        let dateText = DateFormatType.toString(dayArray[indexPath.item], to: .fullWithoutYear)
 //        guard let objectId = task?.id else { return UICollectionViewCell() }
@@ -147,8 +140,7 @@ extension TaskDetailViewController: UICollectionViewDelegate, UICollectionViewDa
             showAlertMessage(title: "작심 인증하기", message: "인증 날짜가 아닙니다.\n확인해주세요!", button: "확인")
             return
         }
-        // 처음 작성
-        // vc -> vc.viewModel.task, dateText, index???
+        
         if !task.memoList[indexPath.item].check {
             vc.dateText = cell.dateLabel.text
             vc.task = task

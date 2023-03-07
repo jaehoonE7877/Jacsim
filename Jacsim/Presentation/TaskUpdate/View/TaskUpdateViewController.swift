@@ -118,12 +118,10 @@ final class TaskUpdateViewController: BaseViewController {
             }
             return
         }
-        
-        guard let task = task else { return }
-        guard let index = index else { return }
-        guard let memo = mainView.memoTextfield.text else { return }
-        
-        guard let dateText = dateText else { return }
+        guard let task = task,
+              let index = index,
+              let memo = mainView.memoTextfield.text,
+              let dateText = dateText else { return }
         
         repository.updateMemo(item: task, index: index, memo: memo)
         

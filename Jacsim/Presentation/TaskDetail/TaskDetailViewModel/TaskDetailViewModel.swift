@@ -69,8 +69,7 @@ extension TaskDetailViewModel {
         return DateFormatType.toString(Date(), to: .fullWithoutYear) == dateText
     }
     
-    //오늘인지 확인해서 맞으면
-    func checkDate() -> Int {
+    var scrollToCurrentDate: Int {
         // 시작일이 오늘과 같거나, 다음 날이면 그대로 이후면 이후 날짜(순서 2번)를 왼쪽으로
         let now = Date()
         let dateArray = configCellTitle()
@@ -79,7 +78,7 @@ extension TaskDetailViewModel {
         for index in 0...dateArray.count - 1 {
             if dateArray[index].year == now.year,
                dateArray[index].month == now.month,
-               dateArray[index].day == now.month {
+               dateArray[index].day == now.day {
                 count = index
             }
         }
@@ -101,9 +100,6 @@ extension TaskDetailViewModel {
     }
     
     func deleteJacsim() {
-        
-        // 인증유무 분기처리
-        
         
         if self.repository.checkCertified(item: task.value) == 0 {
             
@@ -127,19 +123,10 @@ extension TaskDetailViewModel {
 //MARK: CollectionView
 extension TaskDetailViewModel {
     
-    func numberOfItemsInSection() -> Int {
-        
-        return (Calendar.current.dateComponents([.day], from: task.value.startDate, to: task.value.endDate).day ?? 1) + 1
-    }
-    
     func cellForItemAt(_ collectionView: UICollectionView, indexPath: IndexPath) -> UICollectionViewCell {
         
         guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: TaskDetailCollectionViewCell.reuseIdentifier, for: indexPath) as? TaskDetailCollectionViewCell
         else { return UICollectionViewCell() }
-        
-        cell.layer.borderWidth = Constant.Design.borderWidth
-        cell.layer.cornerRadius = Constant.Design.cornerRadius
-        cell.layer.borderColor = Constant.BaseColor.textColor?.cgColor
         
         let dayArray = configCellTitle()
         

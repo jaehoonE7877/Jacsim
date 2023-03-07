@@ -37,6 +37,9 @@ class TaskDetailCollectionViewCell: BaseCollectionViewCell {
     
     override init(frame: CGRect) {
         super.init(frame: frame)
+        self.layer.borderWidth = Constant.Design.borderWidth
+        self.layer.cornerRadius = Constant.Design.cornerRadius
+        self.layer.borderColor = Constant.BaseColor.textColor?.cgColor
     }
     
     required init?(coder: NSCoder) {
@@ -48,7 +51,6 @@ class TaskDetailCollectionViewCell: BaseCollectionViewCell {
     }
     
     override func setConstraints() {
-        
         
         certifiedImageView.snp.makeConstraints { make in
             make.top.leading.equalTo(contentView).offset(8)
@@ -74,5 +76,9 @@ class TaskDetailCollectionViewCell: BaseCollectionViewCell {
             make.centerX.equalToSuperview()
             make.width.equalTo(certifiedImageView)
         }
+    }
+    
+    func setData() {
+        
     }
 }
