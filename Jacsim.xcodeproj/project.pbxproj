@@ -15,6 +15,10 @@
 		2532672928E3DBBA00F0D5D5 /* Realm in Frameworks */ = {isa = PBXBuildFile; productRef = 2532672828E3DBBA00F0D5D5 /* Realm */; };
 		2532672B28E3DBBA00F0D5D5 /* RealmSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 2532672A28E3DBBA00F0D5D5 /* RealmSwift */; };
 		2535270228D222BD0086383E /* UITextField+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2535270128D222BD0086383E /* UITextField+Extension.swift */; };
+		254021FB2A334D7A00F21898 /* RxCocoa in Frameworks */ = {isa = PBXBuildFile; productRef = 254021FA2A334D7A00F21898 /* RxCocoa */; };
+		254021FD2A334D7A00F21898 /* RxRelay in Frameworks */ = {isa = PBXBuildFile; productRef = 254021FC2A334D7A00F21898 /* RxRelay */; };
+		254021FF2A334D7A00F21898 /* RxSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 254021FE2A334D7A00F21898 /* RxSwift */; };
+		254022012A334D7A00F21898 /* RxTest in Frameworks */ = {isa = PBXBuildFile; productRef = 254022002A334D7A00F21898 /* RxTest */; };
 		254354232914277300F8616C /* IQKeyboardManagerSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 254354222914277300F8616C /* IQKeyboardManagerSwift */; };
 		2547132128CC4B670049D952 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2547132028CC4B670049D952 /* AppDelegate.swift */; };
 		2547132328CC4B670049D952 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2547132228CC4B670049D952 /* SceneDelegate.swift */; };
@@ -141,19 +145,23 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				254021FF2A334D7A00F21898 /* RxSwift in Frameworks */,
 				2547135528CC52410049D952 /* Toast in Frameworks */,
 				2547135228CC522E0049D952 /* Alamofire in Frameworks */,
 				25C6F16F28F5285B008BD901 /* FirebaseMessaging in Frameworks */,
 				25C3F56028E1B62D0062EDA9 /* CropViewController in Frameworks */,
 				2547134C28CC520D0049D952 /* SnapKit in Frameworks */,
 				254354232914277300F8616C /* IQKeyboardManagerSwift in Frameworks */,
+				254021FB2A334D7A00F21898 /* RxCocoa in Frameworks */,
 				2532672928E3DBBA00F0D5D5 /* Realm in Frameworks */,
+				254021FD2A334D7A00F21898 /* RxRelay in Frameworks */,
 				2547134F28CC521C0049D952 /* Then in Frameworks */,
 				25EE09A728D0AE6300B5B5CA /* Floaty in Frameworks */,
 				25C6F16B28F5285B008BD901 /* FirebaseAnalyticsWithoutAdIdSupport in Frameworks */,
 				25FDC52328CC6186002543CC /* FSCalendar in Frameworks */,
 				25C6F16D28F5285B008BD901 /* FirebaseCrashlytics in Frameworks */,
 				2532672B28E3DBBA00F0D5D5 /* RealmSwift in Frameworks */,
+				254022012A334D7A00F21898 /* RxTest in Frameworks */,
 				25C3F56228E1B62D0062EDA9 /* TOCropViewController in Frameworks */,
 				2514094228E28F49009CEDE9 /* AcknowList in Frameworks */,
 			);
@@ -489,6 +497,10 @@
 				25C6F16C28F5285B008BD901 /* FirebaseCrashlytics */,
 				25C6F16E28F5285B008BD901 /* FirebaseMessaging */,
 				254354222914277300F8616C /* IQKeyboardManagerSwift */,
+				254021FA2A334D7A00F21898 /* RxCocoa */,
+				254021FC2A334D7A00F21898 /* RxRelay */,
+				254021FE2A334D7A00F21898 /* RxSwift */,
+				254022002A334D7A00F21898 /* RxTest */,
 			);
 			productName = Jacsim;
 			productReference = 2547131D28CC4B670049D952 /* Jacsim.app */;
@@ -530,6 +542,7 @@
 				2532672728E3DBBA00F0D5D5 /* XCRemoteSwiftPackageReference "realm-swift" */,
 				25C6F16928F5285B008BD901 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
 				254354212914277300F8616C /* XCRemoteSwiftPackageReference "IQKeyboardManager" */,
+				254021F92A334D7A00F21898 /* XCRemoteSwiftPackageReference "RxSwift" */,
 			);
 			productRefGroup = 2547131E28CC4B670049D952 /* Products */;
 			projectDirPath = "";
@@ -884,6 +897,14 @@
 				version = 10.30.0;
 			};
 		};
+		254021F92A334D7A00F21898 /* XCRemoteSwiftPackageReference "RxSwift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/ReactiveX/RxSwift.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 6.0.0;
+			};
+		};
 		254354212914277300F8616C /* XCRemoteSwiftPackageReference "IQKeyboardManager" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/hackiftekhar/IQKeyboardManager.git";
@@ -973,6 +994,26 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 2532672728E3DBBA00F0D5D5 /* XCRemoteSwiftPackageReference "realm-swift" */;
 			productName = RealmSwift;
+		};
+		254021FA2A334D7A00F21898 /* RxCocoa */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 254021F92A334D7A00F21898 /* XCRemoteSwiftPackageReference "RxSwift" */;
+			productName = RxCocoa;
+		};
+		254021FC2A334D7A00F21898 /* RxRelay */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 254021F92A334D7A00F21898 /* XCRemoteSwiftPackageReference "RxSwift" */;
+			productName = RxRelay;
+		};
+		254021FE2A334D7A00F21898 /* RxSwift */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 254021F92A334D7A00F21898 /* XCRemoteSwiftPackageReference "RxSwift" */;
+			productName = RxSwift;
+		};
+		254022002A334D7A00F21898 /* RxTest */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 254021F92A334D7A00F21898 /* XCRemoteSwiftPackageReference "RxSwift" */;
+			productName = RxTest;
 		};
 		254354222914277300F8616C /* IQKeyboardManagerSwift */ = {
 			isa = XCSwiftPackageProductDependency;
