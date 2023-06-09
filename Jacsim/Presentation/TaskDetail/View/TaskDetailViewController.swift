@@ -10,9 +10,14 @@ import UIKit
 final class TaskDetailViewController: BaseViewController {
     
     //MARK: Property
-    let viewModel = TaskDetailViewModel()
+    private let viewModel: TaskDetailViewModel
     
-    let mainView = TaskDetailView()
+    private let mainView = TaskDetailView()
+    
+    init(viewModel: TaskDetailViewModel) {
+        self.viewModel = viewModel
+        super.init(nibName: nil, bundle: nil)
+    }
     
     override func loadView() {
         self.view = mainView

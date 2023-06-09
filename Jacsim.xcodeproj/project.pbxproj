@@ -19,6 +19,15 @@
 		254021FD2A334D7A00F21898 /* RxRelay in Frameworks */ = {isa = PBXBuildFile; productRef = 254021FC2A334D7A00F21898 /* RxRelay */; };
 		254021FF2A334D7A00F21898 /* RxSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 254021FE2A334D7A00F21898 /* RxSwift */; };
 		254022012A334D7A00F21898 /* RxTest in Frameworks */ = {isa = PBXBuildFile; productRef = 254022002A334D7A00F21898 /* RxTest */; };
+		254022042A334F7700F21898 /* RxUIControl+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 254022032A334F7700F21898 /* RxUIControl+Extension.swift */; };
+		254022062A334FBC00F21898 /* Reactive+BaseViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 254022052A334FBC00F21898 /* Reactive+BaseViewController.swift */; };
+		254022082A334FE500F21898 /* Observable+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 254022072A334FE500F21898 /* Observable+Extension.swift */; };
+		2540220A2A33500000F21898 /* BehaviorRelay+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 254022092A33500000F21898 /* BehaviorRelay+Extension.swift */; };
+		2540220C2A33516500F21898 /* RxSwift+Optional.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2540220B2A33516500F21898 /* RxSwift+Optional.swift */; };
+		2540220E2A33525E00F21898 /* UIImageView+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2540220D2A33525E00F21898 /* UIImageView+Extension.swift */; };
+		254022112A33529F00F21898 /* Kingfisher in Frameworks */ = {isa = PBXBuildFile; productRef = 254022102A33529F00F21898 /* Kingfisher */; };
+		254022132A3352D500F21898 /* UIView+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 254022122A3352D500F21898 /* UIView+Extension.swift */; };
+		254022182A3353D300F21898 /* UIColor+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 254022172A3353D300F21898 /* UIColor+Extension.swift */; };
 		254354232914277300F8616C /* IQKeyboardManagerSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 254354222914277300F8616C /* IQKeyboardManagerSwift */; };
 		2547132128CC4B670049D952 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2547132028CC4B670049D952 /* AppDelegate.swift */; };
 		2547132328CC4B670049D952 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2547132228CC4B670049D952 /* SceneDelegate.swift */; };
@@ -26,7 +35,6 @@
 		2547132A28CC4B6A0049D952 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 2547132928CC4B6A0049D952 /* Assets.xcassets */; };
 		2547132D28CC4B6A0049D952 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 2547132B28CC4B6A0049D952 /* LaunchScreen.storyboard */; };
 		2547133528CC4BA80049D952 /* .gitignore in Resources */ = {isa = PBXBuildFile; fileRef = 2547133428CC4BA80049D952 /* .gitignore */; };
-		2547133828CC4BCE0049D952 /* APIKey.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2547133728CC4BCE0049D952 /* APIKey.swift */; };
 		2547134028CC4C970049D952 /* ReusableViewProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2547133F28CC4C970049D952 /* ReusableViewProtocol.swift */; };
 		2547134228CC4D780049D952 /* Transition+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2547134128CC4D780049D952 /* Transition+Extension.swift */; };
 		2547134628CC50F10049D952 /* BaseView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2547134528CC50F10049D952 /* BaseView.swift */; };
@@ -41,6 +49,7 @@
 		25636C4928CC54A200B385AF /* BaseTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25636C4828CC54A200B385AF /* BaseTableViewCell.swift */; };
 		25636C4C28CC552D00B385AF /* UserJacsim.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25636C4B28CC552D00B385AF /* UserJacsim.swift */; };
 		25636C5128CC580400B385AF /* APIManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25636C5028CC580400B385AF /* APIManager.swift */; };
+		258EA1302A3358AC007359DF /* APIKey.swift in Sources */ = {isa = PBXBuildFile; fileRef = 258EA12F2A3358AC007359DF /* APIKey.swift */; };
 		259C4E1F28DB77680092223A /* SettingViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 259C4E1E28DB77680092223A /* SettingViewController.swift */; };
 		259C4E2128DB77750092223A /* SettingTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 259C4E2028DB77750092223A /* SettingTableViewCell.swift */; };
 		259C4E2428DB7BA20092223A /* SettingModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 259C4E2328DB7BA20092223A /* SettingModel.swift */; };
@@ -56,7 +65,6 @@
 		25C6F16D28F5285B008BD901 /* FirebaseCrashlytics in Frameworks */ = {isa = PBXBuildFile; productRef = 25C6F16C28F5285B008BD901 /* FirebaseCrashlytics */; };
 		25C6F16F28F5285B008BD901 /* FirebaseMessaging in Frameworks */ = {isa = PBXBuildFile; productRef = 25C6F16E28F5285B008BD901 /* FirebaseMessaging */; };
 		25C6F17528F5A7A4008BD901 /* AllTaskViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25C6F17428F5A7A4008BD901 /* AllTaskViewModel.swift */; };
-		25C6F17728F5AD47008BD901 /* Observable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25C6F17628F5AD47008BD901 /* Observable.swift */; };
 		25D0AD3528D8747F006A918C /* Date+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25D0AD3428D8747F006A918C /* Date+Extension.swift */; };
 		25D0AD3728D8C5B0006A918C /* TaskUpdateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25D0AD3628D8C5B0006A918C /* TaskUpdateView.swift */; };
 		25E1614228F93ED7000B31A8 /* TaskDetailViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25E1614128F93ED7000B31A8 /* TaskDetailViewModel.swift */; };
@@ -87,6 +95,14 @@
 		2514094528E2D420009CEDE9 /* AlarmViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlarmViewController.swift; sourceTree = "<group>"; };
 		2514094728E2DD21009CEDE9 /* Package.resolved */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = Package.resolved; path = Jacsim.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved; sourceTree = "<group>"; };
 		2535270128D222BD0086383E /* UITextField+Extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UITextField+Extension.swift"; sourceTree = "<group>"; };
+		254022032A334F7700F21898 /* RxUIControl+Extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "RxUIControl+Extension.swift"; sourceTree = "<group>"; };
+		254022052A334FBC00F21898 /* Reactive+BaseViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Reactive+BaseViewController.swift"; sourceTree = "<group>"; };
+		254022072A334FE500F21898 /* Observable+Extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Observable+Extension.swift"; sourceTree = "<group>"; };
+		254022092A33500000F21898 /* BehaviorRelay+Extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "BehaviorRelay+Extension.swift"; sourceTree = "<group>"; };
+		2540220B2A33516500F21898 /* RxSwift+Optional.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "RxSwift+Optional.swift"; sourceTree = "<group>"; };
+		2540220D2A33525E00F21898 /* UIImageView+Extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIImageView+Extension.swift"; sourceTree = "<group>"; };
+		254022122A3352D500F21898 /* UIView+Extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIView+Extension.swift"; sourceTree = "<group>"; };
+		254022172A3353D300F21898 /* UIColor+Extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIColor+Extension.swift"; sourceTree = "<group>"; };
 		2547131D28CC4B670049D952 /* Jacsim.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Jacsim.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		2547132028CC4B670049D952 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		2547132228CC4B670049D952 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
@@ -95,7 +111,6 @@
 		2547132C28CC4B6A0049D952 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		2547132E28CC4B6A0049D952 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		2547133428CC4BA80049D952 /* .gitignore */ = {isa = PBXFileReference; lastKnownFileType = text; path = .gitignore; sourceTree = "<group>"; };
-		2547133728CC4BCE0049D952 /* APIKey.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIKey.swift; sourceTree = "<group>"; };
 		2547133F28CC4C970049D952 /* ReusableViewProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReusableViewProtocol.swift; sourceTree = "<group>"; };
 		2547134128CC4D780049D952 /* Transition+Extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Transition+Extension.swift"; sourceTree = "<group>"; };
 		2547134528CC50F10049D952 /* BaseView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BaseView.swift; sourceTree = "<group>"; };
@@ -106,6 +121,7 @@
 		25636C4828CC54A200B385AF /* BaseTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BaseTableViewCell.swift; sourceTree = "<group>"; };
 		25636C4B28CC552D00B385AF /* UserJacsim.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserJacsim.swift; sourceTree = "<group>"; };
 		25636C5028CC580400B385AF /* APIManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIManager.swift; sourceTree = "<group>"; };
+		258EA12F2A3358AC007359DF /* APIKey.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = APIKey.swift; sourceTree = "<group>"; };
 		259C4E1E28DB77680092223A /* SettingViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingViewController.swift; sourceTree = "<group>"; };
 		259C4E2028DB77750092223A /* SettingTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingTableViewCell.swift; sourceTree = "<group>"; };
 		259C4E2328DB7BA20092223A /* SettingModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingModel.swift; sourceTree = "<group>"; };
@@ -117,7 +133,6 @@
 		25C6F16728F527E0008BD901 /* GoogleService-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		25C6F17028F54AAD008BD901 /* Jacsim.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Jacsim.entitlements; sourceTree = "<group>"; };
 		25C6F17428F5A7A4008BD901 /* AllTaskViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AllTaskViewModel.swift; sourceTree = "<group>"; };
-		25C6F17628F5AD47008BD901 /* Observable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Observable.swift; sourceTree = "<group>"; };
 		25D0AD3428D8747F006A918C /* Date+Extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Date+Extension.swift"; sourceTree = "<group>"; };
 		25D0AD3628D8C5B0006A918C /* TaskUpdateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskUpdateView.swift; sourceTree = "<group>"; };
 		25E1614128F93ED7000B31A8 /* TaskDetailViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskDetailViewModel.swift; sourceTree = "<group>"; };
@@ -149,6 +164,7 @@
 				2547135528CC52410049D952 /* Toast in Frameworks */,
 				2547135228CC522E0049D952 /* Alamofire in Frameworks */,
 				25C6F16F28F5285B008BD901 /* FirebaseMessaging in Frameworks */,
+				254022112A33529F00F21898 /* Kingfisher in Frameworks */,
 				25C3F56028E1B62D0062EDA9 /* CropViewController in Frameworks */,
 				2547134C28CC520D0049D952 /* SnapKit in Frameworks */,
 				254354232914277300F8616C /* IQKeyboardManagerSwift in Frameworks */,
@@ -170,6 +186,30 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		254022022A334F6200F21898 /* RxSwift */ = {
+			isa = PBXGroup;
+			children = (
+				254022032A334F7700F21898 /* RxUIControl+Extension.swift */,
+				254022052A334FBC00F21898 /* Reactive+BaseViewController.swift */,
+				254022072A334FE500F21898 /* Observable+Extension.swift */,
+				254022092A33500000F21898 /* BehaviorRelay+Extension.swift */,
+				2540220B2A33516500F21898 /* RxSwift+Optional.swift */,
+			);
+			path = RxSwift;
+			sourceTree = "<group>";
+		};
+		254022162A3352F000F21898 /* UIExtension */ = {
+			isa = PBXGroup;
+			children = (
+				255C1AC028EECBE600C205E7 /* UIImage+.swift */,
+				2547134128CC4D780049D952 /* Transition+Extension.swift */,
+				25FF192028DDE7DD00A45EC4 /* UIFont+Extension.swift */,
+				2535270128D222BD0086383E /* UITextField+Extension.swift */,
+				254022172A3353D300F21898 /* UIColor+Extension.swift */,
+			);
+			path = UIExtension;
+			sourceTree = "<group>";
+		};
 		2547131428CC4B670049D952 = {
 			isa = PBXGroup;
 			children = (
@@ -212,7 +252,7 @@
 			children = (
 				2547132928CC4B6A0049D952 /* Assets.xcassets */,
 				2547132B28CC4B6A0049D952 /* LaunchScreen.storyboard */,
-				2547133728CC4BCE0049D952 /* APIKey.swift */,
+				258EA12F2A3358AC007359DF /* APIKey.swift */,
 			);
 			path = Resources;
 			sourceTree = "<group>";
@@ -254,7 +294,6 @@
 				2547134428CC50E20049D952 /* CustomView */,
 				2547134328CC50C90049D952 /* Constants */,
 				2547134728CC51A60049D952 /* BaseView */,
-				25C6F17628F5AD47008BD901 /* Observable.swift */,
 			);
 			path = Utility;
 			sourceTree = "<group>";
@@ -262,12 +301,12 @@
 		2547133D28CC4C650049D952 /* Extension */ = {
 			isa = PBXGroup;
 			children = (
-				2547134128CC4D780049D952 /* Transition+Extension.swift */,
-				2535270128D222BD0086383E /* UITextField+Extension.swift */,
+				254022162A3352F000F21898 /* UIExtension */,
+				254022022A334F6200F21898 /* RxSwift */,
 				25FCD99228D77FFF004F48E8 /* FileManager+Extension.swift */,
 				25D0AD3428D8747F006A918C /* Date+Extension.swift */,
-				25FF192028DDE7DD00A45EC4 /* UIFont+Extension.swift */,
-				255C1AC028EECBE600C205E7 /* UIImage+.swift */,
+				2540220D2A33525E00F21898 /* UIImageView+Extension.swift */,
+				254022122A3352D500F21898 /* UIView+Extension.swift */,
 			);
 			path = Extension;
 			sourceTree = "<group>";
@@ -501,6 +540,7 @@
 				254021FC2A334D7A00F21898 /* RxRelay */,
 				254021FE2A334D7A00F21898 /* RxSwift */,
 				254022002A334D7A00F21898 /* RxTest */,
+				254022102A33529F00F21898 /* Kingfisher */,
 			);
 			productName = Jacsim;
 			productReference = 2547131D28CC4B670049D952 /* Jacsim.app */;
@@ -543,6 +583,7 @@
 				25C6F16928F5285B008BD901 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
 				254354212914277300F8616C /* XCRemoteSwiftPackageReference "IQKeyboardManager" */,
 				254021F92A334D7A00F21898 /* XCRemoteSwiftPackageReference "RxSwift" */,
+				2540220F2A33529E00F21898 /* XCRemoteSwiftPackageReference "Kingfisher" */,
 			);
 			productRefGroup = 2547131E28CC4B670049D952 /* Products */;
 			projectDirPath = "";
@@ -597,20 +638,24 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				254022062A334FBC00F21898 /* Reactive+BaseViewController.swift in Sources */,
 				25C3F53128E04A310062EDA9 /* WalkThroughViewController.swift in Sources */,
+				2540220E2A33525E00F21898 /* UIImageView+Extension.swift in Sources */,
 				2547134228CC4D780049D952 /* Transition+Extension.swift in Sources */,
 				25EE098F28CF153200B5B5CA /* NewTaskView.swift in Sources */,
-				25C6F17728F5AD47008BD901 /* Observable.swift in Sources */,
 				25636C4728CC544A00B385AF /* BaseCollectionViewCell.swift in Sources */,
 				25FCD98F28D5CA15004F48E8 /* JacsimRepository.swift in Sources */,
 				25EE099A28CF172200B5B5CA /* TaskUpdateViewController.swift in Sources */,
+				254022042A334F7700F21898 /* RxUIControl+Extension.swift in Sources */,
 				255C1ABF28EEAD7300C205E7 /* DateFormatType.swift in Sources */,
 				25EE098D28CF14E400B5B5CA /* NewTaskViewController.swift in Sources */,
 				25C6F17528F5A7A4008BD901 /* AllTaskViewModel.swift in Sources */,
+				254022082A334FE500F21898 /* Observable+Extension.swift in Sources */,
 				259C4E2428DB7BA20092223A /* SettingModel.swift in Sources */,
 				25FF192128DDE7DD00A45EC4 /* UIFont+Extension.swift in Sources */,
 				2514094428E2C73D009CEDE9 /* AlarmView.swift in Sources */,
 				25EE099828CF170E00B5B5CA /* TaskDetailViewController.swift in Sources */,
+				2540220A2A33500000F21898 /* BehaviorRelay+Extension.swift in Sources */,
 				25636C4C28CC552D00B385AF /* UserJacsim.swift in Sources */,
 				25EE098228CF0CF600B5B5CA /* HomeViewController.swift in Sources */,
 				25E1614228F93ED7000B31A8 /* TaskDetailViewModel.swift in Sources */,
@@ -624,20 +669,23 @@
 				2547134628CC50F10049D952 /* BaseView.swift in Sources */,
 				25EE099E28CF198000B5B5CA /* JacsimHeaderView.swift in Sources */,
 				25EE09A028CF1A6200B5B5CA /* Color.swift in Sources */,
+				254022132A3352D500F21898 /* UIView+Extension.swift in Sources */,
 				2547134928CC51E30049D952 /* BaseViewController.swift in Sources */,
-				2547133828CC4BCE0049D952 /* APIKey.swift in Sources */,
 				259C4E1F28DB77680092223A /* SettingViewController.swift in Sources */,
 				25D0AD3728D8C5B0006A918C /* TaskUpdateView.swift in Sources */,
 				25EE099C28CF175F00B5B5CA /* TaskDetailCollectionViewCell.swift in Sources */,
 				25FA7AEF28F6A94F000F0774 /* HomeViewModel.swift in Sources */,
 				25D0AD3528D8747F006A918C /* Date+Extension.swift in Sources */,
+				258EA1302A3358AC007359DF /* APIKey.swift in Sources */,
 				25FCD99328D77FFF004F48E8 /* FileManager+Extension.swift in Sources */,
 				2514094628E2D420009CEDE9 /* AlarmViewController.swift in Sources */,
+				254022182A3353D300F21898 /* UIColor+Extension.swift in Sources */,
 				25636C5128CC580400B385AF /* APIManager.swift in Sources */,
 				25FA7AEA28F68C04000F0774 /* TaskUpdateViewModel.swift in Sources */,
 				25636C4928CC54A200B385AF /* BaseTableViewCell.swift in Sources */,
 				2547132328CC4B670049D952 /* SceneDelegate.swift in Sources */,
 				25EE098828CF104100B5B5CA /* AllTaskViewController.swift in Sources */,
+				2540220C2A33516500F21898 /* RxSwift+Optional.swift in Sources */,
 				25C3F55B28E1ADC50062EDA9 /* SecondViewController.swift in Sources */,
 				25EE09A228CF1A7300B5B5CA /* Constant.swift in Sources */,
 				25FCD99128D74473004F48E8 /* TaskDetailView.swift in Sources */,
@@ -905,6 +953,14 @@
 				minimumVersion = 6.0.0;
 			};
 		};
+		2540220F2A33529E00F21898 /* XCRemoteSwiftPackageReference "Kingfisher" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/onevcat/Kingfisher.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 7.0.0;
+			};
+		};
 		254354212914277300F8616C /* XCRemoteSwiftPackageReference "IQKeyboardManager" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/hackiftekhar/IQKeyboardManager.git";
@@ -1014,6 +1070,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 254021F92A334D7A00F21898 /* XCRemoteSwiftPackageReference "RxSwift" */;
 			productName = RxTest;
+		};
+		254022102A33529F00F21898 /* Kingfisher */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 2540220F2A33529E00F21898 /* XCRemoteSwiftPackageReference "Kingfisher" */;
+			productName = Kingfisher;
 		};
 		254354222914277300F8616C /* IQKeyboardManagerSwift */ = {
 			isa = XCSwiftPackageProductDependency;

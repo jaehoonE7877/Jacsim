@@ -7,6 +7,9 @@
 
 import UIKit
 
+import SnapKit
+import Then
+
 final class WalkThroughViewController: BaseViewController {
     
     private let pageControl = UIPageControl().then {
@@ -26,7 +29,7 @@ final class WalkThroughViewController: BaseViewController {
         $0.dataSource = self
     }
     
-    var pageViewControllerList: [UIViewController] = []
+    private var pageViewControllerList: [UIViewController] = []
     
     override func viewDidLoad() {
         super.viewDidLoad()

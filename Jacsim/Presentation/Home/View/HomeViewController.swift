@@ -10,10 +10,10 @@ import UIKit
 import FSCalendar
 import Floaty
 import RealmSwift
+import RxSwift
+import RxCocoa
 
 final class HomeViewController: BaseViewController {
-        
-    //let repository = JacsimRepository()
     
     private let viewModel = HomeViewModel()
     // MARK: Property
@@ -45,14 +45,13 @@ final class HomeViewController: BaseViewController {
         $0.dataSource = self
         $0.register(JacsimHeaderView.self, forHeaderFooterViewReuseIdentifier: JacsimHeaderView.reuseIdentifier)
         $0.register(JacsimTableViewCell.self, forCellReuseIdentifier: JacsimTableViewCell.reuseIdentifier)
-        $0.rowHeight = 60
+        $0.rowHeight = UITableView.automaticDimension
         $0.sectionFooterHeight = 0
         $0.sectionHeaderHeight = 40
         $0.backgroundColor = Constant.BaseColor.backgroundColor
         $0.separatorStyle = UITableViewCell.SeparatorStyle.none
         $0.panGestureRecognizer.require(toFail: self.scopeGesture)
     }
-    
     
     private lazy var scopeGesture: UIPanGestureRecognizer = { [unowned self] in
         let panGesture = UIPanGestureRecognizer(target: self.fsCalendar, action: #selector(self.fsCalendar.handleScopeGesture(_:)))
@@ -71,45 +70,42 @@ final class HomeViewController: BaseViewController {
     }
     
     // MARK: View LifeCycle
+    override func loadView() {
+        super.loadView()
+        bind()
+    }
+    
     override func viewDidLoad() {
         super.viewDidLoad()
-        
-        setBinding()
-        fsCalendar.reloadData()
-        
+        //fsCalendar.reloadData()
     }
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        
-        fsCalendar.setCurrentPage(Date(), animated: false)
-        fsCalendar.select(Date(), scrollToDate: false)
-        
-        viewModel.fetch()
-        viewModel.checkIsDone()
-   
     }
     
-    private func setBinding() {
+    private func bind() {
         
-        viewModel.tasks.bind { _ in
-            DispatchQueue.main.async {
-                self.tableView.reloadData()
-            }
-        }
+        let input = HomeViewModel.Input(viewWillAppear: self.rx.viewWillAppear,
+                                        sortButtonTap: sortButton.rx.tap.asObservable())
+        let output = viewModel.transform(input: input)
         
+        output.fetchSuccess
+            .drive(onNext: { [weak self] _ in
+                self?.fsCalendar.setCurrentPage(Date(), animated: true)
+                self?.fsCalendar.select(Date(), scrollToDate: true)
+                self?.tableView.reloadData()
+            })
+            .disposed(by: disposeBag)
     }
     
     // MARK: Set UI, Constraints
     override func configure() {
-        
-        [fsCalendar, tableView, infoButton, sortButton, floaty].forEach { view.addSubview($0) }
-        
+
         setFSCalendar()
         setFloatyButton()
         
         infoButton.addTarget(self, action: #selector(infoButtonTapped), for: .touchUpInside)
-        sortButton.addTarget(self, action: #selector(sortButtonTapped), for: .touchUpInside)
         
         view.addGestureRecognizer(self.scopeGesture)
         view.backgroundColor = Constant.BaseColor.backgroundColor
@@ -117,36 +113,11 @@ final class HomeViewController: BaseViewController {
         let backButton = UIBarButtonItem()
         backButton.title = ""
         self.navigationController?.navigationBar.topItem?.backBarButtonItem = backButton
-       
     }
     
     override func setConstraint() {
         
-        // 달력 높이 비율로 잡기
-        fsCalendar.snp.makeConstraints { make in
-            make.top.equalTo(view.safeAreaLayoutGuide).offset(8)
-            make.width.equalTo(view).multipliedBy(0.94)
-            make.centerX.equalToSuperview()
-            make.height.equalTo(UIScreen.main.bounds.height / 2.5)
-        }
         
-        tableView.snp.makeConstraints { make in
-            make.top.equalTo(fsCalendar.snp.bottom)
-            make.width.equalTo(view).multipliedBy(0.88)
-            make.centerX.equalToSuperview()
-            make.bottom.equalTo(view.safeAreaLayoutGuide)
-        }
-        
-        infoButton.snp.makeConstraints { make in
-            make.top.equalTo(tableView.snp.top).offset(8)
-            make.trailing.equalTo(tableView.snp.trailing)
-        }
-        
-        sortButton.snp.makeConstraints { make in
-            make.top.equalTo(infoButton.snp.top)
-            make.trailing.equalTo(infoButton.snp.leading).offset(-8)
-            make.centerY.equalTo(infoButton)
-        }
     }
     
     override func setNavigationController() {
@@ -163,17 +134,17 @@ final class HomeViewController: BaseViewController {
         floaty.itemButtonColor = Constant.BaseColor.floatyColor!
         floaty.itemTitleColor = Constant.BaseColor.textColor!
         floaty.tintColor = Constant.BaseColor.textColor
-
+        
         floaty.addItem("새로운 작심", icon: UIImage.write) { item in
             self.transitionViewController(viewController: NewTaskViewController(), transitionStyle: .presentFullNavigation)
         }
-                       
+        
         floaty.addItem("작심 모아보기", icon: UIImage.list) { item in
             self.transitionViewController(viewController: AllTaskViewController(), transitionStyle: .presentFullNavigation)
         }
         
     }
-
+    
     
     // MARK: FSCalendar Customize
     private func setFSCalendar(){
@@ -187,11 +158,10 @@ final class HomeViewController: BaseViewController {
         fsCalendar.appearance.titleDefaultColor = Constant.BaseColor.textColor
         
         fsCalendar.appearance.todayColor = Constant.BaseColor.buttonColor
-
-        fsCalendar.appearance.todaySelectionColor = .none
-       
-        fsCalendar.appearance.selectionColor = Constant.BaseColor.buttonColor
         
+        fsCalendar.appearance.todaySelectionColor = .none
+        
+        fsCalendar.appearance.selectionColor = Constant.BaseColor.buttonColor
     }
     
     
@@ -210,23 +180,13 @@ final class HomeViewController: BaseViewController {
             button: "확인")
     }
     
-    @objc func sortButtonTapped(){
-        
-        fsCalendar.setCurrentPage(Date(), animated: true)
-        fsCalendar.select(Date(), scrollToDate: true)
-        //fsCalendar(fsCalendar, didSelect: fsCalendar.today ?? Date() , at: .current)
-        //tasks = repository.fetchRealm()
-        viewModel.fetch()
-        
-    }
-    
 }
 
 // MARK: TableView Delegate, Datasource
 extension HomeViewController: UITableViewDelegate, UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return viewModel.tasks.value.count
+        return viewModel.jacsim.value.count
     }
     
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
@@ -241,8 +201,8 @@ extension HomeViewController: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         guard let cell = tableView.dequeueReusableCell(withIdentifier: JacsimTableViewCell.reuseIdentifier, for: indexPath) as? JacsimTableViewCell else { return UITableViewCell() }
         
-        cell.setCellStyle(title: viewModel.tasks.value[indexPath.row].title,
-                          alarm: viewModel.tasks.value[indexPath.row].alarm)
+        cell.setCellStyle(title: viewModel.jacsim.value[indexPath.row].title,
+                          alarm: viewModel.jacsim.value[indexPath.row].alarm)
         
         return cell
     }
@@ -250,10 +210,8 @@ extension HomeViewController: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         
         let vc = TaskDetailViewController()
-        //객체지향적으로 bad
-        // 캡슐화()
-        vc.viewModel.task.value = viewModel.tasks.value[indexPath.row]
-        vc.title = viewModel.tasks.value[indexPath.item].title
+        vc.viewModel.task.value = viewModel.jacsim.value[indexPath.row]
+        vc.title = viewModel.jacsim.value[indexPath.item].title
         
         self.transitionViewController(viewController: vc, transitionStyle: .push)
     }
@@ -320,5 +278,36 @@ extension HomeViewController: FloatyDelegate {
         } else {
             floaty.items[0].isHidden = false
         }
+    }
+}
+
+extension HomeViewController {
+    private func setView() {
+        self.view.addSubviews([fsCalendar, tableView, infoButton, sortButton, floaty])
+        
+        // 달력 높이 비율로 잡기
+        fsCalendar.snp.makeConstraints { make in
+            make.top.equalTo(view.safeAreaLayoutGuide).offset(8)
+            make.horizontalEdges.equalToSuperview().inset(16)
+            make.height.equalTo(UIScreen.main.bounds.height / 2.5)
+        }
+        
+        tableView.snp.makeConstraints { make in
+            make.top.equalTo(fsCalendar.snp.bottom)
+            make.horizontalEdges.equalToSuperview()
+            make.bottom.equalTo(view.safeAreaLayoutGuide)
+        }
+        
+        infoButton.snp.makeConstraints { make in
+            make.top.equalTo(tableView.snp.top).offset(8)
+            make.trailing.equalTo(tableView.snp.trailing)
+        }
+        
+        sortButton.snp.makeConstraints { make in
+            make.top.equalTo(infoButton.snp.top)
+            make.trailing.equalTo(infoButton.snp.leading).offset(-8)
+            make.centerY.equalTo(infoButton)
+        }
+        
     }
 }

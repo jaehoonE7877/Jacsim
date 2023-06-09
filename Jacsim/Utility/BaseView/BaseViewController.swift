@@ -8,6 +8,8 @@
 import UIKit
 import UserNotifications
 
+import RxCocoa
+import RxSwift
 import RealmSwift
 import SnapKit
 import Toast
@@ -18,6 +20,17 @@ class BaseViewController: UIViewController {
     let calendar = Calendar.current
     let notificationCenter = UNUserNotificationCenter.current()
     
+    let disposeBag = DisposeBag()
+
+    override init(nibName nibNameOrNil: String?, bundle nibBundleOrNil: Bundle?) {
+        super.init(nibName: nil, bundle: nil)
+        self.view.backgroundColor = .white
+    }
+    
+    @available(*, unavailable)
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
     override func viewDidLoad() {
         super.viewDidLoad()
         

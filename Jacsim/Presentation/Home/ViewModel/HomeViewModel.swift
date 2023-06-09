@@ -7,40 +7,57 @@
 
 import Foundation
 
+import RxCocoa
+import RxSwift
+
 final class HomeViewModel {
+    struct Input {
+        let viewWillAppear: Observable<Void>
+        let sortButtonTap: Observable<Void>
+    }
     
-    private let repository = JacsimRepository()
+    struct Output {
+        let fetchSuccess: Driver<Void>
+        
+    }
+    //MARK: - Dependency
+    private let repository: JacsimRepository
     
-    var tasks: Observable<[UserJacsim]> = Observable([UserJacsim]())
+    private(set) var jacsim: BehaviorRelay<[UserJacsim]> = .init(value: [])
+    private let disposeBag = DisposeBag()
+    //MARK: -- Initializer
+    init(repository: JacsimRepository = JacsimRepository.shared) {
+        self.repository = repository
+    }
+    
+    func transform(input: Input) -> Output {
+        input.viewWillAppear
+            .subscribe(onNext: { [weak self] _ in
+                self?.checkIsDone()
+                self?.fetch()
+            })
+            .disposed(by: disposeBag)
+        
+        let fetchSuccess = Observable.merge(jacsim.mapToVoid(), input.sortButtonTap)
+        
+        return Output(fetchSuccess: fetchSuccess.asDriver(onErrorDriveWith: .never()))
+    }
 }
 
 extension HomeViewModel {
     
-    func fetch() {
-        
-        let task = repository.fetchRealm()
-        
-        tasks.value.removeAll()
-        
-        task?.forEach{ item in
-            tasks.value.append(item)
-        }
+    private func fetch() {
+        let task = Array(repository.fetchRealm())
+        jacsim.accept(task)
     }
     
     func fetchDate(date: Date) {
-        
-        let task = repository.fetchDate(date: date)
-        
-        tasks.value.removeAll()
-        
-        task?.forEach{ item in
-            tasks.value.append(item)
-        }
-        
+        let task = Array(repository.fetchDate(date: date))
+        jacsim.accept(task)
     }
     
     func checkIsDone() {
-        repository.checkIsDone(items: tasks.value)
+        repository.checkIsDone(items: jacsim.value)
     }
     
     func fetchIsNotDone() -> Int {

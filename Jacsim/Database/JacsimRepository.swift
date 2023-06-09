@@ -15,8 +15,8 @@ import RealmSwift
  */
 
 protocol JacsimRepositoryProtocol: AnyObject {
-    func fetchRealm() -> Results<UserJacsim>!
-    func fetchDate(date: Date) -> Results<UserJacsim>!
+    func fetchRealm() -> Results<UserJacsim>
+    func fetchDate(date: Date) -> Results<UserJacsim>
     func addJacsim(item: UserJacsim)
     func updateMemo(item: UserJacsim, index: Int, memo: String)
     func removeImageFromDocument(fileName: String)
@@ -27,27 +27,40 @@ protocol JacsimRepositoryProtocol: AnyObject {
 
 final class JacsimRepository: JacsimRepositoryProtocol {
     
+    static let shared = JacsimRepository()
+    private init() { }
+    
     let notificationCenter = UNUserNotificationCenter.current()
     
-    private let localRealm = try! Realm()
+    private var localRealm: Realm {
+        get {
+            do {
+                let realm = try Realm()
+                return realm
+            } catch {
+                print("\(error.localizedDescription)")
+                return try! Realm()
+            }
+        }
+    }
     
-    func fetchId(id: ObjectId) -> Results<UserJacsim>! {
+    func fetchId(id: ObjectId) -> Results<UserJacsim> {
         return localRealm.objects(UserJacsim.self).where { $0.id == id }
     }
     
-    func fetchRealm() -> Results<UserJacsim>! {
+    func fetchRealm() -> Results<UserJacsim> {
         return localRealm.objects(UserJacsim.self).where { $0.isDone == false }.sorted(byKeyPath: "startDate", ascending: true)
     }
     // 이후엔 안 쓸 것
-    func fetchIsDone() -> Results<UserJacsim>! {
+    func fetchIsDone() -> Results<UserJacsim> {
         return localRealm.objects(UserJacsim.self).where { $0.isDone == true }.sorted(byKeyPath: "startDate", ascending: true)
     }
     
-    func fetchIsSuccess() -> Results<UserJacsim>! {
+    func fetchIsSuccess() -> Results<UserJacsim> {
         return localRealm.objects(UserJacsim.self).where { $0.isDone == true }.where { $0.isSuccess == true }.sorted(byKeyPath: "startDate", ascending: true)
     }
     
-    func fetchIsFail() -> Results<UserJacsim>! {
+    func fetchIsFail() -> Results<UserJacsim> {
         return localRealm.objects(UserJacsim.self).where { $0.isDone == true }.where { $0.isSuccess == false }.sorted(byKeyPath: "startDate", ascending: true)
     }
     
@@ -56,7 +69,7 @@ final class JacsimRepository: JacsimRepositoryProtocol {
     }
     
     // Home View에서 TableView에 보여주는 task
-    func fetchDate(date: Date) -> Results<UserJacsim>! {
+    func fetchDate(date: Date) -> Results<UserJacsim> {
         //NSPredicate
         return localRealm.objects(UserJacsim.self).where{ $0.isDone == false }.filter("endDate >= %@ AND startDate < %@", date, Date(timeInterval: 86400, since: date)).sorted(byKeyPath: "startDate", ascending: true)
     }

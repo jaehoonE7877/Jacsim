@@ -29,26 +29,16 @@ final class JacsimTableViewCell: BaseTableViewCell {
     
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
+        setView()
     }
 
     required init?(coder: NSCoder) {
         fatalError()
     }
     
-    override func configure() {
-        contentView.backgroundColor = Constant.BaseColor.backgroundColor
-        contentView.addSubview(jacsimContentView)
-        [titleLabel, alarmImageView].forEach { jacsimContentView.addSubview($0) }
-        
-    }
-    
     override func setConstraints() {
         
-        jacsimContentView.snp.makeConstraints { make in
-            make.center.equalToSuperview()
-            make.width.equalTo(contentView)
-            make.height.equalTo(contentView).multipliedBy(0.72)
-        }
+        
         
         titleLabel.snp.makeConstraints { make in
             make.leading.equalTo(jacsimContentView.snp.leading).offset(12)
@@ -72,4 +62,27 @@ final class JacsimTableViewCell: BaseTableViewCell {
         }
     }
     
+}
+
+extension JacsimTableViewCell {
+    private func setView() {
+        contentView.backgroundColor = Constant.BaseColor.backgroundColor
+        contentView.addSubview(jacsimContentView)
+        jacsimContentView.addSubviews([titleLabel, alarmImageView])
+        
+        jacsimContentView.snp.makeConstraints { make in
+            make.verticalEdges.equalToSuperview().inset(8)
+            make.horizontalEdges.equalToSuperview().inset(16)
+        }
+        
+        titleLabel.snp.makeConstraints { make in
+            make.leading.equalToSuperview().offset(12)
+            make.centerY.equalToSuperview()
+        }
+        
+        alarmImageView.snp.makeConstraints { make in
+            make.trailing.equalToSuperview().inset(12)
+            make.centerY.equalToSuperview()
+        }
+    }
 }
