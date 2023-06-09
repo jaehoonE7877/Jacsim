@@ -209,9 +209,8 @@ extension HomeViewController: UITableViewDelegate, UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         
-        let vc = TaskDetailViewController()
-        vc.viewModel.task.value = viewModel.jacsim.value[indexPath.row]
-        vc.title = viewModel.jacsim.value[indexPath.item].title
+        let viewModel = TaskDetailViewModel(jacsimTask: viewModel.jacsim.value[indexPath.row])
+        let vc = TaskDetailViewController(viewModel: viewModel)
         
         self.transitionViewController(viewController: vc, transitionStyle: .push)
     }

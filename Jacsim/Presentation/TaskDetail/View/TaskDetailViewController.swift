@@ -16,6 +16,7 @@ final class TaskDetailViewController: BaseViewController {
     
     init(viewModel: TaskDetailViewModel) {
         self.viewModel = viewModel
+        self.title = viewModel.jacsimTask.title
         super.init(nibName: nil, bundle: nil)
     }
     
