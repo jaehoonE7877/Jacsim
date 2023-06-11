@@ -12,15 +12,69 @@ import RxSwift
 
 final class TaskDetailViewModel {
     
-    private(set) var jacsimTask: UserJacsim
+    struct Input {
+        let viewWillAppear: Observable<Void>
+    }
+    
+    struct Output {
+        let fetchSuccess: Driver<UserJacsim>
+        let jacsimSuccess: Driver<String>
+        let jacsimDelete: Driver<Void>
+        let jacsimAlarm: Driver<Void>
+    }
+    //MARK: -- Private Property
+    private(set) var jacsimTask: BehaviorRelay<UserJacsim>
+    private let jacsimSuccessRelay: PublishRelay<String> = .init()
+    private let jacsimAlarm: PublishRelay<String> = .init()
+    private let disposeBag: DisposeBag = .init()
     //MARK: - Dependecy
     private let documentManager: DocumentManager
     private let repository: JacsimRepository
     
     init(jacsimTask: UserJacsim, repository: JacsimRepository = JacsimRepository.shared, doucumentManager: DocumentManager = DocumentManager.shared) {
-        self.jacsimTask = jacsimTask
+        self.jacsimTask.accept(jacsimTask)
         self.repository = repository
         self.documentManager = doucumentManager
+    }
+    
+    //MARK: -- Action
+    var jacsimDeleteRelay: PublishRelay<Void> = .init()
+    var alarmDeleteRelay: PublishRelay<Void> = .init()
+    
+    func transform(input: Input) -> Output {
+        let fetchSuccessRelay: PublishRelay<UserJacsim> = .init()
+        
+        input.viewWillAppear
+            .subscribe(onNext: { [weak self] _ in
+                guard let self else { return }
+                self.jacsimCertified()
+                self.repository.checkIsSuccess(item: self.jacsimTask.value)
+            })
+            .disposed(by: disposeBag)
+        
+        jacsimTask
+            .subscribe(onNext: { value in
+                fetchSuccessRelay.accept(value)
+            })
+            .disposed(by: disposeBag)
+        
+        let jacsimDeleteDriver = jacsimDeleteRelay
+            .flatMap { [weak self] _ -> Single<Void> in
+                guard let self else { return Single.never() }
+                return self.deleteJacsim()
+            }
+            .asDriver(onErrorDriveWith: .never())
+        
+        alarmDeleteRelay
+            .subscribe(onNext: { [weak self] _ in
+                self?.deleteAlarm()
+            })
+            .disposed(by: disposeBag)
+            
+        return Output(fetchSuccess: fetchSuccessRelay.asDriverOnErrorJustComplete(),
+                      jacsimSuccess: jacsimSuccessRelay.asDriver(onErrorDriveWith: .never()),
+                      jacsimDelete: jacsimDeleteDriver,
+                      jacsimAlarm: jacsimAlarm.asDr)
     }
     
     // collectionView cell개수
@@ -28,7 +82,7 @@ final class TaskDetailViewModel {
         
         var dayArray: [Date] = []
         
-        for date in stride(from: jacsimTask.startDate, to: (jacsimTask.endDate) + 86400, by: 86400 ){
+        for date in stride(from: jacsimTask.value.startDate, to: (jacsimTask.value.endDate) + 86400, by: 86400 ){
             dayArray.append(date)
         }
         
@@ -40,15 +94,15 @@ final class TaskDetailViewModel {
 extension TaskDetailViewModel {
     
     var showStartDate: String {
-        return DateFormatType.toString(jacsimTask.startDate, to: .full)
+        return DateFormatType.toString(jacsimTask.value.startDate, to: .full)
     }
     
     var showEndDate: String {
-        return DateFormatType.toString(jacsimTask.endDate, to: .full)
+        return DateFormatType.toString(jacsimTask.value.endDate, to: .full)
     }
     
     var showAlarm: String {
-        if let alarm = jacsimTask.alarm {
+        if let alarm = jacsimTask.value.alarm {
             return DateFormatType.toString(alarm, to: .time)
         } else {
              return "설정된 알람이 없습니다."
@@ -59,12 +113,12 @@ extension TaskDetailViewModel {
         return documentManager.loadImageFromDocument(fileName: "\(String(describing: jacsimTask.id)).jpg") ?? UIImage.jacsimImage
     }
     
-    var showCertified: String {
-        
-        if jacsimTask.success - repository.checkCertified(item: jacsimTask) > 0 {
-            return "작심 성공까지 \(jacsimTask.success - repository.checkCertified(item: jacsimTask))회 남았습니다!"
+    private func jacsimCertified() {
+        if jacsimTask.value.success - repository.checkCertified(item: jacsimTask.value) > 0 {
+            let message = "작심 성공까지 \(jacsimTask.value.success - repository.checkCertified(item: jacsimTask.value))회 남았습니다!"
+            self.jacsimSuccessRelay.accept(message)
         } else {
-            return "목표를 달성했습니다! 끝까지 힘내세요!!"
+            self.jacsimSuccessRelay.accept("목표를 달성했습니다! 끝까지 힘내세요!!")
         }
     }
     
@@ -99,31 +153,40 @@ extension TaskDetailViewModel {
         return documentManager.loadImageFromDocument(fileName: "\(jacsimTask.id)_\(dateText).jpg") ?? UIImage.jacsimImage
     }
     
-    func checkIsSuccess() {
-        repository.checkIsSuccess(item: jacsimTask)
+    private func checkIsSuccess() {
+        repository.checkIsSuccess(item: jacsimTask.value)
     }
     
-    func deleteAlarm() {
-        repository.deleteAlarm(item: jacsimTask)
-    }
-    
-    func deleteJacsim() {
-        
-        if self.repository.checkCertified(item: jacsimTask) == 0 {
-            
-            self.repository.deleteJacsim(item: jacsimTask)
-            
+    private func deleteAlarm() {
+        repository.deleteAlarm(item: jacsimTask.value)
+        if let alarm = jacsimTask.value.alarm {
+            let alarmText = DateFormatType.toString(alarm, to: .time)
+            self.jacsimAlarm.accept(alarmText)
         } else {
-            // 인증이 있을 때
-            let dayArray = configCellTitle()
-            
-            for index in 0...self.repository.checkCertified(item: jacsimTask) - 1 {
+            self.jacsimAlarm.accept("설정된 알람이 없습니다.")
+        }
+    }
+    
+    private func deleteJacsim() -> Single<Void> {
         
-                let dateText = DateFormatType.toString(dayArray[index], to: .fullWithoutYear)
-                self.repository.removeImageFromDocument(fileName: "\(jacsimTask.id)_\(dateText).jpg")
+        return Single.create { [weak self] single in
+            guard let self else { return }
+            if self.repository.checkCertified(item: jacsimTask.value) == 0 {
+                self.repository.deleteJacsim(item: jacsimTask.value)
+                single(.success(Void()))
+                return Disposables.create()
+            } else {
+                // 인증이 있을 때
+                let dayArray = configCellTitle()
+                
+                for index in 0...self.repository.checkCertified(item: jacsimTask.value) - 1 {
+                    let dateText = DateFormatType.toString(dayArray[index], to: .fullWithoutYear)
+                    self.repository.removeImageFromDocument(fileName: "\(jacsimTask.value.id)_\(dateText).jpg")
+                }
+                self.repository.deleteJacsim(item: jacsimTask.value)
+                single(.success(Void()))
+                return Disposables.create()
             }
-            
-            self.repository.deleteJacsim(item: jacsimTask)
         }
     }
 }

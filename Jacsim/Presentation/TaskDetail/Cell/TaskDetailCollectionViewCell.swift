@@ -7,12 +7,9 @@
 
 import UIKit
 
-class TaskDetailCollectionViewCell: BaseCollectionViewCell {
+final class TaskDetailCollectionViewCell: BaseCollectionViewCell {
     
-    
-    //MARK: UIImage, UILabel
-
-    let certifiedImageView = UIImageView().then {
+   private let certifiedImageView = UIImageView().then {
         $0.backgroundColor = Constant.BaseColor.placeholderColor
         $0.layer.cornerRadius = Constant.Design.cornerRadius
         $0.layer.masksToBounds = true
@@ -20,16 +17,16 @@ class TaskDetailCollectionViewCell: BaseCollectionViewCell {
 
     }
     
-    let lineView = UIView().then {
+    private let lineView = UIView().then {
         $0.backgroundColor = Constant.BaseColor.textColor
     }
     
-    let dateLabel = UILabel().then {
+    private let dateLabel = UILabel().then {
         $0.font = UIFont.gothic(style: .Medium, size: 12)
         $0.textColor = Constant.BaseColor.textColor
     }
     
-    let certifiedMemo = UILabel().then {
+    private let certifiedMemo = UILabel().then {
         $0.font = UIFont.gothic(style: .Light, size: 12)
         $0.textColor = Constant.BaseColor.textColor
         $0.numberOfLines = 2
@@ -78,7 +75,9 @@ class TaskDetailCollectionViewCell: BaseCollectionViewCell {
         }
     }
     
-    func setData() {
-        
+    func setData(jacsim: UserJacsim, image: UIImage, indexPath: Int) {
+        dateLabel.text = DateFormatType.toString(jacsim.jacsimDayArray[indexPath], to: .fullWithoutYear)
+        certifiedMemo.text = jacsim.memoList[indexPath].memo
+        certifiedImageView.image = image
     }
 }

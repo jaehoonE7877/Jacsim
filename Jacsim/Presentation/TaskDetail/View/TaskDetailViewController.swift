@@ -9,14 +9,13 @@ import UIKit
 
 final class TaskDetailViewController: BaseViewController {
     
-    //MARK: Property
+    //MARK: -- Private Property
     private let viewModel: TaskDetailViewModel
-    
     private let mainView = TaskDetailView()
     
     init(viewModel: TaskDetailViewModel) {
         self.viewModel = viewModel
-        self.title = viewModel.jacsimTask.title
+        self.title = viewModel.jacsimTask.value.title
         super.init(nibName: nil, bundle: nil)
     }
     
@@ -32,38 +31,18 @@ final class TaskDetailViewController: BaseViewController {
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
+                
+    }
 
-        viewModel.task.bind { task in
-            DispatchQueue.main.async { [weak self] in
-                guard let self else { return }
-                self.mainView.collectionView.reloadData()
-                self.mainView.collectionView.scrollToItem(at: IndexPath(item: self.viewModel.scrollToCurrentDate, section: 0), at: .centeredHorizontally, animated: false)
-            }
-        }
-        
-        viewModel.checkIsSuccess()
-        
-        mainView.successLabel.text = viewModel.showCertified
-        
-    }
-    // MARK: Delegate
-    private func configureDelegate() {
-        mainView.collectionView.delegate = self
-        mainView.collectionView.dataSource = self
-        mainView.collectionView.register(TaskDetailCollectionViewCell.self, forCellWithReuseIdentifier: TaskDetailCollectionViewCell.reuseIdentifier)
-        mainView.collectionView.showsHorizontalScrollIndicator = false
-    }
     // MARK: Configure
     override func configure() {
-        
         view.backgroundColor = Constant.BaseColor.backgroundColor
-        
-        mainView.startDateLabel.text = viewModel.showStartDate
-        mainView.endDateLabel.text = viewModel.showEndDate
+        mainView.startDateLabel.text = viewModel.jacsimTask.value.startDateStringFull
+        mainView.endDateLabel.text = viewModel.jacsimTask.value.endDateStringFull
         
         mainView.alarmLabel.text = viewModel.showAlarm
 
-        mainView.mainImage.image = viewModel.loadMainImage
+        mainView.mainImage.image = viewModel.documentManager.loadImageFromDocument(fileName: <#T##String#>)
         
     }
     
@@ -81,8 +60,7 @@ final class TaskDetailViewController: BaseViewController {
             guard let self = self else { return }
             
             self.showAlertMessage(title: "알람을 끄시겠습니까?", message: nil, button: "확인", cancel: "취소") { _ in
-                
-                self.viewModel.deleteAlarm()
+                self.viewModel.jacsimAlarmDeleteRelay.accept(Void())
                 self.mainView.alarmLabel.text = self.viewModel.showAlarm
             }
             
@@ -91,19 +69,49 @@ final class TaskDetailViewController: BaseViewController {
         let quit = UIAction(title: "작심 그만두기", image: UIImage.trash , attributes: .destructive) { [weak self] _ in
             guard let self = self else { return }
             self.showAlertMessage(title: "해당 작심을 그만두실 건가요?", message: "기존에 저장한 데이터들은 사라집니다.", button: "확인", cancel: "취소") { _ in
-                
-                self.viewModel.deleteJacsim()
-                self.navigationController?.popViewController(animated: true)
+                self.viewModel.jacsimDeleteRelay.accept(Void())
             }
         }
         
-        let items = viewModel.task.value.alarm != nil ? [deleteAlarm, quit] : [quit]
+        let items = viewModel.jacsimTask.value.alarm != nil ? [deleteAlarm, quit] : [quit]
         
         let menu = UIMenu(title: "", options: .displayInline, children: items)
         
         return menu
     }
 
+    private func bind() {
+        
+        let input = TaskDetailViewModel.Input(viewWillAppear: self.rx.viewWillAppear)
+        let output = self.viewModel.transform(input: input)
+        
+        output.fetchSuccess
+            .drive(onNext: { [weak self] jacsim in
+                guard let self else { return }
+                DispatchQueue.main.async {
+                    self.mainView.collectionView.reloadData()
+                    self.mainView.collectionView.scrollToItem(at: IndexPath(item: self.viewModel.scrollToCurrentDate, section: 0), at: .centeredHorizontally, animated: false)
+                }
+            })
+            .disposed(by: disposeBag)
+        
+        output.jacsimSuccess
+            .drive(onNext: { [weak self] message in
+                self?.mainView.successLabel.text = message
+            })
+            .disposed(by: disposeBag)
+        
+        output.jacsimDelete
+            .drive(onNext: { [weak self] _ in
+                self?.navigationController?.popViewController(animated: true)
+            })
+            .disposed(by: disposeBag)
+        
+        output.jacsimAlarmDelete
+            .drive(onNext: {
+                
+            })
+    }
 
 }
 //MARK: CollectionView Delegate, Datasource
@@ -111,34 +119,32 @@ extension TaskDetailViewController: UICollectionViewDelegate, UICollectionViewDa
     
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         return (Calendar.current.dateComponents([.day],
-                                                from: viewModel.task.value.startDate,
-                                                to: viewModel.task.value.endDate).day ?? 1) + 1
+                                                from: viewModel.jacsimTask.value.startDate,
+                                                to: viewModel.jacsimTask.value.endDate).day ?? 1) + 1
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        
-        viewModel.cellForItemAt(collectionView, indexPath: indexPath)
-        
-//        guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: TaskDetailCollectionViewCell.reuseIdentifier, for: indexPath) as? TaskDetailCollectionViewCell
-//        else { return UICollectionViewCell() }
-//
-//
-//        let dateText = DateFormatType.toString(dayArray[indexPath.item], to: .fullWithoutYear)
-//        guard let objectId = task?.id else { return UICollectionViewCell() }
-//        cell.dateLabel.text = dateText
-//        cell.certifiedMemo.text = task?.memoList[indexPath.row].memo
-//
-//        guard let image = loadImageFromDocument(fileName: "\(objectId)_\(dateText).jpg") else { return UICollectionViewCell()}
-//        cell.certifiedImageView.image = image
-//
-//        return cell
+                
+        guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: TaskDetailCollectionViewCell.reuseIdentifier, for: indexPath) as? TaskDetailCollectionViewCell
+        else { return UICollectionViewCell() }
+
+
+        let dateText = DateFormatType.toString(dayArray[indexPath.item], to: .fullWithoutYear)
+        guard let objectId = task?.id else { return UICollectionViewCell() }
+        cell.dateLabel.text = dateText
+        cell.certifiedMemo.text = task?.memoList[indexPath.row].memo
+
+        guard let image = loadImageFromDocument(fileName: "\(objectId)_\(dateText).jpg") else { return UICollectionViewCell()}
+        cell.certifiedImageView.image = image
+
+        return cell
     }
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
 
         guard let cell = collectionView.cellForItem(at: indexPath) as? TaskDetailCollectionViewCell else { return }
 
-        let task = viewModel.task.value
+        let task = viewModel.jacsimTask.value
         
         let vc = TaskUpdateViewController()
 
@@ -147,7 +153,7 @@ extension TaskDetailViewController: UICollectionViewDelegate, UICollectionViewDa
             return
         }
         
-        if !task.memoList[indexPath.item].check {
+        if task.memoList[indexPath.item].check == false {
             vc.dateText = cell.dateLabel.text
             vc.task = task
             vc.index = indexPath.item
@@ -164,4 +170,14 @@ extension TaskDetailViewController: UICollectionViewDelegate, UICollectionViewDa
     }
     
     
+}
+
+extension TaskDetailViewController {
+    // MARK: Delegate
+    private func configureDelegate() {
+        mainView.collectionView.delegate = self
+        mainView.collectionView.dataSource = self
+        mainView.collectionView.register(TaskDetailCollectionViewCell.self, forCellWithReuseIdentifier: TaskDetailCollectionViewCell.reuseIdentifier)
+        mainView.collectionView.showsHorizontalScrollIndicator = false
+    }
 }

@@ -10,7 +10,7 @@ import UIKit
 import Kingfisher
 
 extension UIImageView {
-    func setImage(with urlString: String,_ placeHolder: String) {
+    func setImage(with urlString: String) {
         //새로운 이미지가 도착전 이전 이미지가 보이는 경우가 있어 이미지를 삭제
         self.image = nil
         let imageBackgroundColor = self.backgroundColor
@@ -25,7 +25,7 @@ extension UIImageView {
                     if urlString.isEmpty { return }
                     let encodedStr = urlString.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed)!
                     guard let url = URL(string: encodedStr) else { return }
-                    let uiImage = UIImage(named: placeHolder)
+                    let uiImage = UIImage.jacsimImage
                     let resource = ImageResource(downloadURL: url, cacheKey: urlString) // URL로부터 이미지를 다운받고 String 타입의 URL을 캐시키로 지정하고
                     self.kf.setImage(with: resource, placeholder: uiImage, options: nil, progressBlock: nil) { _ in
                     }
