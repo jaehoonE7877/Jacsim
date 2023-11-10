@@ -20,7 +20,7 @@ final class TaskDetailViewModel {
         let fetchSuccess: Driver<UserJacsim>
         let jacsimSuccess: Driver<String>
         let jacsimDelete: Driver<Void>
-        let jacsimAlarm: Driver<Void>
+        let jacsimAlarm: Driver<String>
     }
     //MARK: -- Private Property
     private(set) var jacsimTask: BehaviorRelay<UserJacsim>
@@ -74,7 +74,7 @@ final class TaskDetailViewModel {
         return Output(fetchSuccess: fetchSuccessRelay.asDriverOnErrorJustComplete(),
                       jacsimSuccess: jacsimSuccessRelay.asDriver(onErrorDriveWith: .never()),
                       jacsimDelete: jacsimDeleteDriver,
-                      jacsimAlarm: jacsimAlarm.asDr)
+                      jacsimAlarm: jacsimAlarm.asDriver(onErrorDriveWith: .never()))
     }
     
     // collectionView cell개수

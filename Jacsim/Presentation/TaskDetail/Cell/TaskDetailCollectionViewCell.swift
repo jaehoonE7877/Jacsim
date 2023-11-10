@@ -8,13 +8,12 @@
 import UIKit
 
 final class TaskDetailCollectionViewCell: BaseCollectionViewCell {
-    
+    //MARK: - Private Property
    private let certifiedImageView = UIImageView().then {
         $0.backgroundColor = Constant.BaseColor.placeholderColor
         $0.layer.cornerRadius = Constant.Design.cornerRadius
         $0.layer.masksToBounds = true
         $0.contentMode = .scaleAspectFill
-
     }
     
     private let lineView = UIView().then {
@@ -31,7 +30,7 @@ final class TaskDetailCollectionViewCell: BaseCollectionViewCell {
         $0.textColor = Constant.BaseColor.textColor
         $0.numberOfLines = 2
     }
-    
+    //MARK: - Initializer
     override init(frame: CGRect) {
         super.init(frame: frame)
         self.layer.borderWidth = Constant.Design.borderWidth
@@ -42,7 +41,7 @@ final class TaskDetailCollectionViewCell: BaseCollectionViewCell {
     required init?(coder: NSCoder) {
         fatalError()
     }
-    
+    //MARK: - Override Method
     override func configure() {
         [certifiedImageView, lineView, dateLabel, certifiedMemo].forEach { contentView.addSubview($0) }
     }
@@ -74,7 +73,7 @@ final class TaskDetailCollectionViewCell: BaseCollectionViewCell {
             make.width.equalTo(certifiedImageView)
         }
     }
-    
+    //MARK: - Public Method
     func setData(jacsim: UserJacsim, image: UIImage, indexPath: Int) {
         dateLabel.text = DateFormatType.toString(jacsim.jacsimDayArray[indexPath], to: .fullWithoutYear)
         certifiedMemo.text = jacsim.memoList[indexPath].memo
