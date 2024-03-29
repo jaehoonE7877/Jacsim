@@ -31,4 +31,12 @@ public extension ProjectDescription.Path {
     static var core: Self {
         return .relativeToRoot("Projects/Core")
     }
+    
+    static var dsKit: Self {
+        return .relativeToRoot("Projects/DSKit")
+    }
+    
+    static var externalInterface: Self {
+        return .relativeToRoot("Projects/ExternalInterface")
+    }
 }

@@ -7,16 +7,16 @@
 
 import ProjectDescription
 
-public enum Enviroment {
+public enum Environment {
     public static let workspaceName = "Jacsim"
 }
 
 public extension Project {
-    enum Enviroment {
-        public static let workspaceName = "Jacsim"
-        public static let deplymentTarget = DeploymentTarget.iOS(targetVersion: "15.0",
-                                                                 devices: [.iphone])
-        public static let platform = Platform.iOS
+    enum Environment {
+        public static let workspaceName: String = "Jacsim"
+        public static let deploymentTarget = DeploymentTargets.iOS("15.0")
+        public static let platform = Destinations.iOS
         public static let bundlePrefix = "com.jaehoon.jaksim"
+        public static let appVersion: String = "1.5.0"
     }
 }
