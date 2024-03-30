@@ -26,7 +26,7 @@ public extension Project {
         let configurationName: ConfigurationName = "Debug"
         let hasDynamicFramework = targets.contains(.dynamicFramework)
         let deploymentTarget = Environment.deploymentTarget
-        let platform = Environment.platform
+        let destination: Set<Destination> = [.iPhone]
         
         let baseSettings: SettingsDictionary = .baseSettings
         
@@ -48,7 +48,7 @@ public extension Project {
             
             let target = Target.target(
                 name: name,
-                destinations: platform,
+                destinations: destination,
                 product: .app,
                 bundleId: "\(Environment.bundlePrefix)",
                 deploymentTargets: deploymentTarget,
@@ -79,7 +79,7 @@ public extension Project {
             
             let target = Target.target(
                 name: "\(name)Interface",
-                destinations: platform,
+                destinations: destination,
                 product: .framework,
                 bundleId: "\(Environment.bundlePrefix).\(name)Interface",
                 deploymentTargets: deploymentTarget,
@@ -104,7 +104,7 @@ public extension Project {
             
             let target = Target.target(
                 name: name,
-                destinations: platform,
+                destinations: destination,
                 product: hasDynamicFramework ? .framework : .staticFramework,
                 bundleId: "\(Environment.bundlePrefix).\(name)",
                 deploymentTargets: deploymentTarget,
@@ -125,7 +125,7 @@ public extension Project {
             
             let target = Target.target(
                 name: "\(name)Demo",
-                destinations: platform,
+                destinations: .iOS,
                 product: .app,
                 bundleId: "\(Environment.bundlePrefix).\(name)Demo",
                 deploymentTargets: deploymentTarget,
