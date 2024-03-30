@@ -1,12 +1,12 @@
 import ProjectDescription
 import ProjectDescriptionHelpers
 import DependencyPlugin
-import EnvironmentPlugin
 
 let project = Project.makeModule(
-    name: Environment.workspaceName,
-    targets: [.app],
+    name: "DSKit",
+    targets: [.staticFramework],
     internalDependencies: [
-        .Modules.dsKit
-    ]
+        .Modules.core
+    ],
+    hasResources: true
 )

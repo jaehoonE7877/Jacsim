@@ -29,11 +29,11 @@ public extension ProjectDescription.Path {
     }
     
     static var core: Self {
-        return .relativeToRoot("Projects/Core")
+        return .relativeToRoot("Projects/Modules/Core")
     }
     
     static var dsKit: Self {
-        return .relativeToRoot("Projects/DSKit")
+        return .relativeToRoot("Projects/Modules/DSKit")
     }
     
     static var externalInterface: Self {

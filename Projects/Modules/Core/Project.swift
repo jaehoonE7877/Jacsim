@@ -1,12 +1,11 @@
 import ProjectDescription
 import ProjectDescriptionHelpers
 import DependencyPlugin
-import EnvironmentPlugin
 
 let project = Project.makeModule(
-    name: Environment.workspaceName,
-    targets: [.app],
+    name: "Core",
+    targets: [.unitTest, .dynamicFramework],
     internalDependencies: [
-        .Modules.dsKit
+        .Modules.thirdPartyLibs
     ]
 )

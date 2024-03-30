@@ -28,7 +28,6 @@ public extension TargetDependency.SPM {
     static let Floaty = TargetDependency.external(name: "Floaty", condition: .none)
     static let Then = TargetDependency.external(name: "Then", condition: .none)
     //MARK: - DB
-    static let Realm = TargetDependency.external(name: "Realm", condition: .none)
     static let RealmSwift = TargetDependency.external(name: "RealmSwift", condition: .none)
     //MARK: - ReactiveX
     static let RxSwift = TargetDependency.external(name: "RxSwift", condition: .none)

@@ -20,10 +20,6 @@ public extension Dep {
     static let data = Dep.project(target: "Data", path: .data)
     
     static let domain = Dep.project(target: "Domain", path: .domain)
-    
-    static let core = Dep.project(target: "Core", path: .core)
-    
-    static let dsKit = Dep.project(target: "DSKit", path: .dsKit)
 
     static let externalInterface = Dep.project(target: "ExternalInterface", path: .externalInterface)
 }
@@ -31,11 +27,11 @@ public extension Dep {
 //MARK: -- Modules
 
 public extension Dep.Modules {
-    static let dsKit = Dep.project(target: "DSKit", path: .relativeToModules("DSKit"))
+    static let dsKit = Dep.project(target: "DSKit", path: .dsKit, condition: .none)
     
-    static let thirdPartyLibs = Dep.project(target: "ThirdPartyLibs", path: .relativeToModules("ThirdPartyLibs"))
-    
-    static let externalInterface = Dep.project(target: "ExternalInterface", path: .relativeToModules("ExternalInterface"))
+    static let thirdPartyLibs = Dep.project(target: "ThirdPartyLibs", path: .relativeToModules("ThirdPartyLibs"), condition: .none)
+
+    static let core = Dep.project(target: "Core", path: .core, condition: .none)
 }
 
 // MARK: - Feature
