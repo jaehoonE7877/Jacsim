@@ -36,22 +36,6 @@ final class JacsimTableViewCell: BaseTableViewCell {
         fatalError()
     }
     
-    override func setConstraints() {
-        
-        
-        
-        titleLabel.snp.makeConstraints { make in
-            make.leading.equalTo(jacsimContentView.snp.leading).offset(12)
-            make.width.equalTo(jacsimContentView).multipliedBy(0.84)
-            make.centerY.equalTo(jacsimContentView.snp.centerY)
-        }
-        
-        alarmImageView.snp.makeConstraints { make in
-            make.trailing.equalTo(jacsimContentView.snp.trailing).offset(-12)
-            make.centerY.equalTo(titleLabel.snp.centerY)
-        }
-    }
-    
     func setCellStyle(title: String, alarm: Date?) {
         self.selectionStyle = .none
         self.titleLabel.text = title
