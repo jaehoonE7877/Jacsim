@@ -27,10 +27,10 @@ public extension Project {
             ]
         ],
         "UIAppFonts": [
-//            "Item 0": "WantedSans-Bold.ttf",
-//            "Item 1": "WantedSans-SemiBold.ttf",
-//            "Item 2": "WantedSans-Medium.ttf",
-//            "Item 3": "WantedSans-Regular.ttf",
+            "Item 0": "Pretendard-Bold.ttf",
+            "Item 1": "Pretendard-SemiBold.ttf",
+            "Item 2": "Pretendard-Medium.ttf",
+            "Item 3": "Pretendard-Regular.ttf",
         ],
         "UIBackgroundModes": ["remote-notification"]
     ]
@@ -54,10 +54,10 @@ public extension Project {
             ]
         ],
         "UIAppFonts": [
-//            "Item 0": "WantedSans-Bold.ttf",
-//            "Item 1": "WantedSans-SemiBold.ttf",
-//            "Item 2": "WantedSans-Medium.ttf",
-//            "Item 3": "WantedSans-Regular.ttf",
+            "Item 0": "Pretendard-Bold.ttf",
+            "Item 1": "Pretendard-SemiBold.ttf",
+            "Item 2": "Pretendard-Medium.ttf",
+            "Item 3": "Pretendard-Regular.ttf",
         ],
     ]
 }
