@@ -7,6 +7,8 @@
 
 import UIKit
 
+import DSKit
+
 import SnapKit
 import Then
 
@@ -17,7 +19,7 @@ final class WalkThroughViewController: BaseViewController {
         $0.currentPageIndicatorTintColor = Constant.BaseColor.buttonColor
     }
     
-    let continueButton = UIButton().then {
+    private let continueButton = UIButton().then {
         $0.backgroundColor = Constant.BaseColor.buttonColor
         $0.setTitle("계속하기", for: .normal)
         $0.setTitleColor(Constant.BaseColor.textColor, for: .normal)
@@ -30,6 +32,11 @@ final class WalkThroughViewController: BaseViewController {
     }
     
     private var pageViewControllerList: [UIViewController] = []
+    
+    init(fromSetting: Bool) {
+        self.continueButton.isHidden = fromSetting
+        super.init(nibName: nil, bundle: nil)
+    }
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -45,12 +52,12 @@ final class WalkThroughViewController: BaseViewController {
     
     //배열에 뷰컨트롤러를 추가
     private func createPageViewController(){
-        
-        let vc1 = FirstViewController()
-        let vc2 = SecondViewController()
-        let vc3 = ThirdViewController()
-        let vc4 = FourthViewController()
-        pageViewControllerList = [vc1, vc2, vc3, vc4]
+        let controllers = [DSKitAsset.Assets.onboardingImg1.image,
+                           DSKitAsset.Assets.onboardingImg2.image,
+                           DSKitAsset.Assets.onboardingImg3.image,
+                           DSKitAsset.Assets.onboardingImg4.image]
+                        .map { OnboardingVC(image: $0) }
+        pageViewControllerList = controllers
     }
     
     private func configurePageViewController() {

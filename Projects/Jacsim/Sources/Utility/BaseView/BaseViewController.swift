@@ -8,16 +8,36 @@
 import UIKit
 import UserNotifications
 
+import DSKit
+
+import RxSwift
 import SnapKit
 import Toast
 import Then
 
-class BaseViewController: UIViewController {
+open class BaseViewController: UIViewController {
     
     let calendar = Calendar.current
     let notificationCenter = UNUserNotificationCenter.current()
     
-    override func viewDidLoad() {
+    private let disposeBag = DisposeBag()
+    
+    //MARK: - initializers
+    deinit {
+//        Log("deinit - \(theClassName)")
+    }
+    
+    public override init(nibName nibNameOrNil: String?, bundle nibBundleOrNil: Bundle?) {
+        super.init(nibName: nil, bundle: nil)
+        self.view.backgroundColor = DSKitAsset.Colors.background.color
+    }
+    
+    @available(*, unavailable)
+    public required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    open override func viewDidLoad() {
         super.viewDidLoad()
         
         configure()

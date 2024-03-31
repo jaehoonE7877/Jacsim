@@ -140,8 +140,7 @@ extension SettingViewController : MFMailComposeViewControllerDelegate {
     }
     
     private func showUseCase(){
-        let vc = WalkThroughViewController()
-        vc.continueButton.isHidden = true
+        let vc = WalkThroughViewController(fromSetting: true)
         self.transitionViewController(viewController: vc, transitionStyle: .push)
     }
 }

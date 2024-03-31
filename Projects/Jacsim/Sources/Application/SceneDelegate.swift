@@ -25,7 +25,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
             window?.rootViewController = nav
 
         } else {
-            let vc1 = WalkThroughViewController()
+            let vc1 = WalkThroughViewController(fromSetting: false)
 
             window?.rootViewController = vc1
 
