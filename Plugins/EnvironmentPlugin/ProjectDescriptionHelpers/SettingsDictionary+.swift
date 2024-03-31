@@ -70,6 +70,11 @@ public extension SettingsDictionary {
         merging(["SKIP_INSTALL": SettingValue(stringLiteral: value ? "YES" : "NO")])
     }
     
+    func setCodeSignManual() -> SettingsDictionary {
+        merging(["CODE_SIGN_STYLE": SettingValue(stringLiteral: "Manual")])
+            .merging(["DEVELOPMENT_TEAM": SettingValue(stringLiteral: "RFHV927M8S")])
+    }
+    
     func setProvisioning() -> SettingsDictionary {
         merging(["PROVISIONING_PROFILE_SPECIFIER": SettingValue(stringLiteral: "$(APP_PROVISIONING_PROFILE)")])
             .merging(["PROVISIONING_PROFILE": SettingValue(stringLiteral: "$(APP_PROVISIONING_PROFILE)")])

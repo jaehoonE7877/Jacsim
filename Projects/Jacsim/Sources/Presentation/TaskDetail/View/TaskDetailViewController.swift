@@ -7,6 +7,8 @@
 
 import UIKit
 
+import DSKit
+
 final class TaskDetailViewController: BaseViewController {
     
     //MARK: Property
@@ -56,7 +58,7 @@ final class TaskDetailViewController: BaseViewController {
     // MARK: Configure
     override func configure() {
         
-        view.backgroundColor = Constant.BaseColor.backgroundColor
+        view.backgroundColor = DSKitAsset.Colors.background.color
         
         guard let task = task else { return }
         
@@ -85,7 +87,7 @@ final class TaskDetailViewController: BaseViewController {
         navigationController?.navigationBar.backItem?.backButtonTitle = ""
         navigationItem.rightBarButtonItem = UIBarButtonItem(title: nil, image: UIImage.menu, menu: reviseButtonTapped())
         
-        navigationController?.navigationBar.tintColor = Constant.BaseColor.textColor
+        navigationController?.navigationBar.tintColor = DSKitAsset.Colors.text.color
     }
     
     private func reviseButtonTapped() -> UIMenu {
@@ -184,7 +186,7 @@ extension TaskDetailViewController: UICollectionViewDelegate, UICollectionViewDa
         
         cell.layer.borderWidth = Constant.Design.borderWidth
         cell.layer.cornerRadius = Constant.Design.cornerRadius
-        cell.layer.borderColor = Constant.BaseColor.textColor?.cgColor
+        cell.layer.borderColor = DSKitAsset.Colors.background.color.cgColor
         
         let dateText = DateFormatType.toString(dayArray[indexPath.item], to: .fullWithoutYear)
         guard let objectId = task?.id else { return UICollectionViewCell() }

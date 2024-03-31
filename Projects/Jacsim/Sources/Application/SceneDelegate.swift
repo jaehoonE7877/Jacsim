@@ -19,7 +19,8 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         
         let onbording = UserDefaults.standard.bool(forKey: "onboarding")
         if onbording {
-            let vc = HomeViewController()
+            let viewModel = HomeViewModel()
+            let vc = HomeViewController(viewModel: viewModel)
             let nav = UINavigationController(rootViewController: vc)
 
             window?.rootViewController = nav

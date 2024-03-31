@@ -9,7 +9,10 @@ import UIKit
 import MessageUI
 import StoreKit
 
+import DSKit
+
 import AcknowList
+
 final class SettingViewController: BaseViewController {
     
     //MARK: Property
@@ -18,7 +21,7 @@ final class SettingViewController: BaseViewController {
         $0.dataSource = self
         $0.rowHeight = 44
         $0.separatorInset = .zero
-        $0.backgroundColor = Constant.BaseColor.backgroundColor
+        $0.backgroundColor = DSKitAsset.Colors.background.color
         $0.register(SettingTableViewCell.self, forCellReuseIdentifier: SettingTableViewCell.reuseIdentifier)
     }
     
@@ -29,7 +32,7 @@ final class SettingViewController: BaseViewController {
     }
     
     override func configure() {
-        view.backgroundColor = Constant.BaseColor.backgroundColor
+        view.backgroundColor = DSKitAsset.Colors.background.color
         self.view.addSubview(tableView)
     }
     
@@ -52,7 +55,7 @@ extension SettingViewController: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         guard let cell = tableView.dequeueReusableCell(withIdentifier: SettingTableViewCell.reuseIdentifier, for: indexPath) as? SettingTableViewCell else { return UITableViewCell() }
         cell.selectionStyle = .none
-        cell.backgroundColor = Constant.BaseColor.backgroundColor
+        cell.backgroundColor = DSKitAsset.Colors.background.color
         
         if indexPath.row == 3 {
             

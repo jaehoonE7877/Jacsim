@@ -7,13 +7,15 @@
 
 import UIKit
 
+import DSKit
+
 final class JacsimTableViewCell: BaseTableViewCell {
     
     let jacsimContentView = UIView().then {
         $0.layer.cornerRadius = Constant.Design.cornerRadius
         $0.layer.masksToBounds = true
-        //$0.clipsToBounds = true
-        $0.backgroundColor = Constant.BaseColor.buttonColor
+        $0.clipsToBounds = true
+        $0.backgroundColor = DSKitAsset.Colors.button.color
     }
     
     let titleLabel = UILabel().then {
@@ -24,7 +26,7 @@ final class JacsimTableViewCell: BaseTableViewCell {
     lazy var alarmImageView = UIImageView().then {
         $0.isHidden = true
         $0.image = UIImage(systemName: "bell.fill", withConfiguration: UIImage.SymbolConfiguration(pointSize: 18))
-        $0.tintColor = Constant.BaseColor.textColor
+        $0.tintColor = DSKitAsset.Colors.text.color
     }
     
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
@@ -50,7 +52,7 @@ final class JacsimTableViewCell: BaseTableViewCell {
 
 extension JacsimTableViewCell {
     private func setView() {
-        contentView.backgroundColor = Constant.BaseColor.backgroundColor
+        contentView.backgroundColor = DSKitAsset.Colors.background.color
         contentView.addSubview(jacsimContentView)
         jacsimContentView.addSubviews([titleLabel, alarmImageView])
         

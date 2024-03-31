@@ -44,7 +44,6 @@ public extension Project {
             let settings: SettingsDictionary = baseSettings
                 .merging(versionSetting)
                 .setHeaderSearchPath(isModule: false)
-                .codeSignIdentityAppleDevelopment()
             
             let target = Target.target(
                 name: name,
@@ -66,7 +65,7 @@ public extension Project {
                         
                     ]
                 ].flatMap { $0 },
-                settings: .settings(base: settings,
+                settings: .settings(base: settings.codeSignIdentityAppleDevelopment(),
                                     configurations: XCConfig.project)
             )
             projectTargets.append(target)
@@ -101,7 +100,7 @@ public extension Project {
             let isNetworks = (name == "Networks") || name.contains("Feature")
             let settings = baseSettings
                 .setHeaderSearchPath(isModule: isNetworks)
-            
+                
             let target = Target.target(
                 name: name,
                 destinations: destination,
@@ -112,7 +111,7 @@ public extension Project {
                 sources: ["Sources/**/*.swift"],
                 resources: hasResources ? [.glob(pattern: "Resources/**", excluding: ["Resources/dummy.txt"])] : [],
                 dependencies: deps + internalDependencies + externalDependencies,
-                settings: .settings(base: settings, configurations: XCConfig.framework)
+                settings: .settings(base: settings.setCodeSignManual(), configurations: XCConfig.framework)
             )
             
             projectTargets.append(target)
@@ -138,7 +137,7 @@ public extension Project {
                         
                     ]
                 ].flatMap { $0 },
-                settings: .settings(base: baseSettings,
+                settings: .settings(base: baseSettings.setCodeSignManual(),
                                     configurations: XCConfig.demo)
             )
 
@@ -166,7 +165,7 @@ public extension Project {
                         .SPM.Nimble
                     ]
                 ].flatMap { $0 },
-                settings: .settings(base: SettingsDictionary(),
+                settings: .settings(base: SettingsDictionary().setCodeSignManual(),
                                     configurations: XCConfig.tests)
             )
             

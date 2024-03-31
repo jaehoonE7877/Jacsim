@@ -16,13 +16,13 @@ final class WalkThroughViewController: BaseViewController {
     
     private let pageControl = UIPageControl().then {
         $0.pageIndicatorTintColor = .lightGray
-        $0.currentPageIndicatorTintColor = Constant.BaseColor.buttonColor
+        $0.currentPageIndicatorTintColor = DSKitAsset.Colors.button.color
     }
     
     private let continueButton = UIButton().then {
-        $0.backgroundColor = Constant.BaseColor.buttonColor
+        $0.backgroundColor = DSKitAsset.Colors.button.color
         $0.setTitle("계속하기", for: .normal)
-        $0.setTitleColor(Constant.BaseColor.textColor, for: .normal)
+        $0.setTitleColor(DSKitAsset.Colors.text.color, for: .normal)
         $0.layer.cornerRadius = Constant.Design.cornerRadius
     }
     
@@ -75,8 +75,8 @@ final class WalkThroughViewController: BaseViewController {
         } else {
             
             UserDefaults.standard.set(true, forKey: "onboarding")
-            
-            transitionViewController(viewController: HomeViewController(), transitionStyle: .presentFullNavigation)
+            let viewModel = HomeViewModel()
+            transitionViewController(viewController: HomeViewController(viewModel: viewModel), transitionStyle: .presentFullNavigation)
         }
         
         if pageControl.currentPage == 3{

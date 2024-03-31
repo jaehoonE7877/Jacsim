@@ -9,6 +9,8 @@ import UIKit
 import Photos
 import PhotosUI
 
+import DSKit
+
 import CropViewController
 
 final class NewTaskViewController: BaseViewController {
@@ -55,7 +57,6 @@ final class NewTaskViewController: BaseViewController {
     
     override func configure() {
         
-        view.backgroundColor = Constant.BaseColor.backgroundColor
 
         [mainView.newTaskTitleTextfield, mainView.startDateTextField, mainView.endDateTextField, mainView.successTextField].forEach { $0.delegate = self }
         [mainView.newTaskTitleTextfield, mainView.startDateTextField, mainView.endDateTextField].forEach { $0.returnKeyType = .done }
@@ -73,11 +74,11 @@ final class NewTaskViewController: BaseViewController {
     override func setNavigationController() {
         self.title = "새로운 작심"
         
-        navigationController?.navigationBar.tintColor = Constant.BaseColor.textColor
+        navigationController?.navigationBar.tintColor = DSKitAsset.Colors.text.color
         navigationItem.leftBarButtonItem = UIBarButtonItem(image: UIImage.xmark, style: .plain, target: self, action: #selector(backButtonTapped))
         navigationItem.rightBarButtonItem = UIBarButtonItem(title: "저장", style: .plain, target: self, action: #selector(saveButtonTapped))
         let appearance = UINavigationBarAppearance()
-        appearance.backgroundColor = Constant.BaseColor.backgroundColor
+        appearance.backgroundColor = DSKitAsset.Colors.background.color
         self.navigationController?.navigationBar.standardAppearance = appearance
         self.navigationController?.navigationBar.scrollEdgeAppearance = appearance
     }

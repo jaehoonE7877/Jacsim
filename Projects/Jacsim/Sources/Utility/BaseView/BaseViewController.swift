@@ -20,7 +20,7 @@ open class BaseViewController: UIViewController {
     let calendar = Calendar.current
     let notificationCenter = UNUserNotificationCenter.current()
     
-    private let disposeBag = DisposeBag()
+    let disposeBag = DisposeBag()
     
     //MARK: - initializers
     deinit {
@@ -52,7 +52,7 @@ open class BaseViewController: UIViewController {
     
     func setNavigationController() {
         let appearance = UINavigationBarAppearance()
-        appearance.backgroundColor = Constant.BaseColor.backgroundColor
+        appearance.backgroundColor = DSKitAsset.Colors.background.color
         self.navigationController?.navigationBar.standardAppearance = appearance
         self.navigationController?.navigationBar.scrollEdgeAppearance = appearance
     }

@@ -7,6 +7,8 @@
 
 import UIKit
 
+import DSKit
+
 class TaskDetailView: BaseView {
     
     //MARK: UIImage, UILabel, [UILabel, UILabel], [UILabel, UILabel], UICollectionView
@@ -18,54 +20,54 @@ class TaskDetailView: BaseView {
     
     let startLabel = UILabel().then {
         $0.font = UIFont.gothic(style: .Medium, size: 14)
-        $0.textColor = Constant.BaseColor.textColor
+        $0.textColor = DSKitAsset.Colors.text.color
         $0.text = "시작일"
     }
     
     let startDateLabel = UILabel().then {
         $0.font = UIFont.gothic(style: .Medium, size: 14)
-        $0.textColor = Constant.BaseColor.textColor
+        $0.textColor = DSKitAsset.Colors.text.color
         $0.textAlignment = .right
     }
     
     let endLabel = UILabel().then {
         $0.font = UIFont.gothic(style: .Medium, size: 14)
-        $0.textColor = Constant.BaseColor.textColor
+        $0.textColor = DSKitAsset.Colors.text.color
         $0.text = "종료일"
     }
     
     let endDateLabel = UILabel().then {
         $0.font = UIFont.gothic(style: .Medium, size: 14)
-        $0.textColor = Constant.BaseColor.textColor
+        $0.textColor = DSKitAsset.Colors.text.color
         $0.textAlignment = .right
     }
     
     let alarmLabel = UILabel().then {
         $0.font = UIFont.gothic(style: .Medium, size: 14)
-        $0.textColor = Constant.BaseColor.textColor
+        $0.textColor = DSKitAsset.Colors.text.color
         $0.text = "알람 시간"
     }
     
     let alarmTimeLabel = UILabel().then {
         $0.font = UIFont.gothic(style: .Medium, size: 14)
-        $0.textColor = Constant.BaseColor.textColor
+        $0.textColor = DSKitAsset.Colors.text.color
         $0.textAlignment = .right
     }
     
     let successLabel = UILabel().then {
         $0.textAlignment = .center
         $0.font = UIFont.gothic(style: .Medium, size: 18)
-        $0.textColor = Constant.BaseColor.textColor
+        $0.textColor = DSKitAsset.Colors.text.color
     }
     
     let lineView = UIView().then {
-        $0.backgroundColor = Constant.BaseColor.textColor
+        $0.backgroundColor = DSKitAsset.Colors.text.color
     }
     
     let certifyLabel = UILabel().then {
         $0.text = "인증 사진"
         $0.font = UIFont.gothic(style: .Medium, size: 18)
-        $0.textColor = Constant.BaseColor.textColor
+        $0.textColor = DSKitAsset.Colors.text.color
     }
     
     let collectionView: UICollectionView = {

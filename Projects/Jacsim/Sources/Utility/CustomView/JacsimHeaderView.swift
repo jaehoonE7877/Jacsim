@@ -7,6 +7,8 @@
 
 import UIKit
 
+import DSKit
+
 final class JacsimHeaderView: UITableViewHeaderFooterView {
     
     lazy var foldButton = UIButton().then {
@@ -15,11 +17,11 @@ final class JacsimHeaderView: UITableViewHeaderFooterView {
     
     let headerLabel = UILabel().then {
         $0.font = UIFont.gothic(style: .Medium, size: 24)
-        $0.textColor = Constant.BaseColor.textColor
+        $0.textColor = DSKitAsset.Colors.text.color
     }
 
     lazy var foldImage = UIImageView().then {
-        $0.tintColor = Constant.BaseColor.placeholderColor
+        $0.tintColor = .lightGray
     }
     
     override init(reuseIdentifier: String?) {

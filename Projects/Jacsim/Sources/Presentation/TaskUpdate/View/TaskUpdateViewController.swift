@@ -8,6 +8,8 @@
 import UIKit
 import PhotosUI
 
+import DSKit
+
 import CropViewController
 
 final class TaskUpdateViewController: BaseViewController {
@@ -53,7 +55,7 @@ final class TaskUpdateViewController: BaseViewController {
     
     //MARK: Configure
     override func configure() {
-        view.backgroundColor = Constant.BaseColor.backgroundColor
+        view.backgroundColor = DSKitAsset.Colors.background.color
         
         mainView.memoTextfield.delegate = self
         tapGesture()

@@ -7,27 +7,29 @@
 
 import UIKit
 
+import DSKit
+
 final class TaskDetailCollectionViewCell: BaseCollectionViewCell {
     //MARK: - Private Property
    let certifiedImageView = UIImageView().then {
-        $0.backgroundColor = Constant.BaseColor.placeholderColor
+       $0.backgroundColor = .lightGray
         $0.layer.cornerRadius = Constant.Design.cornerRadius
         $0.layer.masksToBounds = true
         $0.contentMode = .scaleAspectFill
     }
     
     private let lineView = UIView().then {
-        $0.backgroundColor = Constant.BaseColor.textColor
+        $0.backgroundColor = DSKitAsset.Colors.text.color
     }
     
     let dateLabel = UILabel().then {
         $0.font = UIFont.gothic(style: .Medium, size: 12)
-        $0.textColor = Constant.BaseColor.textColor
+        $0.textColor = DSKitAsset.Colors.text.color
     }
     
     let certifiedMemo = UILabel().then {
         $0.font = UIFont.gothic(style: .Light, size: 12)
-        $0.textColor = Constant.BaseColor.textColor
+        $0.textColor = DSKitAsset.Colors.text.color
         $0.numberOfLines = 2
     }
     //MARK: - Initializer
@@ -35,7 +37,7 @@ final class TaskDetailCollectionViewCell: BaseCollectionViewCell {
         super.init(frame: frame)
         self.layer.borderWidth = Constant.Design.borderWidth
         self.layer.cornerRadius = Constant.Design.cornerRadius
-        self.layer.borderColor = Constant.BaseColor.textColor?.cgColor
+        self.layer.borderColor = DSKitAsset.Colors.text.color.cgColor
     }
     
     required init?(coder: NSCoder) {

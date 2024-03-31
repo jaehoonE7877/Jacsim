@@ -49,7 +49,7 @@ extension UITextField {
     }
     
     func setPlaceholder(text: String) {
-        attributedPlaceholder = NSAttributedString(string: text, attributes: [.foregroundColor: Constant.BaseColor.placeholderText])
+        attributedPlaceholder = NSAttributedString(string: text, attributes: [.foregroundColor: UIColor.lightGray])
     }
     
 }

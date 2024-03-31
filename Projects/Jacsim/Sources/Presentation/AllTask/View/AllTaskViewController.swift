@@ -9,6 +9,8 @@ import UIKit
 
 import RealmSwift
 
+import DSKit
+
 final class AllTaskViewController: BaseViewController {
     
     // MARK: 객체 선언 TableView
@@ -55,7 +57,7 @@ final class AllTaskViewController: BaseViewController {
     
     override func setNavigationController() {
         self.title = "작심 모아보기"
-        navigationController?.navigationBar.tintColor = Constant.BaseColor.textColor
+        navigationController?.navigationBar.tintColor = DSKitAsset.Colors.text.color
         navigationItem.leftBarButtonItem = UIBarButtonItem(image: UIImage.xmark, style: .plain, target: self, action: #selector(xButtonTapped))
     }
     

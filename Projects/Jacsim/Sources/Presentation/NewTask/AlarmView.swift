@@ -7,6 +7,8 @@
 
 import UIKit
 
+import DSKit
+
 final class AlarmView: BaseView {
     
     //MARK: Property (xmark, 확인, DatePicker)
@@ -15,18 +17,18 @@ final class AlarmView: BaseView {
     }
     
     let backgroundView = UIView().then {
-        $0.backgroundColor = Constant.BaseColor.backgroundColor
+        $0.backgroundColor = DSKitAsset.Colors.background.color
         $0.layer.cornerRadius = Constant.Design.cornerRadius
     }
     
     let xButton = UIButton().then {
         $0.setImage(UIImage.xmark, for: .normal)
-        $0.tintColor = Constant.BaseColor.textColor
+        $0.tintColor = DSKitAsset.Colors.text.color
     }
     
     let saveButton = UIButton().then {
         $0.setTitle("저장", for: .normal)
-        $0.setTitleColor(Constant.BaseColor.textColor, for: .normal)
+        $0.setTitleColor(DSKitAsset.Colors.text.color, for: .normal)
     }
     
     lazy var datePicker = UIDatePicker().then {
