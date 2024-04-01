@@ -247,7 +247,7 @@ final class NewTaskViewController: BaseViewController {
                 task.memoList.append(certified)
             }
             
-            self.documentManager.saveImageToDocument(fileName: "\(String(describing: task.id)).jpg", image: mainView.newTaskImageView.image ?? UIImage.jacsimImage)
+            self.documentManager.saveImageToDocument(fileName: "\(String(describing: task.id)).jpg", image: mainView.newTaskImageView.image ?? DSKitAsset.Assets.jacsim.image)
             repository.addJacsim(item: task)
             
             scheduleNotification(title: title, fireDate: fireDate)
@@ -261,7 +261,7 @@ final class NewTaskViewController: BaseViewController {
                 task.memoList.append(certified)
             }
             
-            self.documentManager.saveImageToDocument(fileName: "\(String(describing: task.id)).jpg", image: mainView.newTaskImageView.image ?? UIImage.jacsimImage)
+            self.documentManager.saveImageToDocument(fileName: "\(String(describing: task.id)).jpg", image: mainView.newTaskImageView.image ?? DSKitAsset.Assets.jacsim.image)
             repository.addJacsim(item: task)
             
             dismiss(animated: true)

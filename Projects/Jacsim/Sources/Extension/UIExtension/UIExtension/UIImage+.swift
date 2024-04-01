@@ -9,7 +9,6 @@ import UIKit
 
 extension UIImage {
     
-    static let jacsimImage = UIImage(named: "jacsim")!
     static let gear = UIImage(systemName: "gearshape.fill")!
     
     static let menu = UIImage(systemName: "ellipsis.circle")!

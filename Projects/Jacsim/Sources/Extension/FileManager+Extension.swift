@@ -7,6 +7,8 @@
 
 import UIKit
 
+import DSKit
+
 class DocumentManager {
     
     static let shared = DocumentManager()
@@ -79,7 +81,7 @@ class DocumentManager {
             return UIImage(contentsOfFile: fileURL.path)
             
         } else {
-            return UIImage.jacsimImage
+            return DSKitAsset.Assets.jacsim.image
         }
 
         

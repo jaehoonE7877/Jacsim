@@ -9,13 +9,25 @@ import UIKit
 import RxCocoa
 import RxSwift
 
+import DSKit
+
 final class TaskDetailViewModel {
     
-    private let repository = JacsimRepository.shared
+    private let repository: JacsimRepositoryProtocol
+    private let documentManager: DocumentManager
+    private var task: BehaviorRelay<UserJacsim>
     
-    var task: BehaviorRelay<UserJacsim> = .init(value: .init())
+    var _task: UserJacsim {
+        return self.task.value
+    }
     
-    private let documentManager = DocumentManager.shared
+    init(task: UserJacsim,
+         repository: JacsimRepositoryProtocol = JacsimRepository.shared,
+         documentManager: DocumentManager = .shared) {
+        self.task = BehaviorRelay(value: task)
+        self.repository = repository
+        self.documentManager = documentManager
+    }
     
     // collectionView cell개수
     func configCellTitle() -> [Date] {
@@ -50,7 +62,7 @@ extension TaskDetailViewModel {
     }
     
     var loadMainImage: UIImage {
-        return documentManager.loadImageFromDocument(fileName: "\(String(describing: task.value.id)).jpg") ?? UIImage.jacsimImage
+        return documentManager.loadImageFromDocument(fileName: "\(String(describing: task.value.id)).jpg") ?? DSKitAsset.Assets.jacsim.image
     }
     
     var showCertified: String {
@@ -90,15 +102,15 @@ extension TaskDetailViewModel {
     func fetchTodayImage(index: Int) -> UIImage {
         let dayArray = configCellTitle()
         let dateText = DateFormatType.toString(dayArray[index], to: .fullWithoutYear)
-        return documentManager.loadImageFromDocument(fileName: "\(task.value.id)_\(dateText).jpg") ?? UIImage.jacsimImage
+        return documentManager.loadImageFromDocument(fileName: "\(task.value.id)_\(dateText).jpg") ?? DSKitAsset.Assets.jacsim.image
     }
     
     func checkIsSuccess() {
-        repository.checkIsSuccess(item: task.value)
+        repository.checkIsSuccess(item: _task)
     }
     
     func deleteAlarm() {
-        repository.deleteAlarm(item: task.value)
+        repository.deleteAlarm(item: _task)
     }
     
     func deleteJacsim() {

@@ -18,11 +18,19 @@ final class TaskDetailViewController: BaseViewController {
     var jacsimDays: Int = 0
     var dayArray: [Date] = []
     
-    var task: UserJacsim?
+//    var task: UserJacsim?
+    
+    private let viewModel: TaskDetailViewModel
+    
+    init(viewModel: TaskDetailViewModel) {
+        self.viewModel = viewModel
+        super.init(nibName: nil, bundle: nil)
+    }
     
     override func loadView() {
         self.view = mainView
     }
+    
     //MARK: View LifeCycle
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -34,7 +42,7 @@ final class TaskDetailViewController: BaseViewController {
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         
-        guard let task = task else { return }
+        let task = self.viewModel._task
         repository.checkIsDone(item: task, count: jacsimDays)
         repository.checkIsSuccess(item: task)
         
@@ -60,7 +68,7 @@ final class TaskDetailViewController: BaseViewController {
         
         view.backgroundColor = DSKitAsset.Colors.background.color
         
-        guard let task = task else { return }
+        let task = self.viewModel._task
         
         mainView.startDateLabel.text = DateFormatType.toString(task.startDate, to: .full)
         mainView.endDateLabel.text = DateFormatType.toString(task.endDate, to: .full)
@@ -76,6 +84,7 @@ final class TaskDetailViewController: BaseViewController {
         
         // collectionView cell개수
         jacsimDays = calculateDays(startDate: task.startDate, endDate: task.endDate)
+        print(jacsimDays)
         
         for date in stride(from: task.startDate, to: task.endDate + 86400, by: 86400 ){
             dayArray.append(date)
@@ -120,9 +129,9 @@ final class TaskDetailViewController: BaseViewController {
 //            vc.task = self.task
 //            self.transitionViewController(viewController: vc, transitionStyle: .presentFullNavigation)
 //        }
-        let deletealarm = UIAction(title: "알람 끄기", image: UIImage.alarmDelete) { [weak self]_ in
+        let deletealarm = UIAction(title: "알람 끄기", image: UIImage.alarmDelete) { [weak self] _ in
             guard let self = self else { return }
-            guard let task = self.task else { return }
+            let task = self.viewModel._task
             self.showAlertMessage(title: "알람을 끄시겠습니까?", message: nil, button: "확인", cancel: "취소") { _ in
                 
                 self.repository.deleteAlarm(item: task)
@@ -136,7 +145,7 @@ final class TaskDetailViewController: BaseViewController {
             guard let self = self else { return }
             self.showAlertMessage(title: "해당 작심을 그만두실 건가요?", message: "기존에 저장한 데이터들은 사라집니다.", button: "확인", cancel: "취소") { _ in
                
-                guard let task = self.task else { return }
+                let task = self.viewModel._task
                 // 인증유무 분기처리
                 
                 if self.repository.checkCertified(item: task) == 0 {
@@ -159,7 +168,7 @@ final class TaskDetailViewController: BaseViewController {
         }
         
         var items: [UIMenuElement] = []
-        if task?.alarm != nil {
+        if self.viewModel._task.alarm != nil {
             items = [deletealarm, quit]
         } else {
             items = [quit]
@@ -180,7 +189,7 @@ extension TaskDetailViewController: UICollectionViewDelegate, UICollectionViewDa
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        
+        let task = self.viewModel._task
         guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: TaskDetailCollectionViewCell.reuseIdentifier, for: indexPath) as? TaskDetailCollectionViewCell
         else { return UICollectionViewCell() }
         
@@ -189,22 +198,22 @@ extension TaskDetailViewController: UICollectionViewDelegate, UICollectionViewDa
         cell.layer.borderColor = DSKitAsset.Colors.background.color.cgColor
         
         let dateText = DateFormatType.toString(dayArray[indexPath.item], to: .fullWithoutYear)
-        guard let objectId = task?.id else { return UICollectionViewCell() }
+        let objectId = task.id
         cell.dateLabel.text = dateText
-        cell.certifiedMemo.text = task?.memoList[indexPath.row].memo
+        cell.certifiedMemo.text = task.memoList[indexPath.row].memo
         
-        guard let image = DocumentManager.shared.loadImageFromDocument(fileName: "\(objectId)_\(dateText).jpg") else { return UICollectionViewCell()}
+        guard let image = DocumentManager.shared.loadImageFromDocument(fileName: "\(objectId)_\(dateText).jpg") else { return UICollectionViewCell() }
         cell.certifiedImageView.image = image
         
         return cell
     }
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        
+        let task = self.viewModel._task
         guard let cell = collectionView.cellForItem(at: indexPath) as? TaskDetailCollectionViewCell else { return }
         
         let vc = TaskUpdateViewController()
-        guard let task = task else { return }
+        
         let dateText = DateFormatType.toString(dayArray[indexPath.item], to: .fullWithoutYear)
         
         guard DateFormatType.toString(Date(), to: .fullWithoutYear) == dateText else {

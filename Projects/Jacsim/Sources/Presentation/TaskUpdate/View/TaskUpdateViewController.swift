@@ -127,7 +127,7 @@ final class TaskUpdateViewController: BaseViewController {
         
         repository.updateMemo(item: task, index: index, memo: memo)
         
-        self.documentManager.saveImageToDocument(fileName: "\(task.id)_\(dateText).jpg", image: mainView.certifyImageView.image ?? UIImage.jacsimImage)
+        self.documentManager.saveImageToDocument(fileName: "\(task.id)_\(dateText).jpg", image: mainView.certifyImageView.image ?? DSKitAsset.Assets.jacsim.image)
         
         self.navigationController?.popViewController(animated: true)
     }

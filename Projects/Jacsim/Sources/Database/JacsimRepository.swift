@@ -21,8 +21,10 @@ protocol JacsimRepositoryProtocol: AnyObject {
     func updateMemo(item: UserJacsim, index: Int, memo: String)
     func removeImageFromDocument(fileName: String)
     func deleteJacsim(item: UserJacsim)
+    func deleteAlarm(item: UserJacsim)
     func checkIsDone(item: UserJacsim, count: Int)
     func checkCertified(item: UserJacsim) -> Int
+    func checkIsSuccess(item: UserJacsim)
 }
 
 final class JacsimRepository: JacsimRepositoryProtocol {
@@ -84,7 +86,7 @@ final class JacsimRepository: JacsimRepositoryProtocol {
         }
     }
     
-    func deleteAlarm(item: UserJacsim){
+    func deleteAlarm(item: UserJacsim) {
        
         guard let alarm = item.alarm else { return }
         let alarmString = DateFormatType.toString(alarm, to: .fullWithTime)
@@ -122,7 +124,7 @@ final class JacsimRepository: JacsimRepositoryProtocol {
         }
     }
     
-    func deleteJacsim(item: UserJacsim){
+    func deleteJacsim(item: UserJacsim) {
         
         if let alarm = item.alarm {
             removeImageFromDocument(fileName: "\(item.id).jpg")
