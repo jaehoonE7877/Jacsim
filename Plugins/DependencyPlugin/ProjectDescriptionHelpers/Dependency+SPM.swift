@@ -35,6 +35,4 @@ public extension TargetDependency.SPM {
     //MARK: - Test
     static let Nimble = TargetDependency.external(name: "Nimble", condition: .none)
     static let Quick = TargetDependency.external(name: "Quick", condition: .none)
-    //MARK: - Debug
-    static let LookinServer = TargetDependency.external(name: "LookinServer", condition: .none)
 }

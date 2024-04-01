@@ -27,7 +27,7 @@ public extension Project {
         let hasDynamicFramework = targets.contains(.dynamicFramework)
         let deploymentTarget = Environment.deploymentTarget
         let destination: Set<Destination> = [.iPhone]
-        
+                
         let baseSettings: SettingsDictionary = .baseSettings
         
         var projectTargets: [Target] = []
@@ -57,12 +57,12 @@ public extension Project {
                     .glob(pattern: "Resources/**", excluding: [])
                            ],
                 entitlements: "\(name).entitlements",
-                scripts: [],
+                scripts: [.FirebaseCrashlyticsString],
                 dependencies: [
                     internalDependencies,
                     externalDependencies,
                     [
-                        
+                        .package(product: "LookinServer", type: .macro, condition: nil)
                     ]
                 ].flatMap { $0 },
                 settings: .settings(base: settings.codeSignIdentityAppleDevelopment(),
@@ -272,4 +272,18 @@ extension Project {
             analyzeAction: .analyzeAction(configuration: "Release")
         )
     ]
+}
+
+public extension TargetScript {
+    static let FirebaseCrashlyticsString = TargetScript.post(
+        script: """
+    ROOT_DIR=\(ProcessInfo.processInfo.environment["TUIST_ROOT_DIR"] ?? "")
+    "${ROOT_DIR}/.build/checkouts/firebase-ios-sdk/Crashlytics/run"
+    """,
+        name: "Firebase Crashlytics",
+        inputPaths: [
+            "${DWARF_DSYM_FOLDER_PATH}/${DWARF_DSYM_FILE_NAME}/Contents/Resources/DWARF/${TARGET_NAME}",
+                "$(SRCROOT)/$(BUILT_PRODUCTS_DIR)/$(INFOPLIST_PATH)"
+        ],
+        basedOnDependencyAnalysis: true)
 }

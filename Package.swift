@@ -35,7 +35,6 @@ let package = Package(
         .package(url: "https://github.com/onevcat/Kingfisher.git", from: "7.9.1"),
         .package(url: "https://github.com/WenchaoD/FSCalendar.git", from: "2.8.3"),
         .package(url: "https://github.com/vtourraine/AcknowList", from: "3.0.1"),
-        .package(url: "https://github.com/QMUI/LookinServer.git", from: "1.1.7"),
         .package(url: "https://github.com/TimOliver/TOCropViewController.git", from: "2.6.1"),
         .package(url: "https://github.com/kciter/Floaty.git", branch: "master"),
         .package(url: "https://github.com/devxoul/Then.git", from: "3.0.0"),
