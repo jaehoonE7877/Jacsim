@@ -110,6 +110,37 @@ public extension UIColor {
     }
 }
 
+//MARK: - Status
+public extension UIColor {
+    
+    static var positive: UIColor {
+        return UIColor { (traits) -> UIColor in
+            if traits.userInterfaceStyle == .dark {
+                return UIColor(hexString: "#1ED45A")
+            }
+            return UIColor(hexString: "#00BF40")
+        }
+    }
+    
+    static var cautionary: UIColor {
+        return UIColor { (traits) -> UIColor in
+            if traits.userInterfaceStyle == .dark {
+                return UIColor(hexString: "#FFA938")
+            }
+            return UIColor(hexString: "#FF9200")
+        }
+    }
+    
+    static var destructive: UIColor {
+        return UIColor { (traits) -> UIColor in
+            if traits.userInterfaceStyle == .dark {
+                return UIColor(hexString: "#FF6363")
+            }
+            return UIColor(hexString: "#FF4242")
+        }
+    }
+}
+
 extension UIColor {
     ///Hex값으로 컬러 할당 가능
     /// Tag: #Hex
