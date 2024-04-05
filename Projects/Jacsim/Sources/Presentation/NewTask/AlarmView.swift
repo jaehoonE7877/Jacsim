@@ -17,7 +17,7 @@ final class AlarmView: BaseView {
     }
     
     let backgroundView = UIView().then {
-        $0.backgroundColor = DSKitAsset.Colors.background.color
+        $0.backgroundColor = .backgroundNormal
         $0.layer.cornerRadius = Constant.Design.cornerRadius
     }
     

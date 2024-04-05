@@ -55,7 +55,7 @@ final class TaskUpdateViewController: BaseViewController {
     
     //MARK: Configure
     override func configure() {
-        view.backgroundColor = DSKitAsset.Colors.background.color
+        view.backgroundColor = .backgroundNormal
         
         mainView.memoTextfield.delegate = self
         tapGesture()

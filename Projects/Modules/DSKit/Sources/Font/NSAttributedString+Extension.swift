@@ -8,17 +8,22 @@
 
 import UIKit
 
-public extension NSAttributedString {
+public extension UILabel {
     /**
-     updateAttString
-     
-     NSAttributedString의 String값을 업데이트합니다.
+     Label의 어트리뷰트 텍스트를 업데이트하기 위한것
+     단 "" 이렇게 하면 안됨 최소 공백 하나는 있어야함
+     Tag: #Label, #attributedText
      */
-    func updateAttString(_ text: String) -> NSAttributedString {
-        let attributes = self.attributes(at: 0, effectiveRange: nil)
-        return NSMutableAttributedString(string: text, attributes: attributes)
+    func updateAttString(_ text: String) {
+        guard let att = self.attributedText else { return }
+        if att.length == 0 { return }
+        let attributes = att.attributes(at: 0, effectiveRange: nil)
+        self.attributedText = NSMutableAttributedString(string: text, attributes: attributes)
     }
-    
+}
+
+
+public extension NSAttributedString {
     /**
      텍스트가 넓이 리턴
      */

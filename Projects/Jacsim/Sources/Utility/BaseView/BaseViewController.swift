@@ -29,7 +29,7 @@ open class BaseViewController: UIViewController {
     
     public override init(nibName nibNameOrNil: String?, bundle nibBundleOrNil: Bundle?) {
         super.init(nibName: nil, bundle: nil)
-        self.view.backgroundColor = DSKitAsset.Colors.background.color
+        self.view.backgroundColor = .backgroundNormal
     }
     
     @available(*, unavailable)
@@ -52,7 +52,7 @@ open class BaseViewController: UIViewController {
     
     func setNavigationController() {
         let appearance = UINavigationBarAppearance()
-        appearance.backgroundColor = DSKitAsset.Colors.background.color
+        appearance.backgroundColor = .backgroundNormal
         self.navigationController?.navigationBar.standardAppearance = appearance
         self.navigationController?.navigationBar.scrollEdgeAppearance = appearance
     }

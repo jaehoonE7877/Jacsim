@@ -78,7 +78,7 @@ final class NewTaskViewController: BaseViewController {
         navigationItem.leftBarButtonItem = UIBarButtonItem(image: UIImage.xmark, style: .plain, target: self, action: #selector(backButtonTapped))
         navigationItem.rightBarButtonItem = UIBarButtonItem(title: "저장", style: .plain, target: self, action: #selector(saveButtonTapped))
         let appearance = UINavigationBarAppearance()
-        appearance.backgroundColor = DSKitAsset.Colors.background.color
+        appearance.backgroundColor = .backgroundNormal
         self.navigationController?.navigationBar.standardAppearance = appearance
         self.navigationController?.navigationBar.scrollEdgeAppearance = appearance
     }

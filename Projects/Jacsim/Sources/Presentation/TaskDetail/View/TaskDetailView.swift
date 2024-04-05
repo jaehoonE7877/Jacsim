@@ -81,7 +81,7 @@ class TaskDetailView: BaseView {
         layout.sectionInset = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: spacing)
         
         let collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout)
-        
+        collectionView.backgroundColor = .backgroundNormal
         return collectionView
     }()
     

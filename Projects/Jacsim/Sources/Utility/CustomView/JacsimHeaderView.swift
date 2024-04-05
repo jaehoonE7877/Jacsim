@@ -9,20 +9,26 @@ import UIKit
 
 import DSKit
 
+import RxSwift
+
 final class JacsimHeaderView: UITableViewHeaderFooterView {
-    
-    lazy var foldButton = UIButton().then {
-        $0.backgroundColor = .clear
-    }
-    
+        
     let headerLabel = UILabel().then {
-        $0.font = UIFont.gothic(style: .Medium, size: 24)
-        $0.textColor = DSKitAsset.Colors.text.color
+        $0.attributedText = "작심한 일".heading3(color: .labelNormal)
     }
 
-    lazy var foldImage = UIImageView().then {
-        $0.tintColor = .lightGray
+    let infoButton = UIButton().then {
+        $0.setImage(DSKitAsset.Assets.circleQuestion.image.withRenderingMode(.alwaysTemplate), for: .normal)
+        $0.tintColor = .labelNormal
     }
+    
+    let sortButton = UIButton().then {
+        $0.setTitle("오늘의 작심", for: .normal)
+        $0.setTitleColor(.labelNormal, for: .normal)
+        $0.titleLabel?.font = .pretendardMedium(size: 16)
+    }
+    
+    private(set) var disposeBag: DisposeBag = .init()
     
     override init(reuseIdentifier: String?) {
         super.init(reuseIdentifier: reuseIdentifier)
@@ -34,27 +40,32 @@ final class JacsimHeaderView: UITableViewHeaderFooterView {
          fatalError()
     }
     
+    override func prepareForReuse() {
+        super.prepareForReuse()
+        disposeBag = .init()
+    }
+    
     private func configure() {
-        self.addSubview(foldButton)
-        [headerLabel, foldImage, foldButton].forEach { self.addSubview($0)}
-        
+        contentView.backgroundColor = .backgroundNormal
+        contentView.addSubviews([headerLabel, infoButton, sortButton])
     }
     
     private func setConstraints() {
+
+        infoButton.snp.makeConstraints { make in
+            make.size.equalTo(24)
+            make.trailing.equalToSuperview()
+            make.verticalEdges.equalToSuperview().inset(8)
+        }
+        
+        sortButton.snp.makeConstraints { make in
+            make.centerY.equalTo(infoButton)
+            make.trailing.equalTo(infoButton.snp.leading).offset(-8)
+        }
         
         headerLabel.snp.makeConstraints { make in
-            make.leading.equalTo(self.snp.leading)
-            make.centerY.equalToSuperview()
-        }
-
-        foldImage.snp.makeConstraints { make in
-            make.centerY.equalToSuperview()
-            make.trailing.equalTo(self.snp.trailing).offset(-12)
-        }
-        
-        foldButton.snp.makeConstraints { make in
-            make.edges.equalTo(self)
+            make.leading.equalToSuperview()
+            make.centerY.equalTo(infoButton)
         }
     }
-    
 }

@@ -12,6 +12,8 @@ import DSKit
 import FSCalendar
 import Floaty
 import RealmSwift
+import RxCocoa
+import RxSwift
 
 final class HomeViewController: BaseViewController {
             
@@ -28,26 +30,16 @@ final class HomeViewController: BaseViewController {
         $0.scope = .month
         $0.clipsToBounds = true
     }
-    
-    private lazy var infoButton = UIButton().then {
-        $0.setImage(UIImage.question, for: .normal)
-        $0.tintColor = DSKitAsset.Colors.text.color
-    }
-    
-    private lazy var sortButton = UIButton().then {
-        $0.setImage(UIImage.sort, for: .normal)
-        $0.tintColor = DSKitAsset.Colors.text.color
-    }
-    
-    private lazy var tableView = UITableView(frame: CGRect.zero, style: .grouped).then {
+
+    private lazy var tableView = UITableView(frame: CGRect.zero, style: .plain).then {
         $0.delegate = self
         $0.dataSource = self
         $0.register(JacsimHeaderView.self, forHeaderFooterViewReuseIdentifier: JacsimHeaderView.reuseIdentifier)
         $0.register(JacsimTableViewCell.self, forCellReuseIdentifier: JacsimTableViewCell.reuseIdentifier)
-        $0.rowHeight = 60
+        $0.rowHeight = UITableView.automaticDimension
         $0.sectionFooterHeight = 0
-        $0.sectionHeaderHeight = 40
-        $0.backgroundColor = DSKitAsset.Colors.background.color
+        $0.sectionHeaderTopPadding = 0.0
+        $0.backgroundColor = .backgroundNormal
         $0.separatorStyle = UITableViewCell.SeparatorStyle.none
         $0.panGestureRecognizer.require(toFail: self.scopeGesture)
     }
@@ -63,8 +55,8 @@ final class HomeViewController: BaseViewController {
     
     private lazy var floaty = Floaty().then {
         $0.paddingY = UIScreen.main.bounds.height / 12
-        $0.buttonColor = DSKitAsset.Colors.floaty.color
-        $0.itemTitleColor = DSKitAsset.Colors.text.color
+        $0.buttonColor = .primaryNormal
+        $0.itemTitleColor = .labelNormal
         $0.size = 48
         $0.fabDelegate = self
     }
@@ -102,42 +94,28 @@ final class HomeViewController: BaseViewController {
     
     // MARK: Set UI, Constraints
     private func setView() {
-        [fsCalendar, tableView, infoButton, sortButton, floaty].forEach { self.view.addSubview($0) }
+        view.addSubviews([fsCalendar, tableView, floaty])
         
         // 달력 높이 비율로 잡기
         fsCalendar.snp.makeConstraints { make in
-            make.top.equalTo(view.safeAreaLayoutGuide).offset(8)
-            make.width.equalTo(view).multipliedBy(0.94)
+            make.top.equalTo(view.safeAreaLayoutGuide).offset(12)
+            make.horizontalEdges.equalToSuperview().inset(16)
             make.centerX.equalToSuperview()
             make.height.equalTo(UIScreen.main.bounds.height / 2.5)
         }
         
         tableView.snp.makeConstraints { make in
-            make.top.equalTo(fsCalendar.snp.bottom)
-            make.width.equalTo(view).multipliedBy(0.88)
+            make.top.equalTo(fsCalendar.snp.bottom).offset(12)
+            make.horizontalEdges.equalToSuperview().inset(24)
             make.centerX.equalToSuperview()
             make.bottom.equalTo(view.safeAreaLayoutGuide)
         }
-        
-        infoButton.snp.makeConstraints { make in
-            make.top.equalTo(tableView.snp.top).offset(8)
-            make.trailing.equalTo(tableView.snp.trailing)
-        }
-        
-        sortButton.snp.makeConstraints { make in
-            make.top.equalTo(infoButton.snp.top)
-            make.trailing.equalTo(infoButton.snp.leading).offset(-8)
-            make.centerY.equalTo(infoButton)
-        }
-        
+                
         setFSCalendar()
         setFloatyButton()
         
-        infoButton.addTarget(self, action: #selector(infoButtonTapped), for: .touchUpInside)
-        sortButton.addTarget(self, action: #selector(sortButtonTapped), for: .touchUpInside)
-        
         view.addGestureRecognizer(self.scopeGesture)
-        view.backgroundColor = DSKitAsset.Colors.background.color
+        view.backgroundColor = .backgroundNormal
         
         let backButton = UIBarButtonItem()
         backButton.title = ""
@@ -145,25 +123,28 @@ final class HomeViewController: BaseViewController {
     }
     
     override func setNavigationController() {
+        super.setNavigationController()
         title = "작심"
-        navigationController?.navigationBar.tintColor = DSKitAsset.Colors.text.color
+        navigationController?.navigationBar.tintColor = .labelNormal
         navigationItem.rightBarButtonItem = UIBarButtonItem(image: .gear, style: .plain, target: self, action: #selector(moveToSetting))
+        navigationItem.titleView?.tintColor = .labelNormal
     }
     
     
-    // MARK: Floaty Button Customize
+// MARK: - Floaty Button Customize
     private func setFloatyButton(){
         
-        floaty.plusColor = DSKitAsset.Colors.text.color
-        floaty.itemButtonColor = DSKitAsset.Colors.floaty.color
-        floaty.itemTitleColor = DSKitAsset.Colors.text.color
-        floaty.tintColor = DSKitAsset.Colors.text.color
-
-        floaty.addItem("새로운 작심", icon: UIImage.write) { item in
+        floaty.plusColor = .labelNormal
+        floaty.itemButtonColor = .primaryNormal
+        floaty.itemTitleColor = .labelNormal
+        floaty.tintColor = .labelNormal
+        floaty.itemImageColor = .labelNormal
+        
+        floaty.addItem("새로운 작심", icon: DSKitAsset.Assets.pencil.image.withRenderingMode(.alwaysTemplate)) { item in
             self.transitionViewController(viewController: NewTaskViewController(), transitionStyle: .presentFullNavigation)
         }
                        
-        floaty.addItem("작심 모아보기", icon: UIImage.list) { item in
+        floaty.addItem("작심 모아보기", icon: DSKitAsset.Assets.list.image.withRenderingMode(.alwaysTemplate)) { item in
             self.transitionViewController(viewController: AllTaskViewController(), transitionStyle: .presentFullNavigation)
         }
         
@@ -172,20 +153,20 @@ final class HomeViewController: BaseViewController {
     
     // MARK: FSCalendar Customize
     private func setFSCalendar(){
-        fsCalendar.backgroundColor = DSKitAsset.Colors.background.color
+        fsCalendar.backgroundColor = .backgroundNormal
         fsCalendar.appearance.headerTitleColor = DSKitAsset.Colors.text.color
-        fsCalendar.appearance.headerTitleFont = UIFont.gothic(style: .Light, size: 20)
-        fsCalendar.appearance.weekdayFont = UIFont.gothic(style: .Light, size: 16)
-        fsCalendar.appearance.titleFont = UIFont.gothic(style: .Light, size: 16)
+        fsCalendar.appearance.headerTitleFont = UIFont.pretendardSemiBold(size: 20)
+        fsCalendar.appearance.weekdayFont = UIFont.pretendardMedium(size: 16)
+        fsCalendar.appearance.titleFont = UIFont.pretendardMedium(size: 16)
         
-        fsCalendar.appearance.weekdayTextColor = DSKitAsset.Colors.text.color
-        fsCalendar.appearance.titleDefaultColor = DSKitAsset.Colors.text.color
+        fsCalendar.appearance.weekdayTextColor = .labelNormal
+        fsCalendar.appearance.titleDefaultColor = .labelNormal
         
-        fsCalendar.appearance.todayColor = DSKitAsset.Colors.button.color
+        fsCalendar.appearance.todayColor = .primaryNormal
 
         fsCalendar.appearance.todaySelectionColor = .none
        
-        fsCalendar.appearance.selectionColor = DSKitAsset.Colors.button.color
+        fsCalendar.appearance.selectionColor = .primaryNormal
         
     }
     
@@ -217,7 +198,7 @@ final class HomeViewController: BaseViewController {
     
 }
 
-// MARK: TableView Delegate, Datasource
+//MARK: - TableView Delegate, Datasource
 extension HomeViewController: UITableViewDelegate, UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
@@ -225,11 +206,23 @@ extension HomeViewController: UITableViewDelegate, UITableViewDataSource {
     }
     
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
-        guard let headerView = tableView.dequeueReusableHeaderFooterView(withIdentifier: JacsimHeaderView.reuseIdentifier) as? JacsimHeaderView else { return UIView() }
-        headerView.foldButton = UIButton(frame: .null)
-        headerView.foldImage = UIImageView(frame: .null)
-        headerView.headerLabel.text = "작심한 일"
         
+        guard let headerView = tableView.dequeueReusableHeaderFooterView(withIdentifier: JacsimHeaderView.reuseIdentifier) as? JacsimHeaderView else { return UIView() }
+        
+        headerView.infoButton.rx.tap
+            .asDriverOnErrorJustComplete()
+            .drive(with: self) { _self, _ in
+                _self.infoButtonTapped()
+            }
+            .disposed(by: headerView.disposeBag)
+       
+        headerView.sortButton.rx.tap
+            .asDriverOnErrorJustComplete()
+            .drive(with: self) { _self, _ in
+                _self.sortButtonTapped()
+            }
+            .disposed(by: headerView.disposeBag)
+                
         return headerView
     }
     

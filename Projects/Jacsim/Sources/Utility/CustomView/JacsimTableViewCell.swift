@@ -15,22 +15,20 @@ final class JacsimTableViewCell: BaseTableViewCell {
         $0.layer.cornerRadius = Constant.Design.cornerRadius
         $0.layer.masksToBounds = true
         $0.clipsToBounds = true
-        $0.backgroundColor = DSKitAsset.Colors.button.color
+        $0.backgroundColor = .primaryNormal
     }
     
     let titleLabel = UILabel().then {
-        $0.font = UIFont.gothic(style: .Light, size: 18)
-        $0.textAlignment = .left
+        $0.attributedText = " ".heading4(color: .labelStrong)
     }
     
-    lazy var alarmImageView = UIImageView().then {
-        $0.isHidden = true
-        $0.image = UIImage(systemName: "bell.fill", withConfiguration: UIImage.SymbolConfiguration(pointSize: 18))
+    let alarmImageView = UIImageView().then {
         $0.tintColor = DSKitAsset.Colors.text.color
     }
     
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
+        self.selectionStyle = .none
         setView()
     }
 
@@ -39,36 +37,35 @@ final class JacsimTableViewCell: BaseTableViewCell {
     }
     
     func setCellStyle(title: String, alarm: Date?) {
-        self.selectionStyle = .none
-        self.titleLabel.text = title
-        if alarm != nil {
-            self.alarmImageView.isHidden = false
-        } else {
-            self.alarmImageView.isHidden = true
-        }
+        titleLabel.updateAttString(title)
+        alarmImageView.image = alarm == nil
+        ? nil
+        : DSKitAsset.Assets.bellFill.image.withRenderingMode(.alwaysTemplate)
     }
     
 }
 
 extension JacsimTableViewCell {
     private func setView() {
-        contentView.backgroundColor = DSKitAsset.Colors.background.color
+        contentView.backgroundColor = .backgroundNormal
         contentView.addSubview(jacsimContentView)
-        jacsimContentView.addSubviews([titleLabel, alarmImageView])
         
         jacsimContentView.snp.makeConstraints { make in
             make.verticalEdges.equalToSuperview().inset(8)
-            make.horizontalEdges.equalToSuperview().inset(16)
+            make.horizontalEdges.equalToSuperview()
+        }
+        
+        jacsimContentView.addSubviews([titleLabel, alarmImageView])
+        
+        alarmImageView.snp.makeConstraints { make in
+            make.size.equalTo(24)
+            make.trailing.equalToSuperview().inset(12)
+            make.verticalEdges.equalToSuperview().inset(12)
         }
         
         titleLabel.snp.makeConstraints { make in
             make.leading.equalToSuperview().offset(12)
-            make.centerY.equalToSuperview()
-        }
-        
-        alarmImageView.snp.makeConstraints { make in
-            make.trailing.equalToSuperview().inset(12)
-            make.centerY.equalToSuperview()
+            make.centerY.equalTo(alarmImageView)
         }
     }
 }

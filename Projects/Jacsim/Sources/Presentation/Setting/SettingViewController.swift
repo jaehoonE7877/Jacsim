@@ -21,7 +21,7 @@ final class SettingViewController: BaseViewController {
         $0.dataSource = self
         $0.rowHeight = 44
         $0.separatorInset = .zero
-        $0.backgroundColor = DSKitAsset.Colors.background.color
+        $0.backgroundColor = .backgroundNormal
         $0.register(SettingTableViewCell.self, forCellReuseIdentifier: SettingTableViewCell.reuseIdentifier)
     }
     
@@ -32,7 +32,7 @@ final class SettingViewController: BaseViewController {
     }
     
     override func configure() {
-        view.backgroundColor = DSKitAsset.Colors.background.color
+        view.backgroundColor = .backgroundNormal
         self.view.addSubview(tableView)
     }
     
@@ -55,7 +55,7 @@ extension SettingViewController: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         guard let cell = tableView.dequeueReusableCell(withIdentifier: SettingTableViewCell.reuseIdentifier, for: indexPath) as? SettingTableViewCell else { return UITableViewCell() }
         cell.selectionStyle = .none
-        cell.backgroundColor = DSKitAsset.Colors.background.color
+        cell.backgroundColor = .backgroundNormal
         
         if indexPath.row == 3 {
             

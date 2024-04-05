@@ -19,15 +19,14 @@ final class AllTaskViewController: BaseViewController {
     
     var foldValue = [false, false, false]
     
-    lazy var tableView = UITableView(frame: CGRect.zero, style: .grouped).then {
+    lazy var tableView = UITableView(frame: CGRect.zero, style: .plain).then {
         $0.delegate = self
         $0.dataSource = self
-        $0.register(JacsimHeaderView.self, forHeaderFooterViewReuseIdentifier: JacsimHeaderView.reuseIdentifier)
+        $0.register(AllTaskJacsimHeaderView.self, forHeaderFooterViewReuseIdentifier: AllTaskJacsimHeaderView.reuseIdentifier)
         $0.register(JacsimTableViewCell.self, forCellReuseIdentifier: JacsimTableViewCell.reuseIdentifier)
-        $0.rowHeight = 60
         $0.sectionFooterHeight = 0
-        $0.sectionHeaderHeight = 56
-        $0.separatorStyle = UITableViewCell.SeparatorStyle.none
+        $0.sectionHeaderTopPadding = 0.0
+        $0.separatorStyle = .none
         $0.backgroundColor = .clear
     }
     
@@ -40,25 +39,24 @@ final class AllTaskViewController: BaseViewController {
     
     // MARK: Navigation title
     override func configure() {
-        
         view.addSubview(tableView)
-        
     }
     
     override func setConstraint() {
-        
         tableView.snp.makeConstraints { make in
             make.top.equalTo(view.safeAreaLayoutGuide).offset(8)
-            make.width.equalTo(view).multipliedBy(0.88)
+            make.horizontalEdges.equalToSuperview().inset(16)
             make.centerX.equalToSuperview()
             make.bottom.equalTo(view.safeAreaLayoutGuide)
         }
     }
     
     override func setNavigationController() {
+        super.setNavigationController()
         self.title = "작심 모아보기"
-        navigationController?.navigationBar.tintColor = DSKitAsset.Colors.text.color
-        navigationItem.leftBarButtonItem = UIBarButtonItem(image: UIImage.xmark, style: .plain, target: self, action: #selector(xButtonTapped))
+        let image = DSKitAsset.Assets.close.image.withRenderingMode(.alwaysTemplate)
+        navigationItem.leftBarButtonItem = UIBarButtonItem(image: image, style: .plain, target: self, action: #selector(xButtonTapped))
+        navigationItem.leftBarButtonItem?.tintColor = .labelNormal
     }
     
     @objc func xButtonTapped(){
@@ -85,7 +83,7 @@ extension AllTaskViewController: UITableViewDelegate, UITableViewDataSource {
     }
     
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
-        guard let headerView = tableView.dequeueReusableHeaderFooterView(withIdentifier: JacsimHeaderView.reuseIdentifier) as? JacsimHeaderView else { return UIView() }
+        guard let headerView = tableView.dequeueReusableHeaderFooterView(withIdentifier: AllTaskJacsimHeaderView.reuseIdentifier) as? AllTaskJacsimHeaderView else { return UIView() }
         
         headerView.foldButton.tag = section
         headerView.foldImage.tag = headerView.foldButton.tag
@@ -102,11 +100,9 @@ extension AllTaskViewController: UITableViewDelegate, UITableViewDataSource {
             headerView.headerLabel.text = "작심"
         }
         
-        if foldValue[section] {
-            headerView.foldImage.image = UIImage.chevornUp
-        } else {
-            headerView.foldImage.image = UIImage.chevornDown
-        }
+        headerView.foldImage.image = foldValue[section]
+        ? DSKitAsset.Assets.chevronUp.image.withRenderingMode(.alwaysTemplate)
+        : DSKitAsset.Assets.chevronDown.image.withRenderingMode(.alwaysTemplate)
         
         return headerView
     }
@@ -122,7 +118,7 @@ extension AllTaskViewController: UITableViewDelegate, UITableViewDataSource {
         if foldValue[indexPath.section] {
             return 0
         } else {
-            return 68
+            return UITableView.automaticDimension
         }
         
     }

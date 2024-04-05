@@ -11,7 +11,7 @@ import UIKit
 public extension CGColor {
     
     static let primaryNormal = UIColor.primaryNormal.cgColor
-    static let primaryStrong = UIColor.primaryStrong.cgColor
+    static let primaryStrong = UIColor.primaryNormal.cgColor
     static let primaryHeavy = UIColor.primaryHeavy.cgColor
     
     static let labelNormal = UIColor.primaryHeavy.cgColor

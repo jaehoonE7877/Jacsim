@@ -66,7 +66,7 @@ final class TaskDetailViewController: BaseViewController {
     // MARK: Configure
     override func configure() {
         
-        view.backgroundColor = DSKitAsset.Colors.background.color
+        view.backgroundColor = .backgroundNormal
         
         let task = self.viewModel._task
         
@@ -195,7 +195,7 @@ extension TaskDetailViewController: UICollectionViewDelegate, UICollectionViewDa
         
         cell.layer.borderWidth = Constant.Design.borderWidth
         cell.layer.cornerRadius = Constant.Design.cornerRadius
-        cell.layer.borderColor = DSKitAsset.Colors.background.color.cgColor
+        cell.layer.borderColor = .backgroundNormal
         
         let dateText = DateFormatType.toString(dayArray[indexPath.item], to: .fullWithoutYear)
         let objectId = task.id
