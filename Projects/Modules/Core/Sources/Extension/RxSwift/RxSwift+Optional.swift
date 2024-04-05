@@ -10,7 +10,7 @@ import Foundation
 import RxSwift
 import RxCocoa
 
-protocol OptionalType {
+public protocol OptionalType {
     associatedtype Wrapped
     var value: Wrapped? { get }
 }
@@ -121,7 +121,7 @@ extension ObservableType where Element: OptionalType {
     }
 }
 
-extension ObservableType {
+public extension ObservableType {
     func asDriverOnErrorJustComplete() -> Driver<Element> {
         return asDriver { error in
             assertionFailure("Error \(error)")

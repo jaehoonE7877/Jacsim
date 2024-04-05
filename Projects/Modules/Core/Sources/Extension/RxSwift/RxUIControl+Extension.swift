@@ -1,12 +1,12 @@
 //
 //  RxUIControl+Extension.swift
-//  Jacsim
+//  Core
 //
-//  Created by Seo Jae Hoon on 2023/06/09.
+//  Created by Seo Jae Hoon on 4/5/24.
+//  Copyright © 2024 Jacsim. All rights reserved.
 //
 
 import UIKit
-
 import RxSwift
 import RxCocoa
 

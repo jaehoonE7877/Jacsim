@@ -16,6 +16,8 @@ import RealmSwift
 
 protocol JacsimRepositoryProtocol: AnyObject {
     func fetchRealm() -> Results<UserJacsim>
+    func fetchIsSuccess() -> Results<UserJacsim>
+    func fetchIsFail() -> Results<UserJacsim>
     func fetchDate(date: Date) -> Results<UserJacsim>
     func addJacsim(item: UserJacsim)
     func updateMemo(item: UserJacsim, index: Int, memo: String)

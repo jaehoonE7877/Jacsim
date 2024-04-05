@@ -9,35 +9,32 @@ import UIKit
 
 import DSKit
 
-final class NewTaskView: BaseView {
+final class NewTaskView: UIView {
     
     // MARK: Property
-    
     let newTaskTitleLabel = UILabel().then {
-        $0.font = UIFont.gothic(style: .Medium, size: 16)
-        $0.textColor = DSKitAsset.Colors.text.color
+        $0.font = .pretendardSemiBold(size: 20)
+        $0.textColor = .labelStrong
         $0.text = "작심의 이름을 정해주세요"
     }
     
     let titleCountLabel = UILabel().then {
-        $0.font = .gothic(style: .Light, size: 12)
-        $0.textColor = DSKitAsset.Colors.text.color
+        $0.font = .pretendardRegular(size: 14)
+        $0.textColor = .labelNormal
         $0.textAlignment = .right
         $0.text = "0/20"
     }
     
-    let newTaskTitleTextfield = UITextField().then {
-        $0.backgroundColor = .lightGray
+    let newTaskTitleTextfield = LemitTextField(lemitCount: 20).then {
         $0.setPlaceholder(text: "예시 - 아침에 일어나서 물 마시기")
         $0.textAlignment = .center
-        $0.layer.cornerRadius = Constant.Design.cornerRadius
-        $0.textColor = DSKitAsset.Colors.text.color
-        $0.font = UIFont.gothic(style: .Light, size: 14)
+        $0.textColor = .labelNeutral
+        $0.font = .pretendardRegular(size: 16)
     }
     
     let newTaskImageLabel = UILabel().then {
-        $0.font = .gothic(style: .Medium, size: 16)
-        $0.textColor = DSKitAsset.Colors.text.color
+        $0.font = .pretendardSemiBold(size: 20)
+        $0.textColor = .labelStrong
         $0.text = "작심의 대표 이미지를 정해주세요"
     }
     
@@ -53,65 +50,61 @@ final class NewTaskView: BaseView {
     }
     
     let imageAddView = UIImageView().then {
-        $0.image = UIImage.addButton
-        $0.tintColor = DSKitAsset.Colors.button.color
+        $0.image = DSKitAsset.Assets.circlePlus.image.withRenderingMode(.alwaysTemplate)
+        $0.tintColor = .primaryNormal
     }
     
     let dateLabel = UILabel().then {
-        $0.font = .gothic(style: .Medium, size: 16)
+        $0.font = .pretendardSemiBold(size: 20)
         $0.textColor = DSKitAsset.Colors.text.color
         $0.text = "시작일과 종료일을 정해주세요"
     }
     
     let startDateTextField = UITextField().then {
         $0.setPlaceholder(text: "시작일")
-        $0.textColor = DSKitAsset.Colors.text.color
-        $0.font = UIFont.gothic(style: .Light, size: 14)
+        $0.textColor = .labelNeutral
+        $0.font = .pretendardRegular(size: 16)
         $0.textAlignment = .center
         $0.layer.cornerRadius = Constant.Design.cornerRadius
-        $0.backgroundColor = .lightGray
     }
     
     let termLabel = UILabel().then {
-        $0.font = .gothic(style: .Medium, size: 16)
-        $0.textColor = DSKitAsset.Colors.text.color
+        $0.font = .pretendardMedium(size: 16)
+        $0.textColor = .labelNeutral
         $0.text = "~"
     }
     
     let endDateTextField = UITextField().then {
-        $0.textColor = DSKitAsset.Colors.text.color
-        $0.font = UIFont.gothic(style: .Light, size: 14)
+        $0.textColor = .labelNeutral
+        $0.font = .pretendardRegular(size: 16)
         $0.textAlignment = .center
         $0.layer.cornerRadius = Constant.Design.cornerRadius
         $0.setPlaceholder(text: "종료일")
-        $0.backgroundColor = .lightGray
     }
     
     let successLabel = UILabel().then {
         $0.text = "성공 기준 횟수를 정해주세요"
-        $0.font = .gothic(style: .Medium, size: 16)
-        $0.textColor = DSKitAsset.Colors.text.color
+        $0.font = .pretendardSemiBold(size: 20)
+        $0.textColor = .labelStrong
     }
     
     let successTextField = UITextField().then {
         $0.textAlignment = .center
-        $0.backgroundColor = .lightGray
         $0.keyboardType = .numberPad
-        $0.layer.cornerRadius = Constant.Design.cornerRadius
         $0.addDoneButtonOnKeyboard()
         $0.text = "1"
-        $0.textColor = DSKitAsset.Colors.text.color
-        $0.font = UIFont.gothic(style: .Light, size: 16)
+        $0.textColor = .labelNeutral
+        $0.font = .pretendardMedium(size: 16)
     }
     let successCountLabel = UILabel().then {
-        $0.font = UIFont.gothic(style: .Medium, size: 16)
-        $0.textColor = DSKitAsset.Colors.text.color
+        $0.font = .pretendardMedium(size: 16)
+        $0.textColor = .labelStrong
         $0.text = "회"
     }
     
     let alarmLabel = UILabel().then {
-        $0.font = UIFont.gothic(style: .Medium, size: 16)
-        $0.textColor = DSKitAsset.Colors.text.color
+        $0.font = .pretendardSemiBold(size: 20)
+        $0.textColor = .labelStrong
         $0.text = "알람을 설정해주세요"
     }
 
@@ -120,8 +113,8 @@ final class NewTaskView: BaseView {
     }
     
     lazy var alarmTimeLabel = UILabel().then {
-        $0.font = .gothic(style: .Light, size: 14)
-        $0.textColor = .tintColor
+        $0.font = .pretendardMedium(size: 16)
+        $0.textColor = .positive
         $0.textAlignment = .left
     }
     
@@ -187,18 +180,19 @@ final class NewTaskView: BaseView {
     
     override init(frame: CGRect) {
         super.init(frame: frame)
+        configure()
+        setConstraints()
     }
     
     required init?(coder: NSCoder) {
         fatalError()
     }
     
-    
-    override func configure() {
+    func configure() {
         [topHorizontalStackView, newTaskTitleTextfield, newTaskImageLabel, newTaskImageView, imageAddButton, imageAddView, dateLabel, datePickStackView, termLabel, successLabel, successStackView, alarmStackView, alarmTimeLabel].forEach{ self.addSubview($0) }
     }
     //MARK: Constraints 
-    override func setConstraints() {
+    func setConstraints() {
         
         topHorizontalStackView.snp.makeConstraints { make in
             make.top.equalTo(self.safeAreaLayoutGuide).offset(8)

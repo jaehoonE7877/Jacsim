@@ -11,6 +11,9 @@ import DSKit
 
 final class TaskDetailViewController: BaseViewController {
     
+    //MARK: - Public
+    var passPreVC: (()-> Void)?
+    
     //MARK: Property
     let mainView = TaskDetailView()
     let repository = JacsimRepository.shared
@@ -47,9 +50,12 @@ final class TaskDetailViewController: BaseViewController {
         repository.checkIsSuccess(item: task)
         
         if task.success - repository.checkCertified(item: task) > 0 {
-            mainView.successLabel.text = "작심 성공까지 \(task.success - repository.checkCertified(item: task))회 남았습니다!"
+            let front = "작심 성공까지".heading3(color: .labelNormal, alignment: .center)
+            let count = " \(task.success - repository.checkCertified(item: task)) 회".heading3(color: .primaryNormal, alignment: .center)
+            let last = " 남았습니다!".heading3(color: .labelNormal, alignment: .center)
+            mainView.successLabel.attributedText = front + count + last
         } else {
-            mainView.successLabel.text = "목표를 달성했습니다! 끝까지 힘내세요!!"
+            mainView.successLabel.attributedText = "🎉 목표를 달성했습니다! 🎉".heading3(color: .positive, alignment: .center)
         }
         
         DispatchQueue.main.async {
@@ -92,11 +98,11 @@ final class TaskDetailViewController: BaseViewController {
     }
     
     override func setNavigationController() {
-        
-        navigationController?.navigationBar.backItem?.backButtonTitle = ""
-        navigationItem.rightBarButtonItem = UIBarButtonItem(title: nil, image: UIImage.menu, menu: reviseButtonTapped())
-        
-        navigationController?.navigationBar.tintColor = DSKitAsset.Colors.text.color
+        super.setNavigationController()
+        setBackButton(type: .pop)
+        let image = DSKitAsset.Assets.squareMore.image
+        navigationItem.rightBarButtonItem = UIBarButtonItem(image: image, menu: reviseButtonTapped())
+        navigationItem.rightBarButtonItem?.tintColor = .labelStrong
     }
     
     private func reviseButtonTapped() -> UIMenu {
@@ -129,19 +135,22 @@ final class TaskDetailViewController: BaseViewController {
 //            vc.task = self.task
 //            self.transitionViewController(viewController: vc, transitionStyle: .presentFullNavigation)
 //        }
-        let deletealarm = UIAction(title: "알람 끄기", image: UIImage.alarmDelete) { [weak self] _ in
+        let image = DSKitAsset.Assets.bell.image
+        let deletealarm = UIAction(title: "알람 끄기", image: image) { [weak self] _ in
             guard let self = self else { return }
             let task = self.viewModel._task
             self.showAlertMessage(title: "알람을 끄시겠습니까?", message: nil, button: "확인", cancel: "취소") { _ in
                 
                 self.repository.deleteAlarm(item: task)
                 
-                self.navigationController?.popViewController(animated: true)
+                self.navigationController?.popViewController(animated: true) {
+                    self.passPreVC?()
+                }
             }
             
         }
-        
-        let quit = UIAction(title: "작심 그만두기", image: UIImage.trash , attributes: .destructive) { [weak self]_ in
+        let trashImage = DSKitAsset.Assets.trash.image.withRenderingMode(.alwaysTemplate)
+        let quit = UIAction(title: "작심 그만두기", image: trashImage, attributes: .destructive) { [weak self]_ in
             guard let self = self else { return }
             self.showAlertMessage(title: "해당 작심을 그만두실 건가요?", message: "기존에 저장한 데이터들은 사라집니다.", button: "확인", cancel: "취소") { _ in
                
@@ -162,7 +171,9 @@ final class TaskDetailViewController: BaseViewController {
                     self.repository.deleteJacsim(item: task)
                     
                 }
-                self.navigationController?.popViewController(animated: true)
+                self.navigationController?.popViewController(animated: true) {
+                    self.passPreVC?()
+                }
             }
            
         }
@@ -215,7 +226,7 @@ extension TaskDetailViewController: UICollectionViewDelegate, UICollectionViewDa
         let vc = TaskUpdateViewController()
         
         let dateText = DateFormatType.toString(dayArray[indexPath.item], to: .fullWithoutYear)
-        
+        vc.title = dateText + "의 작심"
         guard DateFormatType.toString(Date(), to: .fullWithoutYear) == dateText else {
             showAlertMessage(title: "작심 인증하기", message: "인증 날짜가 아닙니다.\n확인해주세요!", button: "확인")
             return

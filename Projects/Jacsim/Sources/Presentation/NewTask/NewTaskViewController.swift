@@ -9,12 +9,17 @@ import UIKit
 import Photos
 import PhotosUI
 
+import Core
 import DSKit
 
 import CropViewController
 
 final class NewTaskViewController: BaseViewController {
     
+    //MARK:  public
+    var passPreVC: (() -> Void)?
+    
+    //Private
     let repository = JacsimRepository.shared
     let documentManager = DocumentManager.shared
     var alarm: Date?
@@ -23,20 +28,20 @@ final class NewTaskViewController: BaseViewController {
     
     let mainView = NewTaskView()
     
-    lazy var imagePicker: UIImagePickerController = {
+    private lazy var imagePicker: UIImagePickerController = {
             let view = UIImagePickerController()
             view.delegate = self
             return view
     }()
     
-    let configuration: PHPickerConfiguration = {
+    private let configuration: PHPickerConfiguration = {
         var configuration = PHPickerConfiguration()
         configuration.filter = .images
         configuration.selectionLimit = 1
         return configuration
     }()
     
-    lazy var phPicker: PHPickerViewController = {
+    private lazy var phPicker: PHPickerViewController = {
         let view = PHPickerViewController(configuration: configuration)
         view.delegate = self
         return view
@@ -56,7 +61,6 @@ final class NewTaskViewController: BaseViewController {
     }
     
     override func configure() {
-        
 
         [mainView.newTaskTitleTextfield, mainView.startDateTextField, mainView.endDateTextField, mainView.successTextField].forEach { $0.delegate = self }
         [mainView.newTaskTitleTextfield, mainView.startDateTextField, mainView.endDateTextField].forEach { $0.returnKeyType = .done }
@@ -72,15 +76,11 @@ final class NewTaskViewController: BaseViewController {
     }
     
     override func setNavigationController() {
+        super.setNavigationController()
+        setBackButton(type: .dismiss)
         self.title = "새로운 작심"
-        
-        navigationController?.navigationBar.tintColor = DSKitAsset.Colors.text.color
-        navigationItem.leftBarButtonItem = UIBarButtonItem(image: UIImage.xmark, style: .plain, target: self, action: #selector(backButtonTapped))
         navigationItem.rightBarButtonItem = UIBarButtonItem(title: "저장", style: .plain, target: self, action: #selector(saveButtonTapped))
-        let appearance = UINavigationBarAppearance()
-        appearance.backgroundColor = .backgroundNormal
-        self.navigationController?.navigationBar.standardAppearance = appearance
-        self.navigationController?.navigationBar.scrollEdgeAppearance = appearance
+        navigationItem.rightBarButtonItem?.tintColor = .labelStrong
     }
     
     private func tapGesture(){
@@ -90,8 +90,8 @@ final class NewTaskViewController: BaseViewController {
     
     //MARK: UIMenu
     private func addImageButtonTapped() -> UIMenu {
-        
-        let camera = UIAction(title: "카메라", image: UIImage.camera) { [weak self]_ in
+        let cameraImage = DSKitAsset.Assets.camera.image.withTintColor(.labelNormal)
+        let camera = UIAction(title: "카메라", image: cameraImage) { [weak self]_ in
             guard let self = self else { return }
             switch AVCaptureDevice.authorizationStatus(for: .video) {
             case .authorized:
@@ -121,7 +121,8 @@ final class NewTaskViewController: BaseViewController {
             }
             
         }
-        let gallery = UIAction(title: "갤러리", image: UIImage.photo) { [weak self] _ in
+        let galleryImage = DSKitAsset.Assets.gallery.image.withTintColor(.labelNormal)
+        let gallery = UIAction(title: "갤러리", image: galleryImage) { [weak self] _ in
             guard let self = self else { return }
             self.present(self.phPicker, animated: true)
         }
@@ -134,13 +135,10 @@ final class NewTaskViewController: BaseViewController {
         view.endEditing(true)
     }
     
-    @objc func backButtonTapped(){
-        self.dismiss(animated: true)
-    }
     // 수정 화면에서 알람이 등록되어 있을 때, 알림이 없을 때로 나눠서 생각해보기
     @objc func alarmSwitchTapped(){
         
-        if !mainView.alarmSwitch.isOn {
+        if mainView.alarmSwitch.isOff {
             
             mainView.alarmTimeLabel.text = nil
             return
@@ -167,7 +165,7 @@ final class NewTaskViewController: BaseViewController {
                             }
                             
                             DispatchQueue.main.async {
-                                self.mainView.alarmTimeLabel.text = DateFormatType.toString(date, to: .time)
+                                self.mainView.alarmTimeLabel.text = date.convertToString(withFormat: .ahhmm)
                             }
                         }
                         
@@ -252,7 +250,9 @@ final class NewTaskViewController: BaseViewController {
             
             scheduleNotification(title: title, fireDate: fireDate)
            
-            dismiss(animated: true)
+            dismiss(animated: true) {
+                self.passPreVC?()
+            }
         } else {
            
             let task = UserJacsim(title: title, startDate: startDate, endDate: endDate, success: success, alarm: nil)
@@ -264,7 +264,9 @@ final class NewTaskViewController: BaseViewController {
             self.documentManager.saveImageToDocument(fileName: "\(String(describing: task.id)).jpg", image: mainView.newTaskImageView.image ?? DSKitAsset.Assets.jacsim.image)
             repository.addJacsim(item: task)
             
-            dismiss(animated: true)
+            dismiss(animated: true) {
+                self.passPreVC?()
+            }
         }
         
     }
@@ -280,11 +282,11 @@ extension NewTaskViewController: UITextFieldDelegate {
     
     func textField(_ textField: UITextField, shouldChangeCharactersIn range: NSRange, replacementString string: String) -> Bool {
         guard let currentText = textField.text else { return false }
-        guard let stringRange = Range(range, in: currentText) else { return false }
+//        guard let stringRange = Range(range, in: currentText) else { return false }
         
-        let changedText = currentText.replacingCharacters(in: stringRange, with: string)
-        mainView.titleCountLabel.text = "\(changedText.count)/20"
-        return changedText.count <= 19
+//        let changedText = currentText.replacingCharacters(in: stringRange, with: string)
+        mainView.titleCountLabel.text = "\(currentText.count)/20"
+        return true
     }
     
     func textFieldDidBeginEditing(_ textField: UITextField) {

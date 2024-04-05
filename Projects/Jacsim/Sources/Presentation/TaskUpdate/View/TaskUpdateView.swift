@@ -9,7 +9,7 @@ import UIKit
 
 import DSKit
 
-final class TaskUpdateView: BaseView {
+final class TaskUpdateView: UIView {
     
     //MARK: Property
     
@@ -21,38 +21,41 @@ final class TaskUpdateView: BaseView {
     }
     
     let imageAddButton = UIButton(type: .system).then {
-        $0.setImage(UIImage.addButton, for: .normal)
         $0.showsMenuAsPrimaryAction = true
-        $0.tintColor = DSKitAsset.Colors.button.color
+    }
+    
+    private let imageAddView: UIImageView = .init().then {
+        $0.image = DSKitAsset.Assets.circlePlus.image.withRenderingMode(.alwaysTemplate)
+        $0.tintColor = .primaryNormal
+        $0.isUserInteractionEnabled = false
     }
     
     let memoLabel = UILabel().then {
-        $0.font = .gothic(style: .Medium, size: 20)
-        $0.textColor = DSKitAsset.Colors.text.color
+        $0.font = .pretendardBold(size: 20)
+        $0.textColor = .labelStrong
         $0.text = "한 줄 메모"
     }
     
     let memoCountLabel = UILabel().then {
-        $0.font = .gothic(style: .Light, size: 12)
-        $0.textColor = DSKitAsset.Colors.text.color
+        $0.font = .pretendardMedium(size: 14)
+        $0.textColor = .labelNeutral
         $0.text = "0/20"
         $0.textAlignment = .right
     }
     
     let memoTextfield = UITextField().then {
-        $0.backgroundColor = .lightGray
+        $0.backgroundColor = .clear
         $0.setPlaceholder(text: "한 줄 메모를 입력해주세요")
         $0.textAlignment = .center
-        $0.layer.cornerRadius = Constant.Design.cornerRadius
-        $0.textColor = DSKitAsset.Colors.text.color
-        $0.font = UIFont.gothic(style: .Light, size: 14)
+        $0.textColor = .labelNeutral
+        $0.font = .pretendardRegular(size: 14)
     }
     
     let certifyButton = UIButton().then {
         $0.setTitle("인증하겠습니다!", for: .normal)
-        $0.setTitleColor(DSKitAsset.Colors.text.color, for: .normal)
+        $0.setTitleColor(.labelStrong, for: .normal)
         $0.layer.cornerRadius = Constant.Design.cornerRadius
-        $0.backgroundColor = DSKitAsset.Colors.button.color
+        $0.backgroundColor = .primaryHeavy
     }
     
     lazy var memoStackView = UIStackView(arrangedSubviews: [memoLabel, memoCountLabel]).then {
@@ -72,17 +75,20 @@ final class TaskUpdateView: BaseView {
     
     override init(frame: CGRect) {
         super.init(frame: frame)
+        configure()
+        setConstraints()
     }
     
     required init?(coder: NSCoder) {
         fatalError()
     }
     
-    override func configure() {
+    func configure() {
         [certifyImageView, imageAddButton, memoStackView, memoTextfield, certifyButton].forEach { self.addSubview($0)}
+        imageAddButton.addSubview(imageAddView)
     }
     
-    override func setConstraints() {
+    func setConstraints() {
         
         certifyImageView.snp.makeConstraints { make in
             make.top.equalTo(self.safeAreaLayoutGuide).offset(8)
@@ -114,6 +120,10 @@ final class TaskUpdateView: BaseView {
             make.centerX.equalToSuperview()
             make.width.equalTo(certifyImageView.snp.width)
             make.height.equalTo(44)
+        }
+        
+        imageAddView.snp.makeConstraints { make in
+            make.edges.equalToSuperview()
         }
     }
     

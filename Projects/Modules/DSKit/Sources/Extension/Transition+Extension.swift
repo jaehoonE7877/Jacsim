@@ -7,7 +7,7 @@
 
 import UIKit
 
-enum TransitionStyle {
+public enum TransitionStyle {
     case present
     case presentNavigation
     case presentFullNavigation
@@ -16,7 +16,7 @@ enum TransitionStyle {
 
 extension UIViewController {
     
-    func transitionViewController<T: UIViewController>(viewController vc: T, transitionStyle: TransitionStyle){
+    public func transitionViewController<T: UIViewController>(viewController vc: T, transitionStyle: TransitionStyle){
         let nav = UINavigationController(rootViewController: vc)
         
         switch transitionStyle {

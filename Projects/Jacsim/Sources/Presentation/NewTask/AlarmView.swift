@@ -9,7 +9,7 @@ import UIKit
 
 import DSKit
 
-final class AlarmView: BaseView {
+final class AlarmView: UIView {
     
     //MARK: Property (xmark, 확인, DatePicker)
     let view = UIView().then {
@@ -22,24 +22,27 @@ final class AlarmView: BaseView {
     }
     
     let xButton = UIButton().then {
-        $0.setImage(UIImage.xmark, for: .normal)
-        $0.tintColor = DSKitAsset.Colors.text.color
+        let image = DSKitAsset.Assets.close.image.withRenderingMode(.alwaysTemplate)
+        $0.setImage(image, for: .normal)
+        $0.tintColor = .labelNormal
     }
     
     let saveButton = UIButton().then {
         $0.setTitle("저장", for: .normal)
-        $0.setTitleColor(DSKitAsset.Colors.text.color, for: .normal)
+        $0.setTitleColor(.labelNormal, for: .normal)
     }
     
     lazy var datePicker = UIDatePicker().then {
         $0.preferredDatePickerStyle = .wheels
         $0.datePickerMode = .time
         
-        $0.locale = Locale(identifier: "ko_KR")
+        $0.locale = .KR
     }
     
     override init(frame: CGRect) {
         super.init(frame: frame)
+        configure()
+        setConstraints()
         self.view.backgroundColor = .clear
     }
     
@@ -47,13 +50,13 @@ final class AlarmView: BaseView {
         fatalError()
     }
     
-    override func configure() {
+    func configure() {
         self.addSubview(view)
         view.addSubview(backgroundView)
         [xButton, saveButton, datePicker].forEach { backgroundView.addSubview($0) }
     }
     
-    override func setConstraints() {
+    func setConstraints() {
         
         view.snp.makeConstraints { make in
             make.edges.equalTo(self.safeAreaLayoutGuide)

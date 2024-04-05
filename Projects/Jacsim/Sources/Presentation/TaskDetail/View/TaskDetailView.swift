@@ -9,7 +9,7 @@ import UIKit
 
 import DSKit
 
-class TaskDetailView: BaseView {
+final class TaskDetailView: UIView {
     
     //MARK: UIImage, UILabel, [UILabel, UILabel], [UILabel, UILabel], UICollectionView
     let mainImage = UIImageView().then {
@@ -19,55 +19,55 @@ class TaskDetailView: BaseView {
     }
     
     let startLabel = UILabel().then {
-        $0.font = UIFont.gothic(style: .Medium, size: 14)
+        $0.font = .pretendardBold(size: 14)
         $0.textColor = DSKitAsset.Colors.text.color
         $0.text = "시작일"
     }
     
     let startDateLabel = UILabel().then {
-        $0.font = UIFont.gothic(style: .Medium, size: 14)
+        $0.font = .pretendardMedium(size: 14)
         $0.textColor = DSKitAsset.Colors.text.color
         $0.textAlignment = .right
     }
     
     let endLabel = UILabel().then {
-        $0.font = UIFont.gothic(style: .Medium, size: 14)
+        $0.font = .pretendardBold(size: 14)
         $0.textColor = DSKitAsset.Colors.text.color
         $0.text = "종료일"
     }
     
     let endDateLabel = UILabel().then {
-        $0.font = UIFont.gothic(style: .Medium, size: 14)
+        $0.font = .pretendardMedium(size: 14)
         $0.textColor = DSKitAsset.Colors.text.color
         $0.textAlignment = .right
     }
     
     let alarmLabel = UILabel().then {
-        $0.font = UIFont.gothic(style: .Medium, size: 14)
+        $0.font = .pretendardBold(size: 14)
         $0.textColor = DSKitAsset.Colors.text.color
         $0.text = "알람 시간"
     }
     
     let alarmTimeLabel = UILabel().then {
-        $0.font = UIFont.gothic(style: .Medium, size: 14)
+        $0.font = .pretendardMedium(size: 14)
         $0.textColor = DSKitAsset.Colors.text.color
         $0.textAlignment = .right
     }
     
     let successLabel = UILabel().then {
         $0.textAlignment = .center
-        $0.font = UIFont.gothic(style: .Medium, size: 18)
-        $0.textColor = DSKitAsset.Colors.text.color
+        $0.font = .pretendardBold(size: 18)
+        $0.textColor = .primaryStrong
     }
     
     let lineView = UIView().then {
-        $0.backgroundColor = DSKitAsset.Colors.text.color
+        $0.backgroundColor = .labelAssistive
     }
     
     let certifyLabel = UILabel().then {
         $0.text = "인증 사진"
-        $0.font = UIFont.gothic(style: .Medium, size: 18)
-        $0.textColor = DSKitAsset.Colors.text.color
+        $0.font = .pretendardBold(size: 18)
+        $0.textColor = .labelStrong
     }
     
     let collectionView: UICollectionView = {
@@ -109,17 +109,19 @@ class TaskDetailView: BaseView {
     
     override init(frame: CGRect) {
         super.init(frame: frame)
+        configure()
+        setConstraints()
     }
     
     required init?(coder: NSCoder) {
         fatalError()
     }
     
-    override func configure() {
+    func configure() {
         [mainImage, startStackView, endStackView, alarmStackView, successLabel, lineView, certifyLabel, collectionView].forEach { self.addSubview($0) }
     }
     
-    override func setConstraints() {
+    func setConstraints() {
         
         mainImage.snp.makeConstraints { make in
             make.top.equalTo(self.safeAreaLayoutGuide).offset(8)

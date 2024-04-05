@@ -7,7 +7,7 @@
 
 import UIKit
 // DatePicker넣는 TextField
-extension UITextField {
+public extension UITextField {
     
     func setInputViewDatePicker(target: Any, selector: Selector) {
         
@@ -49,7 +49,7 @@ extension UITextField {
     }
     
     func setPlaceholder(text: String) {
-        attributedPlaceholder = NSAttributedString(string: text, attributes: [.foregroundColor: UIColor.lightGray])
+        attributedPlaceholder = NSAttributedString(string: text, attributes: [.foregroundColor: UIColor.labelAssistive])
     }
     
 }

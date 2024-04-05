@@ -53,23 +53,16 @@ final class AllTaskViewController: BaseViewController {
     
     override func setNavigationController() {
         super.setNavigationController()
+        setBackButton(type: .dismiss)
         self.title = "작심 모아보기"
-        let image = DSKitAsset.Assets.close.image.withRenderingMode(.alwaysTemplate)
-        navigationItem.leftBarButtonItem = UIBarButtonItem(image: image, style: .plain, target: self, action: #selector(xButtonTapped))
-        navigationItem.leftBarButtonItem?.tintColor = .labelNormal
-    }
-    
-    @objc func xButtonTapped(){
-        self.dismiss(animated: true)
     }
     
     @objc func foldButtonTapped(sender: UIButton){
         foldValue[sender.tag].toggle()
         DispatchQueue.main.async {
-            self.tableView.reloadData()
+            self.tableView.reloadSections(IndexSet(integer: sender.tag), with: .automatic)
         }
     }
-    
 }
 
 extension AllTaskViewController: UITableViewDelegate, UITableViewDataSource {
@@ -79,7 +72,16 @@ extension AllTaskViewController: UITableViewDelegate, UITableViewDataSource {
     }
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return viewModel.numberOfRowsInSection(section: section)
+        switch section {
+        case 0:
+            return self.viewModel.fetchTasks.count
+        case 1:
+            return self.viewModel.fetchSuccess.count
+        case 2:
+            return self.viewModel.fetchFail.count
+        default:
+            return 0
+        }
     }
     
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
@@ -110,7 +112,21 @@ extension AllTaskViewController: UITableViewDelegate, UITableViewDataSource {
     
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        viewModel.cellForRowAt(tableView, indexPath: indexPath)
+        guard let cell = tableView.dequeueReusableCell(withIdentifier: JacsimTableViewCell.reuseIdentifier) as? JacsimTableViewCell else { return UITableViewCell() }
+        
+        cell.backgroundColor = .clear
+        
+        switch indexPath.section {
+        case 0:
+            cell.titleLabel.text = self.viewModel.fetchTasks[indexPath.item].title
+        case 1:
+            cell.titleLabel.text = self.viewModel.fetchSuccess[indexPath.item].title
+        case 2:
+            cell.titleLabel.text = self.viewModel.fetchFail[indexPath.item].title
+        default:
+            cell.titleLabel.text = ""
+        }
+        return cell
     }
     
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {

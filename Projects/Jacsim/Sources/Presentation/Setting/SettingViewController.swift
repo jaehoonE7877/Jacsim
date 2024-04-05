@@ -43,6 +43,11 @@ final class SettingViewController: BaseViewController {
             make.centerX.equalToSuperview()
         }
     }
+    
+    override func setNavigationController() {
+        super.setNavigationController()
+        setBackButton(type: .pop)
+    }
 }
 
 extension SettingViewController: UITableViewDelegate, UITableViewDataSource {
@@ -90,6 +95,7 @@ extension SettingViewController: UITableViewDelegate, UITableViewDataSource {
                        }
                 
                 let vc = AcknowListViewController(acknowledgements: acknowList.acknowledgements, style: .insetGrouped)
+                vc.view.backgroundColor = .backgroundNormal
                 navigationController?.pushViewController(vc, animated: true)
             default:
                 return

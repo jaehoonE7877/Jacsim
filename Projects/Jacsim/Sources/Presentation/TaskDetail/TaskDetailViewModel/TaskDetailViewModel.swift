@@ -9,6 +9,7 @@ import UIKit
 import RxCocoa
 import RxSwift
 
+import Core
 import DSKit
 
 final class TaskDetailViewModel {

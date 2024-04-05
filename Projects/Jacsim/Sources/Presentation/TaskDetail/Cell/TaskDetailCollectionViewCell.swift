@@ -9,46 +9,47 @@ import UIKit
 
 import DSKit
 
-final class TaskDetailCollectionViewCell: BaseCollectionViewCell {
+final class TaskDetailCollectionViewCell: UICollectionViewCell {
     //MARK: - Private Property
-   let certifiedImageView = UIImageView().then {
-       $0.backgroundColor = .lightGray
+    let certifiedImageView = UIImageView().then {
+        $0.clipsToBounds = true
         $0.layer.cornerRadius = Constant.Design.cornerRadius
-        $0.layer.masksToBounds = true
         $0.contentMode = .scaleAspectFill
     }
     
     private let lineView = UIView().then {
-        $0.backgroundColor = DSKitAsset.Colors.text.color
+        $0.backgroundColor = .labelAssistive
     }
     
     let dateLabel = UILabel().then {
-        $0.font = UIFont.gothic(style: .Medium, size: 12)
-        $0.textColor = DSKitAsset.Colors.text.color
+        $0.font = .pretendardMedium(size: 12)
+        $0.textColor = .labelNeutral
     }
     
     let certifiedMemo = UILabel().then {
-        $0.font = UIFont.gothic(style: .Light, size: 12)
-        $0.textColor = DSKitAsset.Colors.text.color
+        $0.font = .pretendardRegular(size: 12)
+        $0.textColor = .labelStrong
         $0.numberOfLines = 2
     }
     //MARK: - Initializer
     override init(frame: CGRect) {
         super.init(frame: frame)
+        configure()
+        setConstraints()
         self.layer.borderWidth = Constant.Design.borderWidth
         self.layer.cornerRadius = Constant.Design.cornerRadius
-        self.layer.borderColor = DSKitAsset.Colors.text.color.cgColor
+        self.layer.borderColor = .labelStrong
     }
     
     required init?(coder: NSCoder) {
         fatalError()
     }
     //MARK: - Override Method
-    override func configure() {
+    func configure() {
         [certifiedImageView, lineView, dateLabel, certifiedMemo].forEach { contentView.addSubview($0) }
     }
     
-    override func setConstraints() {
+    func setConstraints() {
         
         certifiedImageView.snp.makeConstraints { make in
             make.top.leading.equalTo(contentView).offset(8)

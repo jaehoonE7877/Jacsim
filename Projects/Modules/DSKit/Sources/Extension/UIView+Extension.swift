@@ -7,7 +7,7 @@
 
 import UIKit
 
-extension UIView {
+public extension UIView {
     /**
      여러 개의 뷰를 현재 뷰에 추가합니다.
      

@@ -7,6 +7,7 @@
 
 import UIKit
 
+import Core
 import DSKit
 
 import FSCalendar
@@ -23,7 +24,7 @@ final class HomeViewController: BaseViewController {
         $0.delegate = self
         $0.dataSource = self
         $0.appearance.headerMinimumDissolvedAlpha = 0.0
-        $0.locale = Locale(identifier: "ko_KR")
+        $0.locale = .KR
         $0.headerHeight = 40
         $0.appearance.subtitleOffset = CGPoint(x: 0, y: 6)
         $0.appearance.headerDateFormat = "yyyy년 M월"
@@ -124,10 +125,11 @@ final class HomeViewController: BaseViewController {
     
     override func setNavigationController() {
         super.setNavigationController()
+        setBackButton(type: .none)
         title = "작심"
-        navigationController?.navigationBar.tintColor = .labelNormal
-        navigationItem.rightBarButtonItem = UIBarButtonItem(image: .gear, style: .plain, target: self, action: #selector(moveToSetting))
-        navigationItem.titleView?.tintColor = .labelNormal
+        let image = DSKitAsset.Assets.setting.image
+        navigationItem.rightBarButtonItem = UIBarButtonItem(image: image, style: .plain, target: self, action: #selector(moveToSetting))
+        navigationItem.rightBarButtonItem?.tintColor = .labelStrong
     }
     
     
@@ -141,6 +143,13 @@ final class HomeViewController: BaseViewController {
         floaty.itemImageColor = .labelNormal
         
         floaty.addItem("새로운 작심", icon: DSKitAsset.Assets.pencil.image.withRenderingMode(.alwaysTemplate)) { item in
+            let vc = NewTaskViewController()
+            vc.passPreVC = { [weak self] in
+                guard let self else { return }
+                self.viewModel.fetch()
+                self.viewModel.checkIsDone()
+                self.tableView.reloadData()
+            }
             self.transitionViewController(viewController: NewTaskViewController(), transitionStyle: .presentFullNavigation)
         }
                        
@@ -240,8 +249,12 @@ extension HomeViewController: UITableViewDelegate, UITableViewDataSource {
         let viewModel = TaskDetailViewModel(task: viewModel.tasks.value[indexPath.item])
         
         let vc = TaskDetailViewController(viewModel: viewModel)
-        //객체지향적으로 bad
-        // 캡슐화()
+        vc.passPreVC = { [weak self] in
+            guard let self else { return }
+            self.viewModel.fetch()
+            self.viewModel.checkIsDone()
+            self.tableView.reloadData()
+        }
 //        vc.viewModel.task.value = viewModel.tasks.value[indexPath.row]
         vc.title = self.viewModel.tasks.value[indexPath.item].title
 //        vc.task = viewModel.tasks.value[indexPath.item]
@@ -281,23 +294,15 @@ extension HomeViewController: FSCalendarDelegate, FSCalendarDataSource {
     }
     
     func calendar(_ calendar: FSCalendar, didSelect date: Date, at monthPosition: FSCalendarMonthPosition) {
-        
         viewModel.fetchDate(date: date)
-        
-        
+
         if monthPosition == .previous || monthPosition == .next {
             calendar.setCurrentPage(date, animated: true)
         }
     }
     
     func calendar(_ calendar: FSCalendar, titleFor date: Date) -> String? {
-        
-        switch DateFormatType.toString(date, to: .full) {
-        case DateFormatType.toString(Date(), to: .full):
-            return "오늘"
-        default:
-            return nil
-        }
+        return date.isInToday ? "오늘" : nil
     }
     
 }
