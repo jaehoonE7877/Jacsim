@@ -9,7 +9,7 @@ import ProjectDescription
 
 public extension Project {
     static let appInfoPlist: [String: Plist.Value] = [
-        "CFBundleShortVersionString": "1.0.0",
+        "CFBundleShortVersionString": "\(Environment.appVersion)",
         "CFBundleDevelopmentRegion": "ko",
         "CFBundleVersion": "1",
         "CFBundleIdentifier": "com.jaehoon.jaksim",
