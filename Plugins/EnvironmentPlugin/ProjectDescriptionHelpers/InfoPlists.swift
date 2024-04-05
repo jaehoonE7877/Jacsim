@@ -32,7 +32,9 @@ public extension Project {
             "Item 2": "Pretendard-Medium.ttf",
             "Item 3": "Pretendard-Regular.ttf",
         ],
-        "UIBackgroundModes": ["remote-notification"]
+        "UIBackgroundModes": ["remote-notification"],
+        "NSCameraUsageDescription": "작심 하기, 작심 인증을 위해 카메라 접근 권한이 필요합니다.",
+        "NSPhotoLibraryUsageDescription": "작심 하기, 작심 인증을 위해 앨범 접근 권한이 필요합니다."
     ]
     
     static let demoInfoPlist: [String: Plist.Value] = [
@@ -59,5 +61,7 @@ public extension Project {
             "Item 2": "Pretendard-Medium.ttf",
             "Item 3": "Pretendard-Regular.ttf",
         ],
+        "NSCameraUsageDescription": "작심 인증을 위해 카메라 접근 권한이 필요합니다.",
+        "NSPhotoLibraryUsageDescription": "작심 하기, 작심 인증을 위해 앨범 접근 권한이 필요합니다."
     ]
 }

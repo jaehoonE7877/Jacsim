@@ -81,7 +81,6 @@ final class TaskUpdateViewController: BaseViewController {
                 }
                 DispatchQueue.main.async {
                     self.imagePicker.sourceType = .camera
-                    self.imagePicker.allowsEditing = true
                     self.present(self.imagePicker, animated: true)
                 }
             case .notDetermined:
@@ -90,7 +89,6 @@ final class TaskUpdateViewController: BaseViewController {
                     if granted {
                         DispatchQueue.main.async {
                             self.imagePicker.sourceType = .camera
-                            self.imagePicker.allowsEditing = true
                             self.present(self.imagePicker, animated: true)
                         }
                     }

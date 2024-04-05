@@ -10,6 +10,7 @@ import UserNotifications
 
 import Firebase
 import FirebaseCore
+import FirebaseCrashlytics
 import FirebaseMessaging
 import IQKeyboardManagerSwift
 
@@ -20,7 +21,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate{
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         
         FirebaseApp.configure()
-        
+        Crashlytics.crashlytics().setCrashlyticsCollectionEnabled(true)
         if #available(iOS 10.0, *) {
           // For iOS 10 display notification (sent via APNS)
           UNUserNotificationCenter.current().delegate = self
