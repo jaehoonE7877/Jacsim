@@ -44,7 +44,7 @@ let package = Package(
 
         //MARK: - ReactiveX
         .package(url: "https://github.com/ReactiveX/RxSwift.git", from: "6.6.0"),
-
+        .package(url: "https://github.com/RxSwiftCommunity/RxGesture", from: "4.0.4"),
         //MARK: - Test
         .package(url: "https://github.com/Quick/Quick", from: "7.3.0"),
         .package(url: "https://github.com/Quick/Nimble", from: "13.0.0"),

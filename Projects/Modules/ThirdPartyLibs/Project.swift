@@ -26,5 +26,6 @@ let project = Project.makeModule(
         //MARK: - ReactiveX
         .SPM.RxCocoa,
         .SPM.RxSwift,
+        .SPM.RxGesture,
     ]
 )

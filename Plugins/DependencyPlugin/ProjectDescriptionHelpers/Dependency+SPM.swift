@@ -32,6 +32,7 @@ public extension TargetDependency.SPM {
     //MARK: - ReactiveX
     static let RxSwift = TargetDependency.external(name: "RxSwift", condition: .none)
     static let RxCocoa = TargetDependency.external(name: "RxCocoa", condition: .none)
+    static let RxGesture = TargetDependency.external(name: "RxGesture", condition: .none)
     //MARK: - Test
     static let Nimble = TargetDependency.external(name: "Nimble", condition: .none)
     static let Quick = TargetDependency.external(name: "Quick", condition: .none)
