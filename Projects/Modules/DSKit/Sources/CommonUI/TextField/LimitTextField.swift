@@ -8,18 +8,18 @@
 
 import UIKit
 
-protocol HasLemitLength: UITextField {
-    var lemitCount: Int { get set }
+protocol HasLimitLength: UITextField {
+    var limitCount: Int { get set }
     func setMaxLength()
 }
 
-open class LemitTextField: UITextField, HasLemitLength {
-    public var lemitCount: Int
+open class LimitTextField: UITextField, HasLimitLength {
+    public var limitCount: Int
     
-    public init(lemitCount: Int) {
-        self.lemitCount = lemitCount
+    public init(limitCount: Int) {
+        self.limitCount = limitCount
         super.init(frame: .zero)
-        if lemitCount != 0 {
+        if limitCount != 0 {
             self.setMaxLength()
         }
     }
@@ -29,18 +29,18 @@ open class LemitTextField: UITextField, HasLemitLength {
     }
 }
 
-extension LemitTextField {
+extension LimitTextField {
     func setMaxLength() {
-        objc_setAssociatedObject(self, &lemitCount, lemitCount, .OBJC_ASSOCIATION_RETAIN)
+        objc_setAssociatedObject(self, &limitCount, limitCount, .OBJC_ASSOCIATION_RETAIN)
         addTarget(self, action: #selector(checkMaxLength), for: .editingChanged)
     }
     
     @objc
     private func checkMaxLength(textField: UITextField) {
         guard let prospectiveText = self.text,
-              prospectiveText.count > lemitCount else { return }
+              prospectiveText.count > limitCount else { return }
         let selection = selectedTextRange
-        let maxCharIndex = prospectiveText.index(prospectiveText.startIndex, offsetBy: lemitCount)
+        let maxCharIndex = prospectiveText.index(prospectiveText.startIndex, offsetBy: limitCount)
         text = String(prospectiveText[..<maxCharIndex])
         selectedTextRange = selection
     }
