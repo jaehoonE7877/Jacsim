@@ -143,6 +143,8 @@ final class HomeViewController: BaseViewController {
         floaty.itemImageColor = .labelNormal
         
         floaty.addItem("새로운 작심", icon: DSKitAsset.Assets.pencil.image.withRenderingMode(.alwaysTemplate)) { item in
+            let viewModel = JacsimNameViewModel()
+            let vc1 = JacsimNameViewController(viewModel: viewModel)
             let vc = NewTaskViewController()
             vc.passPreVC = { [weak self] in
                 guard let self else { return }
@@ -150,7 +152,7 @@ final class HomeViewController: BaseViewController {
                 self.viewModel.checkIsDone()
                 self.tableView.reloadData()
             }
-            self.transitionViewController(viewController: NewTaskViewController(), transitionStyle: .presentFullNavigation)
+            self.transitionViewController(viewController: vc1, transitionStyle: .presentFullNavigation)
         }
                        
         floaty.addItem("작심 모아보기", icon: DSKitAsset.Assets.list.image.withRenderingMode(.alwaysTemplate)) { item in

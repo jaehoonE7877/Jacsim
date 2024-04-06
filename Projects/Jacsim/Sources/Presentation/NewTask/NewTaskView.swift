@@ -25,7 +25,7 @@ final class NewTaskView: UIView {
         $0.text = "0/20"
     }
     
-    let newTaskTitleTextfield = LemitTextField(lemitCount: 20).then {
+    let newTaskTitleTextfield = LimitTextField(limitCount: 20).then {
         $0.setPlaceholder(text: "예시 - 아침에 일어나서 물 마시기")
         $0.textAlignment = .center
         $0.textColor = .labelNeutral

@@ -8,6 +8,8 @@
 import Foundation
 import UserNotifications
 
+import Core
+
 import RealmSwift
 
 /*
@@ -91,11 +93,11 @@ final class JacsimRepository: JacsimRepositoryProtocol {
     func deleteAlarm(item: UserJacsim) {
        
         guard let alarm = item.alarm else { return }
-        let alarmString = DateFormatType.toString(alarm, to: .fullWithTime)
+        let alarmString = alarm.convertToString(withFormat: .yyyyMDEEEEahhmm)
         notificationCenter.removePendingNotificationRequests(withIdentifiers: ["\(item.title)\(alarmString).starter", "\(item.title)\(alarmString).repeater"])
         
         do {
-            try localRealm.write{
+            try localRealm.write {
                 item.alarm = nil
             }
         } catch let error {
@@ -103,7 +105,7 @@ final class JacsimRepository: JacsimRepositoryProtocol {
         }
     }
     
-    func updateMemo(item: UserJacsim, index: Int, memo: String){
+    func updateMemo(item: UserJacsim, index: Int, memo: String) {
         do {
             try localRealm.write{
                 item.memoList[index].memo = memo
