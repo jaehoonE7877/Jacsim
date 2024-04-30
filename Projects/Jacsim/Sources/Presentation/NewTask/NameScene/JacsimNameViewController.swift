@@ -96,8 +96,10 @@ final class JacsimNameViewController: BaseViewController {
             .disposed(by: disposeBag)
         
         output.showJacsimImageView
-            .drive(with: self, onNext: { _self, jacsimName in
-                Log(jacsimName)
+            .drive(with: self, onNext: { _self, jacsim in
+                let viewModel = JacsimImageViewModel(jacsim: jacsim)
+                let vc = JacsimImageViewController(viewModel: viewModel)
+                _self.navigationController?.pushViewController(vc, animated: true)
             })
             .disposed(by: disposeBag)
         
@@ -112,6 +114,7 @@ final class JacsimNameViewController: BaseViewController {
 }
 
 extension JacsimNameViewController {
+    
     private func setObserver() {
         NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillShow), name: UIResponder.keyboardWillShowNotification, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillHide), name: UIResponder.keyboardWillHideNotification, object: nil)
