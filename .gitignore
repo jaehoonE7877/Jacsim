@@ -87,3 +87,7 @@ Derived/
 ### Projects ###
 *.xcodeproj
 *.xcworkspace
+
+### Docs ###
+AGENTS.md
+Docs/
