@@ -1,18 +1,15 @@
+## Secrets / Private
 APIKey.swift
-Jacsim/Resources
+Projects/Jacsim/Resources/GoogleService-Info.plist
+fastlane/.env
 
-Plugins/ConfigurationPlugin/.DS_Store
-Plugins/.DS_Store
-.DS_Store
-
-### macOS ###
-# General
+## macOS
 .DS_Store
 .AppleDouble
 .LSOverride
 
-# Icon must end with two
-AppIcon
+# Icon must end with two (matches Icon\r)
+Icon?
 
 # Thumbnails
 ._*
@@ -33,31 +30,20 @@ Network Trash Folder
 Temporary Items
 .apdisk
 
-### Xcode ###
-# Xcode
-#
-# gitignore contributors: remember to update Global/Xcode.gitignore, Objective-C.gitignore & Swift.gitignore
-
-## User settings
+## Xcode / Tuist generated
+# Do not commit generated projects/workspaces (Tuist will generate)
+*.xcodeproj
+*.xcworkspace
 xcuserdata/
 
-## compatibility with Xcode 8 and earlier (ignoring not required starting Xcode 9)
+# Legacy Xcode artifacts
 *.xcscmblueprint
 *.xccheckout
-
-## compatibility with Xcode 3 and earlier (ignoring not required starting Xcode 4)
-build/
-DerivedData/
 *.moved-aside
 *.pbxuser
-!default.pbxuser
 *.mode1v3
-!default.mode1v3
 *.mode2v3
-!default.mode2v3
 *.perspectivev3
-!default.perspectivev3
-
 ### XCConfig ###
 xcconfigs/
 .xcconfig
@@ -65,29 +51,26 @@ xcconfigs
 
 ### Firebase ###
 Projects/Jacsim/Resources/GoogleService-Info.plist
+# Derived outputs
+build/
+Derived/
+DerivedData/
+Projects/**/Derived/
 
-### Tuist managed dependencies ###
+## SwiftPM
 .build/
+.swiftpm/
+Package.resolved
 .package.resolved
 
-###DotEnv
-/fastlane/.env
+# Keep root Package.resolved tracked for reproducible builds
+# (no ignore rule here on purpose)
 
-### Tuist derived files ###
+## Tuist aux files
 graph.dot
-Derived/
 
-### Xcode Patch ###
-*.xcodeproj/*
-!*.xcodeproj/project.pbxproj
-!*.xcodeproj/xcshareddata/
-!*.xcworkspace/contents.xcworkspacedata
+## Misc
 /*.gcno
-
-### Projects ###
-*.xcodeproj
-*.xcworkspace
-
 ### Docs ###
 AGENTS.md
 Docs/
