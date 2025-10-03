@@ -57,7 +57,7 @@ final class NewTaskViewController: BaseViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        //print("Realm is located at:", repository.localRealm.configuration.fileURL!)
+        // SwiftData 사용: 별도 경로 출력 불필요
     }
     
     override func configure() {
@@ -182,7 +182,7 @@ final class NewTaskViewController: BaseViewController {
         }
     }
     
-    // MARK: Realm Create
+    // MARK: 저장
     @objc func saveButtonTapped(){
         
         if mainView.newTaskTitleTextfield.text == "" {
@@ -237,13 +237,13 @@ final class NewTaskViewController: BaseViewController {
                 return
             }
             
-            let task = UserJacsim(title: title, startDate: startDate, endDate: endDate, success: success, alarm: fireDate)
+            var memos: [Certified] = []
             for _ in 0...calculateDays(startDate: startDate, endDate: endDate) - 1 {
                 let certified = Certified(memo: "인증해주세요")
-                task.memoList.append(certified)
+                memos.append(certified)
             }
-            
-            self.documentManager.saveImageToDocument(fileName: "\(String(describing: task.id)).jpg", image: mainView.newTaskImageView.image ?? DSKitAsset.Assets.jacsim.image)
+            let task = UserJacsim(title: title, startDate: startDate, endDate: endDate, isDone: false, success: success, isSuccess: false, alarm: fireDate, memoList: memos)
+            self.documentManager.saveImageToDocument(fileName: "\(task.imageBaseName).jpg", image: mainView.newTaskImageView.image ?? DSKitAsset.Assets.jacsim.image)
             repository.addJacsim(item: task)
             
             scheduleNotification(title: title, fireDate: fireDate)
@@ -253,13 +253,13 @@ final class NewTaskViewController: BaseViewController {
             }
         } else {
            
-            let task = UserJacsim(title: title, startDate: startDate, endDate: endDate, success: success, alarm: nil)
+            var memos: [Certified] = []
             for _ in 0...calculateDays(startDate: startDate, endDate: endDate) - 1 {
                 let certified = Certified(memo: "인증해주세요")
-                task.memoList.append(certified)
+                memos.append(certified)
             }
-            
-            self.documentManager.saveImageToDocument(fileName: "\(String(describing: task.id)).jpg", image: mainView.newTaskImageView.image ?? DSKitAsset.Assets.jacsim.image)
+            let task = UserJacsim(title: title, startDate: startDate, endDate: endDate, isDone: false, success: success, isSuccess: false, alarm: nil, memoList: memos)
+            self.documentManager.saveImageToDocument(fileName: "\(task.imageBaseName).jpg", image: mainView.newTaskImageView.image ?? DSKitAsset.Assets.jacsim.image)
             repository.addJacsim(item: task)
             
             dismiss(animated: true) {

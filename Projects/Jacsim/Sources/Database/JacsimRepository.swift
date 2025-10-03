@@ -10,25 +10,27 @@ import UserNotifications
 
 import Core
 
-import RealmSwift
+import SwiftData
 
 /*
  레포의 역할 
  */
 
 protocol JacsimRepositoryProtocol: AnyObject {
-    func fetchRealm() -> Results<UserJacsim>
-    func fetchIsSuccess() -> Results<UserJacsim>
-    func fetchIsFail() -> Results<UserJacsim>
-    func fetchDate(date: Date) -> Results<UserJacsim>
+    func fetchAllActive() -> [UserJacsim]
+    func fetchIsSuccess() -> [UserJacsim]
+    func fetchIsFail() -> [UserJacsim]
+    func fetchDate(date: Date) -> [UserJacsim]
     func addJacsim(item: UserJacsim)
     func updateMemo(item: UserJacsim, index: Int, memo: String)
     func removeImageFromDocument(fileName: String)
     func deleteJacsim(item: UserJacsim)
     func deleteAlarm(item: UserJacsim)
     func checkIsDone(item: UserJacsim, count: Int)
+    func checkIsDone(items: [UserJacsim])
     func checkCertified(item: UserJacsim) -> Int
     func checkIsSuccess(item: UserJacsim)
+    func fetchIsNotDone() -> Int
 }
 
 final class JacsimRepository: JacsimRepositoryProtocol {
@@ -38,56 +40,39 @@ final class JacsimRepository: JacsimRepositoryProtocol {
     
     let notificationCenter = UNUserNotificationCenter.current()
     
-    private var localRealm: Realm {
-        get {
-            do {
-                let realm = try Realm()
-                return realm
-            } catch {
-                print("\(error.localizedDescription)")
-                return try! Realm()
-            }
-        }
-    }
+    private let container: ModelContainer = {
+        let schema = Schema([UserJacsim.self, Certified.self])
+        let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
+        return try! ModelContainer(for: schema, configurations: [config])
+    }()
+    private var context: ModelContext { container.mainContext }
     
-    func fetchId(id: ObjectId) -> Results<UserJacsim> {
-        return localRealm.objects(UserJacsim.self).where { $0.id == id }
+    func fetchAllActive() -> [UserJacsim] {
+        let descriptor = FetchDescriptor<UserJacsim>(predicate: #Predicate { !$0.isDone }, sortBy: [SortDescriptor(\UserJacsim.startDate, order: .forward)])
+        return (try? context.fetch(descriptor)) ?? []
     }
-    
-    func fetchRealm() -> Results<UserJacsim> {
-        return localRealm.objects(UserJacsim.self).where { $0.isDone == false }.sorted(byKeyPath: "startDate", ascending: true)
+    func fetchIsSuccess() -> [UserJacsim] {
+        let descriptor = FetchDescriptor<UserJacsim>(predicate: #Predicate { $0.isDone && $0.isSuccess }, sortBy: [SortDescriptor(\UserJacsim.startDate, order: .forward)])
+        return (try? context.fetch(descriptor)) ?? []
     }
-    // 이후엔 안 쓸 것
-    func fetchIsDone() -> Results<UserJacsim> {
-        return localRealm.objects(UserJacsim.self).where { $0.isDone == true }.sorted(byKeyPath: "startDate", ascending: true)
+    func fetchIsFail() -> [UserJacsim] {
+        let descriptor = FetchDescriptor<UserJacsim>(predicate: #Predicate { $0.isDone && !$0.isSuccess }, sortBy: [SortDescriptor(\UserJacsim.startDate, order: .forward)])
+        return (try? context.fetch(descriptor)) ?? []
     }
-    
-    func fetchIsSuccess() -> Results<UserJacsim> {
-        return localRealm.objects(UserJacsim.self).where { $0.isDone == true }.where { $0.isSuccess == true }.sorted(byKeyPath: "startDate", ascending: true)
-    }
-    
-    func fetchIsFail() -> Results<UserJacsim> {
-        return localRealm.objects(UserJacsim.self).where { $0.isDone == true }.where { $0.isSuccess == false }.sorted(byKeyPath: "startDate", ascending: true)
-    }
-    
     func fetchIsNotDone() -> Int {
-        return localRealm.objects(UserJacsim.self).where({$0.isDone == false }).count
+        let descriptor = FetchDescriptor<UserJacsim>(predicate: #Predicate { !$0.isDone })
+        return ((try? context.fetchCount(descriptor)) ?? 0)
     }
-    
-    // Home View에서 TableView에 보여주는 task
-    func fetchDate(date: Date) -> Results<UserJacsim> {
-        //NSPredicate
-        return localRealm.objects(UserJacsim.self).where{ $0.isDone == false }.filter("endDate >= %@ AND startDate < %@", date, Date(timeInterval: 86400, since: date)).sorted(byKeyPath: "startDate", ascending: true)
+    func fetchDate(date: Date) -> [UserJacsim] {
+        let endOfDay = Date(timeInterval: 86400, since: date)
+        let predicate = #Predicate<UserJacsim> { !$0.isDone && $0.endDate >= date && $0.startDate < endOfDay }
+        let descriptor = FetchDescriptor<UserJacsim>(predicate: predicate, sortBy: [SortDescriptor(\UserJacsim.startDate, order: .forward)])
+        return (try? context.fetch(descriptor)) ?? []
     }
 
     func addJacsim(item: UserJacsim) {
-        do {
-            try localRealm.write{
-                localRealm.add(item)
-            }
-        } catch let error {
-            print(error)
-        }
+        context.insert(item)
+        try? context.save()
     }
     
     func deleteAlarm(item: UserJacsim) {
@@ -96,24 +81,15 @@ final class JacsimRepository: JacsimRepositoryProtocol {
         let alarmString = alarm.convertToString(withFormat: .yyyyMDEEEEahhmm)
         notificationCenter.removePendingNotificationRequests(withIdentifiers: ["\(item.title)\(alarmString).starter", "\(item.title)\(alarmString).repeater"])
         
-        do {
-            try localRealm.write {
-                item.alarm = nil
-            }
-        } catch let error {
-            print(error)
-        }
+        item.alarm = nil
+        try? context.save()
     }
     
     func updateMemo(item: UserJacsim, index: Int, memo: String) {
-        do {
-            try localRealm.write{
-                item.memoList[index].memo = memo
-                item.memoList[index].check = true
-            }
-        } catch let error {
-            print(error)
-        }
+        guard item.memoList.indices.contains(index) else { return }
+        item.memoList[index].memo = memo
+        item.memoList[index].check = true
+        try? context.save()
     }
     
     func removeImageFromDocument(fileName: String) {
@@ -136,25 +112,13 @@ final class JacsimRepository: JacsimRepositoryProtocol {
             //print("\(item.title)\(alarmString).starter", "\(item.title)\(alarmString).repeater")
             notificationCenter.removePendingNotificationRequests(withIdentifiers: ["\(item.title)\(alarmString).starter", "\(item.title)\(alarmString).repeater"])
             
-            do {
-                try localRealm.write{
-                    localRealm.delete(item.memoList)
-                    localRealm.delete(item)
-                }
-            } catch {
-                print(error)
-            }
+            context.delete(item)
+            try? context.save()
         } else {
             removeImageFromDocument(fileName: "\(item.id).jpg")
             
-            do {
-                try localRealm.write{
-                    localRealm.delete(item.memoList)
-                    localRealm.delete(item)
-                }
-            } catch {
-                print(error)
-            }
+            context.delete(item)
+            try? context.save()
         }
         
     }
@@ -167,13 +131,8 @@ final class JacsimRepository: JacsimRepositoryProtocol {
             }
         }
         if cnt == count {
-            do {
-                try localRealm.write{
-                    item.isDone = true
-                }
-            } catch let error {
-                print(error)
-            }
+            item.isDone = true
+            try? context.save()
         }
     }
     // 종료일이 지남으로서 isDone 정의
@@ -184,18 +143,13 @@ final class JacsimRepository: JacsimRepositoryProtocol {
            // print(now, end )
             if Date() - end >= 0 {
                 do {
-                    try localRealm.write{
-                        task.isDone = true
-                        
-                        if let alarm = task.alarm {
-                            let alarmString = DateFormatType.toString(alarm, to: .fullWithTime)
-                            notificationCenter.removePendingNotificationRequests(withIdentifiers: ["\(task.title)\(alarmString).repeater"])
-                        }
-                        
+                    task.isDone = true
+                    if let alarm = task.alarm {
+                        let alarmString = DateFormatType.toString(alarm, to: .fullWithTime)
+                        notificationCenter.removePendingNotificationRequests(withIdentifiers: ["\(task.title)\(alarmString).repeater"])
                     }
-                } catch let error {
-                    print(error)
-                }
+                    try? context.save()
+                } catch { }
             }
         }
     }
@@ -214,14 +168,8 @@ final class JacsimRepository: JacsimRepositoryProtocol {
     func checkIsSuccess(item: UserJacsim) {
         
         if self.checkCertified(item: item) >= item.success {
-            do {
-                try localRealm.write{
-                    item.isSuccess = true
-                    
-                }
-            } catch let error {
-                print(error)
-            }
+            item.isSuccess = true
+            try? context.save()
         }
     }
 }

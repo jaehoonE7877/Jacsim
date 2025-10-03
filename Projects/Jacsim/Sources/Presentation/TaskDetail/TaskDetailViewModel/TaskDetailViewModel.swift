@@ -63,7 +63,7 @@ extension TaskDetailViewModel {
     }
     
     var loadMainImage: UIImage {
-        return documentManager.loadImageFromDocument(fileName: "\(String(describing: task.value.id)).jpg") ?? DSKitAsset.Assets.jacsim.image
+        return documentManager.loadImageFromDocument(fileName: "\(task.value.imageBaseName).jpg") ?? DSKitAsset.Assets.jacsim.image
     }
     
     var showCertified: String {
@@ -103,7 +103,7 @@ extension TaskDetailViewModel {
     func fetchTodayImage(index: Int) -> UIImage {
         let dayArray = configCellTitle()
         let dateText = DateFormatType.toString(dayArray[index], to: .fullWithoutYear)
-        return documentManager.loadImageFromDocument(fileName: "\(task.value.id)_\(dateText).jpg") ?? DSKitAsset.Assets.jacsim.image
+        return documentManager.loadImageFromDocument(fileName: "\(task.value.imageBaseName)_\(dateText).jpg") ?? DSKitAsset.Assets.jacsim.image
     }
     
     func checkIsSuccess() {
@@ -150,7 +150,7 @@ extension TaskDetailViewModel {
         cell.dateLabel.text = dateText
         cell.certifiedMemo.text = task.value.memoList[indexPath.row].memo
         
-        guard let image = self.documentManager.loadImageFromDocument(fileName: "\(task.value.id)_\(dateText).jpg") else { return UICollectionViewCell()}
+        guard let image = self.documentManager.loadImageFromDocument(fileName: "\(task.value.imageBaseName)_\(dateText).jpg") else { return UICollectionViewCell()}
         cell.certifiedImageView.image = image
         
         return cell

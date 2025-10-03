@@ -12,7 +12,6 @@ import DSKit
 
 import FSCalendar
 import Floaty
-import RealmSwift
 import RxCocoa
 import RxSwift
 

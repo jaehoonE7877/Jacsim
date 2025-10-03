@@ -21,8 +21,7 @@ let project = Project.makeModule(
         .SPM.AcknowList,
         .SPM.CropViewController,
         .SPM.Floaty,
-        //MARK: - DB
-        .SPM.RealmSwift,
+        //MARK: - DB (SwiftData로 전환: Realm 제거)
         //MARK: - ReactiveX
         .SPM.RxCocoa,
         .SPM.RxSwift,

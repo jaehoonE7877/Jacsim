@@ -19,37 +19,14 @@ final class HomeViewModel {
 extension HomeViewModel {
     
     func fetch() {
-        
-        let task = repository.fetchRealm()
-        
-        var original = tasks.value
-        original.removeAll()
-        self.tasks.accept(original)
-        
-        var jacsims: [UserJacsim] = []
-        
-        task.forEach { item in
-            jacsims.append(item)
-        }
-        
-        self.tasks.accept(jacsims)
+        let items = repository.fetchAllActive()
+        self.tasks.accept(items)
     }
     
     func fetchDate(date: Date) {
         
-        let task = repository.fetchDate(date: date)
-        
-        var original = tasks.value
-        original.removeAll()
-        self.tasks.accept(original)
-        
-        var jacsims: [UserJacsim] = []
-        
-        task.forEach{ item in
-            jacsims.append(item)
-        }
-        
-        self.tasks.accept(jacsims)
+        let items = repository.fetchDate(date: date)
+        self.tasks.accept(items)
     }
     
     func checkIsDone() {
