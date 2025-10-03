@@ -11,7 +11,8 @@ public extension SettingsDictionary {
     static let allLoadSettings: Self = [
         "OTHER_LDFLAGS" : [
             "$(inherited) -all_load",
-            "-Xlinker -interposable"
+            "-Xlinker -interposable",
+            "-ObjC"
         ]
     ]
     
@@ -21,18 +22,6 @@ public extension SettingsDictionary {
             "-ObjC"
         ]
     ]
-    
-    func setHeaderSearchPath(isModule: Bool) -> SettingsDictionary {
-        let GTMString = isModule
-        ? "$(SRCROOT)/../../../Tuist/Dependencies/SwiftPackageManager/.build/checkouts/GTMAppAuth/GTMAppAuth/Sources/Public/GTMAppAuth"
-        : "$(SRCROOT)/../../Tuist/Dependencies/SwiftPackageManager/.build/checkouts/GTMAppAuth/GTMAppAuth/Sources/Public/GTMAppAuth"
-        let gtmString = isModule
-        ? "$(SRCROOT)/../../../Tuist/Dependencies/SwiftPackageManager/.build/checkouts/gtm-session-fetcher/Sources/Core/Public"
-        : "$(SRCROOT)/../../Tuist/Dependencies/SwiftPackageManager/.build/checkouts/gtm-session-fetcher/Sources/Core/Public"
-        return merging(["HEADER_SEARCH_PATHS": ["$(inherited)",
-                                        GTMString,
-                                        gtmString]])
-    }
     
     func setProductBundleIdentifier(_ value: String = "com.iOS$(BUNDLE_ID_SUFFIX)") -> SettingsDictionary {
         merging(["PRODUCT_BUNDLE_IDENTIFIER": SettingValue(stringLiteral: value)])

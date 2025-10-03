@@ -43,7 +43,6 @@ public extension Project {
             ]
             let settings: SettingsDictionary = baseSettings
                 .merging(versionSetting)
-                .setHeaderSearchPath(isModule: false)
             
             let target = Target.target(
                 name: name,
@@ -57,7 +56,7 @@ public extension Project {
                     .glob(pattern: "Resources/**", excluding: [])
                            ],
                 entitlements: "\(name).entitlements",
-                scripts: [.FirebaseCrashlyticsString],
+                scripts: [.firebaseCrashlytics],
                 dependencies: [
                     internalDependencies,
                     externalDependencies,
@@ -65,7 +64,7 @@ public extension Project {
                         .package(product: "LookinServer", type: .macro, condition: nil)
                     ]
                 ].flatMap { $0 },
-                settings: .settings(base: settings.codeSignIdentityAppleDevelopment(),
+                settings: .settings(base: settings.automaticCodeSigning(devTeam: "RFHV927M8S"),
                                     configurations: XCConfig.project)
             )
             projectTargets.append(target)
@@ -99,7 +98,6 @@ public extension Project {
             : []
             let isNetworks = (name == "Networks") || name.contains("Feature")
             let settings = baseSettings
-                .setHeaderSearchPath(isModule: isNetworks)
                 
             let target = Target.target(
                 name: name,
@@ -275,10 +273,9 @@ extension Project {
 }
 
 public extension TargetScript {
-    static let FirebaseCrashlyticsString = TargetScript.post(
+    static let firebaseCrashlytics = TargetScript.post(
         script: """
-    ROOT_DIR=\(ProcessInfo.processInfo.environment["TUIST_ROOT_DIR"] ?? "")
-    "${ROOT_DIR}/.build/checkouts/firebase-ios-sdk/Crashlytics/run"
+    "$PROJECT_ROOT/.build/checkouts/firebase-ios-sdk/Crashlytics/run"
     """,
         name: "Firebase Crashlytics",
         inputPaths: [
