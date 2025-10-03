@@ -26,7 +26,7 @@ public extension Project {
         let configurationName: ConfigurationName = "Debug"
         let hasDynamicFramework = targets.contains(.dynamicFramework)
         let deploymentTarget = Environment.deploymentTarget
-        let destination: Set<Destination> = [.iOS]
+        let destination: Destinations = .iOS
                 
         let baseSettings: SettingsDictionary = .baseSettings
         
