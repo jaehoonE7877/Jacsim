@@ -61,7 +61,7 @@ public extension Project {
                     internalDependencies,
                     externalDependencies,
                     [
-                        .package(product: "LookinServer", type: .macro, condition: nil)
+                        .package(product: "LookinServer")
                     ]
                 ].flatMap { $0 },
                 // 자동 코드서명(팀 ID 하드코딩) 대신 수동 코드서명으로 일원화합니다.
