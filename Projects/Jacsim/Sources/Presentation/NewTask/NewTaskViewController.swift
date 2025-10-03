@@ -105,10 +105,11 @@ final class NewTaskViewController: BaseViewController {
                 }
                 
             case .notDetermined:
-                AVCaptureDevice.requestAccess(for: .video) { [weak self] granted in
+                Task { [weak self] in
                     guard let self = self else { return }
+                    let granted = await AVCaptureDevice.requestAccess(for: .video)
                     if granted {
-                        DispatchQueue.main.async {
+                        await MainActor.run {
                             self.imagePicker.sourceType = .camera
                             self.present(self.imagePicker, animated: true)
                         }
@@ -143,40 +144,33 @@ final class NewTaskViewController: BaseViewController {
             
         } else {
             
-            notificationCenter.requestAuthorization(options: [.alert, .badge, .sound]) { [weak self] (granted, error) in
+            Task { [weak self] in
                 guard let self = self else { return }
-                
-                if let error = error {
-                    print("granted, but Error in notification permission:\(error.localizedDescription)")
-                }
-                
-                if granted {
-                    
-                    DispatchQueue.main.async {
-                        let vc = AlarmViewController()
-                        
-                        vc.completion = { date in
-                            
-                            guard let date = date else {
-                                self.mainView.alarmSwitch.isOn = false
-                                return
-                            }
-                            
-                            DispatchQueue.main.async {
+                do {
+                    let granted = try await notificationCenter.requestAuthorization(options: [.alert, .badge, .sound])
+                    if granted {
+                        await MainActor.run {
+                            let vc = AlarmViewController()
+                            vc.completion = { date in
+                                guard let date = date else {
+                                    self.mainView.alarmSwitch.isOn = false
+                                    return
+                                }
                                 self.mainView.alarmTimeLabel.text = date.convertToString(withFormat: .ahhmm)
                             }
+                            self.present(vc, animated: true)
                         }
-                        
-                        self.present(vc, animated: true)
+                    } else {
+                        await MainActor.run {
+                            self.mainView.alarmSwitch.isOn = false
+                            self.showAlertSetting(message: "작심이(가) 알림 허용되어 있지 않습니다. \r\n '설정>개인정보 보호'에서 알림 설정을 허용으로 설정해주세요")
+                        }
                     }
-                    
-                } else {
-                    
-                    DispatchQueue.main.async {
+                } catch {
+                    await MainActor.run {
                         self.mainView.alarmSwitch.isOn = false
-                        self.showAlertSetting(message: "작심이(가) 알림 허용되어 있지 않습니다. \r\n '설정>개인정보 보호'에서 알림 설정을 허용으로 설정해주세요")
+                        print("Notification permission request failed: \(error)")
                     }
-                    
                 }
             }
         }
@@ -436,33 +430,26 @@ extension NewTaskViewController {
         content.sound = .default
         
 
-        notificationCenter.requestAuthorization(
-            options: [.alert, .badge ,.sound])
-        { [weak self]
-            (granted, error) in
+        Task { [weak self] in
             guard let self = self else { return }
-            if let error = error {
-                print("granted, but Error in notification permission:\(error.localizedDescription)")
+            do {
+                _ = try await notificationCenter.requestAuthorization(options: [.alert, .badge, .sound])
+            } catch {
+                print("Notification permission request failed: \(error)")
             }
-            
+
             let dateString = DateFormatType.toString(fireDate, to: .fullWithTime)
             let fireTrigger = UNTimeIntervalNotificationTrigger(timeInterval: fireDate.timeIntervalSinceNow , repeats: false)
-            //print(fireDate.timeIntervalSinceNow)
             let fireDateRequest = UNNotificationRequest(identifier: "\(title)\(dateString).starter", content: content, trigger: fireTrigger)
 
-            self.notificationCenter.add(fireDateRequest) { (error) in
-                
+            self.notificationCenter.add(fireDateRequest) { error in
                 if let error = error {
                     print("Error adding firing notification: \(error.localizedDescription)")
                 } else {
-                    
                     if let firstRepeatingDate = Calendar.current.date(byAdding: .minute, value: 1440, to: fireDate) {
-                        print("\(firstRepeatingDate): 반복 알림 시작일")
                         let repeatingTrigger = UNTimeIntervalNotificationTrigger(timeInterval: firstRepeatingDate.timeIntervalSinceNow, repeats: true)
-                        //print(firstRepeatingDate.timeIntervalSinceNow)
                         let repeatingRequest = UNNotificationRequest(identifier: "\(title)\(dateString).repeater", content: content, trigger: repeatingTrigger)
-                        
-                        self.notificationCenter.add(repeatingRequest) { (error) in
+                        self.notificationCenter.add(repeatingRequest) { error in
                             if let error = error {
                                 print("Error adding repeating notification: \(error.localizedDescription)")
                             } else {

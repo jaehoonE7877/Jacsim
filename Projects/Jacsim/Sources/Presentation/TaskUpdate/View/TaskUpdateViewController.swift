@@ -84,10 +84,11 @@ final class TaskUpdateViewController: BaseViewController {
                     self.present(self.imagePicker, animated: true)
                 }
             case .notDetermined:
-                AVCaptureDevice.requestAccess(for: .video) { [weak self] granted in
+                Task { [weak self] in
                     guard let self = self else { return }
+                    let granted = await AVCaptureDevice.requestAccess(for: .video)
                     if granted {
-                        DispatchQueue.main.async {
+                        await MainActor.run {
                             self.imagePicker.sourceType = .camera
                             self.present(self.imagePicker, animated: true)
                         }

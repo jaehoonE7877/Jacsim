@@ -22,22 +22,21 @@ class AppDelegate: UIResponder, UIApplicationDelegate{
         
         FirebaseApp.configure()
         Crashlytics.crashlytics().setCrashlyticsCollectionEnabled(true)
-        if #available(iOS 10.0, *) {
-          // For iOS 10 display notification (sent via APNS)
-          UNUserNotificationCenter.current().delegate = self
-
-          let authOptions: UNAuthorizationOptions = [.alert, .badge, .sound]
-          UNUserNotificationCenter.current().requestAuthorization(
-            options: authOptions,
-            completionHandler: { _, _ in }
-          )
-        } else {
-          let settings: UIUserNotificationSettings =
-            UIUserNotificationSettings(types: [.alert, .badge, .sound], categories: nil)
-          application.registerUserNotificationSettings(settings)
+        // iOS 18+ (Swift 6): 권한 요청은 async/await API 사용
+        UNUserNotificationCenter.current().delegate = self
+        Task {
+            do {
+                let granted = try await UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound])
+                if granted {
+                    await MainActor.run {
+                        application.registerForRemoteNotifications()
+                    }
+                }
+            } catch {
+                // 권한 요청 실패해도 앱은 계속 동작하도록 로깅만 수행
+                print("Notification authorization request failed: \(error)")
+            }
         }
-
-        application.registerForRemoteNotifications()
         
         Messaging.messaging().delegate = self
         
