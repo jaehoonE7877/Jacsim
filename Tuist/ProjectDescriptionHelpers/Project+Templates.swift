@@ -276,7 +276,7 @@ extension Project {
 public extension TargetScript {
     static let firebaseCrashlytics = TargetScript.post(
         script: """
-    "$PROJECT_ROOT/.build/checkouts/firebase-ios-sdk/Crashlytics/run"
+    "${SRCROOT}/../../.build/checkouts/firebase-ios-sdk/Crashlytics/run"
     """,
         name: "Firebase Crashlytics",
         inputPaths: [
