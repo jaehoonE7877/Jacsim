@@ -64,6 +64,12 @@ public extension SettingsDictionary {
         merging(["CODE_SIGN_STYLE": SettingValue(stringLiteral: "Manual")])
     }
     
+    func automaticCodeSigning(devTeam: String) -> SettingsDictionary {
+        // 자동 코드서명 + 팀 ID 지정
+        merging(["CODE_SIGN_STYLE": SettingValue(stringLiteral: "Automatic")])
+            .merging(["DEVELOPMENT_TEAM": SettingValue(stringLiteral: devTeam)])
+    }
+    
     func setProvisioning() -> SettingsDictionary {
         merging(["PROVISIONING_PROFILE_SPECIFIER": SettingValue(stringLiteral: "$(APP_PROVISIONING_PROFILE)")])
             .merging(["PROVISIONING_PROFILE": SettingValue(stringLiteral: "$(APP_PROVISIONING_PROFILE)")])

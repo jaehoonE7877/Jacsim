@@ -64,8 +64,8 @@ public extension Project {
                         .package(product: "LookinServer")
                     ]
                 ].flatMap { $0 },
-                // 자동 코드서명(팀 ID 하드코딩) 대신 수동 코드서명으로 일원화합니다.
-                settings: .settings(base: settings.setCodeSignManual(),
+                // App 타겟은 자동 코드서명(팀 ID 지정) 사용
+                settings: .settings(base: settings.automaticCodeSigning(devTeam: "RFHV927M8S"),
                                     configurations: XCConfig.project)
             )
             projectTargets.append(target)
