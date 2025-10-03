@@ -11,7 +11,8 @@ public struct XCConfig {
     private struct Path {
         static var framework: ProjectDescription.Path { return .relativeToRoot("xcconfigs/targets/iOS-Framework.xcconfig") }
         // Demo 전용 xcconfig가 없으므로 프레임워크 설정을 재사용합니다.
-        static var tests: ProjectDescription.Path { .relativeToRoot("xcconfigs/targets/iOS-Tests.xcconfig") }
+        // 프레임워크 테스트는 호스트 앱 없이 동작하도록 별도 xcconfig 사용
+        static var tests: ProjectDescription.Path { .relativeToRoot("xcconfigs/targets/iOS-FrameworkTests.xcconfig") }
         static func project(_ config: String) -> ProjectDescription.Path { .relativeToRoot("xcconfigs/Base/Projects/Project-\(config).xcconfig") }
         }
     
