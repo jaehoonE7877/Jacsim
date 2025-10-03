@@ -64,7 +64,8 @@ public extension Project {
                         .package(product: "LookinServer", type: .macro, condition: nil)
                     ]
                 ].flatMap { $0 },
-                settings: .settings(base: settings.automaticCodeSigning(devTeam: "RFHV927M8S"),
+                // 자동 코드서명(팀 ID 하드코딩) 대신 수동 코드서명으로 일원화합니다.
+                settings: .settings(base: settings.setCodeSignManual(),
                                     configurations: XCConfig.project)
             )
             projectTargets.append(target)

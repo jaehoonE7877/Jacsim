@@ -60,8 +60,8 @@ public extension SettingsDictionary {
     }
     
     func setCodeSignManual() -> SettingsDictionary {
+        // 코드서명은 수동으로 설정하고, DEVELOPMENT_TEAM은 외부(.xcconfig/CI)에서 주입합니다.
         merging(["CODE_SIGN_STYLE": SettingValue(stringLiteral: "Manual")])
-            .merging(["DEVELOPMENT_TEAM": SettingValue(stringLiteral: "RFHV927M8S")])
     }
     
     func setProvisioning() -> SettingsDictionary {
@@ -69,4 +69,3 @@ public extension SettingsDictionary {
             .merging(["PROVISIONING_PROFILE": SettingValue(stringLiteral: "$(APP_PROVISIONING_PROFILE)")])
     }
 }
-

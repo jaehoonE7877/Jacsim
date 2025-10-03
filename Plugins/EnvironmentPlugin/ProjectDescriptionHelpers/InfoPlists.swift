@@ -12,7 +12,6 @@ public extension Project {
         "CFBundleShortVersionString": "\(Environment.appVersion)",
         "CFBundleDevelopmentRegion": "ko",
         "CFBundleVersion": "1",
-        "CFBundleIdentifier": "com.jaehoon.jaksim",
         "CFBundleDisplayName": "작심",
         "UILaunchStoryboardName": "LaunchScreen",
         "UIApplicationSceneManifest": [
@@ -41,7 +40,6 @@ public extension Project {
         "CFBundleShortVersionString": "1.0.0",
         "CFBundleDevelopmentRegion": "ko",
         "CFBundleVersion": "1",
-        "CFBundleIdentifier": "com.jaehoon.jaksim",
         "CFBundleDisplayName": "작심",
         "UILaunchStoryboardName": "LaunchScreen",
         "UIApplicationSceneManifest": [
