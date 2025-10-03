@@ -36,7 +36,6 @@ protocol JacsimRepositoryProtocol: AnyObject {
 final class JacsimRepository: JacsimRepositoryProtocol {
     
     static let shared = JacsimRepository()
-    private init() { }
     
     let notificationCenter = UNUserNotificationCenter.current()
     
@@ -45,8 +44,12 @@ final class JacsimRepository: JacsimRepositoryProtocol {
         let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
         return try! ModelContainer(for: schema, configurations: [config])
     }()
-    private var context: ModelContext { container.mainContext }
+    private let context: ModelContext
     
+    private init() {
+        self.context = ModelContext(container)
+    }
+
     func fetchAllActive() -> [UserJacsim] {
         let descriptor = FetchDescriptor<UserJacsim>(predicate: #Predicate { !$0.isDone }, sortBy: [SortDescriptor(\UserJacsim.startDate, order: .forward)])
         return (try? context.fetch(descriptor)) ?? []

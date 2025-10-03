@@ -297,7 +297,12 @@ extension Project {
 public extension TargetScript {
     static let firebaseCrashlytics = TargetScript.post(
         script: """
-    "${SRCROOT}/../../.build/checkouts/firebase-ios-sdk/Crashlytics/run"
+    # Skip Crashlytics if GoogleService-Info.plist is missing (e.g., local dev)
+    if [ -f "${SRCROOT}/Resources/GoogleService-Info.plist" ]; then
+      "${SRCROOT}/../../.build/checkouts/firebase-ios-sdk/Crashlytics/run"
+    else
+      echo "[Crashlytics] GoogleService-Info.plist not found. Skipping Crashlytics."
+    fi
     """,
         name: "Firebase Crashlytics",
         inputPaths: [

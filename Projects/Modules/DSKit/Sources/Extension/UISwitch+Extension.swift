@@ -9,9 +9,7 @@
 import UIKit
 
 public extension UISwitch {
-    
-    public var isOff: Bool {
-        return !self.isOn 
+    var isOff: Bool {
+        !self.isOn
     }
-    
 }
