@@ -297,17 +297,27 @@ extension Project {
 public extension TargetScript {
     static let firebaseCrashlytics = TargetScript.post(
         script: """
-    # Skip Crashlytics if GoogleService-Info.plist is missing (e.g., local dev)
-    if [ -f "${SRCROOT}/Resources/GoogleService-Info.plist" ]; then
-      "${SRCROOT}/../../.build/checkouts/firebase-ios-sdk/Crashlytics/run"
-    else
-      echo "[Crashlytics] GoogleService-Info.plist not found. Skipping Crashlytics."
-    fi
+    # Release에서만 실행
+    [ "${CONFIGURATION}" = "Release" ] || { echo "[Crashlytics] Skip non-Release"; exit 0; }
+
+    GSP="${SRCROOT}/Resources/GoogleService-Info.plist"
+    [ -f "${GSP}" ] || { echo "[Crashlytics] No GoogleService-Info.plist — skip"; exit 0; }
+
+    CRASH_RUN=""
+    for P in \
+      "${SRCROOT}/../../.build/checkouts/firebase-ios-sdk/Crashlytics/run" \
+      "${BUILD_DIR%/Build/*}/SourcePackages/checkouts/firebase-ios-sdk/Crashlytics/run"; do
+      [ -x "${P}" ] && CRASH_RUN="${P}" && break
+    done
+
+    [ -n "${CRASH_RUN}" ] || { echo "[Crashlytics] run script not found — skip"; exit 0; }
+    echo "[Crashlytics] ${CRASH_RUN} -gsp ${GSP}"
+    "${CRASH_RUN}" -gsp "${GSP}"
     """,
         name: "Firebase Crashlytics",
         inputPaths: [
             "${DWARF_DSYM_FOLDER_PATH}/${DWARF_DSYM_FILE_NAME}/Contents/Resources/DWARF/${TARGET_NAME}",
-                "$(SRCROOT)/$(BUILT_PRODUCTS_DIR)/$(INFOPLIST_PATH)"
+            "$(BUILT_PRODUCTS_DIR)/$(INFOPLIST_PATH)"
         ],
-        basedOnDependencyAnalysis: true)
+        basedOnDependencyAnalysis: false)
 }
