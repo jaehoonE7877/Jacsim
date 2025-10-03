@@ -10,7 +10,7 @@ import ProjectDescription
 public struct XCConfig {
     private struct Path {
         static var framework: ProjectDescription.Path { return .relativeToRoot("xcconfigs/targets/iOS-Framework.xcconfig") }
-        static var demo: ProjectDescription.Path { return .relativeToRoot("xcconfigs/targets/iOS-Demo.xcconfig") }
+        // Demo 전용 xcconfig가 없으므로 프레임워크 설정을 재사용합니다.
         static var tests: ProjectDescription.Path { .relativeToRoot("xcconfigs/targets/iOS-Tests.xcconfig") }
         static func project(_ config: String) -> ProjectDescription.Path { .relativeToRoot("xcconfigs/Base/Projects/Project-\(config).xcconfig") }
         }
@@ -25,8 +25,8 @@ public struct XCConfig {
         .release(name: "Release", xcconfig: Path.tests),
     ]
     public static let demo: [Configuration] = [
-        .debug(name: "Debug", xcconfig: Path.demo),
-        .release(name: "Release", xcconfig: Path.demo),
+        .debug(name: "Debug", xcconfig: Path.framework),
+        .release(name: "Release", xcconfig: Path.framework),
     ]
     public static let project: [Configuration] = [
         .debug(name: "Debug", xcconfig: Path.project("Debug")),
