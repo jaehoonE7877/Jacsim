@@ -16,17 +16,14 @@ public extension ProjectDescription.Path {
         return .relativeToRoot("Projects/Modules/\(path)")
     }
     
+    // 현재 앱 경로는 Projects/Jacsim 기준으로 사용합니다.
     static var app: Self {
-        return .relativeToRoot("Projects/App")
+        return .relativeToRoot("Projects/Jacsim")
     }
     
-    static var data: Self {
-        return .relativeToRoot("Projects/Data")
-    }
-    
-    static var domain: Self {
-        return .relativeToRoot("Projects/Domain")
-    }
+    // Data/Domain 경로는 현재 레포 구조에 존재하지 않습니다(보류).
+    static var data: Self { .relativeToRoot("Projects/Data") }
+    static var domain: Self { .relativeToRoot("Projects/Domain") }
     
     static var core: Self {
         return .relativeToRoot("Projects/Modules/Core")

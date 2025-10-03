@@ -19,7 +19,6 @@ public extension Project {
         internalDependencies: [TargetDependency] = [],  // 모듈간 의존성
         externalDependencies: [TargetDependency] = [],  // 외부 라이브러리 의존성
         interfaceDependencies: [TargetDependency] = [], // Feature Interface 의존성
-        dependencies: [TargetDependency] = [],
         hasResources: Bool = false
     ) -> Project {
         
@@ -164,6 +163,28 @@ public extension Project {
                         .SPM.Nimble
                     ]
                 ].flatMap { $0 },
+                settings: .settings(base: SettingsDictionary().setCodeSignManual(),
+                                    configurations: XCConfig.tests)
+            )
+            
+            projectTargets.append(target)
+        }
+        
+        // MARK: - UI Tests
+        
+        if targets.contains(.uiTest) {
+            let deps: [TargetDependency] = [.target(name: name)]
+            
+            let target = Target.target(
+                name: "\(name)UITests",
+                destinations: .iOS,
+                product: .uiTests,
+                bundleId: "\(Environment.bundlePrefix).\(name)UITests",
+                deploymentTargets: deploymentTarget,
+                infoPlist: .default,
+                sources: ["UITests/Sources/**/*.swift"],
+                resources: [],
+                dependencies: deps,
                 settings: .settings(base: SettingsDictionary().setCodeSignManual(),
                                     configurations: XCConfig.tests)
             )
