@@ -4,6 +4,7 @@
 
 ## 프로젝트 헌장 요약 (v1.0.0, 2025-11-12)
 - 최소 지원: iOS 18+
+- 개발 도구: Xcode 26 이상
 - 데이터/비동기: Realm, RxSwift 제거 → SwiftData, Swift Concurrency(Async/Await, AsyncSequence)
 - UI: UIKit 신규 코드 금지, 모든 새 화면은 SwiftUI로 작성
 - 아키텍처: TCA(Composable Architecture)로 Feature 단위(State/Action/Reducer/Effect)

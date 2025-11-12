@@ -77,7 +77,7 @@
 
 추가 규칙(쉬운 말)
 - 플랫폼/도구
-  - iOS 18+, Swift 6, iOS 18 SDK(Xcode 16 이상)
+  - iOS 18+, Swift 6, iOS 18 SDK(Xcode 26 이상)
   - 새 코드는 SwiftUI + TCA + SwiftData + Swift Concurrency 조합을 따른다
 - 금지/제거
   - RxSwift/RxCocoa, Realm: 새 코드 금지. 마이그레이션 이후 전면 제거
