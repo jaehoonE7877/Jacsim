@@ -1,21 +1,11 @@
 import Foundation
-import XCTest
-
-import Quick
-import Nimble
+import Testing
 
 @testable import {{ name }}Feature
 
-final class {{ name }}TestSpec: QuickSpec {
-    override static func spec() {
-        describe("Given") {
-            context("When") {
-                it("Then") {
-                    expect(1 + 1).to(equal(2))
-                    expect(1.2).to(beCloseTo(1.1, within: 0.1))
-                    expect(3) > 2
-                }
-            }
-        }
-    }
+@Test("샘플: 수학 검증")
+func {{ name|lower }}_sample_math_test() {
+    #expect(1 + 1 == 2)
+    #expect(abs(1.2 - 1.1) <= 0.1)
+    #expect(3 > 2)
 }
