@@ -111,7 +111,7 @@ public extension Project {
                 sources: ["Sources/**/*.swift"],
                 resources: hasResources ? [.glob(pattern: "Resources/**", excluding: ["Resources/dummy.txt"])] : [],
                 dependencies: deps + internalDependencies + externalDependencies,
-                settings: .settings(base: settings.setCodeSignManual(), configurations: XCConfig.framework)
+                settings: .settings(base: settings.setCodeSignAutomatic(), configurations: XCConfig.framework)
             )
             
             projectTargets.append(target)
@@ -137,7 +137,7 @@ public extension Project {
                         
                     ]
                 ].flatMap { $0 },
-                settings: .settings(base: baseSettings.setCodeSignManual(),
+                settings: .settings(base: baseSettings.setCodeSignAutomatic(),
                                     configurations: XCConfig.demo)
             )
 
@@ -165,7 +165,7 @@ public extension Project {
                         .SPM.Nimble
                     ]
                 ].flatMap { $0 },
-                settings: .settings(base: SettingsDictionary().setCodeSignManual(),
+                settings: .settings(base: SettingsDictionary().setCodeSignAutomatic(),
                                     configurations: XCConfig.tests)
             )
             
