@@ -21,5 +21,5 @@
 - [ ] SwiftData 모델/저장 구조 정의 및 테스트 포함
 - [ ] OSLog/MetricKit 측정 지점 정의, 단위/스냅샷 테스트 통과
 
-전체 문서: `memory/constitution.md`
+전체 문서: `.specify/memory/constitution.md`
 생성 플로우: `templates/commands/constitution.md`

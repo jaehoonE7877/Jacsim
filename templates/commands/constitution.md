@@ -1,6 +1,6 @@
 ### /speckit.constitution — 프로젝트 헌장 생성/업데이트 플로우
 
-본 명령은 `memory/constitution.md`를 생성 또는 업데이트합니다. 아래 체크리스트를 모두 충족해야 하며, 빈칸/미정 표기는 금지합니다.
+본 명령은 `.specify/memory/constitution.md`를 생성 또는 업데이트합니다. 아래 체크리스트를 모두 충족해야 하며, 빈칸/미정 표기는 금지합니다.
 
 ## 입력 메타데이터(필수)
 - PROJECT_NAME: <string>
@@ -57,7 +57,7 @@
 - [ ] “금지/제거”에 Rx/Realm/새 UIKit 코드 금지가 명시됨
 
 ## 산출물
-- 파일: `memory/constitution.md`
+- 파일: `.specify/memory/constitution.md`
 - 커밋 메시지 권장: `Docs: Jacsim 헌장 v<CONSTITUTION_VERSION> 제정/개정`
 
 ## 예외
