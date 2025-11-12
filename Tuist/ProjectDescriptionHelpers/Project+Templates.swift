@@ -27,7 +27,7 @@ public extension Project {
         let hasDynamicFramework = targets.contains(.dynamicFramework)
         let deploymentTarget = Environment.deploymentTarget
         let destination: Set<Destination> = [.iPhone]
-                
+        
         let baseSettings: SettingsDictionary = .baseSettings
         
         var projectTargets: [Target] = []
@@ -55,7 +55,7 @@ public extension Project {
                 sources: ["Sources/**/*.swift"],
                 resources: [
                     .glob(pattern: "Resources/**", excluding: [])
-                           ],
+                ],
                 entitlements: "\(name).entitlements",
                 scripts: [.FirebaseCrashlyticsString],
                 dependencies: [
@@ -100,7 +100,7 @@ public extension Project {
             let isNetworks = (name == "Networks") || name.contains("Feature")
             let settings = baseSettings
                 .setHeaderSearchPath(isModule: isNetworks)
-                
+            
             let target = Target.target(
                 name: name,
                 destinations: destination,
@@ -140,7 +140,7 @@ public extension Project {
                 settings: .settings(base: baseSettings.setCodeSignAutomatic(),
                                     configurations: XCConfig.demo)
             )
-
+            
             projectTargets.append(target)
         }
         
@@ -189,7 +189,7 @@ public extension Project {
             let testAppScheme = Scheme.makeScheme(target: "Debug", name: name)
             scheme.append(testAppScheme)
         }
-            
+        
         return Project(
             name: name,
             organizationName: Environment.workspaceName,
@@ -245,16 +245,28 @@ extension Project {
         .scheme(
             name: "\(Environment.workspaceName)-DEBUG",
             shared: true,
-            buildAction: .buildAction(targets: ["\(Environment.workspaceName)"]),
+            buildAction: .buildAction(targets: ["\(Environment.workspaceName)"],
+                                      postActions: [
+                                        .executionAction(
+                                            title: "Inspect Build",
+                                            scriptText: """
+                                                                $HOME/.local/bin/mise x -C $SRCROOT -- tuist inspect build
+                                                                """,
+                                            target: "\(Environment.workspaceName)-DEBUG"
+                                        )
+                                      ]),
             testAction: .targets(
                 ["\(Environment.workspaceName)Tests"],
                 configuration: "Debug",
                 options: .options(coverage: true, codeCoverageTargets: ["\(Environment.workspaceName)"])
             ),
-            runAction: .runAction(configuration: "Debug",
-                                  arguments: .arguments(environmentVariables: ["OS_ACTIVITY_MODE": "disable"],
-                                                        launchArguments: [.launchArgument(name: "-FIRDebugEnabled", isEnabled: true)])
-                                 ),
+            runAction: .runAction(
+                configuration: "Debug",
+                arguments: .arguments(
+                    environmentVariables: ["OS_ACTIVITY_MODE": "disable"],
+                    launchArguments: [.launchArgument(name: "-FIRDebugEnabled", isEnabled: true)]
+                )
+            ),
             archiveAction: .archiveAction(configuration: "Debug"),
             profileAction: .profileAction(configuration: "Debug"),
             analyzeAction: .analyzeAction(configuration: "Debug")
@@ -262,11 +274,23 @@ extension Project {
         .scheme(
             name: "\(Environment.workspaceName)",
             shared: true,
-            buildAction: .buildAction(targets: ["\(Environment.workspaceName)"]),
-            runAction: .runAction(configuration: "Release",
-                                  arguments: .arguments(environmentVariables: ["OS_ACTIVITY_MODE": "disable"],
-                                                        launchArguments: [.launchArgument(name: "-FIRDebugEnabled", isEnabled: true)])
-                                 ),
+            buildAction: .buildAction(targets: ["\(Environment.workspaceName)"],
+                                      postActions: [
+                                        .executionAction(
+                                            title: "Inspect Build",
+                                            scriptText: """
+                                                               $HOME/.local/bin/mise x -C $SRCROOT -- tuist inspect build
+                                                               """,
+                                            target: "\(Environment.workspaceName)"
+                                        )
+                                      ]),
+            runAction: .runAction(
+                configuration: "Release",
+                arguments: .arguments(
+                    environmentVariables: ["OS_ACTIVITY_MODE": "disable"],
+                    launchArguments: [.launchArgument(name: "-FIRDebugEnabled", isEnabled: true)]
+                )
+            ),
             archiveAction: .archiveAction(configuration: "Release"),
             profileAction: .profileAction(configuration: "Release"),
             analyzeAction: .analyzeAction(configuration: "Release")
@@ -283,7 +307,7 @@ public extension TargetScript {
         name: "Firebase Crashlytics",
         inputPaths: [
             "${DWARF_DSYM_FOLDER_PATH}/${DWARF_DSYM_FILE_NAME}/Contents/Resources/DWARF/${TARGET_NAME}",
-                "$(SRCROOT)/$(BUILT_PRODUCTS_DIR)/$(INFOPLIST_PATH)"
+            "$(SRCROOT)/$(BUILT_PRODUCTS_DIR)/$(INFOPLIST_PATH)"
         ],
         basedOnDependencyAnalysis: false)
 }
