@@ -46,8 +46,7 @@ let package = Package(
         .package(url: "https://github.com/ReactiveX/RxSwift.git", from: "6.6.0"),
         .package(url: "https://github.com/RxSwiftCommunity/RxGesture", from: "4.0.4"),
         //MARK: - Test
-        .package(url: "https://github.com/Quick/Quick", from: "7.3.0"),
-        .package(url: "https://github.com/Quick/Nimble", from: "13.0.0"),
+        // Quick/Nimble 제거: Swift Testing(@Test, #expect) 사용
         //MARK: - DI
         .package(url: "https://github.com/Swinject/Swinject.git", from: "2.8.4"),
     ]

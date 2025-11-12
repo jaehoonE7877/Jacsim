@@ -158,13 +158,7 @@ public extension Project {
                 infoPlist: .default,
                 sources: ["Tests/Sources/**/*.swift"],
                 resources: [],
-                dependencies: [
-                    deps,
-                    [
-                        .SPM.Quick,
-                        .SPM.Nimble
-                    ]
-                ].flatMap { $0 },
+                dependencies: deps,
                 settings: .settings(base: SettingsDictionary().setCodeSignAutomatic(),
                                     configurations: XCConfig.tests)
             )
