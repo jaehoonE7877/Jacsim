@@ -9,8 +9,6 @@ import UIKit
 
 import DSKit
 
-import RxSwift
-
 final class JacsimHeaderView: UITableViewHeaderFooterView {
         
     let headerLabel = UILabel().then {
@@ -28,8 +26,6 @@ final class JacsimHeaderView: UITableViewHeaderFooterView {
         $0.titleLabel?.font = .pretendardMedium(size: 16)
     }
     
-    private(set) var disposeBag: DisposeBag = .init()
-    
     override init(reuseIdentifier: String?) {
         super.init(reuseIdentifier: reuseIdentifier)
         configure()
@@ -38,11 +34,6 @@ final class JacsimHeaderView: UITableViewHeaderFooterView {
     
     required init?(coder: NSCoder) {
          fatalError()
-    }
-    
-    override func prepareForReuse() {
-        super.prepareForReuse()
-        disposeBag = .init()
     }
     
     private func configure() {

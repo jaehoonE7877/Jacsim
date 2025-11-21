@@ -12,9 +12,6 @@ import DSKit
 
 import FSCalendar
 import Floaty
-import RealmSwift
-import RxCocoa
-import RxSwift
 
 final class HomeViewController: BaseViewController {
             
@@ -68,29 +65,17 @@ final class HomeViewController: BaseViewController {
         self.viewModel = viewModel
         super.init(nibName: nil, bundle: nil)
     }
-    
+
     // MARK: View LifeCycle
-    override func loadView() {
-        super.loadView()
-        setBinding()
-    }
     
     override func viewDidLoad() {
         super.viewDidLoad()
         setView()
         fsCalendar.setCurrentPage(Date(), animated: false)
         fsCalendar.select(Date(), scrollToDate: false)
-        viewModel.fetch()
-        viewModel.checkIsDone()
-    }
-    
-    private func setBinding() {
-        viewModel.tasks
-            .asDriver(onErrorJustReturn: [])
-            .drive(with: self, onNext: { _self, jacsims in
-                _self.tableView.reloadData()
-            })
-            .disposed(by: disposeBag)
+        Task { [weak self] in
+            await self?.loadTasks()
+        }
     }
     
     // MARK: Set UI, Constraints
@@ -148,9 +133,9 @@ final class HomeViewController: BaseViewController {
             let vc = NewTaskViewController()
             vc.passPreVC = { [weak self] in
                 guard let self else { return }
-                self.viewModel.fetch()
-                self.viewModel.checkIsDone()
-                self.tableView.reloadData()
+                Task { [weak self] in
+                    await self?.loadTasks()
+                }
             }
             self.transitionViewController(viewController: vc1, transitionStyle: .presentFullNavigation)
         }
@@ -198,67 +183,67 @@ final class HomeViewController: BaseViewController {
     }
     
     @objc func sortButtonTapped(){
-        
+
         fsCalendar.setCurrentPage(Date(), animated: true)
         fsCalendar.select(Date(), scrollToDate: true)
         //fsCalendar(fsCalendar, didSelect: fsCalendar.today ?? Date() , at: .current)
         //tasks = repository.fetchRealm()
-        viewModel.fetch()
-        
+        Task { [weak self] in
+            await self?.loadTasks()
+        }
+
     }
-    
+
+    @MainActor
+    private func loadTasks() async {
+        _ = await viewModel.fetch()
+        viewModel.checkIsDone()
+        tableView.reloadData()
+    }
+
 }
 
 //MARK: - TableView Delegate, Datasource
 extension HomeViewController: UITableViewDelegate, UITableViewDataSource {
-    
+
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return viewModel.tasks.value.count
+        return viewModel.tasks.count
     }
     
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
-        
+
         guard let headerView = tableView.dequeueReusableHeaderFooterView(withIdentifier: JacsimHeaderView.reuseIdentifier) as? JacsimHeaderView else { return UIView() }
-        
-        headerView.infoButton.rx.tap
-            .asDriverOnErrorJustComplete()
-            .drive(with: self) { _self, _ in
-                _self.infoButtonTapped()
-            }
-            .disposed(by: headerView.disposeBag)
-       
-        headerView.sortButton.rx.tap
-            .asDriverOnErrorJustComplete()
-            .drive(with: self) { _self, _ in
-                _self.sortButtonTapped()
-            }
-            .disposed(by: headerView.disposeBag)
-                
+
+        headerView.infoButton.removeTarget(nil, action: nil, for: .touchUpInside)
+        headerView.sortButton.removeTarget(nil, action: nil, for: .touchUpInside)
+        headerView.infoButton.addTarget(self, action: #selector(infoButtonTapped), for: .touchUpInside)
+        headerView.sortButton.addTarget(self, action: #selector(sortButtonTapped), for: .touchUpInside)
+
         return headerView
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         guard let cell = tableView.dequeueReusableCell(withIdentifier: JacsimTableViewCell.reuseIdentifier, for: indexPath) as? JacsimTableViewCell else { return UITableViewCell() }
-        
-        cell.setCellStyle(title: viewModel.tasks.value[indexPath.row].title,
-                          alarm: viewModel.tasks.value[indexPath.row].alarm)
-        
+
+        cell.setCellStyle(title: viewModel.tasks[indexPath.row].title,
+                          alarm: viewModel.tasks[indexPath.row].alarm)
+
         return cell
     }
-    
+
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        
-        let viewModel = TaskDetailViewModel(task: viewModel.tasks.value[indexPath.item])
-        
+
+        let viewModel = TaskDetailViewModel(task: viewModel.tasks[indexPath.item])
+
         let vc = TaskDetailViewController(viewModel: viewModel)
         vc.passPreVC = { [weak self] in
             guard let self else { return }
-            self.viewModel.fetch()
-            self.viewModel.checkIsDone()
-            self.tableView.reloadData()
+            Task { [weak self] in
+                await self?.loadTasks()
+            }
         }
 //        vc.viewModel.task.value = viewModel.tasks.value[indexPath.row]
-        vc.title = self.viewModel.tasks.value[indexPath.item].title
+        vc.title = self.viewModel.tasks[indexPath.item].title
 //        vc.task = viewModel.tasks.value[indexPath.item]
         self.transitionViewController(viewController: vc, transitionStyle: .push)
     }
@@ -296,7 +281,12 @@ extension HomeViewController: FSCalendarDelegate, FSCalendarDataSource {
     }
     
     func calendar(_ calendar: FSCalendar, didSelect date: Date, at monthPosition: FSCalendarMonthPosition) {
-        viewModel.fetchDate(date: date)
+        Task { [weak self] in
+            guard let self else { return }
+            _ = await viewModel.fetchDate(date: date)
+            viewModel.checkIsDone()
+            tableView.reloadData()
+        }
 
         if monthPosition == .previous || monthPosition == .next {
             calendar.setCurrentPage(date, animated: true)
