@@ -13,8 +13,6 @@ import DSKit
 import FSCalendar
 import Floaty
 import RealmSwift
-import RxCocoa
-import RxSwift
 
 final class HomeViewController: BaseViewController {
             
@@ -85,12 +83,11 @@ final class HomeViewController: BaseViewController {
     }
     
     private func setBinding() {
-        viewModel.tasks
-            .asDriver(onErrorJustReturn: [])
-            .drive(with: self, onNext: { _self, jacsims in
-                _self.tableView.reloadData()
-            })
-            .disposed(by: disposeBag)
+        viewModel.tasksDidUpdate = { [weak self] _ in
+            DispatchQueue.main.async {
+                self?.tableView.reloadData()
+            }
+        }
     }
     
     // MARK: Set UI, Constraints
@@ -204,7 +201,7 @@ final class HomeViewController: BaseViewController {
         //fsCalendar(fsCalendar, didSelect: fsCalendar.today ?? Date() , at: .current)
         //tasks = repository.fetchRealm()
         viewModel.fetch()
-        
+
     }
     
 }
@@ -213,42 +210,31 @@ final class HomeViewController: BaseViewController {
 extension HomeViewController: UITableViewDelegate, UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return viewModel.tasks.value.count
+        return viewModel.tasks.count
     }
     
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
         
         guard let headerView = tableView.dequeueReusableHeaderFooterView(withIdentifier: JacsimHeaderView.reuseIdentifier) as? JacsimHeaderView else { return UIView() }
         
-        headerView.infoButton.rx.tap
-            .asDriverOnErrorJustComplete()
-            .drive(with: self) { _self, _ in
-                _self.infoButtonTapped()
-            }
-            .disposed(by: headerView.disposeBag)
-       
-        headerView.sortButton.rx.tap
-            .asDriverOnErrorJustComplete()
-            .drive(with: self) { _self, _ in
-                _self.sortButtonTapped()
-            }
-            .disposed(by: headerView.disposeBag)
-                
+        headerView.infoButton.addTarget(self, action: #selector(infoButtonTapped), for: .touchUpInside)
+        headerView.sortButton.addTarget(self, action: #selector(sortButtonTapped), for: .touchUpInside)
+
         return headerView
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         guard let cell = tableView.dequeueReusableCell(withIdentifier: JacsimTableViewCell.reuseIdentifier, for: indexPath) as? JacsimTableViewCell else { return UITableViewCell() }
         
-        cell.setCellStyle(title: viewModel.tasks.value[indexPath.row].title,
-                          alarm: viewModel.tasks.value[indexPath.row].alarm)
+        cell.setCellStyle(title: viewModel.tasks[indexPath.row].title,
+                          alarm: viewModel.tasks[indexPath.row].alarm)
         
         return cell
     }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         
-        let viewModel = TaskDetailViewModel(task: viewModel.tasks.value[indexPath.item])
+        let viewModel = TaskDetailViewModel(task: viewModel.tasks[indexPath.item])
         
         let vc = TaskDetailViewController(viewModel: viewModel)
         vc.passPreVC = { [weak self] in
@@ -258,7 +244,7 @@ extension HomeViewController: UITableViewDelegate, UITableViewDataSource {
             self.tableView.reloadData()
         }
 //        vc.viewModel.task.value = viewModel.tasks.value[indexPath.row]
-        vc.title = self.viewModel.tasks.value[indexPath.item].title
+        vc.title = self.viewModel.tasks[indexPath.item].title
 //        vc.task = viewModel.tasks.value[indexPath.item]
         self.transitionViewController(viewController: vc, transitionStyle: .push)
     }

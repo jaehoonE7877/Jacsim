@@ -23,9 +23,5 @@ let project = Project.makeModule(
         .SPM.Floaty,
         //MARK: - DB
         .SPM.RealmSwift,
-        //MARK: - ReactiveX
-        .SPM.RxCocoa,
-        .SPM.RxSwift,
-        .SPM.RxGesture,
     ]
 )
