@@ -195,8 +195,12 @@ final class HomeViewController: BaseViewController {
     }
 
     @MainActor
-    private func loadTasks() async {
-        _ = await viewModel.fetch()
+    private func loadTasks(for date: Date? = nil) async {
+        if let date {
+            _ = await viewModel.fetchDate(date: date)
+        } else {
+            _ = await viewModel.fetch()
+        }
         viewModel.checkIsDone()
         tableView.reloadData()
     }
@@ -281,11 +285,8 @@ extension HomeViewController: FSCalendarDelegate, FSCalendarDataSource {
     }
     
     func calendar(_ calendar: FSCalendar, didSelect date: Date, at monthPosition: FSCalendarMonthPosition) {
-        Task { [weak self] in
-            guard let self else { return }
-            _ = await viewModel.fetchDate(date: date)
-            viewModel.checkIsDone()
-            tableView.reloadData()
+        Task { @MainActor [weak self] in
+            await self?.loadTasks(for: date)
         }
 
         if monthPosition == .previous || monthPosition == .next {
