@@ -29,9 +29,5 @@ public extension TargetDependency.SPM {
     static let Then = TargetDependency.external(name: "Then", condition: .none)
     //MARK: - DB
     static let RealmSwift = TargetDependency.external(name: "RealmSwift", condition: .none)
-    //MARK: - ReactiveX
-    static let RxSwift = TargetDependency.external(name: "RxSwift", condition: .none)
-    static let RxCocoa = TargetDependency.external(name: "RxCocoa", condition: .none)
-    static let RxGesture = TargetDependency.external(name: "RxGesture", condition: .none)
     //MARK: - Test (Swift Testing 사용, 외부 테스트 라이브러리 없음)
 }
