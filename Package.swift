@@ -38,9 +38,13 @@ let package = Package(
         .package(url: "https://github.com/TimOliver/TOCropViewController.git", from: "2.6.1"),
         .package(url: "https://github.com/kciter/Floaty.git", branch: "master"),
         .package(url: "https://github.com/devxoul/Then.git", from: "3.0.0"),
-        
+
         //MARK: - DB
         .package(url: "https://github.com/realm/realm-swift.git", from: "10.49.1"),
+
+        //MARK: - ReactiveX
+        .package(url: "https://github.com/ReactiveX/RxSwift.git", from: "6.6.0"),
+        .package(url: "https://github.com/RxSwiftCommunity/RxGesture", from: "4.0.4"),
 
         //MARK: - Test
         // Quick/Nimble 제거: Swift Testing(@Test, #expect) 사용
