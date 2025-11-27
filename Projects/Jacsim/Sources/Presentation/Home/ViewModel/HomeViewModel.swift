@@ -6,14 +6,18 @@
 //
 
 import Foundation
-import RxCocoa
-import RxSwift
 
 final class HomeViewModel {
     
     private let repository = JacsimRepository.shared
-    
-    var tasks: BehaviorRelay<[UserJacsim]> = .init(value: [])
+
+    private(set) var tasks: [UserJacsim] = [] {
+        didSet {
+            tasksDidUpdate?(tasks)
+        }
+    }
+
+    var tasksDidUpdate: (([UserJacsim]) -> Void)?
 }
 
 extension HomeViewModel {
@@ -21,41 +25,33 @@ extension HomeViewModel {
     func fetch() {
         
         let task = repository.fetchRealm()
-        
-        var original = tasks.value
-        original.removeAll()
-        self.tasks.accept(original)
-        
+
         var jacsims: [UserJacsim] = []
-        
+
         task.forEach { item in
             jacsims.append(item)
         }
-        
-        self.tasks.accept(jacsims)
+
+        self.tasks = jacsims
     }
-    
+
     func fetchDate(date: Date) {
-        
+
         let task = repository.fetchDate(date: date)
-        
-        var original = tasks.value
-        original.removeAll()
-        self.tasks.accept(original)
-        
+
         var jacsims: [UserJacsim] = []
-        
+
         task.forEach{ item in
             jacsims.append(item)
         }
-        
-        self.tasks.accept(jacsims)
+
+        self.tasks = jacsims
     }
-    
+
     func checkIsDone() {
-        repository.checkIsDone(items: tasks.value)
+        repository.checkIsDone(items: tasks)
     }
-    
+
     func fetchIsNotDone() -> Int {
         return repository.fetchIsNotDone()
     }

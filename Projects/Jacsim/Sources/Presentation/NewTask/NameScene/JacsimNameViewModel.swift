@@ -10,52 +10,23 @@ import Foundation
 
 import Core
 
-import RxCocoa
-import RxSwift
-
 final class JacsimNameViewModel {
-    
+
     private(set) var name: String
-    private let disposeBag = DisposeBag()
-    
+
     init(name: String = "") {
         self.name = name
     }
-    
-    struct Input {
-        let jacsimTitleText: Observable<String>
-        let nextButtonTap: Observable<Void>
+
+    func updateName(_ text: String) -> (isValid: Bool, countText: String) {
+        name = text
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        return (trimmed.isNotEmpty, trimmed.count.toString())
     }
-    
-    struct Output {
-        let nextButtonValidation: Driver<Bool>
-        let showJacsimImageView: Driver<UserJacsimDTO>
-        let textCount: Driver<String>
-    }
-    
-    func transform(input: Input) -> Output {
-        let buttonValidation: BehaviorRelay<Bool> = .init(value: false)
-        let textCount: BehaviorRelay<String> = .init(value: self.name.count.toString())
-        
-        input.jacsimTitleText
-            .subscribe(with: self) { _self, text in
-                _self.name = text
-                let trimmed = _self.name.trimmingCharacters(in: .whitespacesAndNewlines)
-                textCount.accept(trimmed.count.toString())
-                buttonValidation.accept(trimmed.isNotEmpty)
-            }
-            .disposed(by: disposeBag)
-        
-        let showJacsimImageView = input.nextButtonTap
-            .map { [weak self] _ -> UserJacsimDTO? in
-                guard let self else { return nil }
-                let title = self.name.trimmingCharacters(in: .whitespacesAndNewlines)
-                return UserJacsimDTO(title: title)
-            }
-            .filterNil()
-        
-        return Output(nextButtonValidation: buttonValidation.asDriverOnErrorWithNever(),
-                      showJacsimImageView: showJacsimImageView.asDriverOnErrorWithNever(),
-                      textCount: textCount.asDriverOnErrorWithNever())
+
+    func makeJacsimDTO() -> UserJacsimDTO? {
+        let title = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard title.isNotEmpty else { return nil }
+        return UserJacsimDTO(title: title)
     }
 }
