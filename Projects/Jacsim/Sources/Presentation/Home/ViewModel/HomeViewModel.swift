@@ -7,45 +7,30 @@
 
 import Foundation
 
+@MainActor
 final class HomeViewModel {
-    
+
     private let repository = JacsimRepository.shared
 
-    private(set) var tasks: [UserJacsim] = [] {
-        didSet {
-            tasksDidUpdate?(tasks)
-        }
-    }
-
-    var tasksDidUpdate: (([UserJacsim]) -> Void)?
+    private(set) var tasks: [UserJacsim] = []
 }
 
 extension HomeViewModel {
-    
-    func fetch() {
-        
+
+    func fetch() async -> [UserJacsim] {
+
         let task = repository.fetchRealm()
-
-        var jacsims: [UserJacsim] = []
-
-        task.forEach { item in
-            jacsims.append(item)
-        }
-
-        self.tasks = jacsims
+        let jacsims = Array(task)
+        tasks = jacsims
+        return jacsims
     }
 
-    func fetchDate(date: Date) {
+    func fetchDate(date: Date) async -> [UserJacsim] {
 
         let task = repository.fetchDate(date: date)
-
-        var jacsims: [UserJacsim] = []
-
-        task.forEach{ item in
-            jacsims.append(item)
-        }
-
-        self.tasks = jacsims
+        let jacsims = Array(task)
+        tasks = jacsims
+        return jacsims
     }
 
     func checkIsDone() {
@@ -55,5 +40,5 @@ extension HomeViewModel {
     func fetchIsNotDone() -> Int {
         return repository.fetchIsNotDone()
     }
-    
+
 }
