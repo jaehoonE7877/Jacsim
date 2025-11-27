@@ -6,15 +6,11 @@
 //
 
 import UIKit
-import RxCocoa
-import RxSwift
-
 final class TaskUpdateViewModel {
-    
-    private let repository = JacsimRepository.shared
-    
 
-    var task: PublishRelay<UserJacsim> = .init()
+    private let repository = JacsimRepository.shared
+
+    var task: UserJacsim?
     
     private let documentManager = DocumentManager.shared
     

@@ -42,9 +42,6 @@ let package = Package(
         //MARK: - DB
         .package(url: "https://github.com/realm/realm-swift.git", from: "10.49.1"),
 
-        //MARK: - ReactiveX
-        .package(url: "https://github.com/ReactiveX/RxSwift.git", from: "6.6.0"),
-        .package(url: "https://github.com/RxSwiftCommunity/RxGesture", from: "4.0.4"),
         //MARK: - Test
         // Quick/Nimble 제거: Swift Testing(@Test, #expect) 사용
         //MARK: - DI

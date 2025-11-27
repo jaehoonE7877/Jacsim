@@ -5,59 +5,35 @@
 //  Created by Seo Jae Hoon on 2022/10/12.
 //
 
+import Combine
 import Foundation
-import RxCocoa
-import RxSwift
 
+@MainActor
 final class HomeViewModel {
-    
+
     private let repository = JacsimRepository.shared
-    
-    var tasks: BehaviorRelay<[UserJacsim]> = .init(value: [])
+
+    @Published private(set) var tasks: [UserJacsim] = []
 }
 
 extension HomeViewModel {
-    
+
     func fetch() {
-        
-        let task = repository.fetchRealm()
-        
-        var original = tasks.value
-        original.removeAll()
-        self.tasks.accept(original)
-        
-        var jacsims: [UserJacsim] = []
-        
-        task.forEach { item in
-            jacsims.append(item)
-        }
-        
-        self.tasks.accept(jacsims)
+        let results = repository.fetchRealm()
+        tasks = Array(results)
     }
-    
+
     func fetchDate(date: Date) {
-        
-        let task = repository.fetchDate(date: date)
-        
-        var original = tasks.value
-        original.removeAll()
-        self.tasks.accept(original)
-        
-        var jacsims: [UserJacsim] = []
-        
-        task.forEach{ item in
-            jacsims.append(item)
-        }
-        
-        self.tasks.accept(jacsims)
+        let results = repository.fetchDate(date: date)
+        tasks = Array(results)
     }
-    
+
     func checkIsDone() {
-        repository.checkIsDone(items: tasks.value)
+        repository.checkIsDone(items: tasks)
     }
-    
+
     func fetchIsNotDone() -> Int {
         return repository.fetchIsNotDone()
     }
-    
+
 }

@@ -10,9 +10,6 @@ import UIKit
 
 import Core
 
-import RxCocoa
-import RxGesture
-import RxSwift
 import SnapKit
 
 open class BottomSheetViewController: BaseViewController {
@@ -53,17 +50,21 @@ open class BottomSheetViewController: BaseViewController {
     
 
     // MARK: - Public Properties
-    public var detent: BehaviorRelay = BehaviorRelay<BottomSheetDetent>(value: .zero)
+    public var detent: BottomSheetDetent = .zero {
+        didSet {
+            updateDetentLayout()
+            scheduleBottomSheetAppearance()
+        }
+    }
     // 반투명 백그라운드 터치시 이벤트
-    public let dimmedViewTapRelay: PublishRelay<Void> = .init()
+    public var onDimmedViewTap: (() -> Void)?
     // MARK: - Private Properties
     
     private let bottomSheetMinHeight: CGFloat = 150.0
     private let bottomSheetPanMinMoveConstant: CGFloat = 30.0
     private let bottomSheetPanMinCloseConstant: CGFloat = 150.0
     
-    private var initialBodyY: CGFloat = 0.0
-    private var initialPanY: CGFloat = 0.0
+    private var detentWorkItem: DispatchWorkItem?
     
     //백그라운드 탭 동작 제한
     private var isBackGroundTapEnable: Bool
@@ -87,16 +88,21 @@ open class BottomSheetViewController: BaseViewController {
     }
     
     // MARK: - Life Cycle
-    
+
     open override func loadView() {
         super.loadView()
-        bindUI()
     }
     
     open override func viewDidLoad() {
         super.viewDidLoad()
         configureUI()
         bindGesture()
+    }
+
+    open override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        updateDetentLayout()
+        scheduleBottomSheetAppearance()
     }
     
     open override func viewWillAppear(_ animated: Bool) {
@@ -139,51 +145,38 @@ extension BottomSheetViewController {
         self.view.addSubview(body)
         self.body.frame.origin = CGPoint(x: 0, y: self.view.frame.height)
 
-        self.body.frame.size = CGSize(width: self.view.frame.width, height: self.detent.value.calculateHeight(baseView: self.view))
+        self.body.frame.size = CGSize(width: self.view.frame.width, height: self.detent.calculateHeight(baseView: self.view))
     }
     
     private func bindGesture() {
         if isDragEnable {
-            self.view.rx
-                .panGesture()
-                .when(.began, .changed, .ended)
-                .observe(on: MainScheduler.instance)
-                .subscribe(onNext: { [weak self] sender in
-                    guard let self = self else { return }
-                    self.viewDidPan(sender)
-                })
-                .disposed(by: disposeBag)
+            let panGesture = UIPanGestureRecognizer(target: self, action: #selector(viewDidPan(_:)))
+            self.view.addGestureRecognizer(panGesture)
         }
-        
+
         if isBackGroundTapEnable {
-            self.dimmedView.rx
-                .tapGesture()
-                .when(.recognized)
-                .observe(on: MainScheduler.instance)
-                .subscribe(onNext: { [weak self] sender in
-                    guard let self = self else { return }
-                    self.dimmedViewTap(sender)
-                })
-                .disposed(by: disposeBag)
+            let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dimmedViewTap(_:)))
+            self.dimmedView.addGestureRecognizer(tapGesture)
         }
     }
-    
-    private func bindUI() {
-        self.detent
-            .subscribe(on: MainScheduler.instance)
-            .withUnretained(self)
-            .bind(onNext: { weakSelf, detent in
-                weakSelf.body.frame.size = CGSize(width: weakSelf.view.frame.width, height: weakSelf.detent.value.calculateHeight(baseView: weakSelf.view))
-            })
-            .disposed(by: disposeBag)
-        
-        self.detent
-            .debounce(.milliseconds(100), scheduler: MainScheduler.instance)
-            .withUnretained(self)
-            .subscribe(onNext: { weakSelf, _ in
-                weakSelf.showBottomSheet()
-            })
-            .disposed(by: disposeBag)
+
+    private func updateDetentLayout() {
+        guard isViewLoaded else { return }
+        let height = detent.calculateHeight(baseView: view)
+        self.body.frame.size = CGSize(width: self.view.frame.width, height: height)
+    }
+
+    private func scheduleBottomSheetAppearance() {
+        guard isViewLoaded else { return }
+        detentWorkItem?.cancel()
+
+        let workItem = DispatchWorkItem { [weak self] in
+            self?.showBottomSheet()
+        }
+
+        detentWorkItem = workItem
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(100), execute: workItem)
     }
 }
 // MARK: - Private Method
@@ -191,7 +184,7 @@ extension BottomSheetViewController {
     
     private func showBottomSheet(duration: CGFloat = 0.25, completion: (() -> Void)? = nil) {
         UIView.animate(withDuration: duration) {
-            self.body.frame.origin = CGPoint(x: 0, y: self.view.frame.height - self.detent.value.calculateHeight(baseView: self.view))
+            self.body.frame.origin = CGPoint(x: 0, y: self.view.frame.height - self.detent.calculateHeight(baseView: self.view))
         } completion: { _ in
             completion?()
         }
@@ -209,14 +202,14 @@ extension BottomSheetViewController {
         }
     }
     
-    private func dimmedViewTap(_ sender: UITapGestureRecognizer) {
-        self.dimmedViewTapRelay.accept(())
+    @objc private func dimmedViewTap(_ sender: UITapGestureRecognizer) {
+        onDimmedViewTap?()
         self.dismiss(animated: true, completion: nil)
     }
-    
-    private func viewDidPan(_ sender: UIPanGestureRecognizer) {
+
+    @objc private func viewDidPan(_ sender: UIPanGestureRecognizer) {
         let translation = sender.translation(in: self.view)
-        let dimmedViewHeight = self.view.frame.height - self.detent.value.calculateHeight(baseView: self.view)
+        let dimmedViewHeight = self.view.frame.height - self.detent.calculateHeight(baseView: self.view)
         
         switch sender.state {
         case .began: break
@@ -244,6 +237,6 @@ extension BottomSheetViewController {
         dimmedView.alpha = 0.24
         self.body.transform = .identity
         self.body.frame.origin = CGPoint(x: 0, y: self.view.frame.height)
-        self.body.frame.size = CGSize(width: self.view.frame.width, height: self.detent.value.calculateHeight(baseView: self.view))
+        self.body.frame.size = CGSize(width: self.view.frame.width, height: self.detent.calculateHeight(baseView: self.view))
     }
 }

@@ -6,6 +6,7 @@
 //  Copyright © 2024 Jacsim. All rights reserved.
 //
 
+import Combine
 import UIKit
 
 import Core
@@ -37,7 +38,8 @@ final class JacsimNameViewController: BaseViewController {
         $0.setAttributedTitle("다음".body1(color: .labelNormal, alignment: .center), for: .normal)
         $0.setAttributedTitle("다음".body1(color: .labelDisable, alignment: .center), for: .disabled)
     }
-    
+
+    private var cancellables = Set<AnyCancellable>()
     private let viewModel: JacsimNameViewModel
     
     //MARK: - init
@@ -71,43 +73,50 @@ final class JacsimNameViewController: BaseViewController {
     }
     
     private func bind() {
-        let input = JacsimNameViewModel.Input(jacsimTitleText: self.nameTextField.rx.text.orEmpty.distinctUntilChanged(),
-                                              nextButtonTap: self.nextButton.rx.tap.asObservable())
-        let output = self.viewModel.transform(input: input)
-        
-        nameTextField.rx.controlEvent(.editingDidBegin)
-            .asDriverOnErrorWithNever()
-            .drive(with: self, onNext: { _self, _ in
-                _self.nameTextField.inputState = .typing
-            })
-            .disposed(by: disposeBag)
-        
-        nameTextField.rx.controlEvent(.editingDidEnd)
-            .asDriverOnErrorWithNever()
-            .drive(with: self, onNext: { _self, _ in
-                _self.nameTextField.inputState = .none
-            })
-            .disposed(by: disposeBag)
-        
-        output.nextButtonValidation
-            .drive(with: self, onNext: { _self, valid in
-                _self.nextButton.buttonState = valid ? .enable : .disable
-            })
-            .disposed(by: disposeBag)
-        
-        output.showJacsimImageView
-            .drive(with: self, onNext: { _self, jacsimName in
-                Log(jacsimName)
-            })
-            .disposed(by: disposeBag)
-        
-        output.textCount
-            .drive(with: self, onNext: { _self, count in
+        nameTextField.addTarget(self, action: #selector(textFieldEditingChanged(_:)), for: .editingChanged)
+        nameTextField.addTarget(self, action: #selector(textFieldEditingDidBegin), for: .editingDidBegin)
+        nameTextField.addTarget(self, action: #selector(textFieldEditingDidEnd), for: .editingDidEnd)
+        nextButton.addTarget(self, action: #selector(nextButtonTapped), for: .touchUpInside)
+
+        viewModel.$isNextButtonEnabled
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] isEnabled in
+                self?.nextButton.buttonState = isEnabled ? .enable : .disable
+            }
+            .store(in: &cancellables)
+
+        viewModel.$textCount
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] count in
                 let countAtt = count.body1(color: .labelAssistive, alignment: .right)
                 let limitAtt = " / 20".body1(color: .labelAssistive, alignment: .right)
-                _self.limitCountLabel.attributedText = countAtt + limitAtt
-            })
-            .disposed(by: disposeBag)
+                self?.limitCountLabel.attributedText = countAtt + limitAtt
+            }
+            .store(in: &cancellables)
+    }
+}
+
+extension JacsimNameViewController {
+    @objc
+    private func textFieldEditingChanged(_ textField: UITextField) {
+        viewModel.updateName(textField.text ?? "")
+    }
+
+    @objc
+    private func textFieldEditingDidBegin() {
+        nameTextField.inputState = .typing
+    }
+
+    @objc
+    private func textFieldEditingDidEnd() {
+        nameTextField.inputState = .none
+    }
+
+    @objc
+    private func nextButtonTapped() {
+        if let jacsimName = viewModel.makeJacsimDTO() {
+            Log(jacsimName)
+        }
     }
 }
 

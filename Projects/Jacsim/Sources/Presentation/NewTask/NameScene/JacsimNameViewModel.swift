@@ -6,56 +6,35 @@
 //  Copyright © 2024 Jacsim. All rights reserved.
 //
 
+import Combine
 import Foundation
 
 import Core
 
-import RxCocoa
-import RxSwift
-
+@MainActor
 final class JacsimNameViewModel {
-    
-    private(set) var name: String
-    private let disposeBag = DisposeBag()
-    
+
+    @Published private(set) var name: String
+    @Published private(set) var isNextButtonEnabled: Bool
+    @Published private(set) var textCount: String
+
     init(name: String = "") {
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
         self.name = name
+        self.isNextButtonEnabled = trimmed.isNotEmpty
+        self.textCount = trimmed.count.toString()
     }
-    
-    struct Input {
-        let jacsimTitleText: Observable<String>
-        let nextButtonTap: Observable<Void>
+
+    func updateName(_ text: String) {
+        name = text
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        textCount = trimmed.count.toString()
+        isNextButtonEnabled = trimmed.isNotEmpty
     }
-    
-    struct Output {
-        let nextButtonValidation: Driver<Bool>
-        let showJacsimImageView: Driver<UserJacsimDTO>
-        let textCount: Driver<String>
-    }
-    
-    func transform(input: Input) -> Output {
-        let buttonValidation: BehaviorRelay<Bool> = .init(value: false)
-        let textCount: BehaviorRelay<String> = .init(value: self.name.count.toString())
-        
-        input.jacsimTitleText
-            .subscribe(with: self) { _self, text in
-                _self.name = text
-                let trimmed = _self.name.trimmingCharacters(in: .whitespacesAndNewlines)
-                textCount.accept(trimmed.count.toString())
-                buttonValidation.accept(trimmed.isNotEmpty)
-            }
-            .disposed(by: disposeBag)
-        
-        let showJacsimImageView = input.nextButtonTap
-            .map { [weak self] _ -> UserJacsimDTO? in
-                guard let self else { return nil }
-                let title = self.name.trimmingCharacters(in: .whitespacesAndNewlines)
-                return UserJacsimDTO(title: title)
-            }
-            .filterNil()
-        
-        return Output(nextButtonValidation: buttonValidation.asDriverOnErrorWithNever(),
-                      showJacsimImageView: showJacsimImageView.asDriverOnErrorWithNever(),
-                      textCount: textCount.asDriverOnErrorWithNever())
+
+    func makeJacsimDTO() -> UserJacsimDTO? {
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard trimmed.isNotEmpty else { return nil }
+        return UserJacsimDTO(title: trimmed)
     }
 }
