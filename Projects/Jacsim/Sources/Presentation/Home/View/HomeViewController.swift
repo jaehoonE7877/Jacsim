@@ -10,6 +10,7 @@ import UIKit
 import Core
 import DSKit
 
+import Combine
 import FSCalendar
 import Floaty
 
@@ -59,6 +60,7 @@ final class HomeViewController: BaseViewController {
         $0.fabDelegate = self
     }
     
+    private var cancellables = Set<AnyCancellable>()
     private let viewModel: HomeViewModel
     
     init(viewModel: HomeViewModel) {
@@ -73,9 +75,17 @@ final class HomeViewController: BaseViewController {
         setView()
         fsCalendar.setCurrentPage(Date(), animated: false)
         fsCalendar.select(Date(), scrollToDate: false)
-        Task { [weak self] in
-            await self?.loadTasks()
-        }
+        viewModel.fetch()
+        viewModel.checkIsDone()
+    }
+
+    private func setBinding() {
+        viewModel.$tasks
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in
+                self?.tableView.reloadData()
+            }
+            .store(in: &cancellables)
     }
     
     // MARK: Set UI, Constraints
@@ -218,8 +228,9 @@ extension HomeViewController: UITableViewDelegate, UITableViewDataSource {
 
         guard let headerView = tableView.dequeueReusableHeaderFooterView(withIdentifier: JacsimHeaderView.reuseIdentifier) as? JacsimHeaderView else { return UIView() }
 
-        headerView.infoButton.removeTarget(nil, action: nil, for: .touchUpInside)
-        headerView.sortButton.removeTarget(nil, action: nil, for: .touchUpInside)
+        headerView.infoButton.removeTarget(nil, action: nil, for: .allEvents)
+        headerView.sortButton.removeTarget(nil, action: nil, for: .allEvents)
+
         headerView.infoButton.addTarget(self, action: #selector(infoButtonTapped), for: .touchUpInside)
         headerView.sortButton.addTarget(self, action: #selector(sortButtonTapped), for: .touchUpInside)
 
@@ -228,17 +239,17 @@ extension HomeViewController: UITableViewDelegate, UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         guard let cell = tableView.dequeueReusableCell(withIdentifier: JacsimTableViewCell.reuseIdentifier, for: indexPath) as? JacsimTableViewCell else { return UITableViewCell() }
-
+        
         cell.setCellStyle(title: viewModel.tasks[indexPath.row].title,
                           alarm: viewModel.tasks[indexPath.row].alarm)
-
+        
         return cell
     }
 
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-
+        
         let viewModel = TaskDetailViewModel(task: viewModel.tasks[indexPath.item])
-
+        
         let vc = TaskDetailViewController(viewModel: viewModel)
         vc.passPreVC = { [weak self] in
             guard let self else { return }

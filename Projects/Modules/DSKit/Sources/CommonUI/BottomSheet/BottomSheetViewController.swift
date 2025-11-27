@@ -53,18 +53,19 @@ open class BottomSheetViewController: BaseViewController {
     public var detent: BottomSheetDetent = .zero {
         didSet {
             updateDetentLayout()
+            scheduleBottomSheetAppearance()
         }
     }
-
-    /// 반투명 백그라운드 터치시 이벤트
+    // 반투명 백그라운드 터치시 이벤트
     public var onDimmedViewTap: (() -> Void)?
-
     // MARK: - Private Properties
 
     private let bottomSheetMinHeight: CGFloat = 150.0
     private let bottomSheetPanMinMoveConstant: CGFloat = 30.0
     private let bottomSheetPanMinCloseConstant: CGFloat = 150.0
-
+    
+    private var detentWorkItem: DispatchWorkItem?
+    
     //백그라운드 탭 동작 제한
     private var isBackGroundTapEnable: Bool
 
@@ -90,6 +91,10 @@ open class BottomSheetViewController: BaseViewController {
 
     // MARK: - Life Cycle
 
+    open override func loadView() {
+        super.loadView()
+    }
+    
     open override func viewDidLoad() {
         super.viewDidLoad()
         configureUI()
@@ -102,6 +107,12 @@ open class BottomSheetViewController: BaseViewController {
         showBottomSheet()
     }
 
+    open override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        updateDetentLayout()
+        scheduleBottomSheetAppearance()
+    }
+    
     open override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
     }
@@ -152,25 +163,27 @@ extension BottomSheetViewController {
         }
 
         if isBackGroundTapEnable {
-            let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dimmedViewTapped(_:)))
+            let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dimmedViewTap(_:)))
             self.dimmedView.addGestureRecognizer(tapGesture)
         }
     }
 
-    private func updateDetentLayout(showAfterUpdate: Bool = true) {
+    private func updateDetentLayout() {
         guard isViewLoaded else { return }
-        self.body.frame.size = CGSize(width: self.view.frame.width, height: self.detent.calculateHeight(baseView: self.view))
-        if showAfterUpdate {
-            scheduleShowBottomSheet()
-        }
+        let height = detent.calculateHeight(baseView: view)
+        self.body.frame.size = CGSize(width: self.view.frame.width, height: height)
     }
 
-    private func scheduleShowBottomSheet() {
-        detentUpdateWorkItem?.cancel()
+    private func scheduleBottomSheetAppearance() {
+        guard isViewLoaded else { return }
+        detentWorkItem?.cancel()
+
         let workItem = DispatchWorkItem { [weak self] in
             self?.showBottomSheet()
         }
-        detentUpdateWorkItem = workItem
+
+        detentWorkItem = workItem
+
         DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(100), execute: workItem)
     }
 }
@@ -196,18 +209,16 @@ extension BottomSheetViewController {
             completion?()
         }
     }
-
-    @objc
-    private func dimmedViewTapped(_ sender: UITapGestureRecognizer) {
+    
+    @objc private func dimmedViewTap(_ sender: UITapGestureRecognizer) {
         onDimmedViewTap?()
         self.dismiss(animated: true, completion: nil)
     }
 
-    @objc
-    private func viewDidPan(_ sender: UIPanGestureRecognizer) {
+    @objc private func viewDidPan(_ sender: UIPanGestureRecognizer) {
         let translation = sender.translation(in: self.view)
         let dimmedViewHeight = self.view.frame.height - self.detent.calculateHeight(baseView: self.view)
-
+        
         switch sender.state {
         case .began: break
         case .changed:

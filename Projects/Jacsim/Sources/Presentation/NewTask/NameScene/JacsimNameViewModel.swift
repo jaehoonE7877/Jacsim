@@ -6,27 +6,35 @@
 //  Copyright © 2024 Jacsim. All rights reserved.
 //
 
+import Combine
 import Foundation
 
 import Core
 
+@MainActor
 final class JacsimNameViewModel {
 
-    private(set) var name: String
+    @Published private(set) var name: String
+    @Published private(set) var isNextButtonEnabled: Bool
+    @Published private(set) var textCount: String
 
     init(name: String = "") {
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
         self.name = name
+        self.isNextButtonEnabled = trimmed.isNotEmpty
+        self.textCount = trimmed.count.toString()
     }
 
-    func updateName(_ text: String) -> (isValid: Bool, countText: String) {
+    func updateName(_ text: String) {
         name = text
-        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
-        return (trimmed.isNotEmpty, trimmed.count.toString())
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        textCount = trimmed.count.toString()
+        isNextButtonEnabled = trimmed.isNotEmpty
     }
 
     func makeJacsimDTO() -> UserJacsimDTO? {
-        let title = name.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard title.isNotEmpty else { return nil }
-        return UserJacsimDTO(title: title)
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard trimmed.isNotEmpty else { return nil }
+        return UserJacsimDTO(title: trimmed)
     }
 }

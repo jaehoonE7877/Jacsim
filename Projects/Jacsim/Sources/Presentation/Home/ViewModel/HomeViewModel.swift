@@ -5,6 +5,7 @@
 //  Created by Seo Jae Hoon on 2022/10/12.
 //
 
+import Combine
 import Foundation
 
 @MainActor
@@ -12,25 +13,19 @@ final class HomeViewModel {
 
     private let repository = JacsimRepository.shared
 
-    private(set) var tasks: [UserJacsim] = []
+    @Published private(set) var tasks: [UserJacsim] = []
 }
 
 extension HomeViewModel {
 
-    func fetch() async -> [UserJacsim] {
-
-        let task = repository.fetchRealm()
-        let jacsims = Array(task)
-        tasks = jacsims
-        return jacsims
+    func fetch() {
+        let results = repository.fetchRealm()
+        tasks = Array(results)
     }
 
-    func fetchDate(date: Date) async -> [UserJacsim] {
-
-        let task = repository.fetchDate(date: date)
-        let jacsims = Array(task)
-        tasks = jacsims
-        return jacsims
+    func fetchDate(date: Date) {
+        let results = repository.fetchDate(date: date)
+        tasks = Array(results)
     }
 
     func checkIsDone() {
