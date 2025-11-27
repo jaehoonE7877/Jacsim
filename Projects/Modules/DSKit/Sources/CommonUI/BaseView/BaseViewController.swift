@@ -8,7 +8,6 @@
 import UIKit
 import UserNotifications
 
-import RxSwift
 import SnapKit
 import Toast
 import Then
@@ -34,8 +33,6 @@ open class BaseViewController: UIViewController {
     
     public let calendar = Calendar.current
     public let notificationCenter = UNUserNotificationCenter.current()
-    
-    public let disposeBag = DisposeBag()
     
     //MARK: - initializers
     deinit {

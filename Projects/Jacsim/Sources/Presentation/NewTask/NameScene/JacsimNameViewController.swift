@@ -57,6 +57,7 @@ final class JacsimNameViewController: BaseViewController {
         super.viewDidLoad()
         setView()
         setObserver()
+        applyNameState(viewModel.name)
     }
     
     override func setNavigationController() {
@@ -71,43 +72,10 @@ final class JacsimNameViewController: BaseViewController {
     }
     
     private func bind() {
-        let input = JacsimNameViewModel.Input(jacsimTitleText: self.nameTextField.rx.text.orEmpty.distinctUntilChanged(),
-                                              nextButtonTap: self.nextButton.rx.tap.asObservable())
-        let output = self.viewModel.transform(input: input)
-        
-        nameTextField.rx.controlEvent(.editingDidBegin)
-            .asDriverOnErrorWithNever()
-            .drive(with: self, onNext: { _self, _ in
-                _self.nameTextField.inputState = .typing
-            })
-            .disposed(by: disposeBag)
-        
-        nameTextField.rx.controlEvent(.editingDidEnd)
-            .asDriverOnErrorWithNever()
-            .drive(with: self, onNext: { _self, _ in
-                _self.nameTextField.inputState = .none
-            })
-            .disposed(by: disposeBag)
-        
-        output.nextButtonValidation
-            .drive(with: self, onNext: { _self, valid in
-                _self.nextButton.buttonState = valid ? .enable : .disable
-            })
-            .disposed(by: disposeBag)
-        
-        output.showJacsimImageView
-            .drive(with: self, onNext: { _self, jacsimName in
-                Log(jacsimName)
-            })
-            .disposed(by: disposeBag)
-        
-        output.textCount
-            .drive(with: self, onNext: { _self, count in
-                let countAtt = count.body1(color: .labelAssistive, alignment: .right)
-                let limitAtt = " / 20".body1(color: .labelAssistive, alignment: .right)
-                _self.limitCountLabel.attributedText = countAtt + limitAtt
-            })
-            .disposed(by: disposeBag)
+        nameTextField.addTarget(self, action: #selector(nameEditingDidBegin), for: .editingDidBegin)
+        nameTextField.addTarget(self, action: #selector(nameEditingDidEnd), for: .editingDidEnd)
+        nameTextField.addTarget(self, action: #selector(nameEditingChanged(_:)), for: .editingChanged)
+        nextButton.addTarget(self, action: #selector(nextButtonTapped), for: .touchUpInside)
     }
 }
 
@@ -137,6 +105,38 @@ extension JacsimNameViewController {
             make.horizontalEdges.equalToSuperview().inset(16)
         }
         self.view.layoutIfNeeded()
+    }
+}
+
+// MARK: - Actions
+extension JacsimNameViewController {
+    @objc
+    private func nameEditingChanged(_ sender: UITextField) {
+        applyNameState(sender.text ?? "")
+    }
+
+    @objc
+    private func nameEditingDidBegin() {
+        nameTextField.inputState = .typing
+    }
+
+    @objc
+    private func nameEditingDidEnd() {
+        nameTextField.inputState = .none
+    }
+
+    @objc
+    private func nextButtonTapped() {
+        guard let jacsim = viewModel.makeJacsimDTO() else { return }
+        Log(jacsim)
+    }
+
+    private func applyNameState(_ text: String) {
+        let result = viewModel.updateName(text)
+        let countAtt = result.countText.body1(color: .labelAssistive, alignment: .right)
+        let limitAtt = " / 20".body1(color: .labelAssistive, alignment: .right)
+        limitCountLabel.attributedText = countAtt + limitAtt
+        nextButton.buttonState = result.isValid ? .enable : .disable
     }
 }
 
