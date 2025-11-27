@@ -9,8 +9,8 @@ import Combine
 import UIKit
 
 import Core
-import DSKit
 
+@MainActor
 final class TaskDetailViewModel {
 
     private let repository: JacsimRepositoryProtocol
@@ -20,7 +20,10 @@ final class TaskDetailViewModel {
     var _task: UserJacsim {
         return task
     }
-    
+
+    private let repository: JacsimRepositoryProtocol
+    private let task: UserJacsim
+
     init(task: UserJacsim,
          repository: JacsimRepositoryProtocol = JacsimRepository.shared,
          documentManager: DocumentManager = .shared) {
@@ -40,8 +43,6 @@ final class TaskDetailViewModel {
         
         return dayArray
     }
-    
-}
 
 extension TaskDetailViewModel {
     
@@ -57,7 +58,7 @@ extension TaskDetailViewModel {
         if let alarm = task.alarm {
             return DateFormatType.toString(alarm, to: .time)
         } else {
-             return "설정된 알람이 없습니다."
+            return "설정된 알람이 없습니다."
         }
     }
 
@@ -72,6 +73,8 @@ extension TaskDetailViewModel {
         } else {
             return "목표를 달성했습니다! 끝까지 힘내세요!!"
         }
+
+        return dayArray
     }
     
     func checkIsToday(indexPath: IndexPath) -> Bool {
@@ -82,11 +85,13 @@ extension TaskDetailViewModel {
 
         return DateFormatType.toString(Date(), to: .fullWithoutYear) == dateText
     }
-    
+
+    var isSuccessAchieved: Bool {
+        remainingSuccessCount == 0
+    }
+
     var scrollToCurrentDate: Int {
-        // 시작일이 오늘과 같거나, 다음 날이면 그대로 이후면 이후 날짜(순서 2번)를 왼쪽으로
         let now = Date()
-        let dateArray = configCellTitle()
         var count = 0
 
         for index in 0...dateArray.count - 1 {
@@ -108,11 +113,11 @@ extension TaskDetailViewModel {
     func checkIsSuccess() {
         repository.checkIsSuccess(item: _task)
     }
-    
+
     func deleteAlarm() {
-        repository.deleteAlarm(item: _task)
+        repository.deleteAlarm(item: task)
     }
-    
+
     func deleteJacsim() {
 
         if self.repository.checkCertified(item: task) == 0 {
@@ -131,8 +136,6 @@ extension TaskDetailViewModel {
 
             self.repository.deleteJacsim(item: task)
         }
-    }
-}
 
 //MARK: CollectionView
 extension TaskDetailViewModel {

@@ -67,12 +67,8 @@ final class HomeViewController: BaseViewController {
         self.viewModel = viewModel
         super.init(nibName: nil, bundle: nil)
     }
-    
+
     // MARK: View LifeCycle
-    override func loadView() {
-        super.loadView()
-        setBinding()
-    }
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -147,9 +143,9 @@ final class HomeViewController: BaseViewController {
             let vc = NewTaskViewController()
             vc.passPreVC = { [weak self] in
                 guard let self else { return }
-                self.viewModel.fetch()
-                self.viewModel.checkIsDone()
-                self.tableView.reloadData()
+                Task { [weak self] in
+                    await self?.loadTasks()
+                }
             }
             self.transitionViewController(viewController: vc1, transitionStyle: .presentFullNavigation)
         }
@@ -197,26 +193,39 @@ final class HomeViewController: BaseViewController {
     }
     
     @objc func sortButtonTapped(){
-        
+
         fsCalendar.setCurrentPage(Date(), animated: true)
         fsCalendar.select(Date(), scrollToDate: true)
         //fsCalendar(fsCalendar, didSelect: fsCalendar.today ?? Date() , at: .current)
         //tasks = repository.fetchRealm()
-        viewModel.fetch()
-        
+        Task { [weak self] in
+            await self?.loadTasks()
+        }
+
     }
-    
+
+    @MainActor
+    private func loadTasks(for date: Date? = nil) async {
+        if let date {
+            _ = await viewModel.fetchDate(date: date)
+        } else {
+            _ = await viewModel.fetch()
+        }
+        viewModel.checkIsDone()
+        tableView.reloadData()
+    }
+
 }
 
 //MARK: - TableView Delegate, Datasource
 extension HomeViewController: UITableViewDelegate, UITableViewDataSource {
-    
+
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return viewModel.tasks.count
     }
     
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
-        
+
         guard let headerView = tableView.dequeueReusableHeaderFooterView(withIdentifier: JacsimHeaderView.reuseIdentifier) as? JacsimHeaderView else { return UIView() }
 
         headerView.infoButton.removeTarget(nil, action: nil, for: .allEvents)
@@ -236,7 +245,7 @@ extension HomeViewController: UITableViewDelegate, UITableViewDataSource {
         
         return cell
     }
-    
+
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         
         let viewModel = TaskDetailViewModel(task: viewModel.tasks[indexPath.item])
@@ -244,9 +253,9 @@ extension HomeViewController: UITableViewDelegate, UITableViewDataSource {
         let vc = TaskDetailViewController(viewModel: viewModel)
         vc.passPreVC = { [weak self] in
             guard let self else { return }
-            self.viewModel.fetch()
-            self.viewModel.checkIsDone()
-            self.tableView.reloadData()
+            Task { [weak self] in
+                await self?.loadTasks()
+            }
         }
 //        vc.viewModel.task.value = viewModel.tasks.value[indexPath.row]
         vc.title = self.viewModel.tasks[indexPath.item].title
@@ -287,7 +296,9 @@ extension HomeViewController: FSCalendarDelegate, FSCalendarDataSource {
     }
     
     func calendar(_ calendar: FSCalendar, didSelect date: Date, at monthPosition: FSCalendarMonthPosition) {
-        viewModel.fetchDate(date: date)
+        Task { @MainActor [weak self] in
+            await self?.loadTasks(for: date)
+        }
 
         if monthPosition == .previous || monthPosition == .next {
             calendar.setCurrentPage(date, animated: true)

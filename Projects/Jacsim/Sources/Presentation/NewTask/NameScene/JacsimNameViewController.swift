@@ -59,6 +59,7 @@ final class JacsimNameViewController: BaseViewController {
         super.viewDidLoad()
         setView()
         setObserver()
+        applyNameState(viewModel.name)
     }
     
     override func setNavigationController() {
@@ -146,6 +147,38 @@ extension JacsimNameViewController {
             make.horizontalEdges.equalToSuperview().inset(16)
         }
         self.view.layoutIfNeeded()
+    }
+}
+
+// MARK: - Actions
+extension JacsimNameViewController {
+    @objc
+    private func nameEditingChanged(_ sender: UITextField) {
+        applyNameState(sender.text ?? "")
+    }
+
+    @objc
+    private func nameEditingDidBegin() {
+        nameTextField.inputState = .typing
+    }
+
+    @objc
+    private func nameEditingDidEnd() {
+        nameTextField.inputState = .none
+    }
+
+    @objc
+    private func nextButtonTapped() {
+        guard let jacsim = viewModel.makeJacsimDTO() else { return }
+        Log(jacsim)
+    }
+
+    private func applyNameState(_ text: String) {
+        let result = viewModel.updateName(text)
+        let countAtt = result.countText.body1(color: .labelAssistive, alignment: .right)
+        let limitAtt = " / 20".body1(color: .labelAssistive, alignment: .right)
+        limitCountLabel.attributedText = countAtt + limitAtt
+        nextButton.buttonState = result.isValid ? .enable : .disable
     }
 }
 

@@ -71,9 +71,9 @@ class DocumentManager {
     }
     
     func loadImageFromDocument(fileName: String) -> UIImage? {
-        
+
         guard let imageDirectory = ImageDirectoryPath() else { return nil }
-        
+
         let fileURL = imageDirectory.appendingPathComponent(fileName)
         //print(fileURL)
         if FileManager.default.fileExists(atPath: fileURL.path) {
@@ -84,10 +84,17 @@ class DocumentManager {
             return DSKitAsset.Assets.jacsim.image
         }
 
-        
+
     }
-    
-    
+
+    func loadImage(fileName: String) async -> UIImage? {
+        await withCheckedContinuation { continuation in
+            let image = loadImageFromDocument(fileName: fileName)
+            continuation.resume(returning: image)
+        }
+    }
+
+
     func fetchDocumentZipFile(completion: @escaping([String], [Double]?) -> ()) {
         do {
             guard let path = documentDirectoryPath() else {return}
