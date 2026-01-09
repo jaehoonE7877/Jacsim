@@ -7,8 +7,6 @@
 
 import UIKit
 
-import RealmSwift
-
 import DSKit
 
 final class AllTaskViewController: BaseViewController {

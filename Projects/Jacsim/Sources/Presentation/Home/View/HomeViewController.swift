@@ -197,7 +197,6 @@ final class HomeViewController: BaseViewController {
         fsCalendar.setCurrentPage(Date(), animated: true)
         fsCalendar.select(Date(), scrollToDate: true)
         //fsCalendar(fsCalendar, didSelect: fsCalendar.today ?? Date() , at: .current)
-        //tasks = repository.fetchRealm()
         Task { [weak self] in
             await self?.loadTasks()
         }

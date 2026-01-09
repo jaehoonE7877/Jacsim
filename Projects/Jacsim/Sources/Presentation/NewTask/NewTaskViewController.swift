@@ -57,7 +57,6 @@ final class NewTaskViewController: BaseViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        //print("Realm is located at:", repository.localRealm.configuration.fileURL!)
     }
     
     override func configure() {
@@ -182,8 +181,8 @@ final class NewTaskViewController: BaseViewController {
         }
     }
     
-    // MARK: Realm Create
     @objc func saveButtonTapped(){
+
         
         if mainView.newTaskTitleTextfield.text == "" {
             view.makeToast("제목을 입력해주세요!", duration: 0.8, position: .center, title: nil, image: nil, style: .init()) { _ in

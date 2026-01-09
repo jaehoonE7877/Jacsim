@@ -167,18 +167,12 @@ extension JacsimNameViewController {
         nameTextField.inputState = .none
     }
 
-    @objc
-    private func nextButtonTapped() {
-        guard let jacsim = viewModel.makeJacsimDTO() else { return }
-        Log(jacsim)
-    }
-
     private func applyNameState(_ text: String) {
-        let result = viewModel.updateName(text)
-        let countAtt = result.countText.body1(color: .labelAssistive, alignment: .right)
-        let limitAtt = " / 20".body1(color: .labelAssistive, alignment: .right)
-        limitCountLabel.attributedText = countAtt + limitAtt
-        nextButton.buttonState = result.isValid ? .enable : .disable
+//        let result = viewModel.updateName(text)
+//        let countAtt = result.countText.body1(color: .labelAssistive, alignment: .right)
+//        let limitAtt = " / 20".body1(color: .labelAssistive, alignment: .right)
+//        limitCountLabel.attributedText = countAtt + limitAtt
+//        nextButton.buttonState = result.isValid ? .enable : .disable
     }
 }
 
