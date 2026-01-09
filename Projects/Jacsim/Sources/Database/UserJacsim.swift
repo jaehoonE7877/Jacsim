@@ -1,29 +1,39 @@
 //
-//  RealmModel.swift
+//  UserJacsim.swift
 //  Jacsim
 //
 //  Created by Seo Jae Hoon on 2022/09/10.
 //
 
-import RealmSwift
-import UIKit
+import Foundation
+import SwiftData
 
-class UserJacsim: Object {
-    
-    @Persisted(primaryKey: true) var id: ObjectId
-    
-    @Persisted var title: String
-    @Persisted var startDate: Date
-    @Persisted var endDate: Date
-    @Persisted var isDone: Bool
-    @Persisted var success: Int
-    @Persisted var isSuccess: Bool
-    @Persisted var alarm: Date?
+@Model
+final class UserJacsim {
 
-    @Persisted var memoList: List<Certified>
+    @Attribute(.unique) var id: UUID
 
-    convenience init(title: String, startDate: Date, endDate: Date, isDone: Bool = false, success: Int, isSuccess: Bool = false, alarm: Date?){
-        self.init()
+    var title: String
+    var startDate: Date
+    var endDate: Date
+    var isDone: Bool
+    var success: Int
+    var isSuccess: Bool
+    var alarm: Date?
+
+    @Relationship(deleteRule: .cascade)
+    var memoList: [Certified]
+
+    init(id: UUID = UUID(),
+         title: String,
+         startDate: Date,
+         endDate: Date,
+         isDone: Bool = false,
+         success: Int,
+         isSuccess: Bool = false,
+         alarm: Date? = nil,
+         memoList: [Certified] = []) {
+        self.id = id
         self.title = title
         self.startDate = startDate
         self.endDate = endDate
@@ -31,20 +41,17 @@ class UserJacsim: Object {
         self.success = success
         self.isSuccess = isSuccess
         self.alarm = alarm
+        self.memoList = memoList
     }
-    
-    override class func primaryKey() -> String? {
-        return "id"
-    }
-    
+
     var startDateStringFull: String {
         DateFormatType.toString(startDate, to: .full)
     }
-    
+
     var endDateStringFull: String {
         DateFormatType.toString(endDate, to: .full)
     }
-    
+
     var alarmString: String {
         if let alarm = alarm {
             return DateFormatType.toString(alarm, to: .time)
@@ -52,7 +59,7 @@ class UserJacsim: Object {
             return "설정된 알람이 없습니다."
         }
     }
-    
+
     var jacsimDayArray: [Date] {
         var dayArray: [Date] = []
         for date in stride(from: startDate, to: endDate + 86400, by: 86400) {
@@ -60,39 +67,41 @@ class UserJacsim: Object {
         }
         return dayArray
     }
-    
+
     func checkIsToday(indexPath: Int) -> Bool {
         let dateText = DateFormatType.toString(jacsimDayArray[indexPath], to: .fullWithoutYear)
-        if DateFormatType.toString(Date(), to: .fullWithoutYear) == dateText {
-            return true
-        } else {
-            return false
-        }
+        return DateFormatType.toString(Date(), to: .fullWithoutYear) == dateText
     }
-    
+
     var mainImageURL: String {
         return "\(id).jpg"
     }
-    
+
     var certifiedImageURL: [String] {
-        let dateTextArray = jacsimDayArray.map { DateFormatType.toString($0, to: .fullWithoutYear)}
+        let dateTextArray = jacsimDayArray.map { DateFormatType.toString($0, to: .fullWithoutYear) }
         let imageURLArray = dateTextArray.map { "\(id)_\($0).jpg" }
         return imageURLArray
     }
 }
 
-class Certified: Object {
-   
-    @Persisted(primaryKey: true) var id: ObjectId
-    
-    @Persisted var memo: String
-    @Persisted var check: Bool
-    
-    let forUserjacsim = LinkingObjects(fromType: UserJacsim.self, property: "memo")
-    
-    convenience init(memo: String) {
-        self.init()
+@Model
+final class Certified {
+
+    @Attribute(.unique) var id: UUID
+
+    var memo: String
+    var check: Bool
+
+    @Relationship(inverse: \UserJacsim.memoList)
+    var userJacsim: UserJacsim?
+
+    init(id: UUID = UUID(),
+         memo: String,
+         check: Bool = false,
+         userJacsim: UserJacsim? = nil) {
+        self.id = id
         self.memo = memo
-        self.check = false
+        self.check = check
+        self.userJacsim = userJacsim
     }
 }

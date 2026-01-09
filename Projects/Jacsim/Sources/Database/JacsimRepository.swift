@@ -10,216 +10,203 @@ import UserNotifications
 
 import Core
 
-import RealmSwift
+import SwiftData
 
 /*
  레포의 역할 
  */
 
 protocol JacsimRepositoryProtocol: AnyObject {
-    func fetchRealm() -> Results<UserJacsim>
-    func fetchIsSuccess() -> Results<UserJacsim>
-    func fetchIsFail() -> Results<UserJacsim>
-    func fetchDate(date: Date) -> Results<UserJacsim>
+    func fetchActiveTasks() -> [UserJacsim]
+    func fetchIsSuccess() -> [UserJacsim]
+    func fetchIsFail() -> [UserJacsim]
+    func fetchDate(date: Date) -> [UserJacsim]
+    func fetchIsNotDone() -> Int
     func addJacsim(item: UserJacsim)
     func updateMemo(item: UserJacsim, index: Int, memo: String)
     func removeImageFromDocument(fileName: String)
     func deleteJacsim(item: UserJacsim)
     func deleteAlarm(item: UserJacsim)
     func checkIsDone(item: UserJacsim, count: Int)
+    func checkIsDone(items: [UserJacsim])
     func checkCertified(item: UserJacsim) -> Int
     func checkIsSuccess(item: UserJacsim)
 }
 
+@MainActor
 final class JacsimRepository: JacsimRepositoryProtocol {
-    
+
     static let shared = JacsimRepository()
-    private init() { }
-    
-    let notificationCenter = UNUserNotificationCenter.current()
-    
-    private var localRealm: Realm {
-        get {
-            do {
-                let realm = try Realm()
-                return realm
-            } catch {
-                print("\(error.localizedDescription)")
-                return try! Realm()
-            }
+    private init() {
+        let schema = Schema([UserJacsim.self, Certified.self])
+        let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
+        do {
+            container = try ModelContainer(for: schema, configurations: [config])
+            context = container.mainContext
+        } catch {
+            fatalError("SwiftData 컨테이너 초기화 실패: \(error)")
         }
     }
-    
-    func fetchId(id: ObjectId) -> Results<UserJacsim> {
-        return localRealm.objects(UserJacsim.self).where { $0.id == id }
+
+    private let container: ModelContainer
+    private let context: ModelContext
+
+    let notificationCenter = UNUserNotificationCenter.current()
+
+    func fetchId(id: UUID) -> [UserJacsim] {
+        let descriptor = FetchDescriptor<UserJacsim>(
+            predicate: #Predicate { $0.id == id }
+        )
+        return (try? context.fetch(descriptor)) ?? []
     }
-    
-    func fetchRealm() -> Results<UserJacsim> {
-        return localRealm.objects(UserJacsim.self).where { $0.isDone == false }.sorted(byKeyPath: "startDate", ascending: true)
+
+    func fetchActiveTasks() -> [UserJacsim] {
+        let descriptor = FetchDescriptor<UserJacsim>(
+            predicate: #Predicate { $0.isDone == false },
+            sortBy: [SortDescriptor(\.startDate, order: .forward)]
+        )
+        return (try? context.fetch(descriptor)) ?? []
     }
-    // 이후엔 안 쓸 것
-    func fetchIsDone() -> Results<UserJacsim> {
-        return localRealm.objects(UserJacsim.self).where { $0.isDone == true }.sorted(byKeyPath: "startDate", ascending: true)
+
+    func fetchIsSuccess() -> [UserJacsim] {
+        let descriptor = FetchDescriptor<UserJacsim>(
+            predicate: #Predicate { $0.isDone == true && $0.isSuccess == true },
+            sortBy: [SortDescriptor(\.startDate, order: .forward)]
+        )
+        return (try? context.fetch(descriptor)) ?? []
     }
-    
-    func fetchIsSuccess() -> Results<UserJacsim> {
-        return localRealm.objects(UserJacsim.self).where { $0.isDone == true }.where { $0.isSuccess == true }.sorted(byKeyPath: "startDate", ascending: true)
+
+    func fetchIsFail() -> [UserJacsim] {
+        let descriptor = FetchDescriptor<UserJacsim>(
+            predicate: #Predicate { $0.isDone == true && $0.isSuccess == false },
+            sortBy: [SortDescriptor(\.startDate, order: .forward)]
+        )
+        return (try? context.fetch(descriptor)) ?? []
     }
-    
-    func fetchIsFail() -> Results<UserJacsim> {
-        return localRealm.objects(UserJacsim.self).where { $0.isDone == true }.where { $0.isSuccess == false }.sorted(byKeyPath: "startDate", ascending: true)
-    }
-    
+
     func fetchIsNotDone() -> Int {
-        return localRealm.objects(UserJacsim.self).where({$0.isDone == false }).count
+        let descriptor = FetchDescriptor<UserJacsim>(
+            predicate: #Predicate { $0.isDone == false }
+        )
+        return (try? context.fetch(descriptor).count) ?? 0
     }
-    
-    // Home View에서 TableView에 보여주는 task
-    func fetchDate(date: Date) -> Results<UserJacsim> {
-        //NSPredicate
-        return localRealm.objects(UserJacsim.self).where{ $0.isDone == false }.filter("endDate >= %@ AND startDate < %@", date, Date(timeInterval: 86400, since: date)).sorted(byKeyPath: "startDate", ascending: true)
+
+    func fetchDate(date: Date) -> [UserJacsim] {
+        let endDate = Date(timeInterval: 86400, since: date)
+        let descriptor = FetchDescriptor<UserJacsim>(
+            predicate: #Predicate { $0.isDone == false && $0.endDate >= date && $0.startDate < endDate },
+            sortBy: [SortDescriptor(\.startDate, order: .forward)]
+        )
+        return (try? context.fetch(descriptor)) ?? []
     }
 
     func addJacsim(item: UserJacsim) {
+        context.insert(item)
         do {
-            try localRealm.write{
-                localRealm.add(item)
-            }
-        } catch let error {
+            try context.save()
+        } catch {
             print(error)
         }
     }
-    
+
     func deleteAlarm(item: UserJacsim) {
-       
         guard let alarm = item.alarm else { return }
         let alarmString = alarm.convertToString(withFormat: .yyyyMDEEEEahhmm)
         notificationCenter.removePendingNotificationRequests(withIdentifiers: ["\(item.title)\(alarmString).starter", "\(item.title)\(alarmString).repeater"])
-        
+
+        item.alarm = nil
         do {
-            try localRealm.write {
-                item.alarm = nil
-            }
-        } catch let error {
+            try context.save()
+        } catch {
             print(error)
         }
     }
-    
+
     func updateMemo(item: UserJacsim, index: Int, memo: String) {
+        guard item.memoList.indices.contains(index) else { return }
+        item.memoList[index].memo = memo
+        item.memoList[index].check = true
         do {
-            try localRealm.write{
-                item.memoList[index].memo = memo
-                item.memoList[index].check = true
-            }
-        } catch let error {
+            try context.save()
+        } catch {
             print(error)
         }
     }
-    
+
     func removeImageFromDocument(fileName: String) {
-        
-        guard let documentDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first else { return } //Document 경로
+        guard let documentDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first else { return }
         let imageDirectory = documentDirectory.appendingPathComponent("Image")
         let fileURL = imageDirectory.appendingPathComponent(fileName)
         do {
             try FileManager.default.removeItem(at: fileURL)
-        } catch let error {
+        } catch {
             print(error)
         }
     }
-    
+
     func deleteJacsim(item: UserJacsim) {
-        
         if let alarm = item.alarm {
             removeImageFromDocument(fileName: "\(item.id).jpg")
             let alarmString = DateFormatType.toString(alarm, to: .fullWithTime)
-            //print("\(item.title)\(alarmString).starter", "\(item.title)\(alarmString).repeater")
             notificationCenter.removePendingNotificationRequests(withIdentifiers: ["\(item.title)\(alarmString).starter", "\(item.title)\(alarmString).repeater"])
-            
-            do {
-                try localRealm.write{
-                    localRealm.delete(item.memoList)
-                    localRealm.delete(item)
-                }
-            } catch {
-                print(error)
-            }
         } else {
             removeImageFromDocument(fileName: "\(item.id).jpg")
-            
+        }
+
+        context.delete(item)
+        do {
+            try context.save()
+        } catch {
+            print(error)
+        }
+    }
+
+    func checkIsDone(item: UserJacsim, count: Int) {
+        let certifiedCount = item.memoList.reduce(0) { $0 + ($1.check ? 1 : 0) }
+        if certifiedCount == count {
+            item.isDone = true
             do {
-                try localRealm.write{
-                    localRealm.delete(item.memoList)
-                    localRealm.delete(item)
-                }
+                try context.save()
             } catch {
                 print(error)
-            }
-        }
-        
-    }
-    //종료일 전에 인증 개수로 isDone 정의
-    func checkIsDone(item: UserJacsim, count: Int) {
-        var cnt = 0
-        item.memoList.forEach { value in
-            if value.check {
-                cnt += 1
-            }
-        }
-        if cnt == count {
-            do {
-                try localRealm.write{
-                    item.isDone = true
-                }
-            } catch let error {
-                print(error)
-            }
-        }
-    }
-    // 종료일이 지남으로서 isDone 정의
-    func checkIsDone(items: [UserJacsim]) {
-        
-        items.forEach { task in
-            let end = task.endDate + 86400
-           // print(now, end )
-            if Date() - end >= 0 {
-                do {
-                    try localRealm.write{
-                        task.isDone = true
-                        
-                        if let alarm = task.alarm {
-                            let alarmString = DateFormatType.toString(alarm, to: .fullWithTime)
-                            notificationCenter.removePendingNotificationRequests(withIdentifiers: ["\(task.title)\(alarmString).repeater"])
-                        }
-                        
-                    }
-                } catch let error {
-                    print(error)
-                }
             }
         }
     }
 
-    //인증 개수 확인
-    func checkCertified(item: UserJacsim) -> Int {
-        var cnt = 0
-        item.memoList.forEach { value in
-            if value.check {
-                cnt += 1
+    func checkIsDone(items: [UserJacsim]) {
+        var didUpdate = false
+        for task in items {
+            let end = task.endDate + 86400
+            if Date() - end >= 0 {
+                task.isDone = true
+                didUpdate = true
+
+                if let alarm = task.alarm {
+                    let alarmString = DateFormatType.toString(alarm, to: .fullWithTime)
+                    notificationCenter.removePendingNotificationRequests(withIdentifiers: ["\(task.title)\(alarmString).repeater"])
+                }
             }
         }
-        return cnt
-    }
-    
-    func checkIsSuccess(item: UserJacsim) {
-        
-        if self.checkCertified(item: item) >= item.success {
+
+        if didUpdate {
             do {
-                try localRealm.write{
-                    item.isSuccess = true
-                    
-                }
-            } catch let error {
+                try context.save()
+            } catch {
+                print(error)
+            }
+        }
+    }
+
+    func checkCertified(item: UserJacsim) -> Int {
+        item.memoList.reduce(0) { $0 + ($1.check ? 1 : 0) }
+    }
+
+    func checkIsSuccess(item: UserJacsim) {
+        if checkCertified(item: item) >= item.success {
+            item.isSuccess = true
+            do {
+                try context.save()
+            } catch {
                 print(error)
             }
         }
