@@ -39,9 +39,6 @@ let package = Package(
         .package(url: "https://github.com/kciter/Floaty.git", branch: "master"),
         .package(url: "https://github.com/devxoul/Then.git", from: "3.0.0"),
         
-        //MARK: - DB
-        .package(url: "https://github.com/realm/realm-swift.git", from: "10.49.1"),
-
         //MARK: - Test
         // Quick/Nimble 제거: Swift Testing(@Test, #expect) 사용
         //MARK: - DI

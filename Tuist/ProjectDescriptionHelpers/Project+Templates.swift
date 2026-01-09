@@ -62,10 +62,10 @@ public extension Project {
                     internalDependencies,
                     externalDependencies,
                     [
-                        .package(product: "LookinServer", type: .macro, condition: nil)
+
                     ]
                 ].flatMap { $0 },
-                settings: .settings(base: settings.codeSignIdentityAppleDevelopment(),
+                settings: .settings(base: settings.setCodeSignAutomatic(),
                                     configurations: XCConfig.project)
             )
             projectTargets.append(target)
@@ -237,18 +237,10 @@ extension Scheme {
 extension Project {
     static let appSchemes: [Scheme] = [
         .scheme(
-            name: "\(Environment.workspaceName)-DEBUG",
+            name: "\(Environment.workspaceName)",
             shared: true,
             buildAction: .buildAction(targets: ["\(Environment.workspaceName)"],
-                                      postActions: [
-                                        .executionAction(
-                                            title: "Inspect Build",
-                                            scriptText: """
-                                                                $HOME/.local/bin/mise x -C $SRCROOT -- tuist inspect build
-                                                                """,
-                                            target: "\(Environment.workspaceName)-DEBUG"
-                                        )
-                                      ]),
+                                      postActions: [ ]),
             testAction: .targets(
                 ["\(Environment.workspaceName)Tests"],
                 configuration: "Debug",
@@ -269,15 +261,7 @@ extension Project {
             name: "\(Environment.workspaceName)",
             shared: true,
             buildAction: .buildAction(targets: ["\(Environment.workspaceName)"],
-                                      postActions: [
-                                        .executionAction(
-                                            title: "Inspect Build",
-                                            scriptText: """
-                                                               $HOME/.local/bin/mise x -C $SRCROOT -- tuist inspect build
-                                                               """,
-                                            target: "\(Environment.workspaceName)"
-                                        )
-                                      ]),
+                                      postActions: []),
             runAction: .runAction(
                 configuration: "Release",
                 arguments: .arguments(

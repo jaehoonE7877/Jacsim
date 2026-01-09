@@ -21,7 +21,5 @@ let project = Project.makeModule(
         .SPM.AcknowList,
         .SPM.CropViewController,
         .SPM.Floaty,
-        //MARK: - DB
-        .SPM.RealmSwift,
     ]
 )

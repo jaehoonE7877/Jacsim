@@ -27,7 +27,5 @@ public extension TargetDependency.SPM {
     static let CropViewController = TargetDependency.external(name: "CropViewController", condition: .none)
     static let Floaty = TargetDependency.external(name: "Floaty", condition: .none)
     static let Then = TargetDependency.external(name: "Then", condition: .none)
-    //MARK: - DB
-    static let RealmSwift = TargetDependency.external(name: "RealmSwift", condition: .none)
     //MARK: - Test (Swift Testing 사용, 외부 테스트 라이브러리 없음)
 }
