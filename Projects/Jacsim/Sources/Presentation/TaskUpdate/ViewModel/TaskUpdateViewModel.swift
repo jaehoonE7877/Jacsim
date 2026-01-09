@@ -6,6 +6,8 @@
 //
 
 import UIKit
+
+@MainActor
 final class TaskUpdateViewModel {
 
     private let repository = JacsimRepository.shared

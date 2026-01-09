@@ -9,18 +9,16 @@ import UIKit
 
 import DSKit
 
-import RealmSwift
-
 final class AllTaskViewModel {
 
     private let repository: JacsimRepositoryProtocol
-    let fetchTasks: Results<UserJacsim>
-    let fetchSuccess: Results<UserJacsim>
-    let fetchFail: Results<UserJacsim>
+    let fetchTasks: [UserJacsim]
+    let fetchSuccess: [UserJacsim]
+    let fetchFail: [UserJacsim]
 
     init(repository: JacsimRepositoryProtocol = JacsimRepository.shared) {
         self.repository = repository
-        self.fetchTasks = repository.fetchRealm()
+        self.fetchTasks = repository.fetchActiveTasks()
         self.fetchSuccess = repository.fetchIsSuccess()
         self.fetchFail = repository.fetchIsFail()
     }

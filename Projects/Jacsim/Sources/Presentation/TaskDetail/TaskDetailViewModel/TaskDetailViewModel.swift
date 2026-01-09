@@ -13,16 +13,16 @@ import Core
 @MainActor
 final class TaskDetailViewModel {
 
-    private let repository: JacsimRepositoryProtocol
-    private let documentManager: DocumentManager
-    @Published private var task: UserJacsim
-
-    var _task: UserJacsim {
-        return task
+    struct DayViewData {
+        let date: Date
+        let memo: String
+        let imageIdentifier: String
+        let isChecked: Bool
     }
 
     private let repository: JacsimRepositoryProtocol
-    private let task: UserJacsim
+    private let documentManager: DocumentManager
+    private var task: UserJacsim
 
     init(task: UserJacsim,
          repository: JacsimRepositoryProtocol = JacsimRepository.shared,
@@ -31,87 +31,55 @@ final class TaskDetailViewModel {
         self.repository = repository
         self.documentManager = documentManager
     }
-    
-    // collectionView cell개수
-    func configCellTitle() -> [Date] {
-        
-        var dayArray: [Date] = []
-        
-        for date in stride(from: task.startDate, to: (task.endDate) + 86400, by: 86400 ){
-            dayArray.append(date)
-        }
-        
-        return dayArray
+
+    var currentTask: UserJacsim {
+        task
     }
 
-extension TaskDetailViewModel {
-    
-    var showStartDate: String {
-        return DateFormatType.toString(task.startDate, to: .full)
+    var startDateText: String {
+        DateFormatType.toString(task.startDate, to: .full)
     }
 
-    var showEndDate: String {
-        return DateFormatType.toString(task.endDate, to: .full)
+    var endDateText: String {
+        DateFormatType.toString(task.endDate, to: .full)
     }
 
-    var showAlarm: String {
+    var alarmText: String {
         if let alarm = task.alarm {
             return DateFormatType.toString(alarm, to: .time)
-        } else {
-            return "설정된 알람이 없습니다."
         }
+        return "설정된 알람이 없습니다."
     }
 
-    var loadMainImage: UIImage {
-        return documentManager.loadImageFromDocument(fileName: "\(String(describing: task.id)).jpg") ?? DSKitAsset.Assets.jacsim.image
+    var mainImageIdentifier: String {
+        task.mainImageURL
     }
 
-    var showCertified: String {
-
-        if task.success - repository.checkCertified(item: task) > 0 {
-            return "작심 성공까지 \(task.success - repository.checkCertified(item: task))회 남았습니다!"
-        } else {
-            return "목표를 달성했습니다! 끝까지 힘내세요!!"
-        }
-
-        return dayArray
-    }
-    
-    func checkIsToday(indexPath: IndexPath) -> Bool {
-        
-        let dayArray = configCellTitle()
-
-        let dateText = DateFormatType.toString(dayArray[indexPath.item], to: .fullWithoutYear)
-
-        return DateFormatType.toString(Date(), to: .fullWithoutYear) == dateText
+    var remainingSuccessCount: Int {
+        max(task.success - repository.checkCertified(item: task), 0)
     }
 
-    var isSuccessAchieved: Bool {
-        remainingSuccessCount == 0
-    }
-
-    var scrollToCurrentDate: Int {
-        let now = Date()
-        var count = 0
-
-        for index in 0...dateArray.count - 1 {
-            if dateArray[index].year == now.year,
-               dateArray[index].month == now.month,
-               dateArray[index].day == now.day {
-                count = index
+    var dayViewData: [DayViewData] {
+        let dates = task.jacsimDayArray
+        return dates.enumerated().map { index, date in
+            let memo: String
+            let isChecked: Bool
+            if task.memoList.indices.contains(index) {
+                memo = task.memoList[index].memo
+                isChecked = task.memoList[index].check
+            } else {
+                memo = "인증해주세요"
+                isChecked = false
             }
+            let dateText = DateFormatType.toString(date, to: .fullWithoutYear)
+            let imageIdentifier = "\(task.id)_\(dateText).jpg"
+            return DayViewData(date: date, memo: memo, imageIdentifier: imageIdentifier, isChecked: isChecked)
         }
-        return count
     }
 
-    func fetchTodayImage(index: Int) -> UIImage {
-        let dayArray = configCellTitle()
-        let dateText = DateFormatType.toString(dayArray[index], to: .fullWithoutYear)
-        return documentManager.loadImageFromDocument(fileName: "\(task.id)_\(dateText).jpg") ?? DSKitAsset.Assets.jacsim.image
-    }
-
-    func checkIsSuccess() {
-        repository.checkIsSuccess(item: _task)
+    func refreshTaskStatus() {
+        repository.checkIsDone(items: [task])
+        repository.checkIsSuccess(item: task)
     }
 
     func deleteAlarm() {
@@ -119,44 +87,15 @@ extension TaskDetailViewModel {
     }
 
     func deleteJacsim() {
-
-        if self.repository.checkCertified(item: task) == 0 {
-
-            self.repository.deleteJacsim(item: task)
-
-        } else {
-            // 인증이 있을 때
-            let dayArray = configCellTitle()
-
-            for index in 0...self.repository.checkCertified(item: task) - 1 {
-
-                let dateText = DateFormatType.toString(dayArray[index], to: .fullWithoutYear)
-                self.repository.removeImageFromDocument(fileName: "\(task.id)_\(dateText).jpg")
-            }
-
-            self.repository.deleteJacsim(item: task)
+        if repository.checkCertified(item: task) == 0 {
+            repository.deleteJacsim(item: task)
+            return
         }
 
-//MARK: CollectionView
-extension TaskDetailViewModel {
-    
-    func cellForItemAt(_ collectionView: UICollectionView, indexPath: IndexPath) -> UICollectionViewCell {
-        
-        guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: TaskDetailCollectionViewCell.reuseIdentifier, for: indexPath) as? TaskDetailCollectionViewCell
-        else { return UICollectionViewCell() }
-        
-        let dayArray = configCellTitle()
-        
-        let dateText = DateFormatType.toString(dayArray[indexPath.item], to: .fullWithoutYear)
-
-        cell.dateLabel.text = dateText
-        cell.certifiedMemo.text = task.memoList[indexPath.row].memo
-
-        guard let image = self.documentManager.loadImageFromDocument(fileName: "\(task.id)_\(dateText).jpg") else { return UICollectionViewCell()}
-        cell.certifiedImageView.image = image
-        
-        return cell
-        
+        for date in task.jacsimDayArray {
+            let dateText = DateFormatType.toString(date, to: .fullWithoutYear)
+            repository.removeImageFromDocument(fileName: "\(task.id)_\(dateText).jpg")
+        }
+        repository.deleteJacsim(item: task)
     }
-    
 }

@@ -19,13 +19,11 @@ final class HomeViewModel {
 extension HomeViewModel {
 
     func fetch() {
-        let results = repository.fetchRealm()
-        tasks = Array(results)
+        tasks = repository.fetchActiveTasks()
     }
 
     func fetchDate(date: Date) {
-        let results = repository.fetchDate(date: date)
-        tasks = Array(results)
+        tasks = repository.fetchDate(date: date)
     }
 
     func checkIsDone() {
