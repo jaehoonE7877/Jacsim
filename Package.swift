@@ -39,9 +39,8 @@ let package = Package(
         .package(url: "https://github.com/kciter/Floaty.git", branch: "master"),
         .package(url: "https://github.com/devxoul/Then.git", from: "3.0.0"),
         
-        //MARK: - Test
-        // Quick/Nimble 제거: Swift Testing(@Test, #expect) 사용
         //MARK: - DI
         .package(url: "https://github.com/Swinject/Swinject.git", from: "2.8.4"),
+        .package(url: "https://github.com/pointfreeco/swift-composable-architecture", from: "1.23.1"),
     ]
 )

@@ -14,9 +14,9 @@ public enum DateFormat: String {
     ///yyyy-MM-dd HH:mm:ss
     case default24Format = "yyyy-MM-dd HH:mm:ss"
     ///yyyy년 M월 d일 EEEE
-    case yyyyMdEEEE = "yyyy년 M월 d일 EEEE"
+    case full = "yyyy년 M월 d일 EEEE"
     ///yyyy년 M월 d일 EEEE a hh:mm
-    case yyyyMDEEEEahhmm = "yyyy년 M월 d일 EEEE a hh:mm"
+    case fullWithTime = "yyyy년 M월 d일 EEEE a hh:mm"
     ///yyyyMMddHHmmss
     case YYYYMMDDHHmmss = "yyyyMMddHHmmss"
     ///MM월 dd일 EEEE

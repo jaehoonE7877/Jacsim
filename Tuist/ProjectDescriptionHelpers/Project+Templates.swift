@@ -52,10 +52,7 @@ public extension Project {
                 bundleId: "\(Environment.bundlePrefix)",
                 deploymentTargets: deploymentTarget,
                 infoPlist: .extendingDefault(with: infoPlist),
-                sources: ["Sources/**/*.swift"],
-                resources: [
-                    .glob(pattern: "Resources/**", excluding: [])
-                ],
+                buildableFolders: ["Sources", "Resources"],
                 entitlements: "\(name).entitlements",
                 scripts: [.FirebaseCrashlyticsString],
                 dependencies: [
@@ -83,7 +80,7 @@ public extension Project {
                 bundleId: "\(Environment.bundlePrefix).\(name)Interface",
                 deploymentTargets: deploymentTarget,
                 infoPlist: .default,
-                sources: ["Interface/Sources/**/*.swift"],
+                buildableFolders: ["Interface/Sources"],
                 dependencies: interfaceDependencies,
                 settings: .settings(base: settings, configurations: XCConfig.framework)
             )
@@ -108,8 +105,7 @@ public extension Project {
                 bundleId: "\(Environment.bundlePrefix).\(name)",
                 deploymentTargets: deploymentTarget,
                 infoPlist: .default,
-                sources: ["Sources/**/*.swift"],
-                resources: hasResources ? [.glob(pattern: "Resources/**", excluding: ["Resources/dummy.txt"])] : [],
+                buildableFolders: hasResources ? ["Sources", "Resources"] : ["Sources"],
                 dependencies: deps + internalDependencies + externalDependencies,
                 settings: .settings(base: settings.setCodeSignAutomatic(), configurations: XCConfig.framework)
             )
@@ -129,8 +125,7 @@ public extension Project {
                 bundleId: "\(Environment.bundlePrefix).\(name)Demo",
                 deploymentTargets: deploymentTarget,
                 infoPlist: .extendingDefault(with: Project.demoInfoPlist),
-                sources: ["Demo/Sources/**/*.swift"],
-                resources: [.glob(pattern: "Demo/Resources/**", excluding: ["Demo/Resources/dummy.txt"])],
+                buildableFolders: ["Demo/Sources", "Demo/Resources"],
                 dependencies: [
                     deps,
                     [
@@ -156,8 +151,7 @@ public extension Project {
                 bundleId: "\(Environment.bundlePrefix).\(name)Tests",
                 deploymentTargets: deploymentTarget,
                 infoPlist: .default,
-                sources: ["Tests/Sources/**/*.swift"],
-                resources: [],
+                buildableFolders: ["Tests/Sources"],
                 dependencies: deps,
                 settings: .settings(base: SettingsDictionary().setCodeSignAutomatic(),
                                     configurations: XCConfig.tests)
