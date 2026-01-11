@@ -14,7 +14,6 @@ import FirebaseCrashlytics
 import FirebaseMessaging
 import IQKeyboardManagerSwift
 
-@main
 class AppDelegate: UIResponder, UIApplicationDelegate{
 
 
@@ -86,6 +85,15 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
     }
     
     func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse, withCompletionHandler completionHandler: @escaping () -> Void) {
+        let identifier = response.notification.request.identifier
+        if identifier.hasPrefix("jacsim-") {
+            let idString = identifier.replacingOccurrences(of: "jacsim-", with: "")
+            NotificationCenter.default.post(
+                name: .jacsimLocalNotificationTapped,
+                object: nil,
+                userInfo: ["id": idString]
+            )
+        }
         completionHandler()
     }
     
