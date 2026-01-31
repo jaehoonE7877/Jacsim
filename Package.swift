@@ -29,15 +29,10 @@ let package = Package(
         .package(url: "https://github.com/google/promises.git", exact: "2.4.0"),
         
         //MARK: - UI
-        .package(url: "https://github.com/SnapKit/SnapKit.git", from: "5.6.0"),
-        .package(url: "https://github.com/scalessec/Toast-Swift.git", from: "5.1.0"),
         .package(url: "https://github.com/hackiftekhar/IQKeyboardManager.git", from: "6.5.0"),
         .package(url: "https://github.com/onevcat/Kingfisher.git", from: "7.9.1"),
-        .package(url: "https://github.com/WenchaoD/FSCalendar.git", from: "2.8.3"),
         .package(url: "https://github.com/vtourraine/AcknowList", from: "3.0.1"),
         .package(url: "https://github.com/TimOliver/TOCropViewController.git", from: "2.6.1"),
-        .package(url: "https://github.com/kciter/Floaty.git", branch: "master"),
-        .package(url: "https://github.com/devxoul/Then.git", from: "3.0.0"),
         
         //MARK: - DI
         .package(url: "https://github.com/Swinject/Swinject.git", from: "2.8.4"),

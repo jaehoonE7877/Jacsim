@@ -7,44 +7,21 @@
 //
 
 import UIKit
-/**
- PrimaryButton
- 
- Public Property
- ```
- var buttonTitle: NSAttributedString { get set }
- //상태에따라 조절
- override var isEnabled: Bool
- ```
- 
- Note:
-  - 유동값 : 버튼 높이,너비 /  버튼 radius /  텍스트 컬러
- 
-  - 고정값 :   폰트스타일  /  버튼 상태값(활성화, 비활성화) /  버튼 컬러
- 
- [사용법 예시]
- ```swift
- let bt: PrimaryButton = .init().then {
-    $0.setAttributedTitle("text".body1(color: .gray90), for: .normal)
-    $0.layer.cornerRadius = 10
- }
- ```
- Author: 서재훈
- Tag: #UIButton
- */
+
 public final class PrimaryButton: UIButton {
     public enum State {
         case enable
         case disable
     }
-    //MARK: -- Button Attribute
+
     private let buttonEnableBackground: UIColor = .primaryNormal
     private let buttonDisableBackground: UIColor = .primaryNormal.withAlphaComponent(0.28)
-    
-    //MARK: -- Private
-    private let buttonTitleLabel: UILabel = .init().then {
-        $0.isUserInteractionEnabled = false
-    }
+
+    private let buttonTitleLabel: UILabel = {
+        let label = UILabel()
+        label.isUserInteractionEnabled = false
+        return label
+    }()
     
     private let disableWhenStateDisable: Bool
 
@@ -89,9 +66,10 @@ extension PrimaryButton {
     
     private func setView() {
         self.addSubview(buttonTitleLabel)
-        
-        buttonTitleLabel.snp.makeConstraints { make in
-            make.centerX.centerY.equalToSuperview()
-        }
+        buttonTitleLabel.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            buttonTitleLabel.centerXAnchor.constraint(equalTo: self.centerXAnchor),
+            buttonTitleLabel.centerYAnchor.constraint(equalTo: self.centerYAnchor)
+        ])
     }
 }

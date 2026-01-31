@@ -18,15 +18,10 @@ public extension TargetDependency.SPM {
     static let FirebaseCrashlytics = TargetDependency.external(name: "FirebaseCrashlytics", condition: .none)
     static let Promises = TargetDependency.external(name: "Promises", condition: .none)
     //MARK: - UI
-    static let Snapkit = TargetDependency.external(name: "SnapKit", condition: .none)
-    static let Toast = TargetDependency.external(name: "Toast", condition: .none)
     static let IQKeyboardManagerSwift = TargetDependency.external(name: "IQKeyboardManagerSwift", condition: .none)
     static let Kingfisher = TargetDependency.external(name: "Kingfisher", condition: .none)
-    static let FSCalendar = TargetDependency.external(name: "FSCalendar", condition: .none)
     static let AcknowList = TargetDependency.external(name: "AcknowList", condition: .none)
     static let CropViewController = TargetDependency.external(name: "CropViewController", condition: .none)
-    static let Floaty = TargetDependency.external(name: "Floaty", condition: .none)
-    static let Then = TargetDependency.external(name: "Then", condition: .none)
     static let ComposableArchitecture = TargetDependency.external(name: "ComposableArchitecture", condition: .none)
     //MARK: - Test (Swift Testing 사용, 외부 테스트 라이브러리 없음)
 }

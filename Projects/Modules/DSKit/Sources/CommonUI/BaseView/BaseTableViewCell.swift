@@ -7,9 +7,6 @@
 
 import UIKit
 
-import SnapKit
-import Then
-
 open class BaseTableViewCell: UITableViewCell {
     
     public override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
