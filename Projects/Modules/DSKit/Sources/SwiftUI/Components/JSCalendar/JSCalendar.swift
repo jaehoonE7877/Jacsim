@@ -45,7 +45,7 @@ public struct JSCalendar: View {
             VStack(alignment: .leading, spacing: 2) {
                 Button(action: { withAnimation { moveToToday() } }) {
                     Text(headerTitle)
-                        .font(.pretendardSemiBold(size: 22))
+                        .font(.pretendardBold(size: 22))
                         .foregroundColor(.labelStrong)
                         .contentShape(Rectangle())
                 }
@@ -54,7 +54,7 @@ public struct JSCalendar: View {
                     .foregroundColor(.labelAssistive)
             }
             Spacer()
-            
+
             if !calendar.isDateInToday(viewDate) || !calendar.isDate(viewDate, inSameDayAs: selectedDate) {
                 Button(action: { withAnimation(.spring(response: 0.35, dampingFraction: 0.82)) { moveToToday() } }) {
                     Text("오늘")
@@ -62,29 +62,45 @@ public struct JSCalendar: View {
                         .foregroundColor(.white)
                         .padding(.horizontal, 12)
                         .padding(.vertical, 8)
-                        .background(Color.primaryNormal)
-                        .clipShape(Capsule())
+                        .background(
+                            Capsule()
+                                .fill(Color.primaryNormal)
+                                .shadow(
+                                    color: Color.primaryNormal.opacity(0.3),
+                                    radius: 8, x: 0, y: 4
+                                )
+                        )
                 }
             }
-            
+
             HStack(spacing: 10) {
                 Button(action: { withAnimation { movePage(by: -1) } }) {
                     Image(systemName: "chevron.left")
                         .font(.system(size: 14, weight: .semibold))
                         .foregroundColor(.labelStrong)
                         .frame(width: 36, height: 36)
-                        .background(Color.white)
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
-                        .shadow(color: Color.black.opacity(0.04), radius: 4, x: 0, y: 2)
+                        .background(
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(Color(uiColor: .secondarySystemGroupedBackground))
+                                .shadow(
+                                    color: Color.black.opacity(0.06),
+                                    radius: 6, x: 0, y: 3
+                                )
+                        )
                 }
                 Button(action: { withAnimation { movePage(by: 1) } }) {
                     Image(systemName: "chevron.right")
                         .font(.system(size: 14, weight: .semibold))
                         .foregroundColor(.labelStrong)
                         .frame(width: 36, height: 36)
-                        .background(Color.white)
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
-                        .shadow(color: Color.black.opacity(0.04), radius: 4, x: 0, y: 2)
+                        .background(
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(Color(uiColor: .secondarySystemGroupedBackground))
+                                .shadow(
+                                    color: Color.black.opacity(0.06),
+                                    radius: 6, x: 0, y: 3
+                                )
+                        )
                 }
             }
         }
@@ -98,15 +114,14 @@ public struct JSCalendar: View {
             ForEach(0..<7) { index in
                 Text(weekdayTitle(for: index))
                     .font(.pretendardSemiBold(size: 13))
-                    .foregroundColor(.labelStrong)
+                    .foregroundColor(index == 0 ? Color.destructive.opacity(0.8) : (index == 6 ? Color.primaryNormal.opacity(0.8) : .labelNeutral))
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 4)
             }
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 6)
-        .background(Color.white.opacity(0.9))
-        .overlay(Divider().background(Color.labelDisable.opacity(0.3)), alignment: .bottom)
+        .background(Color.clear)
     }
 
     private var calendarGridView: some View {
@@ -130,27 +145,45 @@ public struct JSCalendar: View {
 
         return VStack(spacing: 6) {
             ZStack {
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(isSelected ? Color.primaryNormal : (isToday ? Color.primaryNormal.opacity(0.12) : Color.clear))
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(isSelected ? Color.primaryNormal : Color.clear, lineWidth: 1)
-                    .shadow(color: isSelected ? Color.primaryNormal.opacity(0.18) : .clear, radius: 6, x: 0, y: 3)
+                if isSelected {
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color.primaryNormal)
+                        .shadow(
+                            color: Color.primaryNormal.opacity(0.3),
+                            radius: 8, x: 0, y: 4
+                        )
+                } else if isToday {
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(Color.primaryNormal.opacity(0.4), lineWidth: 1.5)
+                        .background(
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(Color.primaryNormal.opacity(0.08))
+                        )
+                } else {
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color.clear)
+                }
+
                 Text("\(calendar.component(.day, from: date))")
                     .font(.pretendardSemiBold(size: 16))
                     .foregroundColor(isSelected ? .white : (isCurrentMonth ? (isToday ? .primaryNormal : .labelStrong) : .labelDisable))
             }
             .frame(height: 42)
-            
+
             if hasEvent {
                 Circle()
                     .fill(isSelected ? Color.white.opacity(0.9) : Color.primaryNormal)
-                    .frame(width: 6, height: 6)
+                    .frame(width: 5, height: 5)
+                    .shadow(
+                        color: isSelected ? Color.clear : Color.primaryNormal.opacity(0.3),
+                        radius: 3, x: 0, y: 1
+                    )
             } else if isToday && !isSelected {
                 Circle()
-                    .fill(Color.primaryNormal)
+                    .fill(Color.primaryNormal.opacity(0.5))
                     .frame(width: 4, height: 4)
             } else {
-                Spacer().frame(height: 6)
+                Spacer().frame(height: 5)
             }
         }
         .padding(.horizontal, 6)
