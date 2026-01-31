@@ -10,6 +10,8 @@ public struct HomeFeature {
         public var selectedDate: Date = Date()
         public var calendarScope: JSCalendarScope = .month
         public var tasks: [UserJacsim] = []
+        public var isLoading: Bool = false
+        public var isRefreshing: Bool = false
         public var hasStartedNotificationListener = false
 
         @Presents public var destination: Destination.State?
@@ -23,6 +25,7 @@ public struct HomeFeature {
         case onAppear
         case binding(BindingAction<State>)
         case dateSelected(Date)
+        case refreshTriggered
         case tasksResponse([UserJacsim])
         case settingButtonTapped
         case addButtonTapped
@@ -99,6 +102,7 @@ public struct HomeFeature {
             case .onAppear:
                 let shouldStartListener = !state.hasStartedNotificationListener
                 state.hasStartedNotificationListener = true
+                state.isLoading = state.tasks.isEmpty
                 let fetchEffect: Effect<Action> = .run { send in
                     let tasks = await jacsimClient.fetchActiveTasks()
                     await send(.tasksResponse(tasks))
@@ -119,13 +123,19 @@ public struct HomeFeature {
                 
             case let .dateSelected(date):
                 state.selectedDate = date
+                return .none
+
+            case .refreshTriggered:
+                state.isRefreshing = true
                 return .run { send in
-                    let tasks = await jacsimClient.fetchDate(date)
+                    let tasks = await jacsimClient.fetchActiveTasks()
                     await send(.tasksResponse(tasks))
                 }
                 
             case let .tasksResponse(tasks):
                 state.tasks = tasks
+                state.isLoading = false
+                state.isRefreshing = false
                 return .none
                 
             case .settingButtonTapped:
