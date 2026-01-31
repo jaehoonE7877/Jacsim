@@ -1,7 +1,6 @@
 import Foundation
 import ComposableArchitecture
 import UIKit
-import AVFoundation
 import Photos
 import PhotosUI
 import SwiftUI
@@ -15,8 +14,6 @@ public struct TaskUpdateFeature {
         public var memo: String = ""
         public var image: UIImage?
         public var dateText: String
-        public var isShowingCamera = false
-        public var isShowingPhotoPicker = false
         public var photoPickerItem: PhotosPickerItem?
 
         public init(task: UserJacsim, index: Int) {
@@ -31,10 +28,6 @@ public struct TaskUpdateFeature {
         case onAppear
         case imageLoaded(UIImage?)
         case certifyButtonTapped
-        case cameraButtonTapped
-        case galleryButtonTapped
-        case cameraAuthorizationFinished(Bool)
-        case photoLibraryAuthorizationFinished(Bool)
         case imageSelected(UIImage)
         case photoPickerItemChanged(PhotosPickerItem?)
         case delegate(Delegate)
@@ -86,45 +79,8 @@ public struct TaskUpdateFeature {
                 state.image = image
                 return .none
 
-            case .cameraButtonTapped:
-                return .run { send in
-                    let status = AVCaptureDevice.authorizationStatus(for: .video)
-                    switch status {
-                    case .authorized:
-                        await send(.cameraAuthorizationFinished(true))
-                    case .notDetermined:
-                        let granted = await requestCameraAccess()
-                        await send(.cameraAuthorizationFinished(granted))
-                    default:
-                        await send(.cameraAuthorizationFinished(false))
-                    }
-                }
-
-            case let .cameraAuthorizationFinished(isAuthorized):
-                state.isShowingCamera = isAuthorized
-                return .none
-
-            case .galleryButtonTapped:
-                return .run { send in
-                    let status = PHPhotoLibrary.authorizationStatus(for: .readWrite)
-                    switch status {
-                    case .authorized, .limited:
-                        await send(.photoLibraryAuthorizationFinished(true))
-                    case .notDetermined:
-                        let newStatus = await PHPhotoLibrary.requestAuthorization(for: .readWrite)
-                        await send(.photoLibraryAuthorizationFinished(newStatus == .authorized || newStatus == .limited))
-                    default:
-                        await send(.photoLibraryAuthorizationFinished(false))
-                    }
-                }
-
-            case let .photoLibraryAuthorizationFinished(isAuthorized):
-                state.isShowingPhotoPicker = isAuthorized
-                return .none
-
             case let .photoPickerItemChanged(item):
                 guard let item = item else {
-                    state.isShowingPhotoPicker = false
                     return .none
                 }
                 return .run { send in
@@ -137,14 +93,6 @@ public struct TaskUpdateFeature {
             case .binding, .delegate:
                 return .none
             }
-        }
-    }
-}
-
-private func requestCameraAccess() async -> Bool {
-    await withCheckedContinuation { continuation in
-        AVCaptureDevice.requestAccess(for: .video) { granted in
-            continuation.resume(returning: granted)
         }
     }
 }

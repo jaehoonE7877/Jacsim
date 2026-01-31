@@ -1,7 +1,6 @@
 import Foundation
 import ComposableArchitecture
 import UIKit
-import AVFoundation
 import Photos
 
 @Reducer
@@ -16,8 +15,6 @@ public struct TaskEditFeature {
         public var image: UIImage?
         public var isAlarmEnabled: Bool
         public var alarmDate: Date
-        public var isShowingCamera = false
-        public var isShowingPhotoPicker = false
 
         public init(task: UserJacsim, maxSuccessTarget: Int) {
             self.task = task
@@ -35,10 +32,6 @@ public struct TaskEditFeature {
         case imageLoaded(UIImage?)
         case saveButtonTapped
         case cancelButtonTapped
-        case cameraButtonTapped
-        case galleryButtonTapped
-        case cameraAuthorizationFinished(Bool)
-        case photoLibraryAuthorizationFinished(Bool)
         case imageSelected(UIImage)
         case delegate(Delegate)
 
@@ -74,53 +67,9 @@ public struct TaskEditFeature {
                 state.image = image
                 return .none
 
-            case .cameraButtonTapped:
-                return .run { send in
-                    let status = AVCaptureDevice.authorizationStatus(for: .video)
-                    switch status {
-                    case .authorized:
-                        await send(.cameraAuthorizationFinished(true))
-                    case .notDetermined:
-                        let granted = await requestCameraAccess()
-                        await send(.cameraAuthorizationFinished(granted))
-                    default:
-                        await send(.cameraAuthorizationFinished(false))
-                    }
-                }
-
-            case let .cameraAuthorizationFinished(isAuthorized):
-                state.isShowingCamera = isAuthorized
-                return .none
-
-            case .galleryButtonTapped:
-                return .run { send in
-                    let status = PHPhotoLibrary.authorizationStatus(for: .readWrite)
-                    switch status {
-                    case .authorized, .limited:
-                        await send(.photoLibraryAuthorizationFinished(true))
-                    case .notDetermined:
-                        let newStatus = await PHPhotoLibrary.requestAuthorization(for: .readWrite)
-                        await send(.photoLibraryAuthorizationFinished(newStatus == .authorized || newStatus == .limited))
-                    default:
-                        await send(.photoLibraryAuthorizationFinished(false))
-                    }
-                }
-
-            case let .photoLibraryAuthorizationFinished(isAuthorized):
-                state.isShowingPhotoPicker = isAuthorized
-                return .none
-
             case .binding, .delegate:
                 return .none
             }
-        }
-    }
-}
-
-private func requestCameraAccess() async -> Bool {
-    await withCheckedContinuation { continuation in
-        AVCaptureDevice.requestAccess(for: .video) { granted in
-            continuation.resume(returning: granted)
         }
     }
 }

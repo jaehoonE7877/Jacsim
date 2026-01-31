@@ -33,14 +33,10 @@ public struct TaskEditView: View {
                         )
                 }
 
-                Menu {
-                    Button(action: { store.send(.cameraButtonTapped) }) {
-                        Label("카메라", systemImage: "camera")
-                    }
-                    Button(action: { store.send(.galleryButtonTapped) }) {
-                        Label("갤러리", systemImage: "photo")
-                    }
-                } label: {
+                PhotosPicker(
+                    selection: $photoPickerItem,
+                    matching: .images
+                ) {
                     Image(systemName: "plus.circle.fill")
                         .font(.system(size: 44))
                         .foregroundColor(.primaryNormal)
@@ -48,11 +44,6 @@ public struct TaskEditView: View {
                         .clipShape(Circle())
                         .padding(8)
                 }
-                .photosPicker(
-                    isPresented: $store.isShowingPhotoPicker,
-                    selection: $photoPickerItem,
-                    matching: .images
-                )
                 .onChange(of: photoPickerItem) { newItem in
                     guard let newItem else { return }
                     Task {
@@ -60,11 +51,6 @@ public struct TaskEditView: View {
                            let image = UIImage(data: data) {
                             store.send(.imageSelected(image))
                         }
-                    }
-                }
-                .sheet(isPresented: $store.isShowingCamera) {
-                    ImagePickerView(sourceType: .camera) { image in
-                        if let image { store.send(.imageSelected(image)) }
                     }
                 }
             }

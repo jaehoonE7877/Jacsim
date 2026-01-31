@@ -32,14 +32,13 @@ public struct TaskUpdateView: View {
                         )
                 }
                 
-                Menu {
-                    Button(action: { store.send(.cameraButtonTapped) }) {
-                        Label("카메라", systemImage: "camera")
-                    }
-                    Button(action: { store.send(.galleryButtonTapped) }) {
-                        Label("갤러리", systemImage: "photo")
-                    }
-                } label: {
+                PhotosPicker(
+                    selection: Binding(
+                        get: { store.photoPickerItem ?? PhotosPickerItem(itemIdentifier: "") },
+                        set: { store.photoPickerItem = $0 }
+                    ),
+                    matching: .images
+                ) {
                     Image(systemName: "plus.circle.fill")
                         .font(.system(size: 44))
                         .foregroundColor(.primaryNormal)
@@ -47,21 +46,8 @@ public struct TaskUpdateView: View {
                         .clipShape(Circle())
                         .padding(8)
                 }
-                .photosPicker(
-                    isPresented: $store.isShowingPhotoPicker,
-                    selection: Binding(
-                        get: { store.photoPickerItem ?? PhotosPickerItem(itemIdentifier: "") },
-                        set: { store.photoPickerItem = $0 }
-                    ),
-                    matching: .images
-                )
                 .onChange(of: store.photoPickerItem) { newItem in
                     store.send(.photoPickerItemChanged(newItem))
-                }
-                .sheet(isPresented: $store.isShowingCamera) {
-                    ImagePickerView(sourceType: .camera) { image in
-                        if let image { store.send(.imageSelected(image)) }
-                    }
                 }
             }
             .padding(.horizontal, 16)
