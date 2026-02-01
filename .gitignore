@@ -45,9 +45,10 @@ xcuserdata/
 *.mode2v3
 *.perspectivev3
 ### XCConfig ###
-xcconfigs/
-.xcconfig
-xcconfigs
+# 기본적으로 xcconfigs는 로컬/생성물로 취급해 커밋하지 않되,
+# 에이전트 가이드(AGENTS.md)는 커밋될 수 있도록 예외 처리한다.
+xcconfigs/**
+!xcconfigs/**/AGENTS.md
 
 ### Firebase ###
 Projects/Jacsim/Resources/GoogleService-Info.plist
@@ -72,6 +73,5 @@ graph.dot
 ## Misc
 /*.gcno
 ### Docs ###
-AGENTS.md
 Docs/
 .sisyphus/
