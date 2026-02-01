@@ -112,7 +112,7 @@ public struct JSBottomSheet<Content: View>: View {
 }
 
 extension View {
-    func jsCornerRadius(_ radius: CGFloat, corners: UIRectCorner) -> some View {
+    public func jsCornerRadius(_ radius: CGFloat, corners: UIRectCorner) -> some View {
         clipShape(JSRoundedCorner(radius: radius, corners: corners))
     }
 }

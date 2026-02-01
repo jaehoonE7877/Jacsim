@@ -7,6 +7,7 @@ import Photos
 import PhotosUI
 import SwiftUI
 import Data
+import Core
 
 @Reducer
 public struct TaskUpdateFeature {
@@ -48,7 +49,6 @@ public struct TaskUpdateFeature {
 
     @Dependency(\.jacsimClient) var jacsimClient
     @Dependency(\.imageStore) var imageStore
-    @Dependency(\.notificationScheduler) var notificationScheduler
 
     public var body: some ReducerOf<Self> {
         BindingReducer()
@@ -73,42 +73,29 @@ public struct TaskUpdateFeature {
                 let index = state.index
                 let memo = state.memo.trimmingCharacters(in: .whitespacesAndNewlines)
                 let image = state.image
-                let dateText = state.dateText
-                return .run { [jacsimClient, imageStore, notificationScheduler, task = state.task] send in
+                let imagePath = image != nil ? state.task.imageKey(for: index) : nil
+                return .run { [jacsimClient, imageStore] send in
+                    Logger.certificationStarted(taskId: taskId.rawValue.uuidString, memo: memo, hasImage: image != nil)
+                    let certifyStartTime = Date()
                     do {
-                        try await jacsimClient.updateMemo(taskId, index, memo)
                         if let image = image {
                             let data = image.jpegData(compressionQuality: 0.4)
-                            if let data {
-                                _ = try await imageStore.saveImage("\(taskId.rawValue)_\(dateText).jpg", data)
+                            if let data, let imagePath = imagePath {
+                                _ = try await imageStore.saveImage(imagePath, data)
+                                Logger.imageSaved(key: imagePath)
                             }
                         }
-                        let reminder = await MainActor.run { () -> (TaskID, String, DateComponents)? in
-                            let context = SwiftDataStack.shared.context
-                            let descriptor = FetchDescriptor<UserJacsimModel>(
-                                predicate: #Predicate { $0.id == taskId.rawValue }
-                            )
-                            guard let model = (try? context.fetch(descriptor))?.first else { return nil }
-                            guard model.isNotificationEnabled, let alarm = model.alarm else { return nil }
-                            let time = Calendar.current.dateComponents([.hour, .minute], from: alarm)
-                            return (taskId, model.title, time)
-                        }
-                        if let reminder {
-                            let latestTask = try? await jacsimClient.fetchTask(taskId)
-                            let taskSnapshot = latestTask ?? task
-                            let baseSuccessCount = taskSnapshot.records.filter(\.check).count
-                            let isCurrentChecked = taskSnapshot.records.indices.contains(index)
-                                ? taskSnapshot.records[index].check
-                                : false
-                            let adjustedSuccessCount = isCurrentChecked ? baseSuccessCount : baseSuccessCount + 1
-                            let durationDays = taskSnapshot.stages.last?.durationDays ?? 0
-                            let remainingSuccessCount = max(0, durationDays - adjustedSuccessCount)
-                            if remainingSuccessCount > 0 {
-                                try? await notificationScheduler.scheduleDailyReminder(reminder.0, reminder.1, reminder.2)
-                            }
-                        }
+                        try await jacsimClient.certifyToday(taskId, index, memo, imagePath)
+                        Logger.certificationCompleted(
+                            duration: Date().timeIntervalSince(certifyStartTime),
+                            index: index,
+                            check: true,
+                            memo: memo,
+                            imagePath: imagePath
+                        )
                         await send(.saveCompleted(.success(())))
                     } catch {
+                        Logger.certificationFailed(error: error)
                         await send(.saveCompleted(.failure(error)))
                     }
                 }

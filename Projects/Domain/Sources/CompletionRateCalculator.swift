@@ -21,7 +21,6 @@ public func calculateCompletionRate(
     for date: Date,
     tasks: [Task]
 ) -> CompletionRateResult {
-    let calendar = Calendar.current
     
     let activeTasks = tasks.filter { task in
         task.stages.contains { stage in

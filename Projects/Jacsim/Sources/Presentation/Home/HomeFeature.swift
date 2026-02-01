@@ -2,6 +2,7 @@ import Foundation
 import ComposableArchitecture
 import Domain
 import DSKit
+import Core
 
 @Reducer
 public struct HomeFeature {
@@ -9,14 +10,42 @@ public struct HomeFeature {
     public struct State: Equatable {
         public var selectedDate: Date = Date()
         public var calendarScope: JSCalendarScope = .month
+        public var calendar = CalendarFeature.State()
         public var tasks: [Domain.Task] = []
+        public var activeTasks: [Domain.Task] = []
+        public var heroTask: Domain.Task? = nil
+        public var miniCardDisplayData: [MiniCardDisplayData] = []
         public var isLoading: Bool = false
         public var isRefreshing: Bool = false
+        public var isFetching: Bool = false
         public var hasStartedNotificationListener = false
+        public var toastMessage: String? = nil
 
         @Presents public var destination: Destination.State?
         @Presents public var migrationAlert: AlertState<Action.MigrationAlert>?
         public var path = StackState<Path.State>()
+
+        public struct MiniCardDisplayData: Equatable, Identifiable {
+            public let id: UUID
+            public let title: String
+            public let progress: Double
+            public let totalDays: Int
+            public let completedDays: Int
+
+            public init(
+                id: UUID,
+                title: String,
+                progress: Double,
+                totalDays: Int,
+                completedDays: Int
+            ) {
+                self.id = id
+                self.title = title
+                self.progress = progress
+                self.totalDays = totalDays
+                self.completedDays = completedDays
+            }
+        }
         
         public init() {}
     }
@@ -27,6 +56,7 @@ public struct HomeFeature {
         case dateSelected(Date)
         case refreshTriggered
         case tasksResponse([Domain.Task])
+        case calendar(CalendarFeature.Action)
         case settingButtonTapped
         case addButtonTapped
         case allTasksButtonTapped
@@ -37,6 +67,7 @@ public struct HomeFeature {
         case deepLinkTaskLoaded(Domain.Task?)
         case migrationCheckResponse(Bool)
         case migrationAlert(PresentationAction<MigrationAlert>)
+        case toastDismissed
 
         case destination(PresentationAction<Destination.Action>)
         case path(StackAction<Path.State, Path.Action>)
@@ -96,17 +127,30 @@ public struct HomeFeature {
     }
 
     @Dependency(\.taskRepository) var taskRepository
+    @Dependency(\.activeTaskService) var activeTaskService
 
     public var body: some ReducerOf<Self> {
         BindingReducer()
+        Scope(state: \.calendar, action: \.calendar) {
+            CalendarFeature()
+        }
         Reduce { state, action in
             switch action {
             case .onAppear:
+                guard !state.isFetching else { return .none }
                 let shouldStartListener = !state.hasStartedNotificationListener
                 state.hasStartedNotificationListener = true
+                state.isFetching = true
                 state.isLoading = state.tasks.isEmpty
+                Logger.homeFetchingTasks()
+                let fetchStartTime = Date()
                 let fetchEffect: Effect<Action> = .run { [taskRepository] send in
                     let tasks = try await taskRepository.fetchActiveTasks()
+                    Logger.homeTasksFetched(count: tasks.count, duration: Date().timeIntervalSince(fetchStartTime))
+                    if let firstTask = tasks.first {
+                        let completedCount = firstTask.records.filter { $0.check }.count
+                        Logger.homeFirstTaskDetails(title: firstTask.title, totalRecords: firstTask.records.count, completedRecords: completedCount)
+                    }
                     await send(.tasksResponse(tasks))
                 }
                 let notificationEffect: Effect<Action> = shouldStartListener ? .run { send in
@@ -138,9 +182,31 @@ public struct HomeFeature {
                 }
                 
             case let .tasksResponse(tasks):
+                let processStartTime = Date()
                 state.tasks = tasks
+                state.activeTasks = activeTaskService.filterActiveTasks(tasks, referenceDate: Date())
+                state.heroTask = state.activeTasks.first
+                let remainingTasks = Array(state.activeTasks.dropFirst())
+                state.miniCardDisplayData = remainingTasks.map { task in
+                    let completedDays = task.records.filter { $0.check }.count
+                    let totalDays = task.dayArray.count
+                    let progress = totalDays > 0 ? Double(completedDays) / Double(totalDays) : 0
+                    return State.MiniCardDisplayData(
+                        id: task.id.rawValue,
+                        title: task.title,
+                        progress: progress,
+                        totalDays: totalDays,
+                        completedDays: completedDays
+                    )
+                }
                 state.isLoading = false
                 state.isRefreshing = false
+                state.isFetching = false
+                Logger.homeTasksProcessed(
+                    duration: Date().timeIntervalSince(processStartTime),
+                    activeCount: state.activeTasks.count,
+                    heroTaskTitle: state.heroTask?.title
+                )
                 return .none
                 
             case .settingButtonTapped:
@@ -204,6 +270,21 @@ public struct HomeFeature {
                 state.path.append(.update(TaskUpdateFeature.State(task: task, index: index)))
                 return .none
 
+            case .path(.element(id: _, action: .detail(.delegate(.navigateBack)))):
+                state.path.removeLast()
+                return .none
+
+            case .path(.element(id: _, action: .detail(.delegate(.taskDeleted)))):
+                state.path.removeLast()
+                return .send(.onAppear)
+
+            case let .path(.element(id: _, action: .detail(.delegate(.navigateToMemoEdit(task))))):
+                let today = Calendar.current.startOfDay(for: Date())
+                if let index = task.dayArray.firstIndex(where: { Calendar.current.isDate($0, inSameDayAs: today) }) {
+                    state.path.append(.update(TaskUpdateFeature.State(task: task, index: index)))
+                }
+                return .none
+
             case .path(.element(id: _, action: .update(.delegate(.saveSuccess)))):
                 state.path.removeLast()
                 return .run { send in
@@ -215,13 +296,18 @@ public struct HomeFeature {
 
             case .destination(.presented(.challengeCreate(.delegate(.challengeCreated)))):
                 state.destination = nil
+                state.toastMessage = "새 작심을 시작했어요"
                 return .send(.onAppear)
 
             case .destination(.presented(.challengeCreate(.delegate(.cancelled)))):
                 state.destination = nil
                 return .none
 
-            case .path, .binding, .delegate, .migrationAlert:
+            case .toastDismissed:
+                state.toastMessage = nil
+                return .none
+
+            case .binding, .calendar, .delegate, .migrationAlert, .path:
                 return .none
 
             case .destination:

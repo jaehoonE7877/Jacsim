@@ -1,56 +1,8 @@
 import Foundation
-import SwiftData
 import Domain
 import ComposableArchitecture
 import UIKit
-import Data
 import DSKit
-
-public enum ChallengeDetailState: Equatable {
-    case stagePending
-    case stageSuccess
-    case stageFail
-    case habitCompleted
-    
-    public var isStagePending: Bool {
-        self == .stagePending
-    }
-    
-    public var isStageSuccess: Bool {
-        self == .stageSuccess
-    }
-    
-    public var isStageFail: Bool {
-        self == .stageFail
-    }
-    
-    public var isHabitCompleted: Bool {
-        self == .habitCompleted
-    }
-}
-
-public enum TodayStatus: Equatable {
-    case notCertified
-    case certified
-    
-    public var title: String {
-        switch self {
-        case .notCertified:
-            return "오늘 미인증"
-        case .certified:
-            return "오늘 인증 완료"
-        }
-    }
-    
-    public var chipState: JSStatusChipState {
-        switch self {
-        case .notCertified:
-            return .pending
-        case .certified:
-            return .completed
-        }
-    }
-}
 
 @Reducer
 public struct TaskDetailFeature {
@@ -69,6 +21,7 @@ public struct TaskDetailFeature {
         public var stageProgressText: String = "0/7"
         public var isDeleteConfirmationPresented: Bool = false
         public var todayMemo: String = ""
+        public var shouldScrollToRecords: Bool = false
         
         @Presents public var editTask: TaskEditFeature.State?
         
@@ -110,6 +63,7 @@ public struct TaskDetailFeature {
         case retryStageButtonTapped
         case keepAsIsButtonTapped
         case viewHistoryButtonTapped
+        case scrollToRecordsCompleted
         
         case backButtonTapped
 
@@ -127,12 +81,34 @@ public struct TaskDetailFeature {
     @Dependency(\.jacsimClient) var jacsimClient
     @Dependency(\.imageStore) var imageStore
     @Dependency(\.notificationScheduler) var notificationScheduler
+    @Dependency(\.challengeStateService) var challengeStateService
 
     public var body: some ReducerOf<Self> {
         Reduce { state, action in
             switch action {
             case .onAppear:
-                return calculateChallengeState(&state)
+                let evaluation = challengeStateService.evaluateChallengeState(
+                    for: state.task,
+                    today: Date()
+                )
+                state.challengeState = evaluation.challengeState
+                state.todayStatus = evaluation.todayStatus
+                state.currentStage = evaluation.currentStage
+                state.stageProgress = evaluation.stageProgress
+                state.stageProgressText = evaluation.stageProgressText
+                state.remainingSuccessCount = evaluation.remainingSuccessCount
+                state.todayMemo = evaluation.todayMemo
+                state.dayViewData = evaluation.dayViewData.map {
+                    State.DayViewData(date: $0.date, memo: $0.memo, image: nil, isChecked: $0.isChecked)
+                }
+                return .merge(
+                    .send(.loadImages),
+                    .run { [jacsimClient, stage = evaluation.currentStage] send in
+                        guard let stage else { return }
+                        let result = await jacsimClient.evaluateStageResult(stage)
+                        await send(.stageResultChecked(result))
+                    }
+                )
                 
             case .loadImages:
                 return .run { [task = state.task, dayData = state.dayViewData, imageStore] send in
@@ -156,13 +132,25 @@ public struct TaskDetailFeature {
                 return .none
                 
             case .changePhotoButtonTapped:
-                return .send(.delegate(.navigateToPhotoChange(state.task)))
+                state.editTask = TaskEditFeature.State(
+                    task: state.task,
+                    maxSuccessTarget: state.task.stages.last?.durationDays ?? 3
+                )
+                return .none
                 
             case .notificationSettingsButtonTapped:
-                return .send(.delegate(.navigateToNotificationSettings(state.task)))
+                state.editTask = TaskEditFeature.State(
+                    task: state.task,
+                    maxSuccessTarget: state.task.stages.last?.durationDays ?? 3
+                )
+                return .none
                 
             case .editMemoButtonTapped:
-                return .send(.delegate(.navigateToMemoEdit(state.task)))
+                let today = Calendar.current.startOfDay(for: Date())
+                if let index = state.task.dayArray.firstIndex(where: { Calendar.current.isDate($0, inSameDayAs: today) }) {
+                    return .send(.delegate(.navigateToUpdate(state.task, index)))
+                }
+                return .none
 
             case .backButtonTapped:
                 return .send(.delegate(.navigateBack))
@@ -245,18 +233,6 @@ public struct TaskDetailFeature {
                 let title = state.task.title
                 return .run { [jacsimClient, notificationScheduler, title] send in
                     _ = await jacsimClient.createNextStage(taskId)
-                    let reminderTime = await MainActor.run { () -> DateComponents? in
-                        let context = SwiftDataStack.shared.context
-                        let descriptor = FetchDescriptor<UserJacsimModel>(
-                            predicate: #Predicate { $0.id == taskId.rawValue }
-                        )
-                        guard let model = (try? context.fetch(descriptor))?.first else { return nil }
-                        guard let alarm = model.alarm, model.isNotificationEnabled else { return nil }
-                        return Calendar.current.dateComponents([.hour, .minute], from: alarm)
-                    }
-                    if let reminderTime {
-                        try? await notificationScheduler.scheduleDailyReminder(taskId, title, reminderTime)
-                    }
                     await send(.stagePopupDismissed)
                     await send(.onAppear)
                 }
@@ -273,9 +249,14 @@ public struct TaskDetailFeature {
                 }
 
             case .keepAsIsButtonTapped:
-                return .none
+                return .send(.delegate(.navigateBack))
 
             case .viewHistoryButtonTapped:
+                state.shouldScrollToRecords = true
+                return .none
+
+            case .scrollToRecordsCompleted:
+                state.shouldScrollToRecords = false
                 return .none
 
             case .delegate:
@@ -285,80 +266,5 @@ public struct TaskDetailFeature {
         .ifLet(\.$editTask, action: \.editTask) {
             TaskEditFeature()
         }
-    }
-
-    private func calculateChallengeState(_ state: inout State) -> Effect<Action> {
-        let task = state.task
-        let calendar = Calendar.current
-        let today = calendar.startOfDay(for: Date())
-
-        let currentStage = task.stages.last
-        state.currentStage = currentStage
-
-        state.remainingSuccessCount = max(0, (currentStage?.durationDays ?? 0) - task.records.filter(\.check).count)
-
-        let isTodayInRange = today >= calendar.startOfDay(for: task.startDate)
-            && today <= calendar.startOfDay(for: task.endDate)
-
-        if isTodayInRange {
-            let todayRecord = task.records.first { calendar.isDate($0.date, inSameDayAs: today) }
-            state.todayStatus = (todayRecord?.check == true) ? .certified : .notCertified
-            state.todayMemo = todayRecord?.memo ?? ""
-        } else {
-            state.todayStatus = .notCertified
-        }
-
-        if let stage = currentStage {
-            let stageResult = stage.result
-            let isFinalStage = stage.stageType == .thirty
-
-            switch stageResult {
-            case .inProgress:
-                state.challengeState = .stagePending
-            case .success:
-                if isFinalStage {
-                    state.challengeState = .habitCompleted
-                } else {
-                    state.challengeState = .stageSuccess
-                }
-            case .fail:
-                state.challengeState = .stageFail
-            }
-
-            let stageStart = stage.startDate
-            let stageEnd = stage.endDate
-            let totalStageDays = stage.durationDays
-
-            let stageRecords = task.records.filter { record in
-                let recordDate = calendar.startOfDay(for: record.date)
-                return recordDate >= calendar.startOfDay(for: stageStart)
-                    && recordDate <= calendar.startOfDay(for: stageEnd)
-            }
-            let successCount = stageRecords.filter(\.check).count
-
-            state.stageProgress = totalStageDays > 0 ? Double(successCount) / Double(totalStageDays) : 0
-            state.stageProgressText = "\(successCount)/\(totalStageDays)"
-        } else {
-            state.challengeState = .stagePending
-            state.stageProgress = 0
-            state.stageProgressText = "0/7"
-        }
-
-        let dates = task.dayArray.reversed()
-        state.dayViewData = dates.enumerated().map { index, date in
-            let originalIndex = task.dayArray.count - 1 - index
-            let memo = task.records.indices.contains(originalIndex) ? task.records[originalIndex].memo : "인증해주세요"
-            let isChecked = task.records.indices.contains(originalIndex) ? task.records[originalIndex].check : false
-            return State.DayViewData(date: date, memo: memo, image: nil, isChecked: isChecked)
-        }
-
-        return .merge(
-            .send(.loadImages),
-            .run { [jacsimClient, stage = currentStage] send in
-                guard let stage else { return }
-                let result = await jacsimClient.evaluateStageResult(stage)
-                await send(.stageResultChecked(result))
-            }
-        )
     }
 }

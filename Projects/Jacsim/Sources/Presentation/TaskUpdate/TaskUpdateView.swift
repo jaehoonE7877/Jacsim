@@ -104,7 +104,7 @@ public struct TaskUpdateView: View {
                     .clipShape(Circle())
                     .padding(.jsXS)
             }
-            .onChange(of: store.photoPickerItem) { newItem in
+            .onChange(of: store.photoPickerItem) { _, newItem in
                 store.send(.photoPickerItemChanged(newItem))
             }
         }

@@ -3,6 +3,7 @@ import ExternalInterface
 import Domain
 import Data
 import Foundation
+import Core
 
 public struct JacsimClientPort: Sendable {
     public var fetchActiveTasks: @Sendable () async throws -> [Domain.Task]
@@ -20,6 +21,7 @@ public struct JacsimClientPort: Sendable {
     public var createNextStage: @Sendable (TaskID) async -> Void
     public var updateMemo: @Sendable (TaskID, Int, String) async -> Void
     public var resetStageRecords: @Sendable (TaskID) async -> Void
+    public var certifyToday: @Sendable (TaskID, Int, String, String?) async -> Void
     
     public init(
         fetchActiveTasks: @escaping @Sendable () async throws -> [Domain.Task],
@@ -35,7 +37,8 @@ public struct JacsimClientPort: Sendable {
         evaluateStageResult: @escaping @Sendable (StageSnapshot) async -> StageResult,
         createNextStage: @escaping @Sendable (TaskID) async -> Void,
         updateMemo: @escaping @Sendable (TaskID, Int, String) async -> Void,
-        resetStageRecords: @escaping @Sendable (TaskID) async -> Void
+        resetStageRecords: @escaping @Sendable (TaskID) async -> Void,
+        certifyToday: @escaping @Sendable (TaskID, Int, String, String?) async -> Void
     ) {
         self.fetchActiveTasks = fetchActiveTasks
         self.fetchTask = fetchTask
@@ -51,103 +54,98 @@ public struct JacsimClientPort: Sendable {
         self.createNextStage = createNextStage
         self.updateMemo = updateMemo
         self.resetStageRecords = resetStageRecords
+        self.certifyToday = certifyToday
     }
 }
 
 private enum JacsimClientKey: DependencyKey {
     static let liveValue: JacsimClientPort = {
         let adapter = SwiftDataTaskRepositoryAdapter()
-        return JacsimClientPort(
+        let taskRepository = TaskRepositoryPort(
             fetchActiveTasks: { await adapter.fetchActiveTasks() },
             fetchTask: { await adapter.fetchTask(id: $0) },
             addTask: { try await adapter.addTask($0) },
             updateTask: { try await adapter.updateTask($0) },
             deleteTask: { try await adapter.deleteTask(id: $0) },
-            fetchTasksByStatus: { await adapter.fetchTasksByStatus($0) },
+            fetchTasksByStatus: { await adapter.fetchTasksByStatus($0) }
+        )
+        
+        let taskStatusService = TaskStatusService()
+        let stageEvaluationService = StageEvaluationService()
+        let taskUpdateUseCase = TaskUpdateUseCase(updateTask: { try await adapter.updateTask($0) })
+        let stageProgressionUseCase = StageProgressionUseCase(
+            fetchTask: { await adapter.fetchTask(id: $0) },
+            updateTask: { try await adapter.updateTask($0) }
+        )
+        let certificationUseCase = CertificationUseCase(
+            fetchTask: { try await adapter.fetchTask(id: $0) },
+            updateTask: { try await adapter.updateTask($0) }
+        )
+        
+        return JacsimClientPort(
+            fetchActiveTasks: { try await taskRepository.fetchActiveTasks() },
+            fetchTask: { try await taskRepository.fetchTask($0) },
+            addTask: { task in
+                let startTime = Date()
+                try await taskRepository.addTask(task)
+                Logger.taskSaved(duration: Date().timeIntervalSince(startTime))
+            },
+            updateTask: { try await taskRepository.updateTask($0) },
+            deleteTask: { try await taskRepository.deleteTask($0) },
+            fetchTasksByStatus: { try await taskRepository.fetchTasksByStatus($0) },
             fetchIsSuccess: {
-                let allDone = await adapter.fetchTasksByStatus(.done)
-                return allDone.filter { $0.currentStage?.result == .success }
+                let allDone = try await taskRepository.fetchTasksByStatus(.done)
+                return taskStatusService.filterSuccessTasks(allDone)
             },
             fetchIsFail: {
-                let allDone = await adapter.fetchTasksByStatus(.done)
-                return allDone.filter { $0.currentStage?.result == .fail }
+                let allDone = try await taskRepository.fetchTasksByStatus(.done)
+                return taskStatusService.filterFailTasks(allDone)
             },
-            deleteAlarm: { taskId in
-            },
-            updateTaskInfo: { task, title, successTarget, isAlarmEnabled, alarmDate in
-                var updatedTask = task
-                updatedTask.title = title
-                if var lastStage = updatedTask.stages.last {
-                    lastStage.durationDays = successTarget
-                    let index = updatedTask.stages.count - 1
-                    updatedTask.stages[index] = lastStage
-                }
-                try? await adapter.updateTask(updatedTask)
+            deleteAlarm: { _ in },
+            updateTaskInfo: { task, title, successTarget, _, _ in
+                _ = try? await taskUpdateUseCase.updateTaskInfo(
+                    task: task,
+                    title: title,
+                    durationDays: successTarget
+                )
             },
             evaluateStageResult: { stage in
-                evaluateStageResult(
+                stageEvaluationService.evaluateStage(
                     endDate: stage.endDate,
                     durationDays: stage.durationDays,
                     successDays: stage.successDays
                 )
             },
             createNextStage: { taskId in
-                guard var task = try? await adapter.fetchTask(id: taskId) else { return }
-                guard let lastStage = task.stages.last else { return }
-                guard let nextStageType = lastStage.stageType.next else { return }
-
-                let calendar = Calendar.current
-                guard let nextStartDate = calendar.date(byAdding: .day, value: 1, to: lastStage.endDate) else { return }
-
-                let duration = nextStageType.rawValue
-                guard let nextEndDate = calendar.date(byAdding: .day, value: duration - 1, to: nextStartDate) else { return }
-
-                let newStage = Domain.StageSnapshot(
-                    id: UUID(),
-                    stageTypeRaw: nextStageType.rawValue,
-                    startDate: nextStartDate,
-                    endDate: nextEndDate,
-                    durationDays: duration,
-                    successDays: 0,
-                    resultRaw: Domain.StageResult.inProgress.rawValue
-                )
-
-                task.stages.append(newStage)
-                try? await adapter.updateTask(task)
+                try? await stageProgressionUseCase.createNextStage(for: taskId)
             },
             updateMemo: { taskId, index, memo in
-                guard var task = try? await adapter.fetchTask(id: taskId) else { return }
-                guard task.records.indices.contains(index) else { return }
-                var updatedTask = task
-                updatedTask.records[index].memo = memo
-                try? await adapter.updateTask(updatedTask)
+                try? await certificationUseCase.updateMemo(
+                    taskId: taskId,
+                    index: index,
+                    memo: memo
+                )
             },
             resetStageRecords: { taskId in
-                guard var task = try? await adapter.fetchTask(id: taskId) else { return }
-                guard let lastStage = task.stages.last else { return }
-                
-                let calendar = Calendar.current
-                let today = calendar.startOfDay(for: Date())
-                
-                let newStage = Domain.StageSnapshot(
-                    id: UUID(),
-                    stageTypeRaw: lastStage.stageTypeRaw,
-                    startDate: today,
-                    endDate: calendar.date(byAdding: .day, value: lastStage.durationDays - 1, to: today) ?? today,
-                    durationDays: lastStage.durationDays,
-                    successDays: 0,
-                    resultRaw: Domain.StageResult.inProgress.rawValue
+                try? await stageProgressionUseCase.resetStageRecords(for: taskId)
+            },
+            certifyToday: { taskId, index, memo, imagePath in
+                let startTime = Date()
+                Logger.certificationSaving(
+                    taskId: taskId.rawValue.uuidString,
+                    index: index,
+                    memo: memo,
+                    imagePath: imagePath
                 )
-                
-                task.stages.removeLast()
-                task.stages.append(newStage)
-                
-                task.records.removeAll { record in
-                    let recordDate = calendar.startOfDay(for: record.date)
-                    return recordDate >= today
-                }
-                
-                try? await adapter.updateTask(task)
+                try? await certificationUseCase.certifyToday(
+                    taskId: taskId,
+                    index: index,
+                    memo: memo,
+                    imagePath: imagePath
+                )
+                Logger.certificationSavedToSwiftData(
+                    duration: Date().timeIntervalSince(startTime)
+                )
             }
         )
     }()
@@ -166,7 +164,8 @@ private enum JacsimClientKey: DependencyKey {
         evaluateStageResult: { _ in .inProgress },
         createNextStage: { _ in },
         updateMemo: { _, _, _ in },
-        resetStageRecords: { _ in }
+        resetStageRecords: { _ in },
+        certifyToday: { _, _, _, _ in }
     )
 }
 

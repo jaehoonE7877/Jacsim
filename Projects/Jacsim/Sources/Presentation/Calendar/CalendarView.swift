@@ -105,7 +105,7 @@ public struct CalendarView: View {
         return false
     }
 
-    private func convertDateColors(_ colors: [Date: CalendarFeature.TaskSuccessRate]) -> [Date: JSCalendarDateColor] {
+    private func convertDateColors(_ colors: [Date: Domain.TaskSuccessRate]) -> [Date: JSCalendarDateColor] {
         var result: [Date: JSCalendarDateColor] = [:]
         for (date, rate) in colors {
             switch rate {

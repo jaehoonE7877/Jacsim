@@ -44,7 +44,7 @@ public struct TaskEditView: View {
                         .clipShape(Circle())
                         .padding(.jsXS)
                 }
-                .onChange(of: photoPickerItem) { newItem in
+                .onChange(of: photoPickerItem) { _, newItem in
                     guard let newItem else { return }
                     Task {
                         if let data = try? await newItem.loadTransferable(type: Data.self),

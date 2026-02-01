@@ -13,21 +13,31 @@ public struct TaskDetailView: View {
 
     public var body: some View {
         ZStack(alignment: .bottom) {
-            ScrollView {
-                VStack(spacing: 0) {
-                    coverImageSection
-                    
-                    VStack(spacing: .jsLG) {
-                        stageInfoSection
+            ScrollViewReader { proxy in
+                ScrollView {
+                    VStack(spacing: 0) {
+                        coverImageSection
                         
-                        todayStatusSection
+                        VStack(spacing: .jsLG) {
+                            stageInfoSection
+                            
+                            todayStatusSection
+                            
+                            recordListSection
+                                .id("recordListSection")
+                        }
+                        .padding(.top, .jsLG)
+                        .padding(.horizontal, .jsMD)
                         
-                        recordListSection
+                        Spacer(minLength: 140)
                     }
-                    .padding(.top, .jsLG)
-                    .padding(.horizontal, .jsMD)
-                    
-                    Spacer(minLength: 140)
+                }
+                .onChange(of: store.shouldScrollToRecords) { _, shouldScroll in
+                    guard shouldScroll else { return }
+                    withAnimation(.easeInOut) {
+                        proxy.scrollTo("recordListSection", anchor: .top)
+                    }
+                    store.send(.scrollToRecordsCompleted)
                 }
             }
             
@@ -252,10 +262,19 @@ public struct TaskDetailView: View {
             Text("오늘 상태")
                 .font(.jsHeadlineSmall)
                 .foregroundColor(.labelStrong)
-            
+
             Spacer()
-            
-            JSStatusChip(state: store.todayStatus.chipState)
+
+            JSStatusChip(state: todayStatusChipState)
+        }
+    }
+
+    private var todayStatusChipState: JSStatusChipState {
+        switch store.todayStatus {
+        case .notCertified:
+            return .pending
+        case .certified:
+            return .completed
         }
     }
     

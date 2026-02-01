@@ -1,7 +1,5 @@
 import Foundation
-import SwiftData
 import ComposableArchitecture
-import Data
 import Domain
 
 public enum ThemeMode: String, Equatable, CaseIterable {
@@ -47,6 +45,7 @@ public struct SettingFeature {
 
     @Dependency(\.notificationScheduler) var notificationScheduler
     @Dependency(\.jacsimClient) var jacsimClient
+    @Dependency(\.userSettingsRepository) var userSettingsRepository
 
     public var body: some ReducerOf<Self> {
         Reduce { state, action in
@@ -61,39 +60,24 @@ public struct SettingFeature {
                 return .send(.delegate(.navigateToLicence))
             case .loadNotificationSettings:
                 state.isLoading = true
-                return .run { send in
-                    let isEnabled = await MainActor.run {
-                        let context = SwiftDataStack.shared.context
-                        let descriptor = FetchDescriptor<UserJacsimModel>()
-                        let results = (try? context.fetch(descriptor)) ?? []
-                        return results.contains { $0.isNotificationEnabled }
-                    }
+                return .run { [userSettingsRepository] send in
+                    let isEnabled = await userSettingsRepository.isNotificationEnabled()
                     await send(.notificationSettingsResponse(isEnabled))
                 }
             case let .notificationToggleChanged(isEnabled):
                 state.isNotificationEnabled = isEnabled
                 state.isLoading = true
-                return .run { [notificationScheduler] send in
-                    let reminders = await MainActor.run { () -> [(TaskID, String, DateComponents)] in
-                        let context = SwiftDataStack.shared.context
-                        let descriptor = FetchDescriptor<UserJacsimModel>()
-                        let results = (try? context.fetch(descriptor)) ?? []
-                        results.forEach { $0.isNotificationEnabled = isEnabled }
-                        try? context.save()
-                        return results.compactMap { model in
-                            guard let alarm = model.alarm else { return nil }
-                            let time = Calendar.current.dateComponents([.hour, .minute], from: alarm)
-                            return (TaskID(model.id), model.title, time)
-                        }
-                    }
+                return .run { [notificationScheduler, userSettingsRepository] send in
+                    await userSettingsRepository.updateNotificationEnabled(isEnabled)
+                    let reminders = await userSettingsRepository.getAllReminders()
 
                     if isEnabled {
                         for reminder in reminders {
-                            try? await notificationScheduler.scheduleDailyReminder(reminder.0, reminder.1, reminder.2)
+                            try? await notificationScheduler.scheduleDailyReminder(reminder.taskId, reminder.title, reminder.time)
                         }
                     } else {
                         for reminder in reminders {
-                            await notificationScheduler.cancelReminder(reminder.0)
+                            await notificationScheduler.cancelReminder(reminder.taskId)
                         }
                     }
                     await send(.notificationSettingsResponse(isEnabled))

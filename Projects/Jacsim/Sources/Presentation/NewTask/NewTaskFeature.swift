@@ -1,9 +1,9 @@
 import Foundation
-import SwiftData
 import Domain
 import ComposableArchitecture
 import SwiftUI
-import Data
+import PhotosUI
+import Core
 
 @Reducer
 public struct NewTaskFeature {
@@ -14,20 +14,35 @@ public struct NewTaskFeature {
         public var endDate: Date = Date().addingTimeInterval(86400 * 7)
         public var successCount: Int = 1
         public var image: UIImage?
-        public var alarmDate: Date = Date()
+        public var photoPickerItem: PhotosPickerItem?
+        public var stageType: StageType = .three
+        public var alarmDate: Date = State.defaultAlarmDate()
         public var isAlarmEnabled: Bool = false
+        public var isSaving: Bool = false
+        public var saveFailed: Bool = false
         
         public var path = StackState<Path.State>()
         @Presents public var alert: AlertState<Action.Alert>?
         
-        public init() {}
+        public init() {
+            self.alarmDate = State.defaultAlarmDate()
+        }
+
+        private static func defaultAlarmDate() -> Date {
+            var components = Calendar.current.dateComponents([.year, .month, .day], from: Date())
+            components.hour = 21
+            components.minute = 0
+            return Calendar.current.date(from: components) ?? Date()
+        }
     }
 
     public enum Action: BindableAction {
         case binding(BindingAction<State>)
         case path(StackAction<Path.State, Path.Action>)
         case saveButtonTapped
-        case saveCompleted
+        case saveCompleted(Result<Void, Error>)
+        case imageSelected(UIImage)
+        case photoPickerItemChanged(PhotosPickerItem?)
         case nextButtonTapped
         case confirmAlarmButtonTapped
         case cancelButtonTapped
@@ -64,6 +79,8 @@ public struct NewTaskFeature {
 
     @Dependency(\.jacsimClient) var jacsimClient
     @Dependency(\.notificationScheduler) var notificationScheduler
+    @Dependency(\.imageStore) var imageStore
+    @Dependency(\.userSettingsRepository) var userSettingsRepository
 
     public var body: some ReducerOf<Self> {
         BindingReducer()
@@ -76,42 +93,77 @@ public struct NewTaskFeature {
                 state.path.append(.summary)
                 return .none
             case .saveButtonTapped:
-                return .run { [state, jacsimClient, notificationScheduler] send in
-                    let task = Domain.Task(
-                        id: TaskID(UUID()),
-                        title: state.title,
-                        startDate: state.startDate,
-                        endDate: state.endDate,
-                        stages: [],
-                        records: []
-                    )
-                    try await jacsimClient.addTask(task)
-                    let alarmDate: Date? = state.isAlarmEnabled ? state.alarmDate : nil
-                    if let alarmDate {
-                        let isNotificationEnabled = await MainActor.run { () -> Bool in
-                            let context = SwiftDataStack.shared.context
-                            let descriptor = FetchDescriptor<UserJacsimModel>()
-                            let results = (try? context.fetch(descriptor)) ?? []
-                            return results.contains { $0.isNotificationEnabled }
+                let trimmedTitle = state.title.trimmingCharacters(in: .whitespacesAndNewlines)
+                guard !trimmedTitle.isEmpty, let image = state.image else { return .none }
+                state.isSaving = true
+                state.saveFailed = false
+                let stageType = state.stageType
+                let startDate = Calendar.current.startOfDay(for: Date())
+                let endDate = Calendar.current.date(
+                    byAdding: .day,
+                    value: stageType.durationDays - 1,
+                    to: startDate
+                ) ?? startDate
+                let taskId = TaskID(UUID())
+                let stage = StageSnapshot(
+                    id: UUID(),
+                    stageTypeRaw: stageType.rawValue,
+                    startDate: startDate,
+                    endDate: endDate,
+                    durationDays: stageType.durationDays,
+                    successDays: 0,
+                    resultRaw: StageResult.inProgress.rawValue
+                )
+                let task = Domain.Task(
+                    id: taskId,
+                    title: trimmedTitle,
+                    startDate: startDate,
+                    endDate: endDate,
+                    stages: [stage],
+                    records: []
+                )
+                Logger.taskCreated(title: task.title, taskId: task.id.rawValue.uuidString, startDate: task.startDate, endDate: task.endDate)
+                let isAlarmEnabled = state.isAlarmEnabled
+                let alarmDate = state.alarmDate
+                return .run { [jacsimClient, notificationScheduler, imageStore, userSettingsRepository] send in
+                    do {
+                        if let data = image.jpegData(compressionQuality: 0.4) {
+                            _ = try await imageStore.saveImage(task.mainImageKey, data)
                         }
-                        if isNotificationEnabled {
-                            let time = Calendar.current.dateComponents([.hour, .minute], from: alarmDate)
-                            try? await notificationScheduler.scheduleDailyReminder(task.id, task.title, time)
+                        try await jacsimClient.addTask(task)
+                        if isAlarmEnabled {
+                            let isNotificationEnabled = await userSettingsRepository.isNotificationEnabled()
+                            if isNotificationEnabled {
+                                let time = Calendar.current.dateComponents([.hour, .minute], from: alarmDate)
+                                try? await notificationScheduler.scheduleDailyReminder(task.id, task.title, time)
+                            }
                         }
+                        await send(.saveCompleted(.success(())))
+                    } catch {
+                        await send(.saveCompleted(.failure(error)))
                     }
-                    await send(.saveCompleted)
-                    await send(.delegate(.taskCreated))
                 }
-            case .saveCompleted:
-                state.alert = AlertState {
-                    TextState("저장 완료")
-                } actions: {
-                    ButtonState(role: .cancel, action: .send(.dismiss)) {
-                        TextState("확인")
+            case .saveCompleted(.success):
+                state.isSaving = false
+                return .send(.delegate(.taskCreated))
+            case .saveCompleted(.failure):
+                state.isSaving = false
+                state.saveFailed = true
+                return .none
+            case let .imageSelected(image):
+                state.image = image
+                state.saveFailed = false
+                return .none
+            case let .photoPickerItemChanged(item):
+                guard let item else { return .none }
+                return .run { send in
+                    if let data = try? await item.loadTransferable(type: Data.self),
+                       let image = UIImage(data: data) {
+                        await send(.imageSelected(image))
                     }
-                } message: {
-                    TextState("작심이 저장되었습니다")
                 }
+            case .binding(\.title):
+                state.saveFailed = false
                 return .none
             case .binding, .path, .cancelButtonTapped, .delegate, .alert:
                 return .none
