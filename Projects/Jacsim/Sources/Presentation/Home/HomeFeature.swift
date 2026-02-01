@@ -83,15 +83,15 @@ public struct HomeFeature {
         @CasePathable
         @dynamicMemberLookup
         public enum State: Equatable {
-            case newTask(NewTaskFeature.State)
+            case challengeCreate(ChallengeCreateFeature.State)
         }
         @CasePathable
         @dynamicMemberLookup
         public enum Action {
-            case newTask(NewTaskFeature.Action)
+            case challengeCreate(ChallengeCreateFeature.Action)
         }
         public var body: some ReducerOf<Self> {
-            Scope(state: \.newTask, action: \.newTask) { NewTaskFeature() }
+            Scope(state: \.challengeCreate, action: \.challengeCreate) { ChallengeCreateFeature() }
         }
     }
 
@@ -148,7 +148,7 @@ public struct HomeFeature {
                 return .none
                 
             case .addButtonTapped:
-                state.destination = .newTask(NewTaskFeature.State())
+                state.destination = .challengeCreate(ChallengeCreateFeature.State())
                 return .none
                 
             case .allTasksButtonTapped:
@@ -203,11 +203,28 @@ public struct HomeFeature {
             case let .path(.element(id: _, action: .detail(.delegate(.navigateToUpdate(task, index))))):
                 state.path.append(.update(TaskUpdateFeature.State(task: task, index: index)))
                 return .none
-                
+
+            case .path(.element(id: _, action: .update(.delegate(.saveSuccess)))):
+                state.path.removeLast()
+                return .run { send in
+                    await send(.onAppear)
+                }
+
             case .destination(.dismiss):
                 return .send(.onAppear)
-                
-            case .path, .destination, .binding, .delegate, .migrationAlert:
+
+            case .destination(.presented(.challengeCreate(.delegate(.challengeCreated)))):
+                state.destination = nil
+                return .send(.onAppear)
+
+            case .destination(.presented(.challengeCreate(.delegate(.cancelled)))):
+                state.destination = nil
+                return .none
+
+            case .path, .binding, .delegate, .migrationAlert:
+                return .none
+
+            case .destination:
                 return .none
             }
         }

@@ -101,8 +101,8 @@ public struct HomeView: View {
         }
         .navigationBarHidden(true)
         .onAppear { store.send(.onAppear) }
-        .sheet(item: $store.scope(state: \.destination?.newTask, action: \.destination.newTask)) { store in
-            NewTaskView(store: store)
+        .sheet(item: $store.scope(state: \.destination?.challengeCreate, action: \.destination.challengeCreate)) { store in
+            ChallengeCreateView(store: store)
         }
         .alert($store.scope(state: \.migrationAlert, action: \.migrationAlert))
         .sensoryFeedback(.impact(weight: .light), trigger: tapFeedbackTrigger)
