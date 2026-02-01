@@ -25,7 +25,8 @@ public struct CalendarView: View {
             JSCalendar(
                 selectedDate: $store.selectedDate,
                 scope: store.calendarScope,
-                eventDates: store.eventDates
+                eventDates: store.eventDates,
+                dateColors: convertDateColors(store.dateColors)
             )
             .onChange(of: store.selectedDate) {
                 store.send(.dateSelected(store.selectedDate))
@@ -95,12 +96,29 @@ public struct CalendarView: View {
     private func isTaskCompleted(_ task: Domain.Task, on date: Date) -> Bool {
         let calendar = Calendar.current
         let targetDate = calendar.startOfDay(for: date)
-        
+
         if let dailyRecord = task.records.first(where: {
             calendar.isDate($0.date, inSameDayAs: targetDate)
         }) {
             return dailyRecord.check
         }
         return false
+    }
+
+    private func convertDateColors(_ colors: [Date: CalendarFeature.TaskSuccessRate]) -> [Date: JSCalendarDateColor] {
+        var result: [Date: JSCalendarDateColor] = [:]
+        for (date, rate) in colors {
+            switch rate {
+            case .low:
+                result[date] = .low
+            case .medium:
+                result[date] = .medium
+            case .high:
+                result[date] = .high
+            default:
+                break
+            }
+        }
+        return result
     }
 }
