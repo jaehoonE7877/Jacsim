@@ -1,5 +1,6 @@
 import SwiftUI
 import ComposableArchitecture
+import Domain
 import DSKit
 
 public struct HomeView: View {
@@ -9,8 +10,8 @@ public struct HomeView: View {
     public init(store: StoreOf<HomeFeature>) {
         self.store = store
     }
-    
-    private var filteredTasks: [UserJacsim] {
+
+    private var filteredTasks: [Domain.Task] {
         let calendar = Calendar.current
         let targetDate = calendar.startOfDay(for: store.selectedDate)
         
@@ -48,8 +49,8 @@ public struct HomeView: View {
         let targetDate = calendar.startOfDay(for: store.selectedDate)
         
         return filteredTasks.filter { task in
-            if let dailyRecord = task.memoList.first(where: { 
-                calendar.isDate($0.date, inSameDayAs: targetDate) 
+            if let dailyRecord = task.records.first(where: {
+                calendar.isDate($0.date, inSameDayAs: targetDate)
             }) {
                 return dailyRecord.check
             }
@@ -302,7 +303,7 @@ public struct HomeView: View {
         }
     }
 
-    private func taskRow(task: UserJacsim) -> some View {
+    private func taskRow(task: Domain.Task) -> some View {
         let isCompletedToday = isTaskCompletedToday(task)
 
         return HStack(spacing: 14) {
@@ -331,16 +332,7 @@ public struct HomeView: View {
                     .foregroundColor(isCompletedToday ? .labelDisable : .labelStrong)
                     .lineLimit(1)
 
-                if let alarm = task.alarm {
-                    HStack(spacing: 4) {
-                        Image(systemName: "bell.fill")
-                            .font(.system(size: 10))
-                            .foregroundColor(.labelAssistive)
-                        Text(alarm.convertToString(withFormat: .ahhmm))
-                            .font(.pretendardRegular(size: 12))
-                            .foregroundColor(.labelNeutral)
-                    }
-                }
+
             }
             Spacer()
 
@@ -366,12 +358,12 @@ public struct HomeView: View {
         )
     }
 
-    private func isTaskCompletedToday(_ task: UserJacsim) -> Bool {
+    private func isTaskCompletedToday(_ task: Domain.Task) -> Bool {
         let calendar = Calendar.current
         let targetDate = calendar.startOfDay(for: store.selectedDate)
         
-        if let dailyRecord = task.memoList.first(where: { 
-            calendar.isDate($0.date, inSameDayAs: targetDate) 
+        if let dailyRecord = task.records.first(where: {
+            calendar.isDate($0.date, inSameDayAs: targetDate)
         }) {
             return dailyRecord.check
         }

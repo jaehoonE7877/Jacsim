@@ -1,7 +1,7 @@
 import Foundation
 import ComposableArchitecture
+import Domain
 import DSKit
-
 
 @Reducer
 public struct HomeFeature {
@@ -9,7 +9,7 @@ public struct HomeFeature {
     public struct State: Equatable {
         public var selectedDate: Date = Date()
         public var calendarScope: JSCalendarScope = .month
-        public var tasks: [UserJacsim] = []
+        public var tasks: [Domain.Task] = []
         public var isLoading: Bool = false
         public var isRefreshing: Bool = false
         public var hasStartedNotificationListener = false
@@ -26,13 +26,13 @@ public struct HomeFeature {
         case binding(BindingAction<State>)
         case dateSelected(Date)
         case refreshTriggered
-        case tasksResponse([UserJacsim])
+        case tasksResponse([Domain.Task])
         case settingButtonTapped
         case addButtonTapped
         case allTasksButtonTapped
-        case taskTapped(UserJacsim)
+        case taskTapped(Domain.Task)
         case notificationTapped(UUID)
-        case notificationTaskLoaded(UserJacsim?)
+        case notificationTaskLoaded(Domain.Task?)
         case migrationCheckResponse(Bool)
         case migrationAlert(PresentationAction<MigrationAlert>)
 
@@ -93,7 +93,7 @@ public struct HomeFeature {
         }
     }
 
-    @Dependency(\.jacsimClient) var jacsimClient
+    @Dependency(\.taskRepository) var taskRepository
 
     public var body: some ReducerOf<Self> {
         BindingReducer()
@@ -103,8 +103,8 @@ public struct HomeFeature {
                 let shouldStartListener = !state.hasStartedNotificationListener
                 state.hasStartedNotificationListener = true
                 state.isLoading = state.tasks.isEmpty
-                let fetchEffect: Effect<Action> = .run { send in
-                    let tasks = await jacsimClient.fetchActiveTasks()
+                let fetchEffect: Effect<Action> = .run { [taskRepository] send in
+                    let tasks = try await taskRepository.fetchActiveTasks()
                     await send(.tasksResponse(tasks))
                 }
                 let notificationEffect: Effect<Action> = shouldStartListener ? .run { send in
@@ -115,20 +115,16 @@ public struct HomeFeature {
                         }
                     }
                 } : .none
-                let migrationEffect: Effect<Action> = .run { send in
-                    let needsMigration = await jacsimClient.needsMigrationV0_1()
-                    await send(.migrationCheckResponse(needsMigration))
-                }
-                return .merge(fetchEffect, notificationEffect, migrationEffect)
-                
+                return .merge(fetchEffect, notificationEffect)
+
             case let .dateSelected(date):
                 state.selectedDate = date
                 return .none
 
             case .refreshTriggered:
                 state.isRefreshing = true
-                return .run { send in
-                    let tasks = await jacsimClient.fetchActiveTasks()
+                return .run { [taskRepository] send in
+                    let tasks = try await taskRepository.fetchActiveTasks()
                     await send(.tasksResponse(tasks))
                 }
                 
@@ -155,15 +151,15 @@ public struct HomeFeature {
                 return .none
 
             case let .notificationTapped(id):
-                return .run { send in
-                    let task = await jacsimClient.fetchTask(id)
+                return .run { [taskRepository] send in
+                    let task = try await taskRepository.fetchTask(TaskID(id))
                     await send(.notificationTaskLoaded(task))
                 }
 
             case let .notificationTaskLoaded(task):
                 guard let task else { return .none }
-                if let index = task.jacsimDayArray.firstIndex(where: { Calendar.current.isDate($0, inSameDayAs: Date()) }) {
-                    let isCertifiable = task.memoList.indices.contains(index) ? !task.memoList[index].check : true
+                if let index = task.dayArray.firstIndex(where: { Calendar.current.isDate($0, inSameDayAs: Date()) }) {
+                    let isCertifiable = task.records.indices.contains(index) ? !task.records[index].check : true
                     if isCertifiable {
                         state.path.append(.update(TaskUpdateFeature.State(task: task, index: index)))
                         return .none
@@ -172,32 +168,10 @@ public struct HomeFeature {
                 state.path.append(.detail(TaskDetailFeature.State(task: task)))
                 return .none
 
-            case let .migrationCheckResponse(needsMigration):
-                if needsMigration {
-                    state.migrationAlert = AlertState {
-                        TextState("데이터 마이그레이션 안내")
-                    } actions: {
-                        ButtonState(action: .send(.confirm)) {
-                            TextState("진행")
-                        }
-                        ButtonState(role: .cancel, action: .send(.cancel)) {
-                            TextState("나중에")
-                        }
-                    } message: {
-                        TextState("작심 데이터를 최신 형식으로 변환합니다. 진행할까요?")
-                    }
-                }
+            case .migrationCheckResponse:
                 return .none
 
-            case .migrationAlert(.presented(.confirm)):
-                state.migrationAlert = nil
-                return .run { send in
-                    await jacsimClient.performMigrationV0_1()
-                    await send(.onAppear)
-                }
-
-            case .migrationAlert(.presented(.cancel)):
-                state.migrationAlert = nil
+            case .migrationAlert:
                 return .none
                 
             case let .path(.element(id: _, action: .detail(.delegate(.navigateToUpdate(task, index))))):

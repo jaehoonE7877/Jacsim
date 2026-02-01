@@ -1,13 +1,14 @@
 import Foundation
+import Domain
 import ComposableArchitecture
 
 @Reducer
 public struct AllTaskFeature {
     @ObservableState
     public struct State: Equatable {
-        public var ongoingTasks: [UserJacsim] = []
-        public var successTasks: [UserJacsim] = []
-        public var failTasks: [UserJacsim] = []
+        public var ongoingTasks: [Domain.Task] = []
+        public var successTasks: [Domain.Task] = []
+        public var failTasks: [Domain.Task] = []
         
         public var isOngoingExpanded: Bool = true
         public var isSuccessExpanded: Bool = true
@@ -18,11 +19,11 @@ public struct AllTaskFeature {
 
     public enum Action {
         case onAppear
-        case tasksResponse(ongoing: [UserJacsim], success: [UserJacsim], fail: [UserJacsim])
+        case tasksResponse(ongoing: [Domain.Task], success: [Domain.Task], fail: [Domain.Task])
         case toggleOngoing
         case toggleSuccess
         case toggleFail
-        case taskTapped(UserJacsim)
+        case taskTapped(Domain.Task)
     }
 
     @Dependency(\.jacsimClient) var jacsimClient
@@ -31,10 +32,10 @@ public struct AllTaskFeature {
         Reduce { state, action in
             switch action {
             case .onAppear:
-                return .run { send in
-                    let ongoing = await jacsimClient.fetchActiveTasks()
-                    let success = await jacsimClient.fetchIsSuccess()
-                    let fail = await jacsimClient.fetchIsFail()
+                return .run { [jacsimClient] send in
+                    let ongoing = try await jacsimClient.fetchActiveTasks()
+                    let success = try await jacsimClient.fetchIsSuccess()
+                    let fail = try await jacsimClient.fetchIsFail()
                     await send(.tasksResponse(ongoing: ongoing, success: success, fail: fail))
                 }
             case let .tasksResponse(ongoing, success, fail):

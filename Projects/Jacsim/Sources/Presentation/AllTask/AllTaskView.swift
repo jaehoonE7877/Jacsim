@@ -1,5 +1,6 @@
 import SwiftUI
 import ComposableArchitecture
+import Domain
 import DSKit
 
 public struct AllTaskView: View {
@@ -43,7 +44,7 @@ public struct AllTaskView: View {
 
     private func sectionView(
         title: String,
-        tasks: [UserJacsim],
+        tasks: [Domain.Task],
         isExpanded: Bool,
         toggleAction: @escaping () -> Void
     ) -> some View {
@@ -70,7 +71,7 @@ public struct AllTaskView: View {
         }
     }
 
-    private func taskRow(task: UserJacsim) -> some View {
+    private func taskRow(task: Domain.Task) -> some View {
         HStack {
             Text(task.title)
                 .font(.pretendardMedium(size: 16))
