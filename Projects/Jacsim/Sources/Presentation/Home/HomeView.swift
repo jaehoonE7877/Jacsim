@@ -175,7 +175,7 @@ public struct HomeView: View {
                                     triggerTapFeedback()
                                 }
                             )
-                            .padding(.horizontal, -24)
+                            .padding(.horizontal, 0)
                         }
                     }
                 } else {
@@ -288,7 +288,7 @@ public struct HomeView: View {
                     .padding(.horizontal, 20)
                     .padding(.vertical, 4)
                 }
-                .padding(.horizontal, -24)
+                .padding(.horizontal, 0)
             }
         }
     }
