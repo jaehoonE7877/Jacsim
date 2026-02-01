@@ -18,11 +18,15 @@ public struct TaskUpdateFeature {
         public var image: UIImage?
         public var dateText: String
         public var photoPickerItem: PhotosPickerItem?
+        public var isSaving: Bool = false
+        public var saveFailed: Bool = false
+        public var isOverwriteMode: Bool = false
 
         public init(task: Domain.Task, index: Int) {
             self.task = task
             self.index = index
             self.dateText = DateFormatType.toString(task.dayArray[index], to: .fullWithoutYear)
+            self.isOverwriteMode = task.records.indices.contains(index) && task.records[index].check
         }
     }
 
@@ -33,10 +37,12 @@ public struct TaskUpdateFeature {
         case certifyButtonTapped
         case imageSelected(UIImage)
         case photoPickerItemChanged(PhotosPickerItem?)
+        case saveCompleted(Result<Void, Error>)
+        case dismiss
         case delegate(Delegate)
-        
+
         public enum Delegate {
-            case memoUpdated
+            case saveSuccess
         }
     }
 
@@ -61,55 +67,74 @@ public struct TaskUpdateFeature {
                 return .none
 
             case .certifyButtonTapped:
+                state.isSaving = true
+                state.saveFailed = false
                 let taskId = state.task.id
                 let index = state.index
                 let memo = state.memo.trimmingCharacters(in: .whitespacesAndNewlines)
                 let image = state.image
                 let dateText = state.dateText
                 return .run { [jacsimClient, imageStore, notificationScheduler, task = state.task] send in
-                    await jacsimClient.updateMemo(taskId, index, memo)
-                    if let image = image {
-                        let data = image.jpegData(compressionQuality: 0.4)
-                        if let data {
-                            _ = try? await imageStore.saveImage("\(taskId.rawValue)_\(dateText).jpg", data)
+                    do {
+                        try await jacsimClient.updateMemo(taskId, index, memo)
+                        if let image = image {
+                            let data = image.jpegData(compressionQuality: 0.4)
+                            if let data {
+                                _ = try await imageStore.saveImage("\(taskId.rawValue)_\(dateText).jpg", data)
+                            }
                         }
-                    }
-                    let reminder = await MainActor.run { () -> (TaskID, String, DateComponents)? in
-                        let context = SwiftDataStack.shared.context
-                        let descriptor = FetchDescriptor<UserJacsimModel>(
-                            predicate: #Predicate { $0.id == taskId.rawValue }
-                        )
-                        guard let model = (try? context.fetch(descriptor))?.first else { return nil }
-                        guard model.isNotificationEnabled, let alarm = model.alarm else { return nil }
-                        let time = Calendar.current.dateComponents([.hour, .minute], from: alarm)
-                        return (taskId, model.title, time)
-                    }
-                    if let reminder {
-                        let latestTask = try? await jacsimClient.fetchTask(taskId)
-                        let taskSnapshot = latestTask ?? task
-                        let baseSuccessCount = taskSnapshot.records.filter(\.check).count
-                        let isCurrentChecked = taskSnapshot.records.indices.contains(index)
-                            ? taskSnapshot.records[index].check
-                            : false
-                        let adjustedSuccessCount = isCurrentChecked ? baseSuccessCount : baseSuccessCount + 1
-                        let durationDays = taskSnapshot.stages.last?.durationDays ?? 0
-                        let remainingSuccessCount = max(0, durationDays - adjustedSuccessCount)
-                        if remainingSuccessCount > 0 {
-                            try? await notificationScheduler.scheduleDailyReminder(reminder.0, reminder.1, reminder.2)
+                        let reminder = await MainActor.run { () -> (TaskID, String, DateComponents)? in
+                            let context = SwiftDataStack.shared.context
+                            let descriptor = FetchDescriptor<UserJacsimModel>(
+                                predicate: #Predicate { $0.id == taskId.rawValue }
+                            )
+                            guard let model = (try? context.fetch(descriptor))?.first else { return nil }
+                            guard model.isNotificationEnabled, let alarm = model.alarm else { return nil }
+                            let time = Calendar.current.dateComponents([.hour, .minute], from: alarm)
+                            return (taskId, model.title, time)
                         }
+                        if let reminder {
+                            let latestTask = try? await jacsimClient.fetchTask(taskId)
+                            let taskSnapshot = latestTask ?? task
+                            let baseSuccessCount = taskSnapshot.records.filter(\.check).count
+                            let isCurrentChecked = taskSnapshot.records.indices.contains(index)
+                                ? taskSnapshot.records[index].check
+                                : false
+                            let adjustedSuccessCount = isCurrentChecked ? baseSuccessCount : baseSuccessCount + 1
+                            let durationDays = taskSnapshot.stages.last?.durationDays ?? 0
+                            let remainingSuccessCount = max(0, durationDays - adjustedSuccessCount)
+                            if remainingSuccessCount > 0 {
+                                try? await notificationScheduler.scheduleDailyReminder(reminder.0, reminder.1, reminder.2)
+                            }
+                        }
+                        await send(.saveCompleted(.success(())))
+                    } catch {
+                        await send(.saveCompleted(.failure(error)))
                     }
-                    await send(.delegate(.memoUpdated))
                 }
+
+            case .saveCompleted(.success):
+                state.isSaving = false
+                return .send(.delegate(.saveSuccess))
+
+            case .saveCompleted(.failure):
+                state.isSaving = false
+                state.saveFailed = true
+                return .none
+
+            case .dismiss:
+                return .none
 
             case .binding(\.memo):
                 let trimmed = state.memo.trimmingCharacters(in: .whitespacesAndNewlines)
-                if trimmed.count > 50 {
-                    state.memo = String(trimmed.prefix(50))
+                if trimmed.count > 20 {
+                    state.memo = String(trimmed.prefix(20))
                 }
                 return .none
 
             case let .imageSelected(image):
                 state.image = image
+                state.saveFailed = false
                 return .none
 
             case let .photoPickerItemChanged(item):
