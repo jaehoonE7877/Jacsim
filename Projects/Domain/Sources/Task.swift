@@ -76,6 +76,12 @@ public struct Task: Sendable, Codable, Hashable, Identifiable {
     public var successCount: Int {
         records.filter(\.check).count
     }
+
+    public func hasRecord(for date: Date) -> Bool {
+        records.contains { record in
+            Calendar.current.isDate(record.date, inSameDayAs: date)
+        }
+    }
 }
 
 public struct StageSnapshot: Sendable, Codable, Hashable, Identifiable {

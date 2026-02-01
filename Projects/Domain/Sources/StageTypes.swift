@@ -24,7 +24,7 @@ public enum StageType: Int, CaseIterable {
     }
 }
 
-public enum StageResult: String {
+public enum StageResult: String, Sendable, Codable, Equatable {
     case inProgress
     case success
     case fail
