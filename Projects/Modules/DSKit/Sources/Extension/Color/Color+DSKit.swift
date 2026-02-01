@@ -13,6 +13,8 @@ public extension Color {
     static var labelDisable: Color { Color(uiColor: .labelDisable) }
 
     static var backgroundNormal: Color { Color(uiColor: .backgroundNormal) }
+    static var backgroundStrong: Color { Color(uiColor: .backgroundStrong) }
+    static var backgroundAlternative: Color { Color(uiColor: .backgroundAlternative) }
 
     static var positive: Color { Color(uiColor: .positive) }
     static var cautionary: Color { Color(uiColor: .cautionary) }
