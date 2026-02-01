@@ -6,12 +6,12 @@ public struct AppFeature {
     @ObservableState
     public enum State: Equatable {
         case onboarding(WalkThroughFeature.State)
-        case main(HomeFeature.State)
+        case main(MainFeature.State)
         
         public init() {
             let isOnboarded = UserDefaults.standard.bool(forKey: "onboarding")
             if isOnboarded {
-                self = .main(HomeFeature.State())
+                self = .main(MainFeature.State())
             } else {
                 self = .onboarding(WalkThroughFeature.State(fromSetting: false))
             }
@@ -20,7 +20,7 @@ public struct AppFeature {
 
     public enum Action {
         case onboarding(WalkThroughFeature.Action)
-        case main(HomeFeature.Action)
+        case main(MainFeature.Action)
     }
 
     public var body: some ReducerOf<Self> {
@@ -28,7 +28,7 @@ public struct AppFeature {
             switch action {
             case .onboarding(.delegate(.completeOnboarding)):
                 UserDefaults.standard.set(true, forKey: "onboarding")
-                state = .main(HomeFeature.State())
+                state = .main(MainFeature.State())
                 return .none
                 
             case .onboarding, .main:
@@ -39,7 +39,7 @@ public struct AppFeature {
             WalkThroughFeature()
         }
         .ifCaseLet(\.main, action: \.main) {
-            HomeFeature()
+            MainFeature()
         }
     }
 }

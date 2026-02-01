@@ -6,39 +6,41 @@ public struct JacsimAlarmInputView: View {
     @Bindable var store: StoreOf<NewTaskFeature>
 
     public var body: some View {
-        VStack(alignment: .leading, spacing: 24) {
+        VStack(alignment: .leading, spacing: .jsLG) {
             Text("알림을 받으시겠어요?")
-                .font(.pretendardSemiBold(size: 24))
+                .font(.jsHeadlineMedium)
                 .foregroundColor(.labelStrong)
-                .padding(.top, 24)
+                .padding(.top, .jsLG)
             
-            Toggle("알림 설정", isOn: $store.isAlarmEnabled)
-                .font(.pretendardMedium(size: 18))
-                .padding()
-                .background(Color.backgroundNormal)
-                .cornerRadius(12)
+            JSCard(style: .elevated) {
+                JSListItem(
+                    title: "알림 설정",
+                    icon: "bell",
+                    accessory: .toggle(isOn: $store.isAlarmEnabled)
+                )
+            }
             
             if store.isAlarmEnabled {
-                DatePicker("알림 시간", selection: $store.alarmDate, displayedComponents: .hourAndMinute)
-                    .datePickerStyle(.wheel)
-                    .labelsHidden()
-                    .frame(maxWidth: .infinity)
+                JSCard(style: .elevated) {
+                    DatePicker("알림 시간", selection: $store.alarmDate, displayedComponents: .hourAndMinute)
+                        .datePickerStyle(.wheel)
+                        .labelsHidden()
+                        .frame(maxWidth: .infinity)
+                }
             }
             
             Spacer()
             
-            Button(action: { store.send(.confirmAlarmButtonTapped) }) {
-                Text("다음")
-                    .font(.pretendardMedium(size: 16))
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 52)
-                    .background(Color.primaryNormal)
-                    .cornerRadius(12)
+            JSButton(
+                title: "다음",
+                style: .primary,
+                size: .large
+            ) {
+                store.send(.confirmAlarmButtonTapped)
             }
-            .padding(.bottom, 16)
+            .padding(.bottom, .jsMD)
         }
-        .padding(.horizontal, 16)
+        .padding(.horizontal, .jsMD)
         .background(Color.backgroundNormal)
     }
 }

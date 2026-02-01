@@ -18,7 +18,7 @@ public struct AppView: View {
             case .main:
                 if let mainStore = store.scope(state: \.main, action: \.main) {
                     NavigationStack {
-                        HomeView(store: mainStore)
+                        MainView(store: mainStore)
                     }
                 }
             }

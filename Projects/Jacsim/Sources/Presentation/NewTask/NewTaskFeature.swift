@@ -1,7 +1,9 @@
 import Foundation
+import SwiftData
 import Domain
 import ComposableArchitecture
 import SwiftUI
+import Data
 
 @Reducer
 public struct NewTaskFeature {
@@ -61,6 +63,7 @@ public struct NewTaskFeature {
     }
 
     @Dependency(\.jacsimClient) var jacsimClient
+    @Dependency(\.notificationScheduler) var notificationScheduler
 
     public var body: some ReducerOf<Self> {
         BindingReducer()
@@ -73,7 +76,7 @@ public struct NewTaskFeature {
                 state.path.append(.summary)
                 return .none
             case .saveButtonTapped:
-                return .run { [state, jacsimClient] send in
+                return .run { [state, jacsimClient, notificationScheduler] send in
                     let task = Domain.Task(
                         id: TaskID(UUID()),
                         title: state.title,
@@ -83,6 +86,19 @@ public struct NewTaskFeature {
                         records: []
                     )
                     try await jacsimClient.addTask(task)
+                    let alarmDate: Date? = state.isAlarmEnabled ? state.alarmDate : nil
+                    if let alarmDate {
+                        let isNotificationEnabled = await MainActor.run { () -> Bool in
+                            let context = SwiftDataStack.shared.context
+                            let descriptor = FetchDescriptor<UserJacsimModel>()
+                            let results = (try? context.fetch(descriptor)) ?? []
+                            return results.contains { $0.isNotificationEnabled }
+                        }
+                        if isNotificationEnabled {
+                            let time = Calendar.current.dateComponents([.hour, .minute], from: alarmDate)
+                            try? await notificationScheduler.scheduleDailyReminder(task.id, task.title, time)
+                        }
+                    }
                     await send(.saveCompleted)
                     await send(.delegate(.taskCreated))
                 }

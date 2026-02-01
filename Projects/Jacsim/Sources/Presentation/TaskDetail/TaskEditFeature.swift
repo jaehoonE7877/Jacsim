@@ -43,6 +43,7 @@ public struct TaskEditFeature {
     }
 
     @Dependency(\.imageStore) var imageStore
+    @Dependency(\.notificationScheduler) var notificationScheduler
 
     public var body: some ReducerOf<Self> {
         BindingReducer()
@@ -62,7 +63,25 @@ public struct TaskEditFeature {
 
             case .saveButtonTapped:
                 let title = state.title.trimmingCharacters(in: .whitespacesAndNewlines)
-                return .send(.delegate(.saved(title, state.successTarget, state.image, state.isAlarmEnabled, state.alarmDate)))
+                let taskId = state.task.id
+                let successTarget = state.successTarget
+                let image = state.image
+                let isAlarmEnabled = state.isAlarmEnabled
+                let alarmDate = state.alarmDate
+                return .run { [notificationScheduler, title, taskId, successTarget, image, isAlarmEnabled, alarmDate] send in
+                    await notificationScheduler.cancelReminder(taskId)
+                    if isAlarmEnabled {
+                        let components = Calendar.current.dateComponents([.hour, .minute], from: alarmDate)
+                        let hour = components.hour ?? 0
+                        let minute = components.minute ?? 0
+                        func scheduleDailyReminder(_ taskId: TaskID, _ hour: Int, _ minute: Int) async {
+                            let time = DateComponents(hour: hour, minute: minute)
+                            try? await notificationScheduler.scheduleDailyReminder(taskId, title, time)
+                        }
+                        await scheduleDailyReminder(taskId, hour, minute)
+                    }
+                    await send(.delegate(.saved(title, successTarget, image, isAlarmEnabled, alarmDate)))
+                }
 
             case .cancelButtonTapped:
                 return .send(.delegate(.cancelled))

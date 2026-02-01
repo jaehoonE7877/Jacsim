@@ -6,43 +6,37 @@ public struct JacsimNameInputView: View {
     @Bindable var store: StoreOf<NewTaskFeature>
 
     public var body: some View {
-        VStack(alignment: .leading, spacing: 24) {
+        VStack(alignment: .leading, spacing: .jsLG) {
             Text("무엇을 작심하셨나요?")
-                .font(.pretendardSemiBold(size: 24))
+                .font(.jsHeadlineMedium)
                 .foregroundColor(.labelStrong)
-                .padding(.top, 24)
+                .padding(.top, .jsLG)
             
-            VStack(alignment: .trailing, spacing: 8) {
-                TextField("예시 - 아침에 일어나서 물 마시기", text: $store.title)
-                    .font(.pretendardMedium(size: 16))
-                    .padding()
-                    .background(Color.backgroundNormal)
-                    .cornerRadius(12)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 12)
-                            .stroke(Color.primaryNormal, lineWidth: 1)
-                    )
+            VStack(alignment: .trailing, spacing: .jsXS) {
+                JSInputField(
+                    title: "",
+                    placeholder: "예시 - 아침에 일어나서 물 마시기",
+                    text: $store.title
+                )
                 
                 Text("\(store.title.count) / 20")
-                    .font(.pretendardMedium(size: 14))
+                    .font(.jsLabelMedium)
                     .foregroundColor(.labelAssistive)
             }
             
             Spacer()
             
-            Button(action: { store.send(.nextButtonTapped) }) {
-                Text("다음")
-                    .font(.pretendardMedium(size: 16))
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 52)
-                    .background(store.title.isEmpty ? Color.labelDisable : Color.primaryNormal)
-                    .cornerRadius(12)
+            JSButton(
+                title: "다음",
+                style: .primary,
+                size: .large,
+                isEnabled: !store.title.isEmpty
+            ) {
+                store.send(.nextButtonTapped)
             }
-            .disabled(store.title.isEmpty)
-            .padding(.bottom, 16)
+            .padding(.bottom, .jsMD)
         }
-        .padding(.horizontal, 16)
+        .padding(.horizontal, .jsMD)
         .background(Color.backgroundNormal)
         .navigationBarTitleDisplayMode(.inline)
     }

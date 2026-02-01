@@ -1,7 +1,9 @@
 import Foundation
+import SwiftData
 import Domain
 import ComposableArchitecture
 import UIKit
+import Data
 
 @Reducer
 public struct TaskDetailFeature {
@@ -50,6 +52,7 @@ public struct TaskDetailFeature {
 
     @Dependency(\.jacsimClient) var jacsimClient
     @Dependency(\.imageStore) var imageStore
+    @Dependency(\.notificationScheduler) var notificationScheduler
 
     public var body: some ReducerOf<Self> {
         Reduce { state, action in
@@ -102,7 +105,8 @@ public struct TaskDetailFeature {
                 
             case .deleteJacsimButtonTapped:
                 let taskId = state.task.id
-                return .run { [jacsimClient] send in
+                return .run { [jacsimClient, notificationScheduler] send in
+                    await notificationScheduler.cancelReminder(taskId)
                     try? await jacsimClient.deleteTask(taskId)
                     await send(.delegate(.taskDeleted))
                 }
@@ -155,8 +159,21 @@ public struct TaskDetailFeature {
 
             case .nextStageButtonTapped:
                 let taskId = state.task.id
-                return .run { [jacsimClient] send in
+                let title = state.task.title
+                return .run { [jacsimClient, notificationScheduler, title] send in
                     _ = await jacsimClient.createNextStage(taskId)
+                    let reminderTime = await MainActor.run { () -> DateComponents? in
+                        let context = SwiftDataStack.shared.context
+                        let descriptor = FetchDescriptor<UserJacsimModel>(
+                            predicate: #Predicate { $0.id == taskId.rawValue }
+                        )
+                        guard let model = (try? context.fetch(descriptor))?.first else { return nil }
+                        guard let alarm = model.alarm, model.isNotificationEnabled else { return nil }
+                        return Calendar.current.dateComponents([.hour, .minute], from: alarm)
+                    }
+                    if let reminderTime {
+                        try? await notificationScheduler.scheduleDailyReminder(taskId, title, reminderTime)
+                    }
                     await send(.stagePopupDismissed)
                     await send(.onAppear)
                 }

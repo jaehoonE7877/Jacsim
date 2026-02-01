@@ -42,7 +42,7 @@ public struct TaskEditView: View {
                         .foregroundColor(.primaryNormal)
                         .background(Color.white)
                         .clipShape(Circle())
-                        .padding(8)
+                        .padding(.jsXS)
                 }
                 .onChange(of: photoPickerItem) { newItem in
                     guard let newItem else { return }

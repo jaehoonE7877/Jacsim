@@ -12,29 +12,35 @@ public struct AllTaskView: View {
 
     public var body: some View {
         ScrollView {
-            VStack(spacing: 16) {
+            VStack(spacing: .jsMD) {
                 sectionView(
                     title: "진행중인 작심",
                     tasks: store.ongoingTasks,
                     isExpanded: store.isOngoingExpanded,
-                    toggleAction: { store.send(.toggleOngoing) }
+                    toggleAction: { store.send(.toggleOngoing) },
+                    icon: "circle.fill",
+                    iconColor: .primaryNormal
                 )
                 
                 sectionView(
                     title: "성공한 작심",
                     tasks: store.successTasks,
                     isExpanded: store.isSuccessExpanded,
-                    toggleAction: { store.send(.toggleSuccess) }
+                    toggleAction: { store.send(.toggleSuccess) },
+                    icon: "checkmark.circle.fill",
+                    iconColor: .green
                 )
                 
                 sectionView(
                     title: "실패한 작심",
                     tasks: store.failTasks,
                     isExpanded: store.isFailExpanded,
-                    toggleAction: { store.send(.toggleFail) }
+                    toggleAction: { store.send(.toggleFail) },
+                    icon: "xmark.circle.fill",
+                    iconColor: .destructive
                 )
             }
-            .padding(16)
+            .padding(.jsMD)
         }
         .background(Color.backgroundNormal)
         .navigationTitle("작심 모아보기")
@@ -46,45 +52,68 @@ public struct AllTaskView: View {
         title: String,
         tasks: [Domain.Task],
         isExpanded: Bool,
-        toggleAction: @escaping () -> Void
+        toggleAction: @escaping () -> Void,
+        icon: String,
+        iconColor: Color
     ) -> some View {
-        VStack(spacing: 8) {
-            Button(action: toggleAction) {
-                HStack {
-                    Text(title)
-                        .font(.pretendardSemiBold(size: 18))
-                        .foregroundColor(.labelStrong)
-                    Spacer()
-                    Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
-                        .foregroundColor(.labelNeutral)
-                }
-                .padding(.vertical, 8)
-            }
-            
-            if isExpanded {
-                VStack(spacing: 12) {
-                    ForEach(tasks, id: \.id) { task in
-                        taskRow(task: task)
+        JSCard(style: .elevated) {
+            VStack(spacing: .jsXS) {
+                Button(action: toggleAction) {
+                    HStack(spacing: .jsSM) {
+                        Image(systemName: icon)
+                            .foregroundColor(iconColor)
+                            .font(.system(size: 12))
+
+                        Text(title)
+                            .font(.jsHeadlineSmall)
+                            .foregroundColor(.labelStrong)
+
+                        Text("\(tasks.count)")
+                            .font(.jsLabelMedium)
+                            .foregroundColor(.labelAlternative)
+
+                        Spacer()
+
+                        Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundColor(.labelNeutral)
                     }
+                    .padding(.vertical, .jsXS)
+                }
+                .jsAccessibility("\(title), \(tasks.count)개의 작심", traits: .isButton)
+                
+                if isExpanded {
+                    VStack(spacing: .jsSM) {
+                        ForEach(tasks, id: \.id) { task in
+                            taskRow(task: task)
+                        }
+                    }
+                    .padding(.top, .jsXS)
                 }
             }
         }
     }
 
     private func taskRow(task: Domain.Task) -> some View {
-        HStack {
-            Text(task.title)
-                .font(.pretendardMedium(size: 16))
-                .foregroundColor(.labelNormal)
-            Spacer()
-        }
-        .padding(16)
-        .background(Color.backgroundNormal)
-        .cornerRadius(12)
-        .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
-        .onTapGesture {
+        JSListItem(
+            title: task.title,
+            subtitle: taskDateRange(task),
+            accessory: .disclosure
+        ) {
             store.send(.taskTapped(task))
         }
+        .background(
+            RoundedRectangle(cornerRadius: .jsRadiusMD)
+                .fill(Color.backgroundAlternative)
+        )
+    }
+
+    private func taskDateRange(_ task: Domain.Task) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MM.dd"
+        let start = formatter.string(from: task.startDate)
+        let end = formatter.string(from: task.endDate)
+        return "\(start) - \(end)"
     }
 }
 

@@ -44,7 +44,7 @@ public struct TaskUpdateView: View {
                         .foregroundColor(.primaryNormal)
                         .background(Color.white)
                         .clipShape(Circle())
-                        .padding(8)
+                        .padding(.jsXS)
                 }
                 .onChange(of: store.photoPickerItem) { newItem in
                     store.send(.photoPickerItemChanged(newItem))
