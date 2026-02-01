@@ -1,13 +1,17 @@
 import Foundation
+import UserNotifications
 import ComposableArchitecture
 
 @Reducer
 public struct WalkThroughFeature {
+    @Dependency(\.notificationScheduler) var notificationScheduler
+
     @ObservableState
     public struct State: Equatable {
         public var currentPage: Int = 0
         public var fromSetting: Bool
         public let totalPages: Int = 4
+        public var notificationPermissionStatus: UNAuthorizationStatus? = nil
         
         public init(fromSetting: Bool) {
             self.fromSetting = fromSetting
@@ -18,6 +22,8 @@ public struct WalkThroughFeature {
         case binding(BindingAction<State>)
         case continueButtonTapped
         case skipButtonTapped
+        case requestNotificationPermission
+        case notificationPermissionResponse(Bool)
         case delegate(Delegate)
         
         public enum Delegate {
@@ -38,6 +44,28 @@ public struct WalkThroughFeature {
                 }
             case .skipButtonTapped:
                 return .send(.delegate(.completeOnboarding))
+            case .requestNotificationPermission:
+                if state.notificationPermissionStatus == .denied || state.notificationPermissionStatus == .authorized {
+                    if state.currentPage < state.totalPages - 1 {
+                        state.currentPage += 1
+                        return .none
+                    }
+                    return .send(.delegate(.completeOnboarding))
+                }
+                return .run { send in
+                    do {
+                        let granted = try await notificationScheduler.requestAuthorization()
+                        await send(.notificationPermissionResponse(granted))
+                    } catch {
+                        await send(.notificationPermissionResponse(false))
+                    }
+                }
+            case let .notificationPermissionResponse(granted):
+                state.notificationPermissionStatus = granted ? .authorized : .denied
+                if granted, state.currentPage < state.totalPages - 1 {
+                    state.currentPage += 1
+                }
+                return .none
             case .binding, .delegate:
                 return .none
             }

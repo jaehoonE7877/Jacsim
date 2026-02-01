@@ -33,7 +33,22 @@ public struct WalkThroughView: View {
                 .padding(.vertical, 20)
             
             if !store.fromSetting {
-                Button(action: { store.send(.continueButtonTapped) }) {
+                if store.currentPage == 2, store.notificationPermissionStatus == .denied {
+                    Text("알림 권한이 꺼져 있어요. 설정 > 알림에서 허용해 주세요.")
+                        .font(.pretendardMedium(size: 14))
+                        .foregroundColor(.labelNeutral)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 24)
+                        .padding(.bottom, 12)
+                }
+
+                Button(action: {
+                    if store.currentPage == 2 {
+                        store.send(.requestNotificationPermission)
+                    } else {
+                        store.send(.continueButtonTapped)
+                    }
+                }) {
                     Text(store.currentPage == store.totalPages - 1 ? "시작하기" : "계속하기")
                         .font(.pretendardMedium(size: 16))
                         .foregroundColor(.white)
