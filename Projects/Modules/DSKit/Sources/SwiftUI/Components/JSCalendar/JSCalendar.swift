@@ -5,23 +5,33 @@ public enum JSCalendarScope {
     case week
 }
 
+public enum JSCalendarDateColor {
+    case none
+    case low
+    case medium
+    case high
+}
+
 public struct JSCalendar: View {
     @Binding var selectedDate: Date
     @State private var viewDate: Date
     @State private var scope: JSCalendarScope
     private let eventDates: [Date]
+    private let dateColors: [Date: JSCalendarDateColor]
     private let calendar = Calendar.current
     private let locale = Locale(identifier: "ko_KR")
 
     public init(
         selectedDate: Binding<Date>,
         scope: JSCalendarScope = .month,
-        eventDates: [Date] = []
+        eventDates: [Date] = [],
+        dateColors: [Date: JSCalendarDateColor] = [:]
     ) {
         self._selectedDate = selectedDate
         self._viewDate = State(initialValue: selectedDate.wrappedValue)
         self._scope = State(initialValue: scope)
         self.eventDates = eventDates
+        self.dateColors = dateColors
     }
 
     public var body: some View {
@@ -144,6 +154,7 @@ public struct JSCalendar: View {
         let isToday = calendar.isDateInToday(date)
         let isCurrentMonth = scope == .week || calendar.isDate(date, equalTo: viewDate, toGranularity: .month)
         let hasEvent = eventDates.contains { calendar.isDate($0, inSameDayAs: date) }
+        let dateColor = dateColors[date] ?? .none
 
         return VStack(spacing: 6) {
             ZStack {
@@ -161,6 +172,9 @@ public struct JSCalendar: View {
                             RoundedRectangle(cornerRadius: 12)
                                 .fill(Color.primaryNormal.opacity(0.08))
                         )
+                } else if hasEvent && !isSelected {
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(dateColorBackground(dateColor))
                 } else {
                     RoundedRectangle(cornerRadius: 12)
                         .fill(Color.clear)
@@ -174,10 +188,10 @@ public struct JSCalendar: View {
 
             if hasEvent {
                 Circle()
-                    .fill(isSelected ? Color.white.opacity(0.9) : Color.primaryNormal)
+                    .fill(isSelected ? Color.white.opacity(0.9) : dateColorIndicator(dateColor))
                     .frame(width: 5, height: 5)
                     .shadow(
-                        color: isSelected ? Color.clear : Color.primaryNormal.opacity(0.3),
+                        color: isSelected ? Color.clear : dateColorIndicator(dateColor).opacity(0.3),
                         radius: 3, x: 0, y: 1
                     )
             } else if isToday && !isSelected {
@@ -196,6 +210,32 @@ public struct JSCalendar: View {
                 selectedDate = date
                 viewDate = date
             }
+        }
+    }
+
+    private func dateColorBackground(_ color: JSCalendarDateColor) -> Color {
+        switch color {
+        case .none:
+            return Color.clear
+        case .low:
+            return Color.destructive.opacity(0.1)
+        case .medium:
+            return Color.orange.opacity(0.1)
+        case .high:
+            return Color.green.opacity(0.1)
+        }
+    }
+
+    private func dateColorIndicator(_ color: JSCalendarDateColor) -> Color {
+        switch color {
+        case .none:
+            return Color.primaryNormal
+        case .low:
+            return Color.destructive
+        case .medium:
+            return Color.orange
+        case .high:
+            return Color.green
         }
     }
 
