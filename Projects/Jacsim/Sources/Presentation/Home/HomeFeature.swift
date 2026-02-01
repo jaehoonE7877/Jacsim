@@ -33,6 +33,8 @@ public struct HomeFeature {
         case taskTapped(Domain.Task)
         case notificationTapped(UUID)
         case notificationTaskLoaded(Domain.Task?)
+        case deepLinkReceived(URL)
+        case deepLinkTaskLoaded(Domain.Task?)
         case migrationCheckResponse(Bool)
         case migrationAlert(PresentationAction<MigrationAlert>)
 
@@ -115,7 +117,14 @@ public struct HomeFeature {
                         }
                     }
                 } : .none
-                return .merge(fetchEffect, notificationEffect)
+                let deepLinkEffect: Effect<Action> = shouldStartListener ? .run { send in
+                    for await notification in NotificationCenter.default.notifications(named: .jacsimDeepLinkReceived) {
+                        if let url = notification.userInfo?["url"] as? URL {
+                            await send(.deepLinkReceived(url))
+                        }
+                    }
+                } : .none
+                return .merge(fetchEffect, notificationEffect, deepLinkEffect)
 
             case let .dateSelected(date):
                 state.selectedDate = date
@@ -165,6 +174,23 @@ public struct HomeFeature {
                         return .none
                     }
                 }
+                state.path.append(.detail(TaskDetailFeature.State(task: task)))
+                return .none
+
+            case let .deepLinkReceived(url):
+                guard url.scheme == "jacsim",
+                      url.host == "challenge" else {
+                    return .none
+                }
+                let idString = url.path.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+                guard let id = UUID(uuidString: idString) else { return .none }
+                return .run { [taskRepository] send in
+                    let task = try await taskRepository.fetchTask(TaskID(id))
+                    await send(.deepLinkTaskLoaded(task))
+                }
+
+            case let .deepLinkTaskLoaded(task):
+                guard let task else { return .none }
                 state.path.append(.detail(TaskDetailFeature.State(task: task)))
                 return .none
 

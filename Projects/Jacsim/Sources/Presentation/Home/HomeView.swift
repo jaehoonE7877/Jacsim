@@ -11,56 +11,37 @@ public struct HomeView: View {
         self.store = store
     }
 
-    private var filteredTasks: [Domain.Task] {
+    private var activeTasks: [Domain.Task] {
         let calendar = Calendar.current
-        let targetDate = calendar.startOfDay(for: store.selectedDate)
+        let today = calendar.startOfDay(for: Date())
         
         return store.tasks.filter { task in
-            let start = calendar.startOfDay(for: task.startDate)
             let end = calendar.startOfDay(for: task.endDate)
-            return targetDate >= start && targetDate <= end
+            return today <= end
+        }.sorted { $0.startDate > $1.startDate }
+    }
+
+    private var heroTask: Domain.Task? {
+        activeTasks.first
+    }
+
+    private var remainingTasks: [Domain.Task] {
+        Array(activeTasks.dropFirst())
+    }
+
+    private var miniCardData: [JSMiniCardData] {
+        remainingTasks.map { task in
+            let completedDays = task.records.filter { $0.check }.count
+            let totalDays = task.dayArray.count
+            let progress = totalDays > 0 ? Double(completedDays) / Double(totalDays) : 0
+
+            return JSMiniCardData(
+                title: task.title,
+                progress: progress,
+                totalDays: totalDays,
+                completedDays: completedDays
+            )
         }
-    }
-    
-    private var eventDates: [Date] {
-        let calendar = Calendar.current
-        var dates = Set<Date>()
-        
-        for task in store.tasks {
-            let start = calendar.startOfDay(for: task.startDate)
-            let end = calendar.startOfDay(for: task.endDate)
-            
-            var currentDate = start
-            while currentDate <= end {
-                dates.insert(currentDate)
-                guard let next = calendar.date(byAdding: .day, value: 1, to: currentDate) else { break }
-                currentDate = next
-            }
-        }
-        return Array(dates)
-    }
-    
-    private var totalCount: Int {
-        filteredTasks.count
-    }
-    
-    private var completedCount: Int {
-        let calendar = Calendar.current
-        let targetDate = calendar.startOfDay(for: store.selectedDate)
-        
-        return filteredTasks.filter { task in
-            if let dailyRecord = task.records.first(where: {
-                calendar.isDate($0.date, inSameDayAs: targetDate)
-            }) {
-                return dailyRecord.check
-            }
-            return false
-        }.count
-    }
-    
-    private var progressPercentage: Double {
-        guard totalCount > 0 else { return 0 }
-        return Double(completedCount) / Double(totalCount)
     }
 
     public var body: some View {
@@ -70,7 +51,7 @@ public struct HomeView: View {
             destinationView(store: store)
         }
     }
-    
+
     @ViewBuilder
     private func destinationView(store: Store<HomeFeature.Path.State, HomeFeature.Path.Action>) -> some View {
         switch store.state {
@@ -92,281 +73,211 @@ public struct HomeView: View {
             }
         }
     }
-    
+
     private var mainContent: some View {
         ZStack(alignment: .bottomTrailing) {
-            contentVStack
-            floatButtons
+            Color.backgroundNormal.ignoresSafeArea()
             
+            contentVStack
+            
+            Button(action: {
+                store.send(.addButtonTapped)
+                triggerTapFeedback()
+            }) {
+                Image(systemName: "plus")
+                    .font(.system(size: 24, weight: .semibold))
+                    .foregroundColor(.white)
+                    .frame(width: 56, height: 56)
+                    .background(Color.primaryNormal)
+                    .clipShape(Circle())
+                    .shadow(color: .primaryNormal.opacity(0.3), radius: 8, x: 0, y: 4)
+            }
+            .padding(.trailing, 20)
+            .padding(.bottom, 20)
+
             if store.isLoading {
                 loadingOverlay
             }
         }
-        .background(Color.backgroundNormal)
-        .navigationTitle("작심")
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
-                Button(action: { 
-                    store.send(.settingButtonTapped)
-                    triggerTapFeedback()
-                }) {
-                    Image(systemName: "gearshape")
-                        .foregroundColor(.labelStrong)
-                }
-            }
-        }
+        .navigationBarHidden(true)
         .onAppear { store.send(.onAppear) }
         .sheet(item: $store.scope(state: \.destination?.newTask, action: \.destination.newTask)) { store in
             NewTaskView(store: store)
         }
         .alert($store.scope(state: \.migrationAlert, action: \.migrationAlert))
-        .sensoryFeedback(.selection, trigger: store.selectedDate)
-        .sensoryFeedback(.impact(weight: .light), trigger: completedCount)
         .sensoryFeedback(.impact(weight: .light), trigger: tapFeedbackTrigger)
     }
-    
+
     private func triggerTapFeedback() {
         tapFeedbackTrigger += 1
     }
-    
+
     private var contentVStack: some View {
-        VStack(spacing: 0) {
-            JSCalendar(
-                selectedDate: $store.selectedDate,
-                scope: store.calendarScope,
-                eventDates: eventDates
-            )
-            .onChange(of: store.selectedDate) {
-                store.send(.dateSelected(store.selectedDate))
-            }
-            .frame(height: UIScreen.main.bounds.height / 2.8)
-            .padding(.horizontal, 16)
-            .padding(.top, 12)
-            
-            taskListHeader
-                .padding(.horizontal, 20)
-                .padding(.top, 8)
-            
-            taskListContent
-        }
-    }
-    
-    private var floatButtons: some View {
-        JSFloatButton(items: [
-            JSFloatButtonItem(
-                title: "새로운 작심",
-                icon: Image(systemName: "pencil"),
-                action: { 
-                    store.send(.addButtonTapped)
-                    triggerTapFeedback()
+        ScrollView(showsIndicators: false) {
+            VStack(alignment: .leading, spacing: 32) {
+                HStack {
+                    Text("작심")
+                        .font(.system(size: 34, weight: .bold))
+                        .foregroundColor(.labelStrong)
+                    
+                    Spacer()
+                    
+                    Button(action: {
+                        store.send(.settingButtonTapped)
+                        triggerTapFeedback()
+                    }) {
+                        Image(systemName: "gearshape.fill")
+                            .font(.system(size: 20))
+                            .foregroundColor(.labelAlternative)
+                            .frame(width: 44, height: 44)
+                            .contentShape(Rectangle())
+                    }
                 }
-            ),
-            JSFloatButtonItem(
-                title: "작심 모아보기",
-                icon: Image(systemName: "list.bullet"),
-                action: { 
-                    store.send(.allTasksButtonTapped)
-                    triggerTapFeedback()
-                }
-            )
-        ])
-        .padding(.bottom, 12)
-        .padding(.trailing, 12)
-    }
-    
-    @ViewBuilder
-    private var taskListContent: some View {
-        ScrollView {
-            if filteredTasks.isEmpty {
-                emptyStateView
-                    .padding(.top, 60)
-            } else {
-                LazyVStack(spacing: 12, pinnedViews: [.sectionHeaders]) {
-                    Section {
-                        ForEach(filteredTasks, id: \.id) { task in
-                            taskRow(task: task)
-                                .onTapGesture {
+                .padding(.horizontal, 24)
+                .padding(.top, 16)
+
+                if let heroTask = heroTask {
+                    VStack(alignment: .leading, spacing: 16) {
+                        JSGlassHeroCard(
+                            title: heroTask.title,
+                            subtitle: "\(heroTask.startDate.formatted(.dateTime.month().day())) ~ \(heroTask.endDate.formatted(.dateTime.month().day()))",
+                            progress: calculateProgress(for: heroTask),
+                            totalDays: heroTask.dayArray.count,
+                            completedDays: heroTask.records.filter { $0.check }.count,
+                            isTodayCertified: isTaskCompletedToday(heroTask),
+                            onTap: {
+                                store.send(.taskTapped(heroTask))
+                                triggerTapFeedback()
+                            }
+                        )
+                    }
+                    .padding(.horizontal, 24)
+                    
+                    if !remainingTasks.isEmpty {
+                        VStack(alignment: .leading, spacing: 16) {
+                            HStack {
+                                Text("진행 중인 작심들")
+                                    .font(.system(size: 20, weight: .bold))
+                                    .foregroundColor(.labelStrong)
+                                
+                                Spacer()
+                                
+                                Button(action: {
+                                    store.send(.allTasksButtonTapped)
+                                    triggerTapFeedback()
+                                }) {
+                                    Text("전체보기")
+                                        .font(.system(size: 14, weight: .medium))
+                                        .foregroundColor(.labelAlternative)
+                                }
+                            }
+                            .padding(.horizontal, 24)
+                            
+                            JSMiniCardCarousel(
+                                cards: miniCardData,
+                                onCardTap: { index in
+                                    let task = remainingTasks[index]
                                     store.send(.taskTapped(task))
                                     triggerTapFeedback()
                                 }
+                            )
+                            .padding(.horizontal, -24)
                         }
                     }
+                } else {
+                    emptyStateView
+                        .padding(.top, 40)
+                        .padding(.horizontal, 24)
                 }
-                .padding(.horizontal, 20)
-                .padding(.top, 4)
-                .padding(.bottom, 120)
+                
+                Spacer(minLength: 100)
             }
-        }
-        .refreshable {
-            await store.send(.refreshTriggered).finish()
+            .padding(.bottom, 20)
         }
     }
-    
+
+    private func calculateProgress(for task: Domain.Task) -> Double {
+        let completed = task.records.filter { $0.check }.count
+        let total = task.dayArray.count
+        return total > 0 ? Double(completed) / Double(total) : 0
+    }
+
     private var loadingOverlay: some View {
         ZStack {
             Color.black.opacity(0.3)
                 .ignoresSafeArea()
             VStack(spacing: 12) {
                 ProgressView()
-                    .controlSize(.large)
-                    .tint(.white)
+                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                    .scaleEffect(1.5)
                 Text("불러오는 중...")
-                    .font(.pretendardMedium(size: 14))
+                    .font(.system(size: 14, weight: .medium))
                     .foregroundColor(.white)
             }
-            .padding(24)
+            .padding(.jsXL)
             .background(.ultraThinMaterial)
             .cornerRadius(16)
         }
     }
-    
+
     private var emptyStateView: some View {
         VStack(spacing: 24) {
             Image(systemName: "square.text.square.fill")
-                .font(.system(size: 56))
-                .foregroundColor(Color.labelDisable.opacity(0.4))
+                .font(.system(size: 64))
+                .foregroundColor(Color.gray.opacity(0.3))
 
             VStack(spacing: 8) {
-                Text(store.tasks.isEmpty ? "오늘의 작심이 없어요" : "선택한 날짜에 작심이 없어요")
-                    .font(.pretendardSemiBold(size: 18))
+                Text("진행 중인 작심이 없어요")
+                    .font(.system(size: 20, weight: .bold))
                     .foregroundColor(.labelStrong)
 
-                Text("새로운 작심을 추가필요가 있으신가요?")
-                    .font(.pretendardRegular(size: 14))
-                    .foregroundColor(.labelNeutral)
+                Text("새로운 작심을 시작해보세요!")
+                    .font(.system(size: 15))
+                    .foregroundColor(.labelAlternative)
             }
 
             Button(action: {
                 store.send(.addButtonTapped)
                 triggerTapFeedback()
             }) {
-                Text("작심 추가하기")
-                    .font(.pretendardSemiBold(size: 15))
+                Text("작심 시작하기")
+                    .font(.system(size: 16, weight: .semibold))
                     .foregroundColor(.white)
-                    .padding(.horizontal, 24)
-                    .padding(.vertical, 12)
-                    .background(
-                        Capsule()
-                            .fill(Color.primaryNormal)
-                            .shadow(
-                                color: Color.primaryNormal.opacity(0.35),
-                                radius: 10, x: 0, y: 5
-                            )
-                    )
+                    .frame(height: 50)
+                    .frame(maxWidth: .infinity)
+                    .background(Color.primaryNormal)
+                    .cornerRadius(12)
             }
-            .padding(.top, 8)
+            .padding(.horizontal, 24)
         }
-    }
-
-    private var taskListHeader: some View {
-        VStack(spacing: 16) {
-            HStack(spacing: 12) {
-                Text("나의 작심 리스트")
-                    .font(.pretendardBold(size: 20))
-                    .foregroundColor(.labelStrong)
-
-                if totalCount > 0 {
-                    Text("\(completedCount)/\(totalCount)")
-                        .font(.pretendardSemiBold(size: 13))
-                        .foregroundColor(.primaryNormal)
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 4)
-                        .background(
-                            Capsule()
-                                .fill(Color.primaryNormal.opacity(0.12))
-                        )
-                }
-
-                Spacer()
-            }
-
-            if totalCount > 0 {
-                GeometryReader { geometry in
-                    ZStack(alignment: .leading) {
-                        Capsule()
-                            .fill(Color.labelDisable.opacity(0.15))
-                            .frame(height: 6)
-
-                        Capsule()
-                            .fill(Color.primaryNormal)
-                            .frame(width: geometry.size.width * progressPercentage, height: 6)
-                            .shadow(
-                                color: Color.primaryNormal.opacity(0.3),
-                                radius: 4, x: 0, y: 2
-                            )
-                            .animation(.spring(response: 0.4, dampingFraction: 0.8), value: progressPercentage)
-                    }
-                }
-                .frame(height: 6)
-            }
-        }
-    }
-
-    private func taskRow(task: Domain.Task) -> some View {
-        let isCompletedToday = isTaskCompletedToday(task)
-
-        return HStack(spacing: 14) {
-            ZStack {
-                Circle()
-                    .strokeBorder(
-                        isCompletedToday ? Color.primaryNormal : Color.labelDisable.opacity(0.4),
-                        lineWidth: 2
-                    )
-                    .background(
-                        Circle()
-                            .fill(isCompletedToday ? Color.primaryNormal : Color.clear)
-                    )
-                    .frame(width: 26, height: 26)
-
-                if isCompletedToday {
-                    Image(systemName: "checkmark")
-                        .font(.system(size: 12, weight: .bold))
-                        .foregroundColor(.white)
-                }
-            }
-
-            VStack(alignment: .leading, spacing: 4) {
-                Text(task.title)
-                    .font(.pretendardSemiBold(size: 16))
-                    .foregroundColor(isCompletedToday ? .labelDisable : .labelStrong)
-                    .lineLimit(1)
-
-
-            }
-            Spacer()
-
-            if isCompletedToday {
-                Image(systemName: "checkmark.circle.fill")
-                    .font(.system(size: 20))
-                    .foregroundColor(.primaryNormal)
-            } else {
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(.labelNeutral)
-            }
-        }
-        .padding(.vertical, 16)
-        .padding(.horizontal, 18)
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 40)
         .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(Color(uiColor: .secondarySystemGroupedBackground))
-                .shadow(
-                    color: Color.black.opacity(0.06),
-                    radius: 12, x: 0, y: 4
-                )
+            RoundedRectangle(cornerRadius: 24)
+                .fill(Color.white)
+                .shadow(color: .black.opacity(0.05), radius: 10, x: 0, y: 4)
         )
     }
 
     private func isTaskCompletedToday(_ task: Domain.Task) -> Bool {
         let calendar = Calendar.current
-        let targetDate = calendar.startOfDay(for: store.selectedDate)
+        let today = calendar.startOfDay(for: Date())
         
         if let dailyRecord = task.records.first(where: {
-            calendar.isDate($0.date, inSameDayAs: targetDate)
+            calendar.isDate($0.date, inSameDayAs: today)
         }) {
             return dailyRecord.check
         }
         return false
     }
+}
+
+#Preview {
+    HomeView(
+        store: Store(
+            initialState: HomeFeature.State()
+        ) {
+            HomeFeature()
+        }
+    )
 }
