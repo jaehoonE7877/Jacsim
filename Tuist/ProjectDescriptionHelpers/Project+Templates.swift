@@ -25,6 +25,7 @@ public extension Project {
         
         let configurationName: ConfigurationName = "Debug"
         let hasDynamicFramework = targets.contains(.dynamicFramework)
+        let hasApp = targets.contains(.app)
         let deploymentTarget = Environment.deploymentTarget
         let destination: Set<Destination> = [.iPhone]
         
@@ -143,6 +144,7 @@ public extension Project {
         
         if targets.contains(.unitTest) {
             let deps: [TargetDependency] = [.target(name: name)]
+            let testConfigurations = hasApp ? XCConfig.tests : XCConfig.frameworkTests
             
             let target = Target.target(
                 name: "\(name)Tests",
@@ -154,7 +156,7 @@ public extension Project {
                 buildableFolders: ["Tests/Sources"],
                 dependencies: deps,
                 settings: .settings(base: SettingsDictionary().setCodeSignAutomatic(),
-                                    configurations: XCConfig.tests)
+                                    configurations: testConfigurations)
             )
             
             projectTargets.append(target)
@@ -169,7 +171,7 @@ public extension Project {
         
         schemes += additionalSchemes
         
-        var scheme = targets.contains(.app)
+        var scheme = hasApp
         ? appSchemes
         : schemes
         

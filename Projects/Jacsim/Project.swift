@@ -7,6 +7,9 @@ let project = Project.makeModule(
     name: Environment.workspaceName,
     targets: [.app],
     internalDependencies: [
-        .Modules.dsKit
+        .Modules.dsKit,
+        .domain,
+        .externalInterface,
+        .data
     ]
 )
