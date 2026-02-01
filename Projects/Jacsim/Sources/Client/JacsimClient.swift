@@ -19,6 +19,7 @@ public struct JacsimClientPort: Sendable {
     public var evaluateStageResult: @Sendable (StageSnapshot) async -> StageResult
     public var createNextStage: @Sendable (TaskID) async -> Void
     public var updateMemo: @Sendable (TaskID, Int, String) async -> Void
+    public var resetStageRecords: @Sendable (TaskID) async -> Void
     
     public init(
         fetchActiveTasks: @escaping @Sendable () async throws -> [Domain.Task],
@@ -33,7 +34,8 @@ public struct JacsimClientPort: Sendable {
         updateTaskInfo: @escaping @Sendable (Domain.Task, String, Int, Bool, Date) async -> Void,
         evaluateStageResult: @escaping @Sendable (StageSnapshot) async -> StageResult,
         createNextStage: @escaping @Sendable (TaskID) async -> Void,
-        updateMemo: @escaping @Sendable (TaskID, Int, String) async -> Void
+        updateMemo: @escaping @Sendable (TaskID, Int, String) async -> Void,
+        resetStageRecords: @escaping @Sendable (TaskID) async -> Void
     ) {
         self.fetchActiveTasks = fetchActiveTasks
         self.fetchTask = fetchTask
@@ -48,6 +50,7 @@ public struct JacsimClientPort: Sendable {
         self.evaluateStageResult = evaluateStageResult
         self.createNextStage = createNextStage
         self.updateMemo = updateMemo
+        self.resetStageRecords = resetStageRecords
     }
 }
 
@@ -89,6 +92,28 @@ private enum JacsimClientKey: DependencyKey {
                 )
             },
             createNextStage: { taskId in
+                guard var task = try? await adapter.fetchTask(id: taskId) else { return }
+                guard let lastStage = task.stages.last else { return }
+                guard let nextStageType = lastStage.stageType.next else { return }
+
+                let calendar = Calendar.current
+                guard let nextStartDate = calendar.date(byAdding: .day, value: 1, to: lastStage.endDate) else { return }
+
+                let duration = nextStageType.rawValue
+                guard let nextEndDate = calendar.date(byAdding: .day, value: duration - 1, to: nextStartDate) else { return }
+
+                let newStage = Domain.StageSnapshot(
+                    id: UUID(),
+                    stageTypeRaw: nextStageType.rawValue,
+                    startDate: nextStartDate,
+                    endDate: nextEndDate,
+                    durationDays: duration,
+                    successDays: 0,
+                    resultRaw: Domain.StageResult.inProgress.rawValue
+                )
+
+                task.stages.append(newStage)
+                try? await adapter.updateTask(task)
             },
             updateMemo: { taskId, index, memo in
                 guard var task = try? await adapter.fetchTask(id: taskId) else { return }
@@ -96,6 +121,33 @@ private enum JacsimClientKey: DependencyKey {
                 var updatedTask = task
                 updatedTask.records[index].memo = memo
                 try? await adapter.updateTask(updatedTask)
+            },
+            resetStageRecords: { taskId in
+                guard var task = try? await adapter.fetchTask(id: taskId) else { return }
+                guard let lastStage = task.stages.last else { return }
+                
+                let calendar = Calendar.current
+                let today = calendar.startOfDay(for: Date())
+                
+                let newStage = Domain.StageSnapshot(
+                    id: UUID(),
+                    stageTypeRaw: lastStage.stageTypeRaw,
+                    startDate: today,
+                    endDate: calendar.date(byAdding: .day, value: lastStage.durationDays - 1, to: today) ?? today,
+                    durationDays: lastStage.durationDays,
+                    successDays: 0,
+                    resultRaw: Domain.StageResult.inProgress.rawValue
+                )
+                
+                task.stages.removeLast()
+                task.stages.append(newStage)
+                
+                task.records.removeAll { record in
+                    let recordDate = calendar.startOfDay(for: record.date)
+                    return recordDate >= today
+                }
+                
+                try? await adapter.updateTask(task)
             }
         )
     }()
@@ -113,7 +165,8 @@ private enum JacsimClientKey: DependencyKey {
         updateTaskInfo: { _, _, _, _, _ in },
         evaluateStageResult: { _ in .inProgress },
         createNextStage: { _ in },
-        updateMemo: { _, _, _ in }
+        updateMemo: { _, _, _ in },
+        resetStageRecords: { _ in }
     )
 }
 
