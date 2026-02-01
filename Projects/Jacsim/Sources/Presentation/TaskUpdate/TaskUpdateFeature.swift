@@ -1,4 +1,5 @@
 import Foundation
+import Domain
 import ComposableArchitecture
 import UIKit
 import Photos
@@ -9,17 +10,17 @@ import SwiftUI
 public struct TaskUpdateFeature {
     @ObservableState
     public struct State: Equatable {
-        public var task: UserJacsim
+        public var task: Domain.Task
         public var index: Int
         public var memo: String = ""
         public var image: UIImage?
         public var dateText: String
         public var photoPickerItem: PhotosPickerItem?
 
-        public init(task: UserJacsim, index: Int) {
+        public init(task: Domain.Task, index: Int) {
             self.task = task
             self.index = index
-            self.dateText = DateFormatType.toString(task.jacsimDayArray[index], to: .fullWithoutYear)
+            self.dateText = DateFormatType.toString(task.dayArray[index], to: .fullWithoutYear)
         }
     }
 
@@ -38,15 +39,17 @@ public struct TaskUpdateFeature {
     }
 
     @Dependency(\.jacsimClient) var jacsimClient
+    @Dependency(\.imageStore) var imageStore
 
     public var body: some ReducerOf<Self> {
         BindingReducer()
         Reduce { state, action in
             switch action {
             case .onAppear:
-                let fileName = "\(state.task.id)_\(state.dateText).jpg"
-                return .run { send in
-                    let image = await DocumentManager.shared.loadImage(fileName: fileName)
+                guard let key = state.task.imageKey(for: state.index) else { return .none }
+                return .run { [imageStore] send in
+                    let imageData = await imageStore.loadImage(key)
+                    let image = imageData.flatMap { UIImage(data: $0) }
                     await send(.imageLoaded(image))
                 }
 
@@ -55,15 +58,18 @@ public struct TaskUpdateFeature {
                 return .none
 
             case .certifyButtonTapped:
-                let task = state.task
+                let taskId = state.task.id
                 let index = state.index
                 let memo = state.memo.trimmingCharacters(in: .whitespacesAndNewlines)
                 let image = state.image
                 let dateText = state.dateText
-                return .run { send in
-                    await jacsimClient.updateMemo(task, index, memo)
+                return .run { [jacsimClient, imageStore] send in
+                    await jacsimClient.updateMemo(taskId, index, memo)
                     if let image = image {
-                        DocumentManager.shared.saveImageToDocument(fileName: "\(task.id)_\(dateText).jpg", image: image)
+                        let data = image.jpegData(compressionQuality: 0.4)
+                        if let data {
+                            _ = try? await imageStore.saveImage("\(taskId.rawValue)_\(dateText).jpg", data)
+                        }
                     }
                     await send(.delegate(.memoUpdated))
                 }

@@ -1,4 +1,5 @@
 import Foundation
+import Domain
 import ComposableArchitecture
 import SwiftUI
 
@@ -72,15 +73,16 @@ public struct NewTaskFeature {
                 state.path.append(.summary)
                 return .none
             case .saveButtonTapped:
-                return .run { [state] send in
-                    let task = UserJacsim(
+                return .run { [state, jacsimClient] send in
+                    let task = Domain.Task(
+                        id: TaskID(UUID()),
                         title: state.title,
                         startDate: state.startDate,
                         endDate: state.endDate,
-                        success: state.successCount,
-                        alarm: state.isAlarmEnabled ? state.alarmDate : nil
+                        stages: [],
+                        records: []
                     )
-                    await jacsimClient.addJacsim(task)
+                    try await jacsimClient.addTask(task)
                     await send(.saveCompleted)
                     await send(.delegate(.taskCreated))
                 }
@@ -99,7 +101,7 @@ public struct NewTaskFeature {
                 return .none
             }
         }
-        .ifLet(\.alert, action: \.alert)
+        .ifLet(\.$alert, action: \.alert)
         .forEach(\.path, action: \.path) {
             Path()
         }

@@ -1,6 +1,7 @@
 import SwiftUI
 import ComposableArchitecture
 import DSKit
+import Domain
 import Darwin
 
 public struct TaskDetailView: View {
@@ -39,11 +40,7 @@ public struct TaskDetailView: View {
                     Button(action: { store.send(.editButtonTapped) }) {
                         Label("작심 수정", systemImage: "pencil")
                     }
-                    if store.task.alarm != nil {
-                        Button(action: { store.send(.deleteAlarmButtonTapped) }) {
-                            Label("알람 끄기", systemImage: "bell.slash")
-                        }
-                    }
+        
                     Button(role: .destructive, action: { store.send(.deleteJacsimButtonTapped) }) {
                         Label("작심 그만두기", systemImage: "trash")
                     }
@@ -62,7 +59,7 @@ public struct TaskDetailView: View {
             if store.isStagePopupPresented {
                 StageCompletionPopupView(
                     result: store.stagePopupResult,
-                    hasNextStage: store.task.currentStageType.next != nil,
+                    hasNextStage: store.task.stages.last?.stageType.next != nil,
                     onNextStage: { store.send(.nextStageButtonTapped) },
                     onDismiss: { store.send(.stagePopupDismissed) }
                 )
@@ -72,15 +69,9 @@ public struct TaskDetailView: View {
 
     private var headerSection: some View {
         VStack(spacing: 8) {
-            Text("\(store.task.startDate.convertToString(withFormat: .full)) ~ \(store.task.endDate.convertToString(withFormat: .full))")
+            Text("\(DateFormatType.toString(store.task.startDate, to: .full)) ~ \(DateFormatType.toString(store.task.endDate, to: .full))")
                 .font(.pretendardMedium(size: 14))
                 .foregroundColor(.labelNeutral)
-            
-            if let alarm = store.task.alarm {
-                Text("알림: \(alarm.convertToString(withFormat: .ahhmm))")
-                    .font(.pretendardMedium(size: 14))
-                    .foregroundColor(.primaryNormal)
-            }
         }
     }
 

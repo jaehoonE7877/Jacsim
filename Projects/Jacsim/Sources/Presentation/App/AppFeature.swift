@@ -26,7 +26,7 @@ public struct AppFeature {
     public var body: some ReducerOf<Self> {
         Reduce { state, action in
             switch action {
-            case let .onboarding(.delegate(.completeOnboarding)):
+            case .onboarding(.delegate(.completeOnboarding)):
                 UserDefaults.standard.set(true, forKey: "onboarding")
                 state = .main(HomeFeature.State())
                 return .none

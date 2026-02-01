@@ -1,4 +1,5 @@
 import Foundation
+import Domain
 import ComposableArchitecture
 import UIKit
 
@@ -6,7 +7,7 @@ import UIKit
 public struct TaskDetailFeature {
     @ObservableState
     public struct State: Equatable {
-        public var task: UserJacsim
+        public var task: Domain.Task
         public var dayViewData: [DayViewData] = []
         public var remainingSuccessCount: Int = 0
         public var isStagePopupPresented: Bool = false
@@ -22,7 +23,7 @@ public struct TaskDetailFeature {
             let isChecked: Bool
         }
         
-        public init(task: UserJacsim) {
+        public init(task: Domain.Task) {
             self.task = task
         }
     }
@@ -43,27 +44,28 @@ public struct TaskDetailFeature {
         case delegate(Delegate)
         public enum Delegate {
             case taskDeleted
-            case navigateToUpdate(UserJacsim, Int)
+            case navigateToUpdate(Domain.Task, Int)
         }
     }
 
     @Dependency(\.jacsimClient) var jacsimClient
+    @Dependency(\.imageStore) var imageStore
 
     public var body: some ReducerOf<Self> {
         Reduce { state, action in
             switch action {
             case .onAppear:
-                state.remainingSuccessCount = max(state.task.success - state.task.memoList.filter(\.check).count, 0)
-                let dates = state.task.jacsimDayArray
+                state.remainingSuccessCount = max(0, state.task.stages.last?.durationDays ?? 0 - state.task.records.filter(\.check).count)
+                let dates = state.task.dayArray
                 state.dayViewData = dates.enumerated().map { index, date in
-                    let memo = state.task.memoList.indices.contains(index) ? state.task.memoList[index].memo : "인증해주세요"
-                    let isChecked = state.task.memoList.indices.contains(index) ? state.task.memoList[index].check : false
+                    let memo = state.task.records.indices.contains(index) ? state.task.records[index].memo : "인증해주세요"
+                    let isChecked = state.task.records.indices.contains(index) ? state.task.records[index].check : false
                     return State.DayViewData(date: date, memo: memo, image: nil, isChecked: isChecked)
                 }
                 let stage = state.task.stages.last
                 return .merge(
                     .send(.loadImages),
-                    .run { send in
+                    .run { [jacsimClient, stage] send in
                         guard let stage else { return }
                         let result = await jacsimClient.evaluateStageResult(stage)
                         await send(.stageResultChecked(result))
@@ -71,11 +73,11 @@ public struct TaskDetailFeature {
                 )
                 
             case .loadImages:
-                return .run { [task = state.task, dayData = state.dayViewData] send in
+                return .run { [task = state.task, dayData = state.dayViewData, imageStore] send in
                     for data in dayData {
-                        let dateText = DateFormatType.toString(data.date, to: .fullWithoutYear)
-                        let fileName = "\(task.id)_\(dateText).jpg"
-                        let image = await DocumentManager.shared.loadImage(fileName: fileName)
+                        guard let key = task.imageKey(for: task.dayArray.firstIndex(where: { $0 == data.date }) ?? 0) else { continue }
+                        let imageData = await imageStore.loadImage(key)
+                        let image = imageData.flatMap { UIImage(data: $0) }
                         await send(.imageLoaded(data.date, image))
                     }
                 }
@@ -92,21 +94,21 @@ public struct TaskDetailFeature {
                 return .none
                 
             case .deleteAlarmButtonTapped:
-                let task = state.task
-                return .run { send in
-                    await jacsimClient.deleteAlarm(task)
+                let taskId = state.task.id
+                return .run { [jacsimClient] send in
+                    await jacsimClient.deleteAlarm(taskId)
                     await send(.onAppear)
                 }
                 
             case .deleteJacsimButtonTapped:
-                let task = state.task
-                return .run { send in
-                    await jacsimClient.deleteJacsim(task)
+                let taskId = state.task.id
+                return .run { [jacsimClient] send in
+                    try? await jacsimClient.deleteTask(taskId)
                     await send(.delegate(.taskDeleted))
                 }
                 
             case let .dayTapped(date):
-                if let index = state.task.jacsimDayArray.firstIndex(where: { Calendar.current.isDate($0, inSameDayAs: date) }) {
+                if let index = state.task.dayArray.firstIndex(where: { Calendar.current.isDate($0, inSameDayAs: date) }) {
                     return .send(.delegate(.navigateToUpdate(state.task, index)))
                 }
                 return .none
@@ -114,17 +116,20 @@ public struct TaskDetailFeature {
             case .editButtonTapped:
                 state.editTask = TaskEditFeature.State(
                     task: state.task,
-                    maxSuccessTarget: state.task.currentStageType.durationDays
+                    maxSuccessTarget: state.task.stages.last?.durationDays ?? 3
                 )
                 return .none
 
             case let .editTask(.presented(.delegate(.saved(title, successTarget, image, isAlarmEnabled, alarmDate)))):
                 let task = state.task
                 state.editTask = nil
-                return .run { send in
+                return .run { [jacsimClient, imageStore, task] send in
                     await jacsimClient.updateTaskInfo(task, title, successTarget, isAlarmEnabled, alarmDate)
                     if let image {
-                        DocumentManager.shared.saveImageToDocument(fileName: task.mainImageURL, image: image)
+                        let data = image.jpegData(compressionQuality: 0.4)
+                        if let data {
+                            _ = try? await imageStore.saveImage(task.mainImageKey, data)
+                        }
                     }
                     await send(.onAppear)
                 }
@@ -149,9 +154,9 @@ public struct TaskDetailFeature {
                 return .none
 
             case .nextStageButtonTapped:
-                let task = state.task
-                return .run { send in
-                    _ = await jacsimClient.createNextStage(task)
+                let taskId = state.task.id
+                return .run { [jacsimClient] send in
+                    _ = await jacsimClient.createNextStage(taskId)
                     await send(.stagePopupDismissed)
                     await send(.onAppear)
                 }

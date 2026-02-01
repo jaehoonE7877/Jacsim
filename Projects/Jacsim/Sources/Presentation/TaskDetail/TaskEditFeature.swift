@@ -1,4 +1,5 @@
 import Foundation
+import Domain
 import ComposableArchitecture
 import UIKit
 import Photos
@@ -7,8 +8,8 @@ import Photos
 public struct TaskEditFeature {
     @ObservableState
     public struct State: Equatable, Identifiable {
-        public var id: UUID { task.id }
-        public var task: UserJacsim
+        public var id: TaskID { task.id }
+        public var task: Task
         public var title: String
         public var successTarget: Int
         public var maxSuccessTarget: Int
@@ -16,13 +17,13 @@ public struct TaskEditFeature {
         public var isAlarmEnabled: Bool
         public var alarmDate: Date
 
-        public init(task: UserJacsim, maxSuccessTarget: Int) {
+        public init(task: Task, maxSuccessTarget: Int) {
             self.task = task
             self.title = task.title
-            self.successTarget = task.success
+            self.successTarget = task.successCount
             self.maxSuccessTarget = maxSuccessTarget
-            self.isAlarmEnabled = task.alarm != nil
-            self.alarmDate = task.alarm ?? Date()
+            self.isAlarmEnabled = false
+            self.alarmDate = Date()
         }
     }
 
@@ -41,14 +42,17 @@ public struct TaskEditFeature {
         }
     }
 
+    @Dependency(\.imageStore) var imageStore
+
     public var body: some ReducerOf<Self> {
         BindingReducer()
         Reduce { state, action in
             switch action {
             case .onAppear:
-                let fileName = state.task.mainImageURL
+                let key = state.task.mainImageKey
                 return .run { send in
-                    let image = await DocumentManager.shared.loadImage(fileName: fileName)
+                    let imageData = await imageStore.loadImage(key)
+                    let image = imageData.flatMap { UIImage(data: $0) }
                     await send(.imageLoaded(image))
                 }
 
