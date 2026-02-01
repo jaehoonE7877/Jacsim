@@ -12,6 +12,17 @@ public struct SettingView: View {
     public var body: some View {
         List {
             Section {
+                Toggle(
+                    "알림 설정",
+                    isOn: Binding(
+                        get: { store.isNotificationEnabled },
+                        set: { store.send(.notificationToggleChanged($0)) }
+                    )
+                )
+                .font(.pretendardMedium(size: 16))
+                .foregroundColor(.labelNormal)
+                .listRowBackground(Color.backgroundNormal)
+
                 Button(action: { store.send(.useCaseButtonTapped) }) {
                     rowView(title: "사용법")
                 }
@@ -45,6 +56,9 @@ public struct SettingView: View {
         .background(Color.backgroundNormal)
         .navigationTitle("설정")
         .navigationBarTitleDisplayMode(.inline)
+        .task {
+            store.send(.loadNotificationSettings)
+        }
     }
 
     private func rowView(title: String) -> some View {
