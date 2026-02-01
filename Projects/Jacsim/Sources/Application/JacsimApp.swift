@@ -12,6 +12,13 @@ struct JacsimApp: App {
     var body: some Scene {
         WindowGroup {
             AppView(store: store)
+                .onOpenURL { url in
+                    NotificationCenter.default.post(
+                        name: .jacsimDeepLinkReceived,
+                        object: nil,
+                        userInfo: ["url": url]
+                    )
+                }
         }
     }
 }
