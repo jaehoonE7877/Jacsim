@@ -11,6 +11,20 @@ public struct SettingView: View {
 
     public var body: some View {
         List {
+            Section(header: Text("테마").font(.pretendardMedium(size: 14))) {
+                Picker("테마", selection: Binding(
+                    get: { store.theme },
+                    set: { store.send(.themeChanged($0)) }
+                )) {
+                    Text("시스템").tag(ThemeMode.system)
+                    Text("라이트").tag(ThemeMode.light)
+                    Text("다크").tag(ThemeMode.dark)
+                }
+                .pickerStyle(.segmented)
+                .font(.pretendardMedium(size: 16))
+                .listRowBackground(Color.backgroundNormal)
+            }
+            
             Section {
                 Toggle(
                     "알림 설정",

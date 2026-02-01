@@ -4,6 +4,12 @@ import ComposableArchitecture
 import Data
 import Domain
 
+public enum ThemeMode: String, Equatable, CaseIterable {
+    case system = "system"
+    case light = "light"
+    case dark = "dark"
+}
+
 @Reducer
 public struct SettingFeature {
     @ObservableState
@@ -11,7 +17,13 @@ public struct SettingFeature {
         public var version: String = "1.0.0"
         public var isNotificationEnabled: Bool = false
         public var isLoading: Bool = false
-        public init() {}
+        public var theme: ThemeMode = .system
+        public init() {
+            if let raw = UserDefaults.standard.string(forKey: "appearance_theme"),
+               let mode = ThemeMode(rawValue: raw) {
+                self.theme = mode
+            }
+        }
     }
 
     public enum Action {
@@ -22,6 +34,7 @@ public struct SettingFeature {
         case loadNotificationSettings
         case notificationToggleChanged(Bool)
         case notificationSettingsResponse(Bool)
+        case themeChanged(ThemeMode)
         
         case delegate(Delegate)
         public enum Delegate {
@@ -88,6 +101,10 @@ public struct SettingFeature {
             case let .notificationSettingsResponse(isEnabled):
                 state.isNotificationEnabled = isEnabled
                 state.isLoading = false
+                return .none
+            case let .themeChanged(mode):
+                state.theme = mode
+                UserDefaults.standard.set(mode.rawValue, forKey: "appearance_theme")
                 return .none
             case .delegate:
                 return .none
