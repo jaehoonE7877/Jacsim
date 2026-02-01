@@ -38,6 +38,7 @@ public struct JSCalendar: View {
             handleBar
         }
         .background(Color.backgroundNormal)
+        .clipped()
     }
 
     private var headerView: some View {
@@ -122,6 +123,7 @@ public struct JSCalendar: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 6)
         .background(Color.clear)
+        .zIndex(1)
     }
 
     private var calendarGridView: some View {
