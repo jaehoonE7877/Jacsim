@@ -1,78 +1,125 @@
-import Foundation
 import ComposableArchitecture
+import ExternalInterface
+import Domain
+import Data
+import Foundation
 
-struct JacsimClient {
-    var fetchActiveTasks: @Sendable () async -> [UserJacsim]
-    var fetchIsSuccess: @Sendable () async -> [UserJacsim]
-    var fetchIsFail: @Sendable () async -> [UserJacsim]
-    var fetchDate: @Sendable (Date) async -> [UserJacsim]
-    var fetchIsNotDone: @Sendable () async -> Int
-    var fetchTask: @Sendable (UUID) async -> UserJacsim?
-    var addJacsim: @Sendable (UserJacsim) async -> Void
-    var updateMemo: @Sendable (UserJacsim, Int, String) async -> Void
-    var deleteJacsim: @Sendable (UserJacsim) async -> Void
-    var deleteAlarm: @Sendable (UserJacsim) async -> Void
-    var checkIsDone: @Sendable ([UserJacsim]) async -> Void
-    var updateTaskInfo: @Sendable (UserJacsim, String, Int, Bool, Date) async -> Void
-    var createNextStage: @Sendable (UserJacsim) async -> Stage?
-    var evaluateStageResult: @Sendable (Stage) async -> StageResult
-    var needsMigrationV0_1: @Sendable () async -> Bool
-    var performMigrationV0_1: @Sendable () async -> Void
+public struct JacsimClientPort: Sendable {
+    public var fetchActiveTasks: @Sendable () async throws -> [Domain.Task]
+    public var fetchTask: @Sendable (TaskID) async throws -> Domain.Task?
+    public var addTask: @Sendable (Domain.Task) async throws -> Void
+    public var updateTask: @Sendable (Domain.Task) async throws -> Void
+    public var deleteTask: @Sendable (TaskID) async throws -> Void
+    public var fetchTasksByStatus: @Sendable (ChallengeStatus) async throws -> [Domain.Task]
+    
+    public var fetchIsSuccess: @Sendable () async throws -> [Domain.Task]
+    public var fetchIsFail: @Sendable () async throws -> [Domain.Task]
+    public var deleteAlarm: @Sendable (TaskID) async -> Void
+    public var updateTaskInfo: @Sendable (Domain.Task, String, Int, Bool, Date) async -> Void
+    public var evaluateStageResult: @Sendable (StageSnapshot) async -> StageResult
+    public var createNextStage: @Sendable (TaskID) async -> Void
+    public var updateMemo: @Sendable (TaskID, Int, String) async -> Void
+    
+    public init(
+        fetchActiveTasks: @escaping @Sendable () async throws -> [Domain.Task],
+        fetchTask: @escaping @Sendable (TaskID) async throws -> Domain.Task?,
+        addTask: @escaping @Sendable (Domain.Task) async throws -> Void,
+        updateTask: @escaping @Sendable (Domain.Task) async throws -> Void,
+        deleteTask: @escaping @Sendable (TaskID) async throws -> Void,
+        fetchTasksByStatus: @escaping @Sendable (ChallengeStatus) async throws -> [Domain.Task],
+        fetchIsSuccess: @escaping @Sendable () async throws -> [Domain.Task],
+        fetchIsFail: @escaping @Sendable () async throws -> [Domain.Task],
+        deleteAlarm: @escaping @Sendable (TaskID) async -> Void,
+        updateTaskInfo: @escaping @Sendable (Domain.Task, String, Int, Bool, Date) async -> Void,
+        evaluateStageResult: @escaping @Sendable (StageSnapshot) async -> StageResult,
+        createNextStage: @escaping @Sendable (TaskID) async -> Void,
+        updateMemo: @escaping @Sendable (TaskID, Int, String) async -> Void
+    ) {
+        self.fetchActiveTasks = fetchActiveTasks
+        self.fetchTask = fetchTask
+        self.addTask = addTask
+        self.updateTask = updateTask
+        self.deleteTask = deleteTask
+        self.fetchTasksByStatus = fetchTasksByStatus
+        self.fetchIsSuccess = fetchIsSuccess
+        self.fetchIsFail = fetchIsFail
+        self.deleteAlarm = deleteAlarm
+        self.updateTaskInfo = updateTaskInfo
+        self.evaluateStageResult = evaluateStageResult
+        self.createNextStage = createNextStage
+        self.updateMemo = updateMemo
+    }
 }
 
-extension JacsimClient: DependencyKey {
-    static let liveValue = JacsimClient(
-        fetchActiveTasks: { await MainActor.run { JacsimRepository.shared.fetchActiveTasks() } },
-        fetchIsSuccess: { await MainActor.run { JacsimRepository.shared.fetchIsSuccess() } },
-        fetchIsFail: { await MainActor.run { JacsimRepository.shared.fetchIsFail() } },
-        fetchDate: { date in await MainActor.run { JacsimRepository.shared.fetchDate(date: date) } },
-        fetchIsNotDone: { await MainActor.run { JacsimRepository.shared.fetchIsNotDone() } },
-        fetchTask: { id in await MainActor.run { JacsimRepository.shared.fetchTask(id: id) } },
-        addJacsim: { item in await MainActor.run { JacsimRepository.shared.addJacsim(item: item) } },
-        updateMemo: { item, index, memo in await MainActor.run { JacsimRepository.shared.updateMemo(item: item, index: index, memo: memo) } },
-        deleteJacsim: { item in await MainActor.run { JacsimRepository.shared.deleteJacsim(item: item) } },
-        deleteAlarm: { item in await MainActor.run { JacsimRepository.shared.deleteAlarm(item: item) } },
-        checkIsDone: { items in await MainActor.run { JacsimRepository.shared.checkIsDone(items: items) } },
-        updateTaskInfo: { task, title, success, isAlarmEnabled, alarmDate in
-            await MainActor.run {
-                JacsimRepository.shared.updateTaskInfo(
-                    task: task,
-                    title: title,
-                    success: success,
-                    isAlarmEnabled: isAlarmEnabled,
-                    alarmDate: alarmDate
+private enum JacsimClientKey: DependencyKey {
+    static let liveValue: JacsimClientPort = {
+        let adapter = SwiftDataTaskRepositoryAdapter()
+        return JacsimClientPort(
+            fetchActiveTasks: { await adapter.fetchActiveTasks() },
+            fetchTask: { await adapter.fetchTask(id: $0) },
+            addTask: { try await adapter.addTask($0) },
+            updateTask: { try await adapter.updateTask($0) },
+            deleteTask: { try await adapter.deleteTask(id: $0) },
+            fetchTasksByStatus: { await adapter.fetchTasksByStatus($0) },
+            fetchIsSuccess: {
+                let allDone = await adapter.fetchTasksByStatus(.done)
+                return allDone.filter { $0.currentStage?.result == .success }
+            },
+            fetchIsFail: {
+                let allDone = await adapter.fetchTasksByStatus(.done)
+                return allDone.filter { $0.currentStage?.result == .fail }
+            },
+            deleteAlarm: { taskId in
+            },
+            updateTaskInfo: { task, title, successTarget, isAlarmEnabled, alarmDate in
+                var updatedTask = task
+                updatedTask.title = title
+                if var lastStage = updatedTask.stages.last {
+                    lastStage.durationDays = successTarget
+                    let index = updatedTask.stages.count - 1
+                    updatedTask.stages[index] = lastStage
+                }
+                try? await adapter.updateTask(updatedTask)
+            },
+            evaluateStageResult: { stage in
+                evaluateStageResult(
+                    endDate: stage.endDate,
+                    durationDays: stage.durationDays,
+                    successDays: stage.successDays
                 )
+            },
+            createNextStage: { taskId in
+            },
+            updateMemo: { taskId, index, memo in
+                guard var task = try? await adapter.fetchTask(id: taskId) else { return }
+                guard task.records.indices.contains(index) else { return }
+                var updatedTask = task
+                updatedTask.records[index].memo = memo
+                try? await adapter.updateTask(updatedTask)
             }
-        },
-        createNextStage: { task in await MainActor.run { JacsimRepository.shared.createNextStage(for: task) } },
-        evaluateStageResult: { stage in await MainActor.run { JacsimRepository.shared.evaluateStageResult(stage) } },
-        needsMigrationV0_1: { await MainActor.run { JacsimRepository.shared.needsMigrationV0_1() } },
-        performMigrationV0_1: { await MainActor.run { JacsimRepository.shared.performMigrationV0_1() } }
-    )
-
-    static let testValue = JacsimClient(
+        )
+    }()
+    
+    static let testValue = JacsimClientPort(
         fetchActiveTasks: { [] },
+        fetchTask: { _ in nil },
+        addTask: { _ in },
+        updateTask: { _ in },
+        deleteTask: { _ in },
+        fetchTasksByStatus: { _ in [] },
         fetchIsSuccess: { [] },
         fetchIsFail: { [] },
-        fetchDate: { _ in [] },
-        fetchIsNotDone: { 0 },
-        fetchTask: { _ in nil },
-        addJacsim: { _ in },
-        updateMemo: { _, _, _ in },
-        deleteJacsim: { _ in },
         deleteAlarm: { _ in },
-        checkIsDone: { _ in },
         updateTaskInfo: { _, _, _, _, _ in },
-        createNextStage: { _ in nil },
         evaluateStageResult: { _ in .inProgress },
-        needsMigrationV0_1: { false },
-        performMigrationV0_1: { }
+        createNextStage: { _ in },
+        updateMemo: { _, _, _ in }
     )
 }
 
 extension DependencyValues {
-    var jacsimClient: JacsimClient {
-        get { self[JacsimClient.self] }
-        set { self[JacsimClient.self] = newValue }
+    public var jacsimClient: JacsimClientPort {
+        get { self[JacsimClientKey.self] }
+        set { self[JacsimClientKey.self] = newValue }
     }
 }
