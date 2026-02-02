@@ -305,7 +305,8 @@ public struct HomeFeature {
                     progress: currentData.progress,
                     totalDays: currentData.totalDays,
                     completedDays: currentData.completedDays,
-                    imageData: imageData
+                    imageData: imageData,
+                    isTodayCertified: currentData.isTodayCertified
                 )
                 return .none
 
