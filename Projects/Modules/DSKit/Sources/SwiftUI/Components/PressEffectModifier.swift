@@ -7,13 +7,17 @@ public struct PressEffectModifier: ViewModifier {
     
     public func body(content: Content) -> some View {
         content
-            .scaleEffect(isPressed ? 0.92 : 1.0)
-            .opacity(isPressed ? 0.8 : 1.0)
-            .animation(.easeInOut(duration: 0.15), value: isPressed)
+            .scaleEffect(isPressed ? 0.95 : 1.0)
+            .opacity(isPressed ? 0.9 : 1.0)
+            .animation(.easeInOut(duration: 0.1), value: isPressed)
             .simultaneousGesture(
-                DragGesture(minimumDistance: 0)
-                    .onChanged { _ in
-                        isPressed = true
+                DragGesture(minimumDistance: 10)
+                    .onChanged { value in
+                        let horizontalMovement = abs(value.translation.width)
+                        let verticalMovement = abs(value.translation.height)
+                        if verticalMovement > horizontalMovement {
+                            isPressed = true
+                        }
                     }
                     .onEnded { _ in
                         isPressed = false
