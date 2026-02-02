@@ -238,7 +238,8 @@ public struct HomeView: View {
                 progress: data.progress,
                 totalDays: data.totalDays,
                 completedDays: data.completedDays,
-                image: image
+                image: image,
+                isTodayCertified: data.isTodayCertified
             )
         }
     }

@@ -32,6 +32,7 @@ public struct HomeFeature {
             public let totalDays: Int
             public let completedDays: Int
             public let imageData: Data?
+            public let isTodayCertified: Bool
 
             public init(
                 id: UUID,
@@ -39,7 +40,8 @@ public struct HomeFeature {
                 progress: Double,
                 totalDays: Int,
                 completedDays: Int,
-                imageData: Data? = nil
+                imageData: Data? = nil,
+                isTodayCertified: Bool = false
             ) {
                 self.id = id
                 self.title = title
@@ -47,6 +49,7 @@ public struct HomeFeature {
                 self.totalDays = totalDays
                 self.completedDays = completedDays
                 self.imageData = imageData
+                self.isTodayCertified = isTodayCertified
             }
         }
 
@@ -208,13 +211,15 @@ public struct HomeFeature {
                     let completedDays = task.records.filter { $0.check }.count
                     let totalDays = task.dayArray.count
                     let progress = totalDays > 0 ? Double(completedDays) / Double(totalDays) : 0
+                    let isTodayCertified = task.isCompleted(on: Date())
                     return State.MiniCardDisplayData(
                         id: task.id.rawValue,
                         title: task.title,
                         progress: progress,
                         totalDays: totalDays,
                         completedDays: completedDays,
-                        imageData: nil
+                        imageData: nil,
+                        isTodayCertified: isTodayCertified
                     )
                 }
                 state.isLoading = false

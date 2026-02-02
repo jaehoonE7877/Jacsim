@@ -6,6 +6,7 @@ public struct JSMiniHeroCard: View {
     let totalDays: Int
     let completedDays: Int
     let image: Image?
+    let isTodayCertified: Bool
     let onTap: () -> Void
 
     public init(
@@ -14,6 +15,7 @@ public struct JSMiniHeroCard: View {
         totalDays: Int,
         completedDays: Int,
         image: Image? = nil,
+        isTodayCertified: Bool = false,
         onTap: @escaping () -> Void
     ) {
         self.title = title
@@ -21,6 +23,7 @@ public struct JSMiniHeroCard: View {
         self.totalDays = totalDays
         self.completedDays = completedDays
         self.image = image
+        self.isTodayCertified = isTodayCertified
         self.onTap = onTap
     }
 
@@ -52,23 +55,10 @@ public struct JSMiniHeroCard: View {
                 )
                 .frame(width: 160, height: 200)
 
-                // Top-right badge
                 VStack {
                     HStack {
                         Spacer()
-                        Text("\(Int(progress * 100))%")
-                            .font(.system(size: 11, weight: .semibold))
-                            .foregroundColor(.white)
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 4)
-                            .background(
-                                Capsule()
-                                    .fill(.ultraThinMaterial)
-                                    .overlay(
-                                        Capsule()
-                                            .stroke(Color.white.opacity(0.2), lineWidth: 1)
-                                    )
-                            )
+                        StatusBadge(isCertified: isTodayCertified)
                     }
                     Spacer()
                 }
@@ -121,6 +111,26 @@ public struct JSMiniHeroCard: View {
     }
 }
 
+private struct StatusBadge: View {
+    let isCertified: Bool
+
+    var body: some View {
+        Text(isCertified ? "오늘 인증 완료" : "오늘 미인증")
+            .font(.system(size: 10, weight: .semibold))
+            .foregroundColor(isCertified ? .green : .white)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
+            .background(
+                Capsule()
+                    .fill(.ultraThinMaterial)
+                    .overlay(
+                        Capsule()
+                            .stroke(isCertified ? Color.green.opacity(0.3) : Color.white.opacity(0.2), lineWidth: 1)
+                    )
+            )
+    }
+}
+
 public struct JSMiniHeroCardCarousel: View {
     let cards: [JSMiniHeroCardData]
     let onCardTap: (Int) -> Void
@@ -143,6 +153,7 @@ public struct JSMiniHeroCardCarousel: View {
                         totalDays: card.totalDays,
                         completedDays: card.completedDays,
                         image: card.image,
+                        isTodayCertified: card.isTodayCertified,
                         onTap: { onCardTap(index) }
                     )
                 }
@@ -160,6 +171,7 @@ public struct JSMiniHeroCardData: Identifiable {
     public let totalDays: Int
     public let completedDays: Int
     public let image: Image?
+    public let isTodayCertified: Bool
 
     public init(
         id: UUID,
@@ -167,7 +179,8 @@ public struct JSMiniHeroCardData: Identifiable {
         progress: Double,
         totalDays: Int,
         completedDays: Int,
-        image: Image? = nil
+        image: Image? = nil,
+        isTodayCertified: Bool = false
     ) {
         self.id = id
         self.title = title
@@ -175,6 +188,7 @@ public struct JSMiniHeroCardData: Identifiable {
         self.totalDays = totalDays
         self.completedDays = completedDays
         self.image = image
+        self.isTodayCertified = isTodayCertified
     }
 }
 

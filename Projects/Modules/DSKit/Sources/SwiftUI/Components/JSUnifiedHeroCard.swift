@@ -119,6 +119,7 @@ public struct JSUnifiedHeroCard: View {
             )
         }
         .buttonStyle(PlainButtonStyle())
+        .contentShape(RoundedRectangle(cornerRadius: 20))
     }
 }
 
