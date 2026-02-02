@@ -13,47 +13,71 @@ public struct TaskDetailView: View {
 
     @State private var scrollOffset: CGFloat = 0
     private let coverImageHeight: CGFloat = 280
-    
+    private let minHeaderHeight: CGFloat = 100
+
     public var body: some View {
-        ZStack(alignment: .bottom) {
-            GeometryReader { geometry in
+        ZStack(alignment: .top) {
+            let showMinimizedHeader = coverImageHeight - scrollOffset <= minHeaderHeight
+
+            if !showMinimizedHeader {
                 ZStack(alignment: .top) {
-                    coverImageSection
-                        .frame(height: coverImageHeight)
+                    coverImageBackground
+                        .frame(height: max(minHeaderHeight, coverImageHeight - scrollOffset))
                         .clipped()
-                    
-                    ScrollViewReader { proxy in
-                        ScrollView {
-                            VStack(spacing: 0) {
-                                Rectangle()
-                                    .fill(Color.clear)
-                                    .frame(height: coverImageHeight)
-                                
-                                VStack(spacing: .jsLG) {
-                                    stageInfoSection
-                                    
-                                    todayStatusSection
-                                    
-                                    recordListSection
-                                        .id("recordListSection")
-                                }
-                                .padding(.top, .jsLG)
-                                .padding(.horizontal, .jsMD)
-                                
-                                Spacer(minLength: 140)
-                            }
-                        }
-                        .onChange(of: store.shouldScrollToRecords) { _, shouldScroll in
-                            guard shouldScroll else { return }
-                            withAnimation(.easeInOut) {
-                                proxy.scrollTo("recordListSection", anchor: .top)
-                            }
-                            store.send(.scrollToRecordsCompleted)
-                        }
-                    }
+
+                    let minOffset = coverImageHeight - minHeaderHeight
+                    let offsetY = scrollOffset <= 0 ? -scrollOffset : scrollOffset <= minOffset ? -scrollOffset : -minOffset
+
+                    coverImageContent
+                        .frame(height: coverImageHeight)
+                        .frame(maxWidth: .infinity)
+                        .offset(y: offsetY)
                 }
             }
-            
+
+            ScrollViewReader { proxy in
+                ScrollView {
+                    Color.clear
+                        .frame(height: coverImageHeight)
+
+                    VStack(spacing: .jsLG) {
+                        stageInfoSection
+
+                        todayStatusSection
+
+                        recordListSection
+                            .id("recordListSection")
+                    }
+                    .padding(.top, .jsLG)
+                    .padding(.horizontal, .jsMD)
+
+                    Spacer(minLength: 140)
+                }
+                .onScrollGeometryChange(for: CGFloat.self) { geometry in
+                    geometry.contentOffset.y + geometry.contentInsets.top
+                } action: { _, new in
+                    scrollOffset = new
+                }
+                .onChange(of: store.shouldScrollToRecords) { _, shouldScroll in
+                    guard shouldScroll else { return }
+                    withAnimation(.easeInOut) {
+                        proxy.scrollTo("recordListSection", anchor: .top)
+                    }
+                    store.send(.scrollToRecordsCompleted)
+                }
+            }
+
+            if showMinimizedHeader {
+                minimizedHeader
+                    .frame(height: minHeaderHeight)
+                    .frame(maxWidth: .infinity)
+                    .background(Color.backgroundNormal)
+            }
+
+            topNavigationBar
+                .padding(.horizontal, .jsSM)
+                .padding(.top, .jsSM)
+
             bottomCTASection
                 .padding(.horizontal, .jsMD)
                 .padding(.bottom, .jsMD)
@@ -71,11 +95,11 @@ public struct TaskDetailView: View {
                     .frame(height: 140)
                     .frame(maxHeight: .infinity, alignment: .bottom)
                 )
+                .frame(maxHeight: .infinity, alignment: .bottom)
         }
         .background(Color.backgroundNormal)
         .navigationBarBackButtonHidden(true)
         .onAppear { store.send(.onAppear) }
-        .overlay(topNavigationBar)
         .sheet(item: $store.scope(state: \.editTask, action: \.editTask)) { store in
             NavigationStack {
                 TaskEditView(store: store)
@@ -154,6 +178,68 @@ public struct TaskDetailView: View {
         .frame(maxHeight: .infinity, alignment: .top)
     }
 
+    private var coverImageBackground: some View {
+        ZStack(alignment: .bottomLeading) {
+            if let image = loadCoverImage() {
+                Image(uiImage: image)
+                    .resizable()
+                    .scaledToFill()
+                    .clipped()
+            } else {
+                Rectangle()
+                    .fill(
+                        LinearGradient(
+                            colors: [Color.primaryNormal, Color.primaryStrong],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+            }
+        }
+    }
+
+    private var coverImageContent: some View {
+        ZStack(alignment: .bottomLeading) {
+            LinearGradient(
+                colors: [
+                    Color.black.opacity(0),
+                    Color.black.opacity(0.4)
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+
+            VStack(alignment: .leading, spacing: .jsXS) {
+                Text(store.task.title)
+                    .font(.jsDisplaySmall)
+                    .foregroundColor(.white)
+                    .lineLimit(2)
+            }
+            .padding(.jsMD)
+            .padding(.bottom, .jsSM)
+        }
+    }
+
+    private var minimizedHeader: some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(store.task.title)
+                    .font(.jsHeadlineSmall)
+                    .foregroundColor(.labelStrong)
+                    .lineLimit(1)
+
+                Text("\(store.currentStage?.stageType.durationDays ?? 7)일 스테이지")
+                    .font(.jsBodySmall)
+                    .foregroundColor(.labelAlternative)
+            }
+
+            Spacer()
+        }
+        .padding(.horizontal, .jsMD)
+        .padding(.top, 52)
+        .padding(.bottom, .jsSM)
+    }
+
     private var coverImageSection: some View {
         ZStack(alignment: .bottomLeading) {
             if let image = loadCoverImage() {
@@ -173,7 +259,7 @@ public struct TaskDetailView: View {
                     )
                     .frame(height: 280)
             }
-            
+
             LinearGradient(
                 colors: [
                     Color.black.opacity(0),
@@ -183,7 +269,7 @@ public struct TaskDetailView: View {
                 endPoint: .bottom
             )
             .frame(height: 280)
-            
+
             VStack(alignment: .leading, spacing: .jsXS) {
                 Text(store.task.title)
                     .font(.jsDisplaySmall)

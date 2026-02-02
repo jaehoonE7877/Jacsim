@@ -15,6 +15,18 @@ public struct HomeView: View {
     public var body: some View {
         NavigationStack(path: $store.scope(state: \.path, action: \.path)) {
             mainContent
+                .navigationTitle("작심")
+                .toolbar {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button(action: {
+                            store.send(.settingButtonTapped)
+                            triggerTapFeedback()
+                        }) {
+                            Image(systemName: "gearshape.fill")
+                                .foregroundColor(.labelAlternative)
+                        }
+                    }
+                }
         } destination: { store in
             destinationView(store: store)
         }
@@ -50,14 +62,13 @@ public struct HomeView: View {
 
             addButton
         }
-        .navigationBarHidden(true)
         .onAppear { store.send(.onAppear) }
         .overlay(alignment: .bottom) {
             if let message = store.toastMessage {
                 toastView(message: message)
                     .transition(.move(edge: .bottom).combined(with: .opacity))
                     .task {
-//                        try? await Task.sleep(nanoseconds: 2_000_000_000)
+                        try? await _Concurrency.Task.sleep(nanoseconds: 2_000_000_000)
                         store.send(.toastDismissed)
                     }
             }
@@ -97,27 +108,6 @@ public struct HomeView: View {
     private var contentVStack: some View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: 32) {
-                HStack {
-                    Text("작심")
-                        .font(.system(size: 34, weight: .bold))
-                        .foregroundColor(.labelStrong)
-                    
-                    Spacer()
-                    
-                    Button(action: {
-                        store.send(.settingButtonTapped)
-                        triggerTapFeedback()
-                    }) {
-                        Image(systemName: "gearshape.fill")
-                            .font(.system(size: 20))
-                            .foregroundColor(.labelAlternative)
-                            .frame(width: 44, height: 44)
-                            .contentShape(Rectangle())
-                    }
-                }
-                .padding(.horizontal, 24)
-                .padding(.top, 16)
-
                 if store.isLoading && store.tasks.isEmpty {
                     skeletonContent
                 } else if let heroTask = store.heroTask {
