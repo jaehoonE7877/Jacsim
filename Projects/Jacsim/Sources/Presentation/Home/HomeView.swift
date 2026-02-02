@@ -15,16 +15,7 @@ public struct HomeView: View {
     public var body: some View {
         NavigationStack(path: $store.scope(state: \.path, action: \.path)) {
             mainContent
-                .navigationTitle("작심")
-                .navigationBarItems(
-                    trailing: Button(action: {
-                        store.send(.settingButtonTapped)
-                        triggerTapFeedback()
-                    }) {
-                        Image(systemName: "gearshape.fill")
-                            .foregroundColor(.labelAlternative)
-                    }
-                )
+                .navigationBarHidden(true)
         } destination: { store in
             destinationView(store: store)
         }
@@ -106,6 +97,28 @@ public struct HomeView: View {
     private var contentVStack: some View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: 32) {
+                HStack {
+                    Text("작심")
+                        .font(.system(size: 28, weight: .bold))
+                        .foregroundColor(.labelStrong)
+                    
+                    Spacer()
+                    
+                    Button(action: {
+                        store.send(.settingButtonTapped)
+                        triggerTapFeedback()
+                    }) {
+                        Image(systemName: "gearshape.fill")
+                            .font(.system(size: 22))
+                            .foregroundColor(.labelAlternative)
+                            .frame(width: 44, height: 44)
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                    .zIndex(10)
+                }
+                .padding(.horizontal, 24)
+                .padding(.top, 8)
+
                 if store.isLoading && store.tasks.isEmpty {
                     skeletonContent
                 } else if let heroTask = store.heroTask {

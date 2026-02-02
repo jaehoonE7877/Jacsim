@@ -12,33 +12,34 @@ public struct TaskDetailView: View {
     }
 
     @State private var scrollOffset: CGFloat = 0
-    private let coverImageHeight: CGFloat = 280
     private let minHeaderHeight: CGFloat = 100
 
     public var body: some View {
-        ZStack(alignment: .top) {
+        GeometryReader { geometry in
+            let coverImageHeight = geometry.size.width
             let showMinimizedHeader = coverImageHeight - scrollOffset <= minHeaderHeight
 
-            if !showMinimizedHeader {
-                ZStack(alignment: .top) {
-                    coverImageBackground
-                        .frame(height: max(minHeaderHeight, coverImageHeight - scrollOffset))
-                        .clipped()
+            ZStack(alignment: .top) {
+                if !showMinimizedHeader {
+                    ZStack(alignment: .top) {
+                        coverImageBackground
+                            .frame(height: max(minHeaderHeight, coverImageHeight - scrollOffset))
+                            .clipped()
 
-                    let minOffset = coverImageHeight - minHeaderHeight
-                    let offsetY = scrollOffset <= 0 ? -scrollOffset : scrollOffset <= minOffset ? -scrollOffset : -minOffset
+                        let minOffset = coverImageHeight - minHeaderHeight
+                        let offsetY = scrollOffset <= 0 ? -scrollOffset : scrollOffset <= minOffset ? -scrollOffset : -minOffset
 
-                    coverImageContent
-                        .frame(height: coverImageHeight)
-                        .frame(maxWidth: .infinity)
-                        .offset(y: offsetY)
+                        coverImageContent
+                            .frame(height: coverImageHeight)
+                            .frame(maxWidth: .infinity)
+                            .offset(y: offsetY)
+                    }
                 }
-            }
 
-            ScrollViewReader { proxy in
-                ScrollView {
-                    Color.clear
-                        .frame(height: coverImageHeight)
+                ScrollViewReader { proxy in
+                    ScrollView {
+                        Color.clear
+                            .frame(height: coverImageHeight)
 
                     VStack(spacing: .jsLG) {
                         stageInfoSection
@@ -92,46 +93,44 @@ public struct TaskDetailView: View {
                     .frame(maxHeight: .infinity, alignment: .bottom)
                 )
                 .frame(maxHeight: .infinity, alignment: .bottom)
+            }
+            .background(Color.backgroundNormal)
+            .ignoresSafeArea(edges: .top)
         }
-        .background(Color.backgroundNormal)
         .onAppear { store.send(.onAppear) }
-        .toolbar {
-            ToolbarItem(placement: .topBarLeading) {
-                Button(action: { store.send(.backButtonTapped) }) {
-                    Image(systemName: "chevron.left")
-                        .font(.system(size: 20, weight: .semibold))
-                        .foregroundColor(.white)
+        .navigationBarBackButtonHidden(true)
+        .navigationBarItems(
+            leading: Button(action: { store.send(.backButtonTapped) }) {
+                Image(systemName: "chevron.left")
+                    .font(.system(size: 20, weight: .semibold))
+                    .foregroundColor(.white)
+                    .frame(width: 44, height: 44)
+            },
+            trailing: Menu {
+                Button(action: { store.send(.changePhotoButtonTapped) }) {
+                    Label("대표 사진 변경", systemImage: "photo")
                 }
-            }
 
-            ToolbarItem(placement: .topBarTrailing) {
-                Menu {
-                    Button(action: { store.send(.changePhotoButtonTapped) }) {
-                        Label("대표 사진 변경", systemImage: "photo")
-                    }
-
-                    Button(action: { store.send(.notificationSettingsButtonTapped) }) {
-                        Label("알림 설정", systemImage: "bell")
-                    }
-
-                    Button(action: { store.send(.editMemoButtonTapped) }) {
-                        Label("작심 메모 편집", systemImage: "note.text")
-                    }
-
-                    Divider()
-
-                    Button(role: .destructive, action: { store.send(.deleteButtonTapped) }) {
-                        Label("삭제", systemImage: "trash")
-                    }
-                } label: {
-                    Image(systemName: "ellipsis")
-                        .font(.system(size: 20, weight: .semibold))
-                        .foregroundColor(.white)
+                Button(action: { store.send(.notificationSettingsButtonTapped) }) {
+                    Label("알림 설정", systemImage: "bell")
                 }
+
+                Button(action: { store.send(.editMemoButtonTapped) }) {
+                    Label("작심 메모 편집", systemImage: "note.text")
+                }
+
+                Divider()
+
+                Button(role: .destructive, action: { store.send(.deleteButtonTapped) }) {
+                    Label("삭제", systemImage: "trash")
+                }
+            } label: {
+                Image(systemName: "ellipsis")
+                    .font(.system(size: 20, weight: .semibold))
+                    .foregroundColor(.white)
+                    .frame(width: 44, height: 44)
             }
-        }
-        .toolbarBackground(.hidden, for: .navigationBar)
-        .toolbarColorScheme(.dark, for: .navigationBar)
+        )
         .sheet(item: $store.scope(state: \.editTask, action: \.editTask)) { store in
             NavigationStack {
                 TaskEditView(store: store)
