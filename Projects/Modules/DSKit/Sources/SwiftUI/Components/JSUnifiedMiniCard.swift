@@ -1,6 +1,6 @@
 import SwiftUI
 
-public struct JSMiniCard: View {
+public struct JSUnifiedMiniCard: View {
     let title: String
     let progress: Double
     let totalDays: Int
@@ -33,13 +33,13 @@ public struct JSMiniCard: View {
             .padding(12)
             .frame(width: 160)
             .background(
-                RoundedRectangle(cornerRadius: 8)
+                RoundedRectangle(cornerRadius: 20)
                     .fill(Color(.systemBackground))
                     .shadow(
-                        color: .black.opacity(0.06),
-                        radius: 8,
+                        color: .black.opacity(0.12),
+                        radius: 16,
                         x: 0,
-                        y: 2
+                        y: 8
                     )
             )
         }
@@ -57,55 +57,65 @@ public struct JSMiniCard: View {
                         .resizable()
                         .scaledToFill()
                 } else {
-                    RoundedRectangle(cornerRadius: 4)
-                        .fill(
-                            LinearGradient(
-                                colors: [
-                                    Color.blue.opacity(0.6),
-                                    Color.blue.opacity(0.8)
-                                ],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
+                    LinearGradient(
+                        colors: [
+                            Color.blue.opacity(0.6),
+                            Color.purple.opacity(0.6)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
                 }
             }
             .frame(height: 80)
-            .clipShape(RoundedRectangle(cornerRadius: 4))
+            .clipShape(RoundedRectangle(cornerRadius: 12))
 
             Text("\(completedDays)/\(totalDays)")
-                .font(.system(size: 12, weight: .medium))
+                .font(.system(size: 11, weight: .semibold))
                 .foregroundColor(.white)
-                .padding(.horizontal, 6)
-                .padding(.vertical, 2)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
                 .background(
                     Capsule()
-                        .fill(.black.opacity(0.4))
+                        .fill(.ultraThinMaterial)
+                        .overlay(
+                            Capsule()
+                                .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                        )
                 )
-                .padding(6)
+                .padding(8)
         }
     }
 
     private var contentSection: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(title)
-                .font(.system(size: 15, weight: .medium))
+                .font(.system(size: 15, weight: .semibold))
                 .foregroundColor(.primary)
                 .lineLimit(1)
 
-            ProgressView(value: progress)
-                .progressViewStyle(LinearProgressViewStyle(tint: .blue))
-                .frame(height: 3)
+            GeometryReader { geo in
+                ZStack(alignment: .leading) {
+                    Capsule()
+                        .fill(Color.gray.opacity(0.2))
+                        .frame(height: 6)
+                    
+                    Capsule()
+                        .fill(Color.blue)
+                        .frame(width: geo.size.width * CGFloat(progress), height: 6)
+                }
+            }
+            .frame(height: 6)
         }
     }
 }
 
-public struct JSMiniCardCarousel: View {
-    let cards: [JSMiniCardData]
+public struct JSUnifiedMiniCardCarousel: View {
+    let cards: [JSUnifiedMiniCardData]
     let onCardTap: (Int) -> Void
 
     public init(
-        cards: [JSMiniCardData],
+        cards: [JSUnifiedMiniCardData],
         onCardTap: @escaping (Int) -> Void
     ) {
         self.cards = cards
@@ -116,7 +126,7 @@ public struct JSMiniCardCarousel: View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 12) {
                 ForEach(Array(cards.enumerated()), id: \.offset) { index, card in
-                    JSMiniCard(
+                    JSUnifiedMiniCard(
                         title: card.title,
                         progress: card.progress,
                         totalDays: card.totalDays,
@@ -132,7 +142,7 @@ public struct JSMiniCardCarousel: View {
     }
 }
 
-public struct JSMiniCardData: Identifiable {
+public struct JSUnifiedMiniCardData: Identifiable {
     public let id = UUID()
     public let title: String
     public let progress: Double
@@ -155,14 +165,14 @@ public struct JSMiniCardData: Identifiable {
     }
 }
 
-struct JSMiniCard_Previews: PreviewProvider {
+struct JSUnifiedMiniCard_Previews: PreviewProvider {
     static var previews: some View {
         ScrollView {
             VStack(spacing: 20) {
                 Text("Single MiniCard")
                     .font(.system(size: 18, weight: .semibold))
 
-                JSMiniCard(
+                JSUnifiedMiniCard(
                     title: "물 마시기",
                     progress: 0.4,
                     totalDays: 7,
@@ -176,27 +186,27 @@ struct JSMiniCard_Previews: PreviewProvider {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.top, 20)
 
-                JSMiniCardCarousel(
+                JSUnifiedMiniCardCarousel(
                     cards: [
-                        JSMiniCardData(
+                        JSUnifiedMiniCardData(
                             title: "독서하기",
                             progress: 0.65,
                             totalDays: 30,
                             completedDays: 19
                         ),
-                        JSMiniCardData(
+                        JSUnifiedMiniCardData(
                             title: "물 마시기",
                             progress: 0.4,
                             totalDays: 7,
                             completedDays: 2
                         ),
-                        JSMiniCardData(
+                        JSUnifiedMiniCardData(
                             title: "울기",
                             progress: 0.85,
                             totalDays: 15,
                             completedDays: 12
                         ),
-                        JSMiniCardData(
+                        JSUnifiedMiniCardData(
                             title: "일기쓰기",
                             progress: 0.2,
                             totalDays: 30,

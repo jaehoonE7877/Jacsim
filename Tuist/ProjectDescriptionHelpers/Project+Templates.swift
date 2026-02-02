@@ -259,7 +259,7 @@ extension Project {
             buildAction: .buildAction(targets: ["\(Environment.workspaceName)"],
                                       postActions: []),
             runAction: .runAction(
-                configuration: "Release",
+                configuration: "Debug",
                 arguments: .arguments(
                     environmentVariables: ["OS_ACTIVITY_MODE": "disable"],
                     launchArguments: [.launchArgument(name: "-FIRDebugEnabled", isEnabled: true)]

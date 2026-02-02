@@ -31,21 +31,27 @@ public struct HomeFeature {
             public let progress: Double
             public let totalDays: Int
             public let completedDays: Int
+            public let imageData: Data?
 
             public init(
                 id: UUID,
                 title: String,
                 progress: Double,
                 totalDays: Int,
-                completedDays: Int
+                completedDays: Int,
+                imageData: Data? = nil
             ) {
                 self.id = id
                 self.title = title
                 self.progress = progress
                 self.totalDays = totalDays
                 self.completedDays = completedDays
+                self.imageData = imageData
             }
         }
+
+        public var heroTaskImageData: Data? = nil
+        public var loadingStartTime: Date? = nil
         
         public init() {}
     }
@@ -56,6 +62,8 @@ public struct HomeFeature {
         case dateSelected(Date)
         case refreshTriggered
         case tasksResponse([Domain.Task])
+        case heroImageLoaded(Data?)
+        case miniCardImageLoaded(index: Int, imageData: Data?)
         case calendar(CalendarFeature.Action)
         case settingButtonTapped
         case addButtonTapped
@@ -128,6 +136,7 @@ public struct HomeFeature {
 
     @Dependency(\.taskRepository) var taskRepository
     @Dependency(\.activeTaskService) var activeTaskService
+    @Dependency(\.imageStore) var imageStore
 
     public var body: some ReducerOf<Self> {
         BindingReducer()
@@ -142,6 +151,7 @@ public struct HomeFeature {
                 state.hasStartedNotificationListener = true
                 state.isFetching = true
                 state.isLoading = state.tasks.isEmpty
+                state.loadingStartTime = Date()
                 Logger.homeFetchingTasks()
                 let fetchStartTime = Date()
                 let fetchEffect: Effect<Action> = .run { [taskRepository] send in
@@ -150,6 +160,13 @@ public struct HomeFeature {
                     if let firstTask = tasks.first {
                         let completedCount = firstTask.records.filter { $0.check }.count
                         Logger.homeFirstTaskDetails(title: firstTask.title, totalRecords: firstTask.records.count, completedRecords: completedCount)
+                    }
+                    // Ensure minimum skeleton display duration of 1.5 seconds
+                    let elapsed = Date().timeIntervalSince(fetchStartTime)
+                    let minDisplay: TimeInterval = 1.5
+                    let remaining = minDisplay - elapsed
+                    if remaining > 0 {
+                        try await _Concurrency.Task.sleep(nanoseconds: UInt64(remaining * 1_000_000_000))
                     }
                     await send(.tasksResponse(tasks))
                 }
@@ -196,7 +213,8 @@ public struct HomeFeature {
                         title: task.title,
                         progress: progress,
                         totalDays: totalDays,
-                        completedDays: completedDays
+                        completedDays: completedDays,
+                        imageData: nil
                     )
                 }
                 state.isLoading = false
@@ -207,7 +225,16 @@ public struct HomeFeature {
                     activeCount: state.activeTasks.count,
                     heroTaskTitle: state.heroTask?.title
                 )
-                return .none
+                return .run { [heroTask = state.heroTask, remainingTasks] send in
+                    if let heroTask = heroTask {
+                        let heroImageData = await self.imageStore.loadImage(heroTask.mainImageKey)
+                        await send(.heroImageLoaded(heroImageData))
+                    }
+                    for (index, task) in remainingTasks.enumerated() {
+                        let imageData = await self.imageStore.loadImage(task.mainImageKey)
+                        await send(.miniCardImageLoaded(index: index, imageData: imageData))
+                    }
+                }
                 
             case .settingButtonTapped:
                 state.path.append(.setting(SettingFeature.State()))
@@ -258,6 +285,23 @@ public struct HomeFeature {
             case let .deepLinkTaskLoaded(task):
                 guard let task else { return .none }
                 state.path.append(.detail(TaskDetailFeature.State(task: task)))
+                return .none
+
+            case let .heroImageLoaded(imageData):
+                state.heroTaskImageData = imageData
+                return .none
+
+            case let .miniCardImageLoaded(index, imageData):
+                guard state.miniCardDisplayData.indices.contains(index) else { return .none }
+                let currentData = state.miniCardDisplayData[index]
+                state.miniCardDisplayData[index] = State.MiniCardDisplayData(
+                    id: currentData.id,
+                    title: currentData.title,
+                    progress: currentData.progress,
+                    totalDays: currentData.totalDays,
+                    completedDays: currentData.completedDays,
+                    imageData: imageData
+                )
                 return .none
 
             case .migrationCheckResponse:

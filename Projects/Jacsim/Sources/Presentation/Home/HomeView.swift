@@ -2,13 +2,11 @@ import SwiftUI
 import ComposableArchitecture
 import Domain
 import DSKit
+import _Concurrency
 
 public struct HomeView: View {
-    @Bindable var store: StoreOf<HomeFeature>
-    @State private var tapFeedbackTrigger = 0
-    private let calendarSheetMinHeight: CGFloat = 200
-    private let calendarSheetMaxHeightRatio: CGFloat = 0.7
-    private let calendarSheetMaxHeightLimit: CGFloat = 560
+     @Bindable var store: StoreOf<HomeFeature>
+     @State private var tapFeedbackTrigger = 0
 
     public init(store: StoreOf<HomeFeature>) {
         self.store = store
@@ -45,38 +43,12 @@ public struct HomeView: View {
     }
 
     private var mainContent: some View {
-        GeometryReader { proxy in
-            let maxHeight = min(proxy.size.height * calendarSheetMaxHeightRatio, calendarSheetMaxHeightLimit)
-            let minHeight = min(calendarSheetMinHeight, maxHeight)
+        ZStack(alignment: .bottom) {
+            Color.backgroundNormal.ignoresSafeArea()
 
-            ZStack(alignment: .bottom) {
-                Color.backgroundNormal.ignoresSafeArea()
+            contentVStack
 
-                contentVStack(minHeight: minHeight)
-
-                Button(action: {
-                    store.send(.addButtonTapped)
-                    triggerTapFeedback()
-                }) {
-                    Image(systemName: "plus")
-                        .font(.system(size: 24, weight: .semibold))
-                        .foregroundColor(.white)
-                        .frame(width: 56, height: 56)
-                        .background(Color.primaryNormal)
-                        .clipShape(Circle())
-                        .shadow(color: .primaryNormal.opacity(0.3), radius: 8, x: 0, y: 4)
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
-                .padding(.trailing, 20)
-                .padding(.bottom, minHeight + 20)
-
-                HomeCalendarBottomSheet(
-                    minHeight: minHeight,
-                    maxHeight: maxHeight,
-                    store: store.scope(state: \.calendar, action: \.calendar)
-                )
-                .frame(maxWidth: .infinity)
-            }
+            addButton
         }
         .navigationBarHidden(true)
         .onAppear { store.send(.onAppear) }
@@ -85,7 +57,7 @@ public struct HomeView: View {
                 toastView(message: message)
                     .transition(.move(edge: .bottom).combined(with: .opacity))
                     .task {
-                        try? await Task.sleep(nanoseconds: 2_000_000_000)
+//                        try? await Task.sleep(nanoseconds: 2_000_000_000)
                         store.send(.toastDismissed)
                     }
             }
@@ -98,11 +70,31 @@ public struct HomeView: View {
         .sensoryFeedback(.impact(weight: .light), trigger: tapFeedbackTrigger)
     }
 
+    private var addButton: some View {
+        Button(action: {
+            store.send(.addButtonTapped)
+            triggerTapFeedback()
+        }) {
+            Image(systemName: "plus")
+                .font(.system(size: 24, weight: .semibold))
+                .foregroundColor(.white)
+                .frame(width: 64, height: 64)
+                .background(Color.primaryNormal)
+                .clipShape(Circle())
+                .shadow(color: .primaryNormal.opacity(0.3), radius: 12, x: 0, y: 6)
+                .contentShape(Circle())
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
+        .padding(.trailing, 16)
+        .padding(.bottom, 16)
+        .pressEffect()
+    }
+
     private func triggerTapFeedback() {
         tapFeedbackTrigger += 1
     }
 
-    private func contentVStack(minHeight: CGFloat) -> some View {
+    private var contentVStack: some View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: 32) {
                 HStack {
@@ -131,18 +123,21 @@ public struct HomeView: View {
                 } else if let heroTask = store.heroTask {
                     let remainingTasks = Array(store.activeTasks.dropFirst())
                     VStack(alignment: .leading, spacing: 16) {
-                        JSGlassHeroCard(
+                        let heroImage = store.heroTaskImageData.flatMap { UIImage(data: $0) }.map { Image(uiImage: $0) }
+                        JSUnifiedHeroCard(
                             title: heroTask.title,
                             subtitle: "\(heroTask.startDate.formatted(.dateTime.month().day())) ~ \(heroTask.endDate.formatted(.dateTime.month().day()))",
                             progress: calculateProgress(for: heroTask),
                             totalDays: heroTask.dayArray.count,
                             completedDays: heroTask.records.filter { $0.check }.count,
+                            image: heroImage,
                             isTodayCertified: isTaskCompletedToday(heroTask),
                             onTap: {
                                 store.send(.taskTapped(heroTask))
                                 triggerTapFeedback()
                             }
                         )
+                        .pressEffect()
                     }
                     .padding(.horizontal, 24)
                     
@@ -159,15 +154,15 @@ public struct HomeView: View {
                                     store.send(.allTasksButtonTapped)
                                     triggerTapFeedback()
                                 }) {
-                                    Text("전체보기")
+                                    Text("전첵보기")
                                         .font(.system(size: 14, weight: .medium))
                                         .foregroundColor(.labelAlternative)
                                 }
                             }
                             .padding(.horizontal, 24)
                             
-                            JSMiniCardCarousel(
-                                cards: makeMiniCardData(from: store.miniCardDisplayData),
+                            JSMiniHeroCardCarousel(
+                                cards: makeMiniHeroCardData(from: store.miniCardDisplayData),
                                 onCardTap: { index in
                                     guard remainingTasks.indices.contains(index) else { return }
                                     let task = remainingTasks[index]
@@ -186,7 +181,7 @@ public struct HomeView: View {
                 
                 Spacer(minLength: 100)
             }
-            .padding(.bottom, minHeight + 24)
+            .padding(.bottom, 24)
         }
     }
 
@@ -247,15 +242,17 @@ public struct HomeView: View {
         return false
     }
 
-    private func makeMiniCardData(
+    private func makeMiniHeroCardData(
         from displayData: [HomeFeature.State.MiniCardDisplayData]
-    ) -> [JSMiniCardData] {
+    ) -> [JSMiniHeroCardData] {
         displayData.map { data in
-            JSMiniCardData(
+            let image = data.imageData.flatMap { UIImage(data: $0) }.map { Image(uiImage: $0) }
+            return JSMiniHeroCardData(
                 title: data.title,
                 progress: data.progress,
                 totalDays: data.totalDays,
-                completedDays: data.completedDays
+                completedDays: data.completedDays,
+                image: image
             )
         }
     }
@@ -304,84 +301,6 @@ public struct HomeView: View {
             .padding(.bottom, 24)
             .padding(.horizontal, 24)
             .animation(.easeInOut(duration: 0.25), value: message)
-    }
-}
-
-private struct HomeCalendarBottomSheet: View {
-    let minHeight: CGFloat
-    let maxHeight: CGFloat
-    let store: StoreOf<CalendarFeature>
-
-    @State private var currentHeight: CGFloat
-    @State private var dragStartHeight: CGFloat = 0
-    @State private var isDragging = false
-
-    init(minHeight: CGFloat, maxHeight: CGFloat, store: StoreOf<CalendarFeature>) {
-        self.minHeight = minHeight
-        self.maxHeight = maxHeight
-        self.store = store
-        _currentHeight = State(initialValue: minHeight)
-    }
-
-    var body: some View {
-        VStack(spacing: 0) {
-            dragIndicator
-
-            CalendarView(store: store)
-        }
-        .frame(maxWidth: .infinity)
-        .frame(height: currentHeight)
-        .background(
-            UnevenRoundedRectangle(
-                topLeadingRadius: 20,
-                bottomLeadingRadius: 0,
-                bottomTrailingRadius: 0,
-                topTrailingRadius: 20
-            )
-            .fill(Color(.systemBackground))
-        )
-        .shadow(color: .black.opacity(0.08), radius: 12, x: 0, y: -2)
-        .gesture(
-            DragGesture()
-                .onChanged { value in
-                    if !isDragging {
-                        dragStartHeight = currentHeight
-                        isDragging = true
-                    }
-                    let newHeight = dragStartHeight - value.translation.height
-                    currentHeight = min(max(newHeight, minHeight), maxHeight)
-                }
-                .onEnded { value in
-                    isDragging = false
-                    let predictedHeight = dragStartHeight - value.predictedEndTranslation.height
-                    let clampedPredictedHeight = min(max(predictedHeight, minHeight), maxHeight)
-                    let target = nearestSnapHeight(to: clampedPredictedHeight)
-                    withAnimation(.spring(response: 0.3, dampingFraction: 0.85)) {
-                        currentHeight = target
-                    }
-                }
-        )
-        .ignoresSafeArea(.container, edges: .bottom)
-    }
-
-    private var midHeight: CGFloat {
-        minHeight + (maxHeight - minHeight) * 0.5
-    }
-
-    private var snapHeights: [CGFloat] {
-        [minHeight, midHeight, maxHeight]
-    }
-
-    private func nearestSnapHeight(to value: CGFloat) -> CGFloat {
-        snapHeights.min(by: { abs($0 - value) < abs($1 - value) }) ?? minHeight
-    }
-
-    private var dragIndicator: some View {
-        RoundedRectangle(cornerRadius: 2.5)
-            .fill(Color.gray.opacity(0.4))
-            .frame(width: 36, height: 5)
-            .padding(.top, 8)
-            .padding(.bottom, 4)
     }
 }
 
