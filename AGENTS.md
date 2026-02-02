@@ -1,7 +1,7 @@
 # Jacsim Knowledge Base (AGENTS.md)
 
-**Generated:** 2026-02-01
-**Commit:** ceb3acd
+**Generated:** 2026-02-02
+**Commit:** c5a3f6a
 **Branch:** refactor-home-UI
 
 ## Overview
