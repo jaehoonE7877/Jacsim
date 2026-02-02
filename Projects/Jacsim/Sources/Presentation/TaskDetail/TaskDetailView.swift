@@ -11,33 +11,46 @@ public struct TaskDetailView: View {
         self.store = store
     }
 
+    @State private var scrollOffset: CGFloat = 0
+    private let coverImageHeight: CGFloat = 280
+    
     public var body: some View {
         ZStack(alignment: .bottom) {
-            ScrollViewReader { proxy in
-                ScrollView {
-                    VStack(spacing: 0) {
-                        coverImageSection
-                        
-                        VStack(spacing: .jsLG) {
-                            stageInfoSection
-                            
-                            todayStatusSection
-                            
-                            recordListSection
-                                .id("recordListSection")
+            GeometryReader { geometry in
+                ZStack(alignment: .top) {
+                    coverImageSection
+                        .frame(height: coverImageHeight)
+                        .clipped()
+                    
+                    ScrollViewReader { proxy in
+                        ScrollView {
+                            VStack(spacing: 0) {
+                                Rectangle()
+                                    .fill(Color.clear)
+                                    .frame(height: coverImageHeight)
+                                
+                                VStack(spacing: .jsLG) {
+                                    stageInfoSection
+                                    
+                                    todayStatusSection
+                                    
+                                    recordListSection
+                                        .id("recordListSection")
+                                }
+                                .padding(.top, .jsLG)
+                                .padding(.horizontal, .jsMD)
+                                
+                                Spacer(minLength: 140)
+                            }
                         }
-                        .padding(.top, .jsLG)
-                        .padding(.horizontal, .jsMD)
-                        
-                        Spacer(minLength: 140)
+                        .onChange(of: store.shouldScrollToRecords) { _, shouldScroll in
+                            guard shouldScroll else { return }
+                            withAnimation(.easeInOut) {
+                                proxy.scrollTo("recordListSection", anchor: .top)
+                            }
+                            store.send(.scrollToRecordsCompleted)
+                        }
                     }
-                }
-                .onChange(of: store.shouldScrollToRecords) { _, shouldScroll in
-                    guard shouldScroll else { return }
-                    withAnimation(.easeInOut) {
-                        proxy.scrollTo("recordListSection", anchor: .top)
-                    }
-                    store.send(.scrollToRecordsCompleted)
                 }
             }
             
@@ -60,9 +73,8 @@ public struct TaskDetailView: View {
                 )
         }
         .background(Color.backgroundNormal)
-        .navigationBarHidden(true)
+        .navigationBarBackButtonHidden(true)
         .onAppear { store.send(.onAppear) }
-        .toolbar(.hidden, for: .navigationBar)
         .overlay(topNavigationBar)
         .sheet(item: $store.scope(state: \.editTask, action: \.editTask)) { store in
             NavigationStack {
@@ -410,7 +422,7 @@ public struct TaskDetailView: View {
     }
     
     private func loadCoverImage() -> UIImage? {
-        return nil
+        return store.coverImage
     }
 }
 

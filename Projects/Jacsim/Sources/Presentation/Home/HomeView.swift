@@ -127,11 +127,11 @@ public struct HomeView: View {
                         JSUnifiedHeroCard(
                             title: heroTask.title,
                             subtitle: "\(heroTask.startDate.formatted(.dateTime.month().day())) ~ \(heroTask.endDate.formatted(.dateTime.month().day()))",
-                            progress: calculateProgress(for: heroTask),
+                            progress: heroTask.progress,
                             totalDays: heroTask.dayArray.count,
-                            completedDays: heroTask.records.filter { $0.check }.count,
+                            completedDays: heroTask.completedDays,
                             image: heroImage,
-                            isTodayCertified: isTaskCompletedToday(heroTask),
+                            isTodayCertified: heroTask.isCompleted(on: Date()),
                             onTap: {
                                 store.send(.taskTapped(heroTask))
                                 triggerTapFeedback()
@@ -185,11 +185,7 @@ public struct HomeView: View {
         }
     }
 
-    private func calculateProgress(for task: Domain.Task) -> Double {
-        let completed = task.records.filter { $0.check }.count
-        let total = task.dayArray.count
-        return total > 0 ? Double(completed) / Double(total) : 0
-    }
+
 
     private var emptyStateView: some View {
         VStack(spacing: 24) {
@@ -228,18 +224,6 @@ public struct HomeView: View {
                 .fill(Color.white)
                 .shadow(color: .black.opacity(0.05), radius: 10, x: 0, y: 4)
         )
-    }
-
-    private func isTaskCompletedToday(_ task: Domain.Task) -> Bool {
-        let calendar = Calendar.current
-        let today = calendar.startOfDay(for: Date())
-        
-        if let dailyRecord = task.records.first(where: {
-            calendar.isDate($0.date, inSameDayAs: today)
-        }) {
-            return dailyRecord.check
-        }
-        return false
     }
 
     private func makeMiniHeroCardData(

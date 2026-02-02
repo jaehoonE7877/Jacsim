@@ -82,6 +82,21 @@ public struct Task: Sendable, Codable, Hashable, Identifiable {
             Calendar.current.isDate(record.date, inSameDayAs: date)
         }
     }
+
+    public var progress: Double {
+        let total = dayArray.count
+        guard total > 0 else { return 0 }
+        let completed = records.filter { $0.check }.count
+        return Double(completed) / Double(total)
+    }
+
+    public var completedDays: Int {
+        records.filter { $0.check }.count
+    }
+
+    public func isCompleted(on date: Date) -> Bool {
+        records.first { Calendar.current.isDate($0.date, inSameDayAs: date) }?.check ?? false
+    }
 }
 
 public struct StageSnapshot: Sendable, Codable, Hashable, Identifiable {

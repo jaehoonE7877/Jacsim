@@ -13,7 +13,7 @@ public struct TaskDetailFeature {
         public var remainingSuccessCount: Int = 0
         public var isStagePopupPresented: Bool = false
         public var stagePopupResult: StageResult = .inProgress
-        
+
         public var challengeState: ChallengeDetailState = .stagePending
         public var todayStatus: TodayStatus = .notCertified
         public var currentStage: StageSnapshot?
@@ -22,7 +22,8 @@ public struct TaskDetailFeature {
         public var isDeleteConfirmationPresented: Bool = false
         public var todayMemo: String = ""
         public var shouldScrollToRecords: Bool = false
-        
+        public var coverImage: UIImage? = nil
+
         @Presents public var editTask: TaskEditFeature.State?
         
         public struct DayViewData: Equatable, Identifiable {
@@ -42,6 +43,7 @@ public struct TaskDetailFeature {
         case onAppear
         case loadImages
         case imageLoaded(Date, UIImage?)
+        case coverImageLoaded(UIImage?)
         case dayTapped(Date)
         
         case changePhotoButtonTapped
@@ -112,6 +114,10 @@ public struct TaskDetailFeature {
                 
             case .loadImages:
                 return .run { [task = state.task, dayData = state.dayViewData, imageStore] send in
+                    let coverImageData = await imageStore.loadImage(task.mainImageKey)
+                    let coverImage = coverImageData.flatMap { UIImage(data: $0) }
+                    await send(.coverImageLoaded(coverImage))
+
                     for data in dayData {
                         guard let key = task.imageKey(for: task.dayArray.firstIndex(where: { $0 == data.date }) ?? 0) else { continue }
                         let imageData = await imageStore.loadImage(key)
@@ -120,6 +126,10 @@ public struct TaskDetailFeature {
                     }
                 }
                 
+            case let .coverImageLoaded(image):
+                state.coverImage = image
+                return .none
+
             case let .imageLoaded(date, image):
                 if let index = state.dayViewData.firstIndex(where: { $0.date == date }) {
                     state.dayViewData[index] = State.DayViewData(

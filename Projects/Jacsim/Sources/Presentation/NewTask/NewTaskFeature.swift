@@ -104,24 +104,15 @@ public struct NewTaskFeature {
                     value: stageType.durationDays - 1,
                     to: startDate
                 ) ?? startDate
-                let taskId = TaskID(UUID())
-                let stage = StageSnapshot(
-                    id: UUID(),
-                    stageTypeRaw: stageType.rawValue,
-                    startDate: startDate,
-                    endDate: endDate,
-                    durationDays: stageType.durationDays,
-                    successDays: 0,
-                    resultRaw: StageResult.inProgress.rawValue
-                )
-                let task = Domain.Task(
-                    id: taskId,
+                
+                let createTaskUseCase = CreateTaskUseCase()
+                let task = createTaskUseCase.createTask(
                     title: trimmedTitle,
                     startDate: startDate,
                     endDate: endDate,
-                    stages: [stage],
-                    records: []
+                    stageType: stageType
                 )
+                
                 Logger.taskCreated(title: task.title, taskId: task.id.rawValue.uuidString, startDate: task.startDate, endDate: task.endDate)
                 let isAlarmEnabled = state.isAlarmEnabled
                 let alarmDate = state.alarmDate
