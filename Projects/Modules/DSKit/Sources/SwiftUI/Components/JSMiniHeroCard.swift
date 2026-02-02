@@ -56,7 +56,7 @@ public struct JSMiniHeroCard: View {
                 VStack {
                     HStack {
                         Spacer()
-                        Text("\(completedDays)/\(totalDays)")
+                        Text("\(Int(progress * 100))%")
                             .font(.system(size: 11, weight: .semibold))
                             .foregroundColor(.white)
                             .padding(.horizontal, 8)
@@ -154,7 +154,7 @@ public struct JSMiniHeroCardCarousel: View {
 }
 
 public struct JSMiniHeroCardData: Identifiable {
-    public let id = UUID()
+    public let id: UUID
     public let title: String
     public let progress: Double
     public let totalDays: Int
@@ -162,12 +162,14 @@ public struct JSMiniHeroCardData: Identifiable {
     public let image: Image?
 
     public init(
+        id: UUID,
         title: String,
         progress: Double,
         totalDays: Int,
         completedDays: Int,
         image: Image? = nil
     ) {
+        self.id = id
         self.title = title
         self.progress = progress
         self.totalDays = totalDays
@@ -212,18 +214,21 @@ struct JSMiniHeroCard_Previews: PreviewProvider {
                 JSMiniHeroCardCarousel(
                     cards: [
                         JSMiniHeroCardData(
+                            id: UUID(),
                             title: "두쫀쿠",
                             progress: 0.4,
                             totalDays: 15,
                             completedDays: 0
                         ),
                         JSMiniHeroCardData(
+                            id: UUID(),
                             title: "hhh",
                             progress: 0.65,
                             totalDays: 18,
                             completedDays: 0
                         ),
                         JSMiniHeroCardData(
+                            id: UUID(),
                             title: "물 마시기",
                             progress: 0.85,
                             totalDays: 30,

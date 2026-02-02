@@ -154,7 +154,7 @@ public struct HomeView: View {
                                     store.send(.allTasksButtonTapped)
                                     triggerTapFeedback()
                                 }) {
-                                    Text("전첵보기")
+                                    Text("전체보기")
                                         .font(.system(size: 14, weight: .medium))
                                         .foregroundColor(.labelAlternative)
                                 }
@@ -248,6 +248,7 @@ public struct HomeView: View {
         displayData.map { data in
             let image = data.imageData.flatMap { UIImage(data: $0) }.map { Image(uiImage: $0) }
             return JSMiniHeroCardData(
+                id: data.id,
                 title: data.title,
                 progress: data.progress,
                 totalDays: data.totalDays,

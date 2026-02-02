@@ -75,6 +75,10 @@ func mapToSwiftDataModel(_ task: Domain.Task, existing: UserJacsimModel? = nil) 
         )
     }
     
+    for stage in userJacsim.stages {
+        stage.dailyRecords = []
+    }
+    
     return userJacsim
 }
 

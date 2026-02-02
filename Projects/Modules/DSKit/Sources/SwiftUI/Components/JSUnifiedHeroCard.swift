@@ -96,7 +96,7 @@ public struct JSUnifiedHeroCard: View {
                             }
                             .frame(height: 6)
 
-                            Text("\(completedDays)/\(totalDays)일")
+                            Text("\(Int(progress * 100))%")
                                 .font(.system(size: 13, weight: .bold))
                                 .foregroundColor(.white)
                                 .frame(minWidth: 50, alignment: .trailing)
