@@ -32,7 +32,7 @@ public struct ShimmeringModifier: ViewModifier {
             .modifier(AnimatedMask(phase: phase))
             .onAppear {
                 withAnimation(
-                    .linear(duration: 2.0)
+                    .linear(duration: 2.5)
                     .repeatForever(autoreverses: false)
                 ) {
                     phase = 1.0

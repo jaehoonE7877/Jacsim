@@ -161,6 +161,8 @@ public struct JSMiniHeroCardCarousel: View {
             .padding(.horizontal, 20)
             .padding(.vertical, 4)
         }
+        .frame(height: 200)
+        .scrollClipDisabled(false)
     }
 }
 
