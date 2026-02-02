@@ -253,13 +253,13 @@ public struct HomeView: View {
                 HStack {
                     RoundedRectangle(cornerRadius: 8)
                         .frame(width: 140, height: 20)
-                        .skeleton(cornerRadius: 8)
+                        .skeleton(shape: RoundedRectangle(cornerRadius: 8))
 
                     Spacer()
 
                     RoundedRectangle(cornerRadius: 6)
                         .frame(width: 60, height: 16)
-                        .skeleton(cornerRadius: 6)
+                        .skeleton(shape: RoundedRectangle(cornerRadius: 6))
                 }
                 .padding(.horizontal, 24)
 

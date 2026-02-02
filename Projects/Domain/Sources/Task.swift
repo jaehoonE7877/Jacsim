@@ -95,7 +95,11 @@ public struct Task: Sendable, Codable, Hashable, Identifiable {
     }
 
     public func isCompleted(on date: Date) -> Bool {
-        records.first { Calendar.current.isDate($0.date, inSameDayAs: date) }?.check ?? false
+        let calendar = Calendar.current
+        let startOfDay = calendar.startOfDay(for: date)
+        return records.first { record in
+            calendar.isDate(record.date, inSameDayAs: startOfDay)
+        }?.check ?? false
     }
 }
 
