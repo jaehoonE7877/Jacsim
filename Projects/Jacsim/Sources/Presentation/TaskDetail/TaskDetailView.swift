@@ -74,10 +74,6 @@ public struct TaskDetailView: View {
                     .background(Color.backgroundNormal)
             }
 
-            topNavigationBar
-                .padding(.horizontal, .jsSM)
-                .padding(.top, .jsSM)
-
             bottomCTASection
                 .padding(.horizontal, .jsMD)
                 .padding(.bottom, .jsMD)
@@ -98,8 +94,44 @@ public struct TaskDetailView: View {
                 .frame(maxHeight: .infinity, alignment: .bottom)
         }
         .background(Color.backgroundNormal)
-        .navigationBarBackButtonHidden(true)
         .onAppear { store.send(.onAppear) }
+        .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                Button(action: { store.send(.backButtonTapped) }) {
+                    Image(systemName: "chevron.left")
+                        .font(.system(size: 20, weight: .semibold))
+                        .foregroundColor(.white)
+                }
+            }
+
+            ToolbarItem(placement: .topBarTrailing) {
+                Menu {
+                    Button(action: { store.send(.changePhotoButtonTapped) }) {
+                        Label("대표 사진 변경", systemImage: "photo")
+                    }
+
+                    Button(action: { store.send(.notificationSettingsButtonTapped) }) {
+                        Label("알림 설정", systemImage: "bell")
+                    }
+
+                    Button(action: { store.send(.editMemoButtonTapped) }) {
+                        Label("작심 메모 편집", systemImage: "note.text")
+                    }
+
+                    Divider()
+
+                    Button(role: .destructive, action: { store.send(.deleteButtonTapped) }) {
+                        Label("삭제", systemImage: "trash")
+                    }
+                } label: {
+                    Image(systemName: "ellipsis")
+                        .font(.system(size: 20, weight: .semibold))
+                        .foregroundColor(.white)
+                }
+            }
+        }
+        .toolbarBackground(.hidden, for: .navigationBar)
+        .toolbarColorScheme(.dark, for: .navigationBar)
         .sheet(item: $store.scope(state: \.editTask, action: \.editTask)) { store in
             NavigationStack {
                 TaskEditView(store: store)
@@ -133,49 +165,6 @@ public struct TaskDetailView: View {
         } message: {
             Text("모든 기록과 사진이 삭제되며 되돌릴 수 없어요")
         }
-    }
-    
-    private var topNavigationBar: some View {
-        HStack {
-            Button(action: {
-                store.send(.backButtonTapped)
-            }) {
-                Image(systemName: "chevron.left")
-                    .font(.system(size: 20, weight: .semibold))
-                    .foregroundColor(.white)
-                    .frame(width: 44, height: 44)
-            }
-            
-            Spacer()
-            
-            Menu {
-                Button(action: { store.send(.changePhotoButtonTapped) }) {
-                    Label("대표 사진 변경", systemImage: "photo")
-                }
-                
-                Button(action: { store.send(.notificationSettingsButtonTapped) }) {
-                    Label("알림 설정", systemImage: "bell")
-                }
-                
-                Button(action: { store.send(.editMemoButtonTapped) }) {
-                    Label("작심 메모 편집", systemImage: "note.text")
-                }
-                
-                Divider()
-                
-                Button(role: .destructive, action: { store.send(.deleteButtonTapped) }) {
-                    Label("삭제", systemImage: "trash")
-                }
-            } label: {
-                Image(systemName: "ellipsis")
-                    .font(.system(size: 20, weight: .semibold))
-                    .foregroundColor(.white)
-                    .frame(width: 44, height: 44)
-            }
-        }
-        .padding(.horizontal, .jsSM)
-        .padding(.top, .jsSM)
-        .frame(maxHeight: .infinity, alignment: .top)
     }
 
     private var coverImageBackground: some View {

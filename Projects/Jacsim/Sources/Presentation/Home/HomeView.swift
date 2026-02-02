@@ -16,17 +16,15 @@ public struct HomeView: View {
         NavigationStack(path: $store.scope(state: \.path, action: \.path)) {
             mainContent
                 .navigationTitle("작심")
-                .toolbar {
-                    ToolbarItem(placement: .topBarTrailing) {
-                        Button(action: {
-                            store.send(.settingButtonTapped)
-                            triggerTapFeedback()
-                        }) {
-                            Image(systemName: "gearshape.fill")
-                                .foregroundColor(.labelAlternative)
-                        }
+                .navigationBarItems(
+                    trailing: Button(action: {
+                        store.send(.settingButtonTapped)
+                        triggerTapFeedback()
+                    }) {
+                        Image(systemName: "gearshape.fill")
+                            .foregroundColor(.labelAlternative)
                     }
-                }
+                )
         } destination: { store in
             destinationView(store: store)
         }
