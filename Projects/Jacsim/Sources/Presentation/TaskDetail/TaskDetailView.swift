@@ -7,47 +7,64 @@ import UIKit
 
 public struct TaskDetailView: View {
     @Bindable var store: StoreOf<TaskDetailFeature>
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     public init(store: StoreOf<TaskDetailFeature>) {
         self.store = store
     }
 
     @State private var scrollOffset: CGFloat = 0
+    @State private var isHeaderMinimized = false
     private let minHeaderHeight: CGFloat = 100.jsScaled()
 
     public var body: some View {
         GeometryReader { geometry in
-            let coverImageHeight = geometry.size.width
-            let showMinimizedHeader = coverImageHeight - scrollOffset <= minHeaderHeight
+            let topSafeArea = geometry.safeAreaInsets.top
+            let coverImageWidth = geometry.size.width
+            let coverImageHeight = coverImageWidth
+            let minimizedHeaderHeight = minHeaderHeight + topSafeArea
+            let revealRange = reduceMotion ? 1 : max(1, 32.jsScaled())
+            let coverRevealDistance = coverImageHeight - minimizedHeaderHeight - scrollOffset
+            let revealProgress = min(max(coverRevealDistance / revealRange, 0), 1)
+            let coverImageVisibleHeight = max(minimizedHeaderHeight, coverImageHeight - scrollOffset)
+            let shouldMinimizeHeaderTitle = revealProgress < 0.15
 
             ZStack(alignment: .top) {
-                if !showMinimizedHeader {
-                    ZStack(alignment: .top) {
-                        coverImageBackground
-                            .frame(height: max(minHeaderHeight, coverImageHeight - scrollOffset))
-                            .clipped()
+                ZStack(alignment: .top) {
+                    coverImageBackground
+                        .frame(width: coverImageWidth, height: coverImageVisibleHeight)
+                        .clipped()
+                        .opacity(revealProgress)
 
-                        let minOffset = coverImageHeight - minHeaderHeight
-                        let offsetY = scrollOffset <= 0 ? -scrollOffset : scrollOffset <= minOffset ? -scrollOffset : -minOffset
+                    LinearGradient(
+                        colors: [
+                            Color.backgroundNormal.opacity(0.92),
+                            Color.backgroundNormal.opacity(0)
+                        ],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                    .frame(width: coverImageWidth, height: coverImageVisibleHeight)
+                    .opacity(1 - revealProgress)
+                    .allowsHitTesting(false)
 
-                        coverImageContent
-                            .frame(height: coverImageHeight)
-                            .frame(maxWidth: .infinity)
-                            .offset(y: offsetY)
-                    }
+                    let minOffset = coverImageHeight - minimizedHeaderHeight
+                    let offsetY = scrollOffset <= 0 ? -scrollOffset : scrollOffset <= minOffset ? -scrollOffset : -minOffset
+
+                    coverImageContent
+                        .frame(width: coverImageWidth, height: coverImageHeight)
+                        .opacity(revealProgress)
+                        .offset(y: offsetY + (1 - revealProgress) * 6.jsScaled())
                 }
+                .frame(width: coverImageWidth, height: coverImageVisibleHeight, alignment: .top)
+                .clipped()
 
                 ScrollViewReader { proxy in
                     ScrollView {
                         Color.clear
-                            .frame(height: coverImageHeight)
+                            .frame(width: coverImageWidth, height: coverImageHeight)
 
                     VStack(spacing: .jsLG) {
-                        if PresentationRedesignFlags.isEnabled(.taskDetail) &&
-                            PresentationRedesignFlags.isSectionEnabled(.taskDetailOverview) {
-                            overviewBanner
-                        }
-
                         stageInfoSection
 
                         if PresentationRedesignFlags.isSectionEnabled(.taskDetailTodayStatus) {
@@ -78,13 +95,6 @@ public struct TaskDetailView: View {
                 }
             }
 
-            if showMinimizedHeader {
-                minimizedHeader
-                    .frame(height: minHeaderHeight)
-                    .frame(maxWidth: .infinity)
-                    .background(Color.backgroundNormal)
-            }
-
             if shouldShowBottomCTA {
                 bottomCTASection
                     .padding(.horizontal, .jsMD)
@@ -106,48 +116,77 @@ public struct TaskDetailView: View {
                     .frame(maxHeight: .infinity, alignment: .bottom)
             }
             }
+            .onChange(of: shouldMinimizeHeaderTitle) { _, newValue in
+                guard isHeaderMinimized != newValue else { return }
+                isHeaderMinimized = newValue
+            }
+            .onAppear {
+                isHeaderMinimized = shouldMinimizeHeaderTitle
+            }
             .background(Color.backgroundNormal)
             .ignoresSafeArea(edges: .top)
         }
         .onAppear { store.send(.onAppear) }
         .navigationBarBackButtonHidden(true)
-        .navigationBarItems(
-            leading: Button(action: { store.send(.backButtonTapped) }) {
-                Image(systemName: "chevron.left")
-                    .font(.jsHeadlineMedium)
-                    .foregroundColor(.white)
-                    .frame(width: 44.jsScaled(.touchTarget), height: 44.jsScaled(.touchTarget))
-            },
-            trailing: Menu {
-                Button(action: { store.send(.changePhotoButtonTapped) }) {
-                    Label("대표 사진 변경", systemImage: "photo")
+        .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                Button(action: { store.send(.backButtonTapped) }) {
+                    Image(systemName: "chevron.left")
+                        .font(.jsHeadlineMedium)
+                        .foregroundColor(.white)
+                        .frame(width: 44.jsScaled(.touchTarget), height: 44.jsScaled(.touchTarget))
                 }
-
-                Button(action: { store.send(.notificationSettingsButtonTapped) }) {
-                    Label("알림 설정", systemImage: "bell")
-                }
-
-                Button(action: { store.send(.editMemoButtonTapped) }) {
-                    Label("작심 메모 편집", systemImage: "note.text")
-                }
-
-                Divider()
-
-                Button(role: .destructive, action: { store.send(.deleteButtonTapped) }) {
-                    Label("삭제", systemImage: "trash")
-                }
-            } label: {
-                Image(systemName: "ellipsis")
-                    .font(.jsHeadlineMedium)
-                    .foregroundColor(.white)
-                    .frame(width: 44.jsScaled(.touchTarget), height: 44.jsScaled(.touchTarget))
             }
-        )
+
+            ToolbarItem(placement: .principal) {
+                VStack(spacing: .jsMicro) {
+                    Text(store.task.title)
+                        .font(.jsHeadlineSmall)
+                        .foregroundColor(.labelStrong)
+                        .lineLimit(1)
+
+                    Text(navigationStageSubtitle)
+                        .font(.jsLabelMedium)
+                        .foregroundColor(.labelAlternative)
+                        .lineLimit(1)
+                }
+                .opacity(isHeaderMinimized ? 1 : 0)
+                .animation(.easeOut(duration: 0.12), value: isHeaderMinimized)
+            }
+
+            ToolbarItem(placement: .topBarTrailing) {
+                Menu {
+                    Button(action: { store.send(.changePhotoButtonTapped) }) {
+                        Label("대표 사진 변경", systemImage: "photo")
+                    }
+
+                    Button(action: { store.send(.notificationSettingsButtonTapped) }) {
+                        Label("알림 설정", systemImage: "bell")
+                    }
+
+                    Button(action: { store.send(.editMemoButtonTapped) }) {
+                        Label("작심 메모 편집", systemImage: "note.text")
+                    }
+
+                    Divider()
+
+                    Button(role: .destructive, action: { store.send(.deleteButtonTapped) }) {
+                        Label("삭제", systemImage: "trash")
+                    }
+                } label: {
+                    Image(systemName: "ellipsis")
+                        .font(.jsHeadlineMedium)
+                        .foregroundColor(.white)
+                        .frame(width: 44.jsScaled(.touchTarget), height: 44.jsScaled(.touchTarget))
+                }
+            }
+        }
         .background(InteractivePopGestureEnabler())
         .sheet(item: $store.scope(state: \.editTask, action: \.editTask)) { store in
             NavigationStack {
                 TaskEditView(store: store)
             }
+            .presentationDragIndicator(.visible)
         }
         .overlay {
             if store.isStagePopupPresented {
@@ -179,8 +218,9 @@ public struct TaskDetailView: View {
         ZStack(alignment: .bottomLeading) {
             if let image = loadCoverImage() {
                 Image(uiImage: image)
+                    .interpolation(.high)
                     .resizable()
-                    .scaledToFill()
+                    .aspectRatio(contentMode: .fill)
                     .clipped()
             } else {
                 Rectangle()
@@ -215,26 +255,6 @@ public struct TaskDetailView: View {
             .padding(.jsMD)
             .padding(.bottom, .jsSM)
         }
-    }
-
-    private var minimizedHeader: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: .jsMicro) {
-                Text(store.task.title)
-                    .font(.jsHeadlineSmall)
-                    .foregroundColor(.labelStrong)
-                    .lineLimit(1)
-
-                Text("\(store.currentStage?.stageType.durationDays ?? 7)일 스테이지")
-                    .font(.jsBodySmall)
-                    .foregroundColor(.labelAlternative)
-            }
-
-            Spacer()
-        }
-        .padding(.horizontal, .jsMD)
-        .padding(.top, 52.jsScaled())
-        .padding(.bottom, .jsSM)
     }
 
     private var coverImageSection: some View {
@@ -317,36 +337,15 @@ public struct TaskDetailView: View {
         }
     }
 
-    private var overviewBanner: some View {
-        RedesignSectionCard(
-            title: "오늘 진행",
-            subtitle: store.todayStatus == .certified ? "오늘 인증을 완료했어요" : "오늘 인증을 아직 하지 않았어요"
-        ) {
-            HStack(spacing: .jsSM) {
-                metricCard(
-                    title: "스테이지 진행률",
-                    value: "\(Int(store.stageProgress * 100))%",
-                    color: progressColor
-                )
-                metricCard(
-                    title: "현재 스테이지",
-                    value: "\(store.currentStage?.stageType.durationDays ?? 7)일",
-                    color: .primaryNormal
-                )
-                metricCard(
-                    title: "인증 상태",
-                    value: store.todayStatus == .certified ? "완료" : "대기",
-                    color: store.todayStatus == .certified ? .positive : .cautionary
-                )
-            }
-        }
-    }
-    
     private var stageDateRange: String {
         guard let stage = store.currentStage else { return "" }
         let formatter = DateFormatter()
         formatter.dateFormat = "M/d"
         return "\(formatter.string(from: stage.startDate)) ~ \(formatter.string(from: stage.endDate))"
+    }
+
+    private var navigationStageSubtitle: String {
+        "\(store.currentStage?.stageType.durationDays ?? 7)일 스테이지"
     }
     
     private var stageStatusChip: some View {
@@ -537,22 +536,6 @@ public struct TaskDetailView: View {
     
     private func loadCoverImage() -> UIImage? {
         return store.coverImage
-    }
-
-    private func metricCard(title: String, value: String, color: Color) -> some View {
-        VStack(spacing: .jsMicro) {
-            Text(title)
-                .font(.jsLabelSmall)
-                .foregroundColor(.labelAlternative)
-            Text(value)
-                .font(.jsHeadlineSmall)
-                .foregroundColor(color)
-        }
-        .frame(maxWidth: .infinity, minHeight: 72.jsScaled())
-        .background(
-            RoundedRectangle(cornerRadius: .jsRadiusMD)
-                .fill(color.opacity(0.08))
-        )
     }
 }
 
