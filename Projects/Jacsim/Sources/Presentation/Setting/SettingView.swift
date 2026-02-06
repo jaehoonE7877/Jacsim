@@ -82,7 +82,7 @@ public struct SettingView: View {
                 .foregroundColor(.labelNormal)
             Spacer()
             Image(systemName: "chevron.right")
-                .font(.system(size: 14, weight: .semibold))
+                .font(.jsButtonSmall)
                 .foregroundColor(.labelNeutral)
         }
         .contentShape(Rectangle())

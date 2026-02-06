@@ -14,13 +14,13 @@ public struct CalendarView: View {
         VStack(spacing: 0) {
             HStack {
                 Text("캘린더")
-                    .font(.system(size: 34, weight: .bold))
+                    .font(.jsDisplayLarge)
                     .foregroundColor(.labelStrong)
                 Spacer()
             }
-            .padding(.horizontal, 24)
-            .padding(.top, 16)
-            .padding(.bottom, 16)
+            .padding(.horizontal, .jsXL)
+            .padding(.top, .jsMD)
+            .padding(.bottom, .jsMD)
 
             JSCalendar(
                 selectedDate: $store.selectedDate,
@@ -31,10 +31,10 @@ public struct CalendarView: View {
             .onChange(of: store.selectedDate) {
                 store.send(.dateSelected(store.selectedDate))
             }
-            .padding(.horizontal, 16)
+            .padding(.horizontal, .jsMD)
             
             ScrollView {
-                VStack(spacing: 16) {
+                VStack(spacing: .jsMD) {
                     let tasksForDate = tasksForSelectedDate
                     
                     if tasksForDate.isEmpty {
@@ -64,12 +64,12 @@ public struct CalendarView: View {
     }
     
     private var emptyStateView: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: .jsMD) {
             Image(systemName: "calendar.badge.exclamationmark")
-                .font(.system(size: 48))
-                .foregroundColor(.gray.opacity(0.3))
+                .font(.pretendardSemiBold(size: 48))
+                .foregroundColor(.labelAssistive)
             Text("이 날은 작심이 없어요")
-                .font(.system(size: 16))
+                .font(.jsBodyMedium)
                 .foregroundColor(.labelAlternative)
         }
         .frame(maxWidth: .infinity)
@@ -85,11 +85,11 @@ public struct CalendarView: View {
             iconColor: isCompleted ? .primaryNormal : .labelDisable,
             accessory: isCompleted ? .checkmark(isSelected: true) : .disclosure
         )
-        .padding(.vertical, 8)
+        .padding(.vertical, .jsXS)
         .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color(.systemBackground))
-                .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 2)
+            RoundedRectangle(cornerRadius: .jsRadiusMD)
+                .fill(Color.backgroundStrong)
+                .jsShadow(JSShadow.small)
         )
     }
     

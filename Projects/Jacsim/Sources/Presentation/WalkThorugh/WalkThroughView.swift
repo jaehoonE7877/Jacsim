@@ -23,14 +23,14 @@ public struct WalkThroughView: View {
                     Image(uiImage: images[index])
                         .resizable()
                         .scaledToFit()
-                        .padding(.horizontal, 16)
+                        .padding(.horizontal, .jsMD)
                         .tag(index)
                 }
             }
             .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
             
             pageControl
-                .padding(.vertical, 20)
+                .padding(.vertical, .jsLG)
             
             if !store.fromSetting {
                 if store.currentPage == 2, store.notificationPermissionStatus == .denied {
@@ -42,22 +42,18 @@ public struct WalkThroughView: View {
                         .padding(.bottom, 12)
                 }
 
-                Button(action: {
+                JSButton(
+                    title: store.currentPage == store.totalPages - 1 ? "시작하기" : "계속하기",
+                    style: .primary,
+                    size: .large
+                ) {
                     if store.currentPage == 2 {
                         store.send(.requestNotificationPermission)
                     } else {
                         store.send(.continueButtonTapped)
                     }
-                }) {
-                    Text(store.currentPage == store.totalPages - 1 ? "시작하기" : "계속하기")
-                        .font(.pretendardMedium(size: 16))
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 50)
-                        .background(Color.primaryNormal)
-                        .cornerRadius(12)
                 }
-                .padding(.horizontal, 24)
+                .padding(.horizontal, .jsXL)
                 .padding(.bottom, 40)
             }
         }
@@ -65,11 +61,11 @@ public struct WalkThroughView: View {
     }
     
     private var pageControl: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: .jsXS) {
             ForEach(0..<store.totalPages, id: \.self) { index in
                 Circle()
                     .fill(index == store.currentPage ? Color.primaryNormal : Color.labelNeutral.opacity(0.3))
-                    .frame(width: 8, height: 8)
+                    .frame(width: .jsXS, height: .jsXS)
             }
         }
     }

@@ -28,7 +28,7 @@ public struct AllTaskView: View {
                     isExpanded: store.isSuccessExpanded,
                     toggleAction: { store.send(.toggleSuccess) },
                     icon: "checkmark.circle.fill",
-                    iconColor: .green
+                    iconColor: .positive
                 )
                 
                 sectionView(
@@ -62,7 +62,7 @@ public struct AllTaskView: View {
                     HStack(spacing: .jsSM) {
                         Image(systemName: icon)
                             .foregroundColor(iconColor)
-                            .font(.system(size: 12))
+                            .font(.jsLabelSmall)
 
                         Text(title)
                             .font(.jsHeadlineSmall)
@@ -75,7 +75,7 @@ public struct AllTaskView: View {
                         Spacer()
 
                         Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
-                            .font(.system(size: 14, weight: .semibold))
+                            .font(.jsButtonSmall)
                             .foregroundColor(.labelNeutral)
                     }
                     .padding(.vertical, .jsXS)

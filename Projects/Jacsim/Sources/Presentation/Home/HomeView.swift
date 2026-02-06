@@ -7,6 +7,7 @@ import _Concurrency
 public struct HomeView: View {
      @Bindable var store: StoreOf<HomeFeature>
      @State private var tapFeedbackTrigger = 0
+     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     public init(store: StoreOf<HomeFeature>) {
         self.store = store
@@ -62,7 +63,7 @@ public struct HomeView: View {
                     }
             }
         }
-        .animation(.easeInOut(duration: 0.25), value: store.toastMessage)
+        .animation(reduceMotion ? .none : .easeInOut(duration: 0.25), value: store.toastMessage)
         .sheet(item: $store.scope(state: \.destination?.challengeCreate, action: \.destination.challengeCreate)) { store in
             ChallengeCreateView(store: store)
         }
@@ -76,7 +77,7 @@ public struct HomeView: View {
             triggerTapFeedback()
         }) {
             Image(systemName: "plus")
-                .font(.system(size: 24, weight: .semibold))
+                .font(.jsDisplaySmall)
                 .foregroundColor(.white)
                 .frame(width: 64, height: 64)
                 .background(Color.primaryNormal)
@@ -85,8 +86,8 @@ public struct HomeView: View {
                 .contentShape(Circle())
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
-        .padding(.trailing, 16)
-        .padding(.bottom, 16)
+        .padding(.trailing, .jsMD)
+        .padding(.bottom, .jsMD)
         .pressEffect()
     }
 
@@ -96,10 +97,10 @@ public struct HomeView: View {
 
     private var contentVStack: some View {
         ScrollView(showsIndicators: false) {
-            VStack(alignment: .leading, spacing: 32) {
+            VStack(alignment: .leading, spacing: .jsXXL) {
                 HStack {
                     Text("작심")
-                        .font(.system(size: 28, weight: .bold))
+                        .font(.jsDisplayMedium)
                         .foregroundColor(.labelStrong)
                     
                     Spacer()
@@ -109,21 +110,21 @@ public struct HomeView: View {
                         triggerTapFeedback()
                     }) {
                         Image(systemName: "gearshape.fill")
-                            .font(.system(size: 22))
+                            .font(.jsHeadlineLarge)
                             .foregroundColor(.labelAlternative)
                             .frame(width: 44, height: 44)
                     }
                     .buttonStyle(PlainButtonStyle())
                     .zIndex(10)
                 }
-                .padding(.horizontal, 24)
-                .padding(.top, 8)
+                .padding(.horizontal, .jsXL)
+                .padding(.top, .jsXS)
 
                 if store.isLoading && store.tasks.isEmpty {
                     skeletonContent
                 } else if let heroTask = store.heroTask {
                     let remainingTasks = Array(store.activeTasks.dropFirst())
-                    VStack(alignment: .leading, spacing: 16) {
+                    VStack(alignment: .leading, spacing: .jsMD) {
                         let heroImage = store.heroTaskImageData.flatMap { UIImage(data: $0) }.map { Image(uiImage: $0) }
                         JSUnifiedHeroCard(
                             title: heroTask.title,
@@ -140,13 +141,13 @@ public struct HomeView: View {
                         )
                         .pressEffect()
                     }
-                    .padding(.horizontal, 24)
+                    .padding(.horizontal, .jsXL)
                     
                     if !remainingTasks.isEmpty {
-                        VStack(alignment: .leading, spacing: 16) {
+                        VStack(alignment: .leading, spacing: .jsMD) {
                             HStack {
                                 Text("진행 중인 작심들")
-                                    .font(.system(size: 20, weight: .bold))
+                                    .font(.jsHeadlineMedium)
                                     .foregroundColor(.labelStrong)
                                 
                                 Spacer()
@@ -156,11 +157,11 @@ public struct HomeView: View {
                                     triggerTapFeedback()
                                 }) {
                                     Text("전체보기")
-                                        .font(.system(size: 14, weight: .medium))
+                                        .font(.jsButtonSmall)
                                         .foregroundColor(.labelAlternative)
                                 }
                             }
-                            .padding(.horizontal, 24)
+                            .padding(.horizontal, .jsXL)
                             
                             JSMiniHeroCardCarousel(
                                 cards: makeMiniHeroCardData(from: store.miniCardDisplayData),
@@ -177,30 +178,30 @@ public struct HomeView: View {
                 } else {
                     emptyStateView
                         .padding(.top, 40)
-                        .padding(.horizontal, 24)
+                        .padding(.horizontal, .jsXL)
                 }
                 
                 Spacer(minLength: 100)
             }
-            .padding(.bottom, 24)
+            .padding(.bottom, .jsXL)
         }
     }
 
 
 
     private var emptyStateView: some View {
-        VStack(spacing: 24) {
+        VStack(spacing: .jsXL) {
             Image(systemName: "square.text.square.fill")
-                .font(.system(size: 64))
-                .foregroundColor(Color.gray.opacity(0.3))
+                .font(.pretendardBold(size: 64))
+                .foregroundColor(Color.labelAssistive)
 
-            VStack(spacing: 8) {
+            VStack(spacing: .jsXS) {
                 Text("진행 중인 작심이 없어요")
-                    .font(.system(size: 20, weight: .bold))
+                    .font(.jsHeadlineMedium)
                     .foregroundColor(.labelStrong)
 
                 Text("새로운 작심을 시작해보세요!")
-                    .font(.system(size: 15))
+                    .font(.jsBodySmall)
                     .foregroundColor(.labelAlternative)
             }
 
@@ -209,21 +210,21 @@ public struct HomeView: View {
                 triggerTapFeedback()
             }) {
                 Text("작심 시작하기")
-                    .font(.system(size: 16, weight: .semibold))
+                    .font(.jsButtonMedium)
                     .foregroundColor(.white)
                     .frame(height: 50)
                     .frame(maxWidth: .infinity)
                     .background(Color.primaryNormal)
-                    .cornerRadius(12)
+                    .cornerRadius(.jsRadiusMD)
             }
-            .padding(.horizontal, 24)
+            .padding(.horizontal, .jsXL)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 40)
         .background(
             RoundedRectangle(cornerRadius: 24)
-                .fill(Color.white)
-                .shadow(color: .black.opacity(0.05), radius: 10, x: 0, y: 4)
+                .fill(Color.backgroundStrong)
+                .shadow(color: Color.labelStrong.opacity(0.05), radius: 10, x: 0, y: 4)
         )
     }
 
@@ -280,14 +281,13 @@ public struct HomeView: View {
     private func toastView(message: String) -> some View {
         Text(message)
             .font(.jsBodyMedium)
-            .foregroundColor(.white)
-            .padding(.horizontal, 16)
+            .foregroundColor(.labelStrong)
+            .padding(.horizontal, .jsMD)
             .padding(.vertical, 10)
-            .background(Color.black.opacity(0.85))
-            .cornerRadius(16)
-            .padding(.bottom, 24)
-            .padding(.horizontal, 24)
-            .animation(.easeInOut(duration: 0.25), value: message)
+            .background(Color.backgroundAlternative.opacity(0.95))
+            .cornerRadius(.jsRadiusLG)
+            .padding(.bottom, .jsXL)
+            .padding(.horizontal, .jsXL)
     }
 }
 

@@ -14,7 +14,7 @@ public struct NewTaskView: View {
     public var body: some View {
         VStack(spacing: 0) {
             ScrollView(showsIndicators: false) {
-                VStack(alignment: .leading, spacing: 24) {
+                VStack(alignment: .leading, spacing: .jsXL) {
                     titleSection
                     stageSection
                     photoSection
@@ -26,8 +26,8 @@ public struct NewTaskView: View {
 
                     Spacer(minLength: 40)
                 }
-                .padding(.horizontal, 16)
-                .padding(.top, 16)
+                .padding(.horizontal, .jsMD)
+                .padding(.top, .jsMD)
             }
 
             buttonSection
@@ -37,7 +37,7 @@ public struct NewTaskView: View {
     }
 
     private var titleSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: .jsXS) {
             Text("제목 입력")
                 .font(.jsHeadlineSmall)
                 .foregroundColor(.labelStrong)
@@ -55,7 +55,7 @@ public struct NewTaskView: View {
     }
 
     private var stageSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: .jsXS) {
             Text("스테이지 선택")
                 .font(.jsHeadlineSmall)
                 .foregroundColor(.labelStrong)
@@ -71,7 +71,7 @@ public struct NewTaskView: View {
     }
 
     private var photoSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: .jsXS) {
             Text("대표 사진 선택")
                 .font(.jsHeadlineSmall)
                 .foregroundColor(.labelStrong)
@@ -83,15 +83,15 @@ public struct NewTaskView: View {
                         .scaledToFill()
                         .frame(height: 220)
                         .clipped()
-                        .cornerRadius(12)
+                        .cornerRadius(.jsRadiusMD)
                 } else {
-                    RoundedRectangle(cornerRadius: 12)
+                    RoundedRectangle(cornerRadius: .jsRadiusMD)
                         .fill(Color.backgroundStrong)
                         .frame(height: 220)
                         .overlay(
-                            VStack(spacing: 8) {
+                            VStack(spacing: .jsXS) {
                                 Image(systemName: "photo")
-                                    .font(.system(size: 36))
+                                    .font(.jsDisplayLarge)
                                     .foregroundColor(.labelAlternative)
                                 Text("대표 사진 추가")
                                     .font(.jsBodyMedium)
@@ -105,9 +105,10 @@ public struct NewTaskView: View {
                     matching: .images
                 ) {
                     Image(systemName: "plus.circle.fill")
-                        .font(.system(size: 40))
+                        .font(.jsDisplayLarge)
+                        .scaleEffect(1.3)
                         .foregroundColor(.primaryNormal)
-                        .background(Color.white)
+                        .background(Color.backgroundNormal)
                         .clipShape(Circle())
                         .padding(.jsXS)
                 }
@@ -119,7 +120,7 @@ public struct NewTaskView: View {
     }
 
     private var alarmSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: .jsSM) {
             Toggle("알림 받기", isOn: $store.isAlarmEnabled)
                 .font(.jsBodyMedium)
 
@@ -132,11 +133,11 @@ public struct NewTaskView: View {
                 .datePickerStyle(.wheel)
             }
         }
-        .padding(.top, 8)
+        .padding(.top, .jsXS)
     }
 
     private var buttonSection: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: .jsSM) {
             ZStack {
                 JSButton(
                     title: "챌린지 시작",
@@ -161,8 +162,8 @@ public struct NewTaskView: View {
                 store.send(.cancelButtonTapped)
             }
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 16)
+        .padding(.horizontal, .jsMD)
+        .padding(.vertical, .jsMD)
         .background(
             LinearGradient(
                 colors: [
@@ -178,19 +179,19 @@ public struct NewTaskView: View {
     }
 
     private var saveFailedBanner: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: .jsXS) {
             Image(systemName: "exclamationmark.circle.fill")
-                .foregroundColor(.red)
-                .font(.system(size: 14))
+                .foregroundColor(.destructive)
+                .font(.jsLabelMedium)
             Text("저장에 실패했어요. 다시 시도해주세요")
                 .font(.jsBodySmall)
-                .foregroundColor(.red)
+                .foregroundColor(.destructive)
             Spacer()
         }
-        .padding(.horizontal, 12)
+        .padding(.horizontal, .jsSM)
         .padding(.vertical, 10)
-        .background(Color.red.opacity(0.1))
-        .cornerRadius(8)
+        .background(Color.destructive.opacity(0.12))
+        .cornerRadius(.jsRadiusSM)
     }
 
     private var isFormValid: Bool {

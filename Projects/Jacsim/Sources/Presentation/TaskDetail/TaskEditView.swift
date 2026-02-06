@@ -12,7 +12,7 @@ public struct TaskEditView: View {
     }
 
     public var body: some View {
-        VStack(spacing: 24) {
+        VStack(spacing: .jsXL) {
             ZStack(alignment: .bottomTrailing) {
                 if let image = store.image {
                     Image(uiImage: image)
@@ -20,15 +20,16 @@ public struct TaskEditView: View {
                         .scaledToFill()
                         .frame(height: 220)
                         .clipped()
-                        .cornerRadius(12)
+                        .cornerRadius(.jsRadiusMD)
                 } else {
                     Rectangle()
                         .fill(Color.labelDisable)
                         .frame(height: 220)
-                        .cornerRadius(12)
+                        .cornerRadius(.jsRadiusMD)
                         .overlay(
                             Image(systemName: "camera")
-                                .font(.system(size: 40))
+                                .font(.jsDisplaySmall)
+                                .scaleEffect(1.6)
                                 .foregroundColor(.labelNeutral)
                         )
                 }
@@ -38,9 +39,10 @@ public struct TaskEditView: View {
                     matching: .images
                 ) {
                     Image(systemName: "plus.circle.fill")
-                        .font(.system(size: 44))
+                        .font(.jsDisplayLarge)
+                        .scaleEffect(1.3)
                         .foregroundColor(.primaryNormal)
-                        .background(Color.white)
+                        .background(Color.backgroundNormal)
                         .clipShape(Circle())
                         .padding(.jsXS)
                 }
@@ -54,30 +56,30 @@ public struct TaskEditView: View {
                     }
                 }
             }
-            .padding(.horizontal, 16)
+            .padding(.horizontal, .jsMD)
 
-            VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: .jsSM) {
                 TextField("작심 이름", text: $store.title)
-                    .font(.pretendardMedium(size: 16))
+                    .font(.jsBodyMedium)
                     .padding()
                     .background(Color.backgroundNormal)
-                    .cornerRadius(12)
+                    .cornerRadius(.jsRadiusMD)
                     .overlay(
-                        RoundedRectangle(cornerRadius: 12)
+                        RoundedRectangle(cornerRadius: .jsRadiusMD)
                             .stroke(Color.primaryNormal.opacity(0.5), lineWidth: 1)
                     )
 
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: .jsMicro) {
                     Text("성공 목표")
-                        .font(.pretendardMedium(size: 14))
+                        .font(.jsLabelMedium)
                         .foregroundColor(.labelNeutral)
                     Stepper("\(store.successTarget)회", value: $store.successTarget, in: 1...store.maxSuccessTarget)
-                        .font(.pretendardMedium(size: 16))
+                        .font(.jsBodyMedium)
                 }
 
-                VStack(alignment: .leading, spacing: 8) {
+                VStack(alignment: .leading, spacing: .jsXS) {
                     Toggle("알림 설정", isOn: $store.isAlarmEnabled)
-                        .font(.pretendardMedium(size: 16))
+                        .font(.jsBodyMedium)
 
                     if store.isAlarmEnabled {
                         DatePicker(
@@ -89,34 +91,34 @@ public struct TaskEditView: View {
                     }
                 }
             }
-            .padding(.horizontal, 16)
+            .padding(.horizontal, .jsMD)
 
             Spacer()
 
-            HStack(spacing: 12) {
+            HStack(spacing: .jsSM) {
                 Button(action: { store.send(.cancelButtonTapped) }) {
                     Text("취소")
-                        .font(.pretendardMedium(size: 16))
+                        .font(.jsButtonMedium)
                         .foregroundColor(.labelStrong)
                         .frame(maxWidth: .infinity)
                         .frame(height: 52)
                         .background(Color.backgroundNormal)
-                        .cornerRadius(12)
+                        .cornerRadius(.jsRadiusMD)
                 }
 
                 Button(action: { store.send(.saveButtonTapped) }) {
                     Text("저장")
-                        .font(.pretendardMedium(size: 16))
+                        .font(.jsButtonMedium)
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity)
                         .frame(height: 52)
                         .background(isSaveEnabled ? Color.primaryNormal : Color.labelDisable)
-                        .cornerRadius(12)
+                        .cornerRadius(.jsRadiusMD)
                 }
                 .disabled(!isSaveEnabled)
             }
-            .padding(.horizontal, 16)
-            .padding(.bottom, 16)
+            .padding(.horizontal, .jsMD)
+            .padding(.bottom, .jsMD)
         }
         .background(Color.backgroundNormal)
         .navigationTitle("작심 수정")

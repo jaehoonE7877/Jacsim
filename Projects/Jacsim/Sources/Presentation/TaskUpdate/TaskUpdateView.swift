@@ -13,7 +13,7 @@ public struct TaskUpdateView: View {
     public var body: some View {
         VStack(spacing: 0) {
             ScrollView {
-                VStack(spacing: 24) {
+                VStack(spacing: .jsXL) {
                     if store.isOverwriteMode {
                         overwriteBanner
                     }
@@ -28,8 +28,8 @@ public struct TaskUpdateView: View {
                     
                     Spacer(minLength: 100)
                 }
-                .padding(.horizontal, 16)
-                .padding(.top, 16)
+                .padding(.horizontal, .jsMD)
+                .padding(.top, .jsMD)
             }
             
             bottomCTASection
@@ -46,10 +46,10 @@ public struct TaskUpdateView: View {
     }
     
     private var overwriteBanner: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: .jsXS) {
             Image(systemName: "info.circle.fill")
                 .foregroundColor(.primaryNormal)
-                .font(.system(size: 16))
+                .font(.jsBodyMedium)
             
             Text("오늘 인증은 수정할 수 있어요")
                 .font(.jsBodySmall)
@@ -57,10 +57,10 @@ public struct TaskUpdateView: View {
             
             Spacer()
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
+        .padding(.horizontal, .jsMD)
+        .padding(.vertical, .jsSM)
         .background(Color.primaryNormal.opacity(0.1))
-        .cornerRadius(8)
+        .cornerRadius(.jsRadiusSM)
     }
     
     private var photoPickerSection: some View {
@@ -71,16 +71,16 @@ public struct TaskUpdateView: View {
                     .scaledToFill()
                     .frame(height: 300)
                     .clipped()
-                    .cornerRadius(12)
+                    .cornerRadius(.jsRadiusMD)
             } else {
                 Rectangle()
                     .fill(Color.backgroundStrong)
                     .frame(height: 300)
-                    .cornerRadius(12)
+                    .cornerRadius(.jsRadiusMD)
                     .overlay(
-                        VStack(spacing: 12) {
+                        VStack(spacing: .jsSM) {
                             Image(systemName: "photo")
-                                .font(.system(size: 40))
+                                .font(.pretendardSemiBold(size: 40))
                                 .foregroundColor(.labelAlternative)
                             
                             Text("사진을 추가해주세요")
@@ -98,9 +98,9 @@ public struct TaskUpdateView: View {
                 matching: .images
             ) {
                 Image(systemName: "plus.circle.fill")
-                    .font(.system(size: 44))
+                    .font(.pretendardSemiBold(size: 44))
                     .foregroundColor(.primaryNormal)
-                    .background(Color.white)
+                    .background(Color.backgroundNormal)
                     .clipShape(Circle())
                     .padding(.jsXS)
             }
@@ -111,14 +111,14 @@ public struct TaskUpdateView: View {
     }
     
     private var memoInputSection: some View {
-        VStack(alignment: .trailing, spacing: 8) {
+        VStack(alignment: .trailing, spacing: .jsXS) {
             TextField("짧게 기록해요 (선택)", text: $store.memo, axis: .vertical)
                 .font(.jsBodyMedium)
                 .padding()
                 .background(Color.backgroundStrong)
-                .cornerRadius(12)
+                .cornerRadius(.jsRadiusMD)
                 .overlay(
-                    RoundedRectangle(cornerRadius: 12)
+                    RoundedRectangle(cornerRadius: .jsRadiusMD)
                         .stroke(Color.primaryNormal.opacity(0.5), lineWidth: 1)
                 )
                 .lineLimit(2...4)
@@ -130,21 +130,21 @@ public struct TaskUpdateView: View {
     }
     
     private var errorMessage: some View {
-        HStack(spacing: 6) {
+        HStack(spacing: .jsXS) {
             Image(systemName: "exclamationmark.circle.fill")
-                .foregroundColor(.red)
-                .font(.system(size: 14))
+                .foregroundColor(.destructive)
+                .font(.jsLabelMedium)
             
             Text("저장에 실패했어요. 다시 시도해주세요")
                 .font(.jsBodySmall)
-                .foregroundColor(.red)
+                .foregroundColor(.destructive)
             
             Spacer()
         }
-        .padding(.horizontal, 12)
+        .padding(.horizontal, .jsSM)
         .padding(.vertical, 10)
-        .background(Color.red.opacity(0.1))
-        .cornerRadius(8)
+        .background(Color.destructive.opacity(0.12))
+        .cornerRadius(.jsRadiusSM)
     }
     
     private var bottomCTASection: some View {
@@ -157,8 +157,8 @@ public struct TaskUpdateView: View {
             ) {
                 store.send(.certifyButtonTapped)
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 16)
+            .padding(.horizontal, .jsMD)
+            .padding(.vertical, .jsMD)
         }
         .background(
             LinearGradient(
@@ -176,21 +176,21 @@ public struct TaskUpdateView: View {
     
     private var loadingOverlay: some View {
         ZStack {
-            Color.black.opacity(0.3)
+            Color.backgroundStrong.opacity(0.6)
                 .ignoresSafeArea()
             
-            VStack(spacing: 12) {
+            VStack(spacing: .jsSM) {
                 ProgressView()
-                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                    .progressViewStyle(CircularProgressViewStyle(tint: .primaryNormal))
                     .scaleEffect(1.5)
                 
                 Text("저장 중...")
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.white)
+                    .font(.jsButtonSmall)
+                    .foregroundColor(.labelStrong)
             }
             .padding(.jsXL)
             .background(.ultraThinMaterial)
-            .cornerRadius(16)
+            .cornerRadius(.jsRadiusLG)
         }
     }
     

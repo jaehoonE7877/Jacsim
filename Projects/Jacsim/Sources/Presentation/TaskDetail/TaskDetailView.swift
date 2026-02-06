@@ -68,7 +68,7 @@ public struct TaskDetailView: View {
                 }
             }
 
-            if showMinimizedHeader {
+            if let showMinimizedHeader {
                 minimizedHeader
                     .frame(height: minHeaderHeight)
                     .frame(maxWidth: .infinity)
@@ -102,7 +102,7 @@ public struct TaskDetailView: View {
         .navigationBarItems(
             leading: Button(action: { store.send(.backButtonTapped) }) {
                 Image(systemName: "chevron.left")
-                    .font(.system(size: 20, weight: .semibold))
+                    .font(.jsHeadlineMedium)
                     .foregroundColor(.white)
                     .frame(width: 44, height: 44)
             },
@@ -126,7 +126,7 @@ public struct TaskDetailView: View {
                 }
             } label: {
                 Image(systemName: "ellipsis")
-                    .font(.system(size: 20, weight: .semibold))
+                    .font(.jsHeadlineMedium)
                     .foregroundColor(.white)
                     .frame(width: 44, height: 44)
             }
@@ -190,8 +190,8 @@ public struct TaskDetailView: View {
         ZStack(alignment: .bottomLeading) {
             LinearGradient(
                 colors: [
-                    Color.black.opacity(0),
-                    Color.black.opacity(0.4)
+                    Color.surfaceOverlay.opacity(0),
+                    Color.surfaceOverlay.opacity(0.4)
                 ],
                 startPoint: .top,
                 endPoint: .bottom
@@ -250,8 +250,8 @@ public struct TaskDetailView: View {
 
             LinearGradient(
                 colors: [
-                    Color.black.opacity(0),
-                    Color.black.opacity(0.4)
+                    Color.surfaceOverlay.opacity(0),
+                    Color.surfaceOverlay.opacity(0.4)
                 ],
                 startPoint: .top,
                 endPoint: .bottom
@@ -409,12 +409,12 @@ public struct TaskDetailView: View {
             ) {
                 store.send(.certifyTodayTapped)
             }
-        } else if isTodayInRange && store.todayStatus == .certified {
+                } else if isTodayInRange && store.todayStatus == .certified {
             JSCard(style: .elevated, padding: 16) {
                 HStack(spacing: 12) {
                     Image(systemName: "checkmark.circle.fill")
                         .foregroundColor(.positive)
-                        .font(.system(size: 24))
+                        .font(.jsDisplaySmall)
                     
                     VStack(alignment: .leading, spacing: 4) {
                         Text("오늘 인증 완료!")
@@ -542,11 +542,11 @@ private struct DailyRecordRow: View {
             if data.isChecked {
                 Image(systemName: "checkmark.circle.fill")
                     .foregroundColor(.positive)
-                    .font(.system(size: 24))
+                    .font(.jsDisplaySmall)
             } else {
                 Image(systemName: "circle")
                     .foregroundColor(.labelDisable)
-                    .font(.system(size: 24))
+                    .font(.jsDisplaySmall)
             }
         }
         .padding(.jsSM)
@@ -570,10 +570,11 @@ private struct StageCompletionPopupView: View {
     let onDismiss: () -> Void
 
     @State private var animate = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         ZStack {
-            Color.black.opacity(0.45)
+            Color.surfaceOverlay.opacity(0.45)
                 .ignoresSafeArea()
                 .onTapGesture {
                     onDismiss()
@@ -618,8 +619,12 @@ private struct StageCompletionPopupView: View {
             .padding(.horizontal, .jsLG)
         }
         .onAppear {
-            withAnimation(.easeOut(duration: 1.2).repeatForever(autoreverses: false)) {
-                animate = true
+            if reduceMotion {
+                animate = false
+            } else {
+                withAnimation(.easeOut(duration: 1.2).repeatForever(autoreverses: false)) {
+                    animate = true
+                }
             }
         }
     }
