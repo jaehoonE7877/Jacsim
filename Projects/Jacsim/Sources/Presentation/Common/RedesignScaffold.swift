@@ -77,6 +77,8 @@ struct RedesignScreenScaffold<Content: View>: View {
     let subtitle: String?
     let state: RedesignScreenState
     let contentBottomInset: CGFloat
+    let scrollToID: AnyHashable?
+    let scrollAnchor: UnitPoint
     let content: Content
     private let stickyFooter: AnyView?
 
@@ -85,12 +87,16 @@ struct RedesignScreenScaffold<Content: View>: View {
         subtitle: String? = nil,
         state: RedesignScreenState = .content,
         contentBottomInset: CGFloat = .jsXXL,
+        scrollToID: AnyHashable? = nil,
+        scrollAnchor: UnitPoint = .top,
         @ViewBuilder content: () -> Content
     ) {
         self.title = title
         self.subtitle = subtitle
         self.state = state
         self.contentBottomInset = contentBottomInset
+        self.scrollToID = scrollToID
+        self.scrollAnchor = scrollAnchor
         self.content = content()
         self.stickyFooter = nil
     }
@@ -99,7 +105,9 @@ struct RedesignScreenScaffold<Content: View>: View {
         title: String,
         subtitle: String? = nil,
         state: RedesignScreenState = .content,
-        contentBottomInset: CGFloat = 132,
+        contentBottomInset: CGFloat = 132.jsScaled(),
+        scrollToID: AnyHashable? = nil,
+        scrollAnchor: UnitPoint = .top,
         @ViewBuilder stickyFooter: () -> StickyFooter,
         @ViewBuilder content: () -> Content
     ) {
@@ -107,22 +115,32 @@ struct RedesignScreenScaffold<Content: View>: View {
         self.subtitle = subtitle
         self.state = state
         self.contentBottomInset = contentBottomInset
+        self.scrollToID = scrollToID
+        self.scrollAnchor = scrollAnchor
         self.content = content()
         self.stickyFooter = AnyView(stickyFooter())
     }
 
     var body: some View {
         ZStack(alignment: .bottom) {
-            ScrollView(showsIndicators: false) {
-                VStack(alignment: .leading, spacing: .jsLG) {
-                    header
-                    stateContent
+            ScrollViewReader { proxy in
+                ScrollView(showsIndicators: false) {
+                    VStack(alignment: .leading, spacing: .jsLG) {
+                        header
+                        stateContent
+                    }
+                    .padding(.horizontal, .jsMD)
+                    .padding(.top, .jsLG)
+                    .padding(.bottom, contentBottomInset)
                 }
-                .padding(.horizontal, .jsMD)
-                .padding(.top, .jsLG)
-                .padding(.bottom, contentBottomInset)
+                .background(Color.backgroundNormal)
+                .onChange(of: scrollToID) { _, newValue in
+                    guard let newValue else { return }
+                    withAnimation(.easeInOut(duration: 0.24)) {
+                        proxy.scrollTo(newValue, anchor: scrollAnchor)
+                    }
+                }
             }
-            .background(Color.backgroundNormal)
 
             if let stickyFooter {
                 stickyFooter
