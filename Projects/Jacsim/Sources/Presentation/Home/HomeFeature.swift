@@ -66,7 +66,7 @@ public struct HomeFeature {
         case refreshTriggered
         case tasksResponse([Domain.Task])
         case heroImageLoaded(Data?)
-        case miniCardImageLoaded(index: Int, imageData: Data?)
+        case miniCardImageLoaded(taskID: UUID, imageData: Data?)
         case calendar(CalendarFeature.Action)
         case settingButtonTapped
         case addButtonTapped
@@ -235,9 +235,9 @@ public struct HomeFeature {
                         let heroImageData = await self.imageStore.loadImage(heroTask.mainImageKey)
                         await send(.heroImageLoaded(heroImageData))
                     }
-                    for (index, task) in remainingTasks.enumerated() {
+                    for task in remainingTasks {
                         let imageData = await self.imageStore.loadImage(task.mainImageKey)
-                        await send(.miniCardImageLoaded(index: index, imageData: imageData))
+                        await send(.miniCardImageLoaded(taskID: task.id.rawValue, imageData: imageData))
                     }
                 }
                 
@@ -266,7 +266,7 @@ public struct HomeFeature {
             case let .notificationTaskLoaded(task):
                 guard let task else { return .none }
                 if let index = task.dayArray.firstIndex(where: { Calendar.current.isDate($0, inSameDayAs: Date()) }) {
-                    let isCertifiable = task.records.indices.contains(index) ? !task.records[index].check : true
+                    let isCertifiable = !task.isCompleted(on: Date())
                     if isCertifiable {
                         state.path.append(.update(TaskUpdateFeature.State(task: task, index: index)))
                         return .none
@@ -296,8 +296,10 @@ public struct HomeFeature {
                 state.heroTaskImageData = imageData
                 return .none
 
-            case let .miniCardImageLoaded(index, imageData):
-                guard state.miniCardDisplayData.indices.contains(index) else { return .none }
+            case let .miniCardImageLoaded(taskID, imageData):
+                guard let index = state.miniCardDisplayData.firstIndex(where: { $0.id == taskID }) else {
+                    return .none
+                }
                 let currentData = state.miniCardDisplayData[index]
                 state.miniCardDisplayData[index] = State.MiniCardDisplayData(
                     id: currentData.id,
