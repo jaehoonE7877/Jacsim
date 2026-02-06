@@ -5,14 +5,23 @@ import DSKit
 import _Concurrency
 
 public struct HomeView: View {
-     @Bindable var store: StoreOf<HomeFeature>
-     @State private var tapFeedbackTrigger = 0
-     @State private var isFabCollapsed = false
-     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    private enum FabState {
+        case expanded
+        case collapsed
+        case hidden
+    }
+
+    @Bindable var store: StoreOf<HomeFeature>
+    @State private var tapFeedbackTrigger = 0
+    @State private var fabState: FabState = .expanded
+    @State private var previousScrollOffset: CGFloat = 0
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private var fabHeight: CGFloat { 56.jsScaled() }
-    private var fabCollapseThreshold: CGFloat { -80.jsScaled() }
-    private var fabExpandThreshold: CGFloat { -24.jsScaled() }
+    private var fabCollapseThreshold: CGFloat { -56.jsScaled() }
+    private var fabHiddenThreshold: CGFloat { -148.jsScaled() }
+    private var fabExpandThreshold: CGFloat { -20.jsScaled() }
+    private var scrollDeltaDeadZone: CGFloat { 3.jsScaled() }
 
     public init(store: StoreOf<HomeFeature>) {
         self.store = store
@@ -83,6 +92,7 @@ public struct HomeView: View {
         .animation(reduceMotion ? .none : .easeInOut(duration: 0.25), value: store.toastMessage)
         .sheet(item: $store.scope(state: \.destination?.challengeCreate, action: \.destination.challengeCreate)) { store in
             ChallengeCreateView(store: store)
+                .presentationDragIndicator(.visible)
         }
         .alert($store.scope(state: \.migrationAlert, action: \.migrationAlert))
         .sensoryFeedback(.impact(weight: .light), trigger: tapFeedbackTrigger)
@@ -98,7 +108,7 @@ public struct HomeView: View {
                     .font(.system(size: 19.jsScaled(.displayTypography), weight: .semibold))
                     .foregroundColor(.white)
 
-                if !isFabCollapsed {
+                if fabState == .expanded {
                     Text("새 TODO")
                         .font(.jsButtonMedium)
                         .foregroundColor(.white)
@@ -107,7 +117,7 @@ public struct HomeView: View {
                 }
             }
             .frame(height: fabHeight)
-            .padding(.horizontal, isFabCollapsed ? .jsMD : .jsLG)
+            .padding(.horizontal, fabState == .expanded ? .jsLG : .jsMD)
             .background(
                 Capsule()
                     .fill(Color.primaryNormal)
@@ -120,6 +130,15 @@ public struct HomeView: View {
             .contentShape(Capsule())
         }
         .pressEffect()
+        .opacity(fabState == .hidden ? 0 : 1)
+        .scaleEffect(fabState == .hidden ? 0.92 : 1)
+        .offset(y: fabState == .hidden ? 24.jsScaled() : 0)
+        .allowsHitTesting(fabState != .hidden)
+        .accessibilityHidden(fabState == .hidden)
+        .animation(
+            reduceMotion ? .none : .spring(response: 0.28, dampingFraction: 0.88),
+            value: fabState
+        )
         .accessibilityLabel("새 TODO 만들기")
         .accessibilityHint("새 할 일 추가 화면을 엽니다")
     }
@@ -233,10 +252,9 @@ public struct HomeView: View {
                         .padding(.horizontal, .jsXL)
                 }
                 
-                Spacer(minLength: 100.jsScaled())
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.bottom, .jsXL)
+            .padding(.bottom, contentBottomPadding)
             .animation(
                 reduceMotion ? .none : .easeInOut(duration: 0.22),
                 value: store.isLoading
@@ -440,26 +458,56 @@ public struct HomeView: View {
     }
 
     private func updateFabState(for offset: CGFloat) {
-        if offset < fabCollapseThreshold {
-            setFabCollapsed(true)
-        } else if offset > fabExpandThreshold {
-            setFabCollapsed(false)
-        }
-    }
+        let delta = offset - previousScrollOffset
+        previousScrollOffset = offset
 
-    private func setFabCollapsed(_ collapsed: Bool) {
-        guard isFabCollapsed != collapsed else { return }
-        if reduceMotion {
-            isFabCollapsed = collapsed
-        } else {
-            withAnimation(.spring(response: 0.28, dampingFraction: 0.88)) {
-                isFabCollapsed = collapsed
+        guard abs(delta) > scrollDeltaDeadZone else { return }
+
+        switch fabState {
+        case .expanded:
+            if offset < fabCollapseThreshold {
+                setFabState(.collapsed)
+            }
+        case .collapsed:
+            if offset < fabHiddenThreshold && delta < 0 {
+                setFabState(.hidden)
+            } else if offset > fabExpandThreshold {
+                setFabState(.expanded)
+            }
+        case .hidden:
+            if delta > 0 {
+                if offset > fabExpandThreshold {
+                    setFabState(.expanded)
+                } else {
+                    setFabState(.collapsed)
+                }
             }
         }
     }
 
+    private func setFabState(_ state: FabState) {
+        guard fabState != state else { return }
+        fabState = state
+    }
+
+    private var contentBottomPadding: CGFloat {
+        switch fabState {
+        case .expanded:
+            return .jsSM
+        case .collapsed, .hidden:
+            return .jsXS
+        }
+    }
+
     private var toastBottomPadding: CGFloat {
-        isFabCollapsed ? 96.jsScaled() : 116.jsScaled()
+        switch fabState {
+        case .expanded:
+            return 116.jsScaled()
+        case .collapsed:
+            return 96.jsScaled()
+        case .hidden:
+            return 40.jsScaled()
+        }
     }
 
     private var overallProgress: Double {
