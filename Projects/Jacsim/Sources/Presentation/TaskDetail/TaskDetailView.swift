@@ -68,7 +68,7 @@ public struct TaskDetailView: View {
                 }
             }
 
-            if let showMinimizedHeader {
+            if showMinimizedHeader {
                 minimizedHeader
                     .frame(height: minHeaderHeight)
                     .frame(maxWidth: .infinity)
