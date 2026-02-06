@@ -5,6 +5,7 @@ import DSKit
 
 public struct AllTaskView: View {
     let store: StoreOf<AllTaskFeature>
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     public init(store: StoreOf<AllTaskFeature>) {
         self.store = store
@@ -121,7 +122,11 @@ public struct AllTaskView: View {
             subtitle: "\(tasks.count)개"
         ) {
             VStack(spacing: .jsXS) {
-                Button(action: toggleAction) {
+                Button {
+                    withAnimation(foldAnimation) {
+                        toggleAction()
+                    }
+                } label: {
                     HStack(spacing: .jsSM) {
                         Image(systemName: icon)
                             .foregroundColor(iconColor)
@@ -129,9 +134,11 @@ public struct AllTaskView: View {
 
                         Spacer()
 
-                        Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
+                        Image(systemName: "chevron.down")
                             .font(.jsButtonSmall)
                             .foregroundColor(.labelNeutral)
+                            .rotationEffect(.degrees(isExpanded ? 180 : 0))
+                            .animation(foldAnimation, value: isExpanded)
                     }
                     .padding(.vertical, .jsXS)
                 }
@@ -148,9 +155,32 @@ public struct AllTaskView: View {
                         }
                     }
                     .padding(.top, .jsXS)
+                    .clipped()
+                    .transition(foldTransition)
                 }
             }
         }
+    }
+
+    private var foldAnimation: Animation {
+        reduceMotion ? .linear(duration: 0.12) : .easeInOut(duration: 0.24)
+    }
+
+    private var foldTransition: AnyTransition {
+        if reduceMotion {
+            return .opacity
+        }
+
+        return .asymmetric(
+            insertion: .modifier(
+                active: FoldTransitionModifier(opacity: 0.0, scaleY: 0.96, yOffset: -8),
+                identity: FoldTransitionModifier(opacity: 1.0, scaleY: 1.0, yOffset: 0)
+            ),
+            removal: .modifier(
+                active: FoldTransitionModifier(opacity: 0.0, scaleY: 0.96, yOffset: -8),
+                identity: FoldTransitionModifier(opacity: 1.0, scaleY: 1.0, yOffset: 0)
+            )
+        )
     }
 
     private func taskRow(task: Domain.Task) -> some View {
@@ -194,7 +224,7 @@ public struct AllTaskView: View {
                 .font(.jsHeadlineSmall)
                 .foregroundColor(color)
         }
-        .frame(maxWidth: .infinity, minHeight: 72)
+        .frame(maxWidth: .infinity, minHeight: 72.jsScaled())
         .background(
             RoundedRectangle(cornerRadius: .jsRadiusMD)
                 .fill(color.opacity(0.1))
@@ -221,6 +251,20 @@ public struct AllTaskView: View {
         let start = formatter.string(from: task.startDate)
         let end = formatter.string(from: task.endDate)
         return "\(start) - \(end)"
+    }
+}
+
+private struct FoldTransitionModifier: ViewModifier {
+    let opacity: CGFloat
+    let scaleY: CGFloat
+    let yOffset: CGFloat
+
+    func body(content: Content) -> some View {
+        content
+            .opacity(opacity)
+            .scaleEffect(x: 1.0, y: scaleY, anchor: .top)
+            .offset(y: yOffset)
+            .clipped()
     }
 }
 

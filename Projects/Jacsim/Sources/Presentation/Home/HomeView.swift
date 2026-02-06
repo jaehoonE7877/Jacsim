@@ -7,7 +7,12 @@ import _Concurrency
 public struct HomeView: View {
      @Bindable var store: StoreOf<HomeFeature>
      @State private var tapFeedbackTrigger = 0
+     @State private var isFabCollapsed = false
      @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    private var fabHeight: CGFloat { 56.jsScaled() }
+    private var fabCollapseThreshold: CGFloat { -80.jsScaled() }
+    private var fabExpandThreshold: CGFloat { -24.jsScaled() }
 
     public init(store: StoreOf<HomeFeature>) {
         self.store = store
@@ -45,23 +50,35 @@ public struct HomeView: View {
     }
 
     private var mainContent: some View {
-        ZStack(alignment: .bottom) {
+        ZStack {
             Color.backgroundNormal.ignoresSafeArea()
 
             contentVStack
-
-            addButton
         }
         .onAppear { store.send(.onAppear) }
         .overlay(alignment: .bottom) {
             if let message = store.toastMessage {
-                toastView(message: message)
+                RedesignToastView(
+                    payload: .success(message),
+                    bottomPadding: toastBottomPadding
+                )
                     .transition(.move(edge: .bottom).combined(with: .opacity))
                     .task {
-                        try? await _Concurrency.Task.sleep(nanoseconds: 2_000_000_000)
+                        try? await _Concurrency.Task.sleep(
+                            nanoseconds: RedesignToastView.defaultDismissNanoseconds
+                        )
                         store.send(.toastDismissed)
-                    }
+                }
             }
+        }
+        .safeAreaInset(edge: .bottom) {
+            HStack {
+                Spacer()
+                addButton
+            }
+            .padding(.top, .jsXS)
+            .padding(.trailing, .jsMD)
+            .padding(.bottom, .jsSM)
         }
         .animation(reduceMotion ? .none : .easeInOut(duration: 0.25), value: store.toastMessage)
         .sheet(item: $store.scope(state: \.destination?.challengeCreate, action: \.destination.challengeCreate)) { store in
@@ -76,19 +93,35 @@ public struct HomeView: View {
             store.send(.addButtonTapped)
             triggerTapFeedback()
         }) {
-            Image(systemName: "plus")
-                .font(.jsDisplaySmall)
-                .foregroundColor(.white)
-                .frame(width: 64, height: 64)
-                .background(Color.primaryNormal)
-                .clipShape(Circle())
-                .shadow(color: .primaryNormal.opacity(0.3), radius: 12, x: 0, y: 6)
-                .contentShape(Circle())
+            HStack(spacing: .jsXS) {
+                Image(systemName: "plus")
+                    .font(.system(size: 19.jsScaled(.displayTypography), weight: .semibold))
+                    .foregroundColor(.white)
+
+                if !isFabCollapsed {
+                    Text("새 TODO")
+                        .font(.jsButtonMedium)
+                        .foregroundColor(.white)
+                        .lineLimit(1)
+                        .transition(.opacity.combined(with: .move(edge: .trailing)))
+                }
+            }
+            .frame(height: fabHeight)
+            .padding(.horizontal, isFabCollapsed ? .jsMD : .jsLG)
+            .background(
+                Capsule()
+                    .fill(Color.primaryNormal)
+            )
+            .overlay(
+                Capsule()
+                    .stroke(Color.white.opacity(0.16), lineWidth: 1)
+            )
+            .shadow(color: .primaryNormal.opacity(0.26), radius: 14.jsScaled(), x: 0, y: 8.jsScaled())
+            .contentShape(Capsule())
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
-        .padding(.trailing, .jsMD)
-        .padding(.bottom, .jsMD)
         .pressEffect()
+        .accessibilityLabel("새 TODO 만들기")
+        .accessibilityHint("새 할 일 추가 화면을 엽니다")
     }
 
     private func triggerTapFeedback() {
@@ -124,7 +157,7 @@ public struct HomeView: View {
                         Image(systemName: "gearshape.fill")
                             .font(.jsHeadlineLarge)
                             .foregroundColor(.labelAlternative)
-                            .frame(width: 44, height: 44)
+                            .frame(width: 44.jsScaled(.touchTarget), height: 44.jsScaled(.touchTarget))
                     }
                     .buttonStyle(PlainButtonStyle())
                     .zIndex(10)
@@ -134,11 +167,13 @@ public struct HomeView: View {
 
                 if store.isLoading && store.tasks.isEmpty {
                     skeletonContent
+                        .transition(.opacity)
                 } else if let heroTask = store.heroTask {
                     let remainingTasks = Array(store.activeTasks.dropFirst())
                     if PresentationRedesignFlags.isEnabled(.home) &&
                         PresentationRedesignFlags.isSectionEnabled(.homeSummary) {
                         homeSummaryCard
+                            .transition(.opacity)
                     }
                     VStack(alignment: .leading, spacing: .jsMD) {
                         let heroImage = store.heroTaskImageData.flatMap { UIImage(data: $0) }.map { Image(uiImage: $0) }
@@ -155,8 +190,9 @@ public struct HomeView: View {
                                 triggerTapFeedback()
                             }
                         )
-                        .pressEffect()
+                        .frame(maxWidth: .infinity)
                     }
+                    .frame(maxWidth: .infinity)
                     .padding(.horizontal, .jsXL)
                     
                     if !remainingTasks.isEmpty &&
@@ -182,9 +218,8 @@ public struct HomeView: View {
                             
                             JSMiniHeroCardCarousel(
                                 cards: makeMiniHeroCardData(from: store.miniCardDisplayData),
-                                onCardTap: { index in
-                                    guard remainingTasks.indices.contains(index) else { return }
-                                    let task = remainingTasks[index]
+                                onCardTap: { cardID in
+                                    guard let task = remainingTasks.first(where: { $0.id.rawValue == cardID }) else { return }
                                     store.send(.taskTapped(task))
                                     triggerTapFeedback()
                                 }
@@ -194,13 +229,30 @@ public struct HomeView: View {
                     }
                 } else {
                     emptyStateView
-                        .padding(.top, 40)
+                        .padding(.top, 40.jsScaled())
                         .padding(.horizontal, .jsXL)
                 }
                 
-                Spacer(minLength: 100)
+                Spacer(minLength: 100.jsScaled())
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.bottom, .jsXL)
+            .animation(
+                reduceMotion ? .none : .easeInOut(duration: 0.22),
+                value: store.isLoading
+            )
+            .background(
+                GeometryReader { proxy in
+                    Color.clear.preference(
+                        key: HomeScrollOffsetPreferenceKey.self,
+                        value: proxy.frame(in: .named("homeScrollView")).minY
+                    )
+                }
+            )
+        }
+        .coordinateSpace(name: "homeScrollView")
+        .onPreferenceChange(HomeScrollOffsetPreferenceKey.self) { offset in
+            updateFabState(for: offset)
         }
     }
 
@@ -209,7 +261,7 @@ public struct HomeView: View {
     private var emptyStateView: some View {
         VStack(spacing: .jsXL) {
             Image(systemName: "square.text.square.fill")
-                .font(.pretendardBold(size: 64))
+                .font(.jsDisplayScaledBold(size: 64))
                 .foregroundColor(Color.labelAssistive)
 
             VStack(spacing: .jsXS) {
@@ -229,7 +281,7 @@ public struct HomeView: View {
                 Text("작심 시작하기")
                     .font(.jsButtonMedium)
                     .foregroundColor(.white)
-                    .frame(height: 50)
+                    .frame(height: 50.jsScaled())
                     .frame(maxWidth: .infinity)
                     .background(Color.primaryNormal)
                     .cornerRadius(.jsRadiusMD)
@@ -237,11 +289,11 @@ public struct HomeView: View {
             .padding(.horizontal, .jsXL)
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, 40)
+        .padding(.vertical, 40.jsScaled())
         .background(
-            RoundedRectangle(cornerRadius: 24)
+            RoundedRectangle(cornerRadius: 24.jsScaled())
                 .fill(Color.backgroundStrong)
-                .shadow(color: Color.labelStrong.opacity(0.05), radius: 10, x: 0, y: 4)
+                .shadow(color: Color.labelStrong.opacity(0.05), radius: 10.jsScaled(), x: 0, y: 4.jsScaled())
         )
     }
 
@@ -280,7 +332,7 @@ public struct HomeView: View {
                 .font(.jsHeadlineSmall)
                 .foregroundColor(color)
         }
-        .frame(maxWidth: .infinity, minHeight: 72)
+        .frame(maxWidth: .infinity, minHeight: 72.jsScaled())
         .background(
             RoundedRectangle(cornerRadius: .jsRadiusMD)
                 .fill(color.opacity(0.08))
@@ -305,48 +357,109 @@ public struct HomeView: View {
     }
 
     private var skeletonContent: some View {
-        VStack(alignment: .leading, spacing: 24) {
+        VStack(alignment: .leading, spacing: 24.jsScaled()) {
+            if PresentationRedesignFlags.isEnabled(.home) &&
+                PresentationRedesignFlags.isSectionEnabled(.homeSummary) {
+                homeSummarySkeleton
+            }
+
             JSHeroCardSkeleton()
-                .padding(.horizontal, 24)
+                .padding(.horizontal, 24.jsScaled())
 
-            VStack(alignment: .leading, spacing: 16) {
-                HStack {
-                    RoundedRectangle(cornerRadius: 8)
-                        .frame(width: 140, height: 20)
-                        .skeleton(shape: RoundedRectangle(cornerRadius: 8))
+            if PresentationRedesignFlags.isSectionEnabled(.homeMiniCards) {
+                VStack(alignment: .leading, spacing: 16.jsScaled()) {
+                    HStack {
+                        RoundedRectangle(cornerRadius: 8)
+                            .frame(width: 140.jsScaled(), height: 20.jsScaled())
+                            .skeleton(shape: RoundedRectangle(cornerRadius: 8))
 
-                    Spacer()
+                        Spacer()
 
-                    RoundedRectangle(cornerRadius: 6)
-                        .frame(width: 60, height: 16)
-                        .skeleton(shape: RoundedRectangle(cornerRadius: 6))
-                }
-                .padding(.horizontal, 24)
-
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 12) {
-                        JSMiniCardSkeleton()
-                        JSMiniCardSkeleton()
-                        JSMiniCardSkeleton()
+                        RoundedRectangle(cornerRadius: 6)
+                            .frame(width: 60.jsScaled(), height: 16.jsScaled())
+                            .skeleton(shape: RoundedRectangle(cornerRadius: 6))
                     }
-                    .padding(.horizontal, 20)
-                    .padding(.vertical, 4)
+                    .padding(.horizontal, 24.jsScaled())
+
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 12.jsScaled()) {
+                            JSMiniCardSkeleton()
+                            JSMiniCardSkeleton()
+                            JSMiniCardSkeleton()
+                        }
+                        .padding(.horizontal, 20.jsScaled())
+                        .padding(.vertical, 4.jsScaled())
+                    }
+                    .frame(height: 200.jsScaled())
+                    .padding(.horizontal, 0)
                 }
-                .padding(.horizontal, 0)
             }
         }
     }
 
-    private func toastView(message: String) -> some View {
-        Text(message)
-            .font(.jsBodyMedium)
-            .foregroundColor(.labelStrong)
-            .padding(.horizontal, .jsMD)
-            .padding(.vertical, 10)
-            .background(Color.backgroundAlternative.opacity(0.95))
-            .cornerRadius(.jsRadiusLG)
-            .padding(.bottom, .jsXL)
-            .padding(.horizontal, .jsXL)
+    private var homeSummarySkeleton: some View {
+        VStack(alignment: .leading, spacing: .jsSM) {
+            RoundedRectangle(cornerRadius: 8)
+                .frame(width: 72.jsScaled(), height: 20.jsScaled())
+                .skeleton(shape: RoundedRectangle(cornerRadius: 8))
+
+            RoundedRectangle(cornerRadius: 6)
+                .frame(width: 160.jsScaled(), height: 14.jsScaled())
+                .skeleton(shape: RoundedRectangle(cornerRadius: 6))
+
+            HStack(spacing: .jsSM) {
+                summaryMetricSkeleton
+                summaryMetricSkeleton
+                summaryMetricSkeleton
+            }
+            .padding(.top, .jsXS)
+        }
+        .padding(.jsMD)
+        .background(
+            RoundedRectangle(cornerRadius: .jsRadiusMD)
+                .fill(Color.backgroundStrong)
+        )
+        .padding(.horizontal, .jsXL)
+    }
+
+    private var summaryMetricSkeleton: some View {
+        VStack(spacing: .jsMicro) {
+            RoundedRectangle(cornerRadius: 4)
+                .frame(width: 44.jsScaled(), height: 12.jsScaled())
+                .skeleton(shape: RoundedRectangle(cornerRadius: 4))
+
+            RoundedRectangle(cornerRadius: 6)
+                .frame(width: 52.jsScaled(), height: 20.jsScaled())
+                .skeleton(shape: RoundedRectangle(cornerRadius: 6))
+        }
+        .frame(maxWidth: .infinity, minHeight: 72.jsScaled())
+        .background(
+            RoundedRectangle(cornerRadius: .jsRadiusMD)
+                .fill(Color.backgroundAlternative)
+        )
+    }
+
+    private func updateFabState(for offset: CGFloat) {
+        if offset < fabCollapseThreshold {
+            setFabCollapsed(true)
+        } else if offset > fabExpandThreshold {
+            setFabCollapsed(false)
+        }
+    }
+
+    private func setFabCollapsed(_ collapsed: Bool) {
+        guard isFabCollapsed != collapsed else { return }
+        if reduceMotion {
+            isFabCollapsed = collapsed
+        } else {
+            withAnimation(.spring(response: 0.28, dampingFraction: 0.88)) {
+                isFabCollapsed = collapsed
+            }
+        }
+    }
+
+    private var toastBottomPadding: CGFloat {
+        isFabCollapsed ? 96.jsScaled() : 116.jsScaled()
     }
 
     private var overallProgress: Double {
@@ -363,6 +476,14 @@ public struct HomeView: View {
 
     private var todayLabel: String {
         DateFormatType.toString(Date(), to: .fullWithoutYear)
+    }
+}
+
+private struct HomeScrollOffsetPreferenceKey: PreferenceKey {
+    static var defaultValue: CGFloat = 0
+
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = nextValue()
     }
 }
 

@@ -92,7 +92,7 @@ public struct CalendarView: View {
     private var emptyStateView: some View {
         VStack(spacing: .jsMD) {
             Image(systemName: "calendar.badge.exclamationmark")
-                .font(.pretendardSemiBold(size: 48))
+                .font(.jsDisplayScaledSemiBold(size: 48))
                 .foregroundColor(.labelAssistive)
             Text("이 날은 작심이 없어요")
                 .font(.jsBodyMedium)

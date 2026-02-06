@@ -66,7 +66,7 @@ public struct HomeFeature {
         case refreshTriggered
         case tasksResponse([Domain.Task])
         case heroImageLoaded(Data?)
-        case miniCardImageLoaded(index: Int, imageData: Data?)
+        case miniCardImageLoaded(id: UUID, imageData: Data?)
         case calendar(CalendarFeature.Action)
         case settingButtonTapped
         case addButtonTapped
@@ -141,6 +141,14 @@ public struct HomeFeature {
     @Dependency(\.activeTaskService) var activeTaskService
     @Dependency(\.imageStore) var imageStore
 
+    private enum LoadingPolicy {
+        static let minimumSkeletonDuration: TimeInterval = 1.1
+    }
+
+    private enum CancelID {
+        case imageLoading
+    }
+
     public var body: some ReducerOf<Self> {
         BindingReducer()
         Scope(state: \.calendar, action: \.calendar) {
@@ -164,9 +172,9 @@ public struct HomeFeature {
                         let completedCount = firstTask.records.filter { $0.check }.count
                         Logger.homeFirstTaskDetails(title: firstTask.title, totalRecords: firstTask.records.count, completedRecords: completedCount)
                     }
-                    // Ensure minimum skeleton display duration of 1.5 seconds
+                    // Ensure minimum skeleton display duration for stable loading perception.
                     let elapsed = Date().timeIntervalSince(fetchStartTime)
-                    let minDisplay: TimeInterval = 1.5
+                    let minDisplay = LoadingPolicy.minimumSkeletonDuration
                     let remaining = minDisplay - elapsed
                     if remaining > 0 {
                         try await _Concurrency.Task.sleep(nanoseconds: UInt64(remaining * 1_000_000_000))
@@ -188,7 +196,12 @@ public struct HomeFeature {
                         }
                     }
                 } : .none
-                return .merge(fetchEffect, notificationEffect, deepLinkEffect)
+                return .merge(
+                    .cancel(id: CancelID.imageLoading),
+                    fetchEffect,
+                    notificationEffect,
+                    deepLinkEffect
+                )
 
             case let .dateSelected(date):
                 state.selectedDate = date
@@ -196,10 +209,13 @@ public struct HomeFeature {
 
             case .refreshTriggered:
                 state.isRefreshing = true
-                return .run { [taskRepository] send in
-                    let tasks = try await taskRepository.fetchActiveTasks()
-                    await send(.tasksResponse(tasks))
-                }
+                return .merge(
+                    .cancel(id: CancelID.imageLoading),
+                    .run { [taskRepository] send in
+                        let tasks = try await taskRepository.fetchActiveTasks()
+                        await send(.tasksResponse(tasks))
+                    }
+                )
                 
             case let .tasksResponse(tasks):
                 let processStartTime = Date()
@@ -235,11 +251,12 @@ public struct HomeFeature {
                         let heroImageData = await self.imageStore.loadImage(heroTask.mainImageKey)
                         await send(.heroImageLoaded(heroImageData))
                     }
-                    for (index, task) in remainingTasks.enumerated() {
+                    for task in remainingTasks {
                         let imageData = await self.imageStore.loadImage(task.mainImageKey)
-                        await send(.miniCardImageLoaded(index: index, imageData: imageData))
+                        await send(.miniCardImageLoaded(id: task.id.rawValue, imageData: imageData))
                     }
                 }
+                .cancellable(id: CancelID.imageLoading, cancelInFlight: true)
                 
             case .settingButtonTapped:
                 state.path.append(.setting(SettingFeature.State()))
@@ -296,10 +313,12 @@ public struct HomeFeature {
                 state.heroTaskImageData = imageData
                 return .none
 
-            case let .miniCardImageLoaded(index, imageData):
-                guard state.miniCardDisplayData.indices.contains(index) else { return .none }
-                let currentData = state.miniCardDisplayData[index]
-                state.miniCardDisplayData[index] = State.MiniCardDisplayData(
+            case let .miniCardImageLoaded(id, imageData):
+                guard let targetIndex = state.miniCardDisplayData.firstIndex(where: { $0.id == id }) else {
+                    return .none
+                }
+                let currentData = state.miniCardDisplayData[targetIndex]
+                state.miniCardDisplayData[targetIndex] = State.MiniCardDisplayData(
                     id: currentData.id,
                     title: currentData.title,
                     progress: currentData.progress,
