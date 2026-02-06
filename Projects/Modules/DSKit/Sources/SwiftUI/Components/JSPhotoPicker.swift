@@ -120,6 +120,7 @@ public struct JSPhotoPicker: View {
         }
         .sheet(isPresented: $showImagePicker) {
             ImagePicker(sourceType: sourceType, selectedImage: $selectedImage, onImageSelected: onImageSelected)
+                .presentationDragIndicator(.visible)
         }
     }
 
