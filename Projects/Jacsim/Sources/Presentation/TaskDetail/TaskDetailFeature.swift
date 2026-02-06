@@ -166,17 +166,11 @@ public struct TaskDetailFeature {
                 return .none
                 
             case .changePhotoButtonTapped:
-                state.editTask = TaskEditFeature.State(
-                    task: state.task,
-                    maxSuccessTarget: state.task.stages.last?.durationDays ?? 3
-                )
+                state.editTask = TaskEditFeature.State(task: state.task)
                 return .none
                 
             case .notificationSettingsButtonTapped:
-                state.editTask = TaskEditFeature.State(
-                    task: state.task,
-                    maxSuccessTarget: state.task.stages.last?.durationDays ?? 3
-                )
+                state.editTask = TaskEditFeature.State(task: state.task)
                 return .none
                 
             case .editMemoButtonTapped:
@@ -272,17 +266,15 @@ public struct TaskDetailFeature {
                 return .none
 
             case .editButtonTapped:
-                state.editTask = TaskEditFeature.State(
-                    task: state.task,
-                    maxSuccessTarget: state.task.stages.last?.durationDays ?? 3
-                )
+                state.editTask = TaskEditFeature.State(task: state.task)
                 return .none
 
-            case let .editTask(.presented(.delegate(.saved(title, successTarget, image, isAlarmEnabled, alarmDate)))):
+            case let .editTask(.presented(.delegate(.saved(title, image, isAlarmEnabled, alarmDate)))):
                 let task = state.task
+                let durationDays = task.currentStage?.durationDays ?? task.stages.last?.durationDays ?? 3
                 state.editTask = nil
-                return .run { [jacsimClient, imageStore, task] send in
-                    await jacsimClient.updateTaskInfo(task, title, successTarget, isAlarmEnabled, alarmDate)
+                return .run { [jacsimClient, imageStore, task, durationDays] send in
+                    await jacsimClient.updateTaskInfo(task, title, durationDays, isAlarmEnabled, alarmDate)
                     if let image {
                         let data = image.jpegData(compressionQuality: 0.4)
                         if let data {
