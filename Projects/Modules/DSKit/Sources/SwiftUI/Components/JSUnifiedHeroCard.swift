@@ -109,7 +109,7 @@ public struct JSUnifiedHeroCard: View {
             .frame(height: 320)
             .background(
                 RoundedRectangle(cornerRadius: 20)
-                    .fill(DSKitAsset.Colors.surfacePrimary.swiftUIColor)
+                    .fill(Color.surfaceElevated)
                     .jsShadow(.medium)
             )
         }

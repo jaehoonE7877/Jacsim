@@ -96,7 +96,7 @@ public struct JSUnifiedMiniCard: View {
                         .frame(height: 6)
                     
                     Capsule()
-                        .fill(DSKitAsset.Colors.primaryNormal.swiftUIColor)
+                        .fill(Color.primaryNormal)
                         .frame(width: geo.size.width * CGFloat(progress), height: 6)
                 }
             }

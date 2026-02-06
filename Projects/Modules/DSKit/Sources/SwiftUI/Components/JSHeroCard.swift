@@ -36,7 +36,7 @@ public struct JSHeroCard: View {
             .padding(16)
             .background(
                 RoundedRectangle(cornerRadius: 12)
-                    .fill(DSKitAsset.Colors.surfacePrimary.swiftUIColor)
+                    .fill(Color.surfaceElevated)
                     .jsShadow(.medium)
             )
         }
@@ -57,8 +57,8 @@ public struct JSHeroCard: View {
                         .fill(
                             LinearGradient(
                                 colors: [
-                                    DSKitAsset.Colors.primaryNormal.swiftUIColor.opacity(0.8),
-                                    DSKitAsset.Colors.primaryNormal.swiftUIColor
+                                    Color.primaryNormal.opacity(0.8),
+                                    Color.primaryNormal
                                 ],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
@@ -70,7 +70,7 @@ public struct JSHeroCard: View {
             .clipShape(RoundedRectangle(cornerRadius: 8))
 
             LinearGradient(
-                colors: [.clear, DSKitAsset.Colors.dim.swiftUIColor.opacity(0.6)],
+                colors: [.clear, Color.surfaceOverlay.opacity(0.6)],
                 startPoint: .top,
                 endPoint: .bottom
             )
@@ -98,24 +98,24 @@ public struct JSHeroCard: View {
         VStack(alignment: .leading, spacing: 8) {
             Text(title)
                 .font(.jsHeadline18Bold)
-                .foregroundColor(DSKitAsset.Colors.textPrimary.swiftUIColor)
+                .foregroundColor(Color.labelNormal)
                 .lineLimit(1)
 
             if let subtitle = subtitle {
                 Text(subtitle)
                     .font(.jsBody14Regular)
-                    .foregroundColor(DSKitAsset.Colors.textSecondary.swiftUIColor)
+                    .foregroundColor(Color.labelNeutral)
                     .lineLimit(2)
             }
 
             HStack(spacing: 12) {
                 ProgressView(value: progress)
-                    .progressViewStyle(LinearProgressViewStyle(tint: DSKitAsset.Colors.primaryNormal.swiftUIColor))
+                    .progressViewStyle(LinearProgressViewStyle(tint: Color.primaryNormal))
                     .frame(height: 4)
 
                 Text("\(Int(progress * 100))%")
                     .font(.jsLabel12Bold)
-                    .foregroundColor(DSKitAsset.Colors.primaryNormal.swiftUIColor)
+                    .foregroundColor(Color.primaryNormal)
                     .frame(width: 36, alignment: .trailing)
             }
             .padding(.top, 4)
@@ -156,6 +156,6 @@ struct JSHeroCard_Previews: PreviewProvider {
             }
             .padding()
         }
-        .background(DSKitAsset.Colors.backgroundPrimary.swiftUIColor)
+        .background(Color.backgroundNormal)
     }
 }

@@ -24,7 +24,7 @@ public struct JSFloatButton: View {
     public var body: some View {
         ZStack(alignment: .bottomTrailing) {
             if isExpanded {
-                DSKitAsset.Colors.surfaceOverlay.swiftUIColor.opacity(0.15)
+                Color.surfaceOverlay.opacity(0.15)
                     .ignoresSafeArea()
                     .onTapGesture {
                         withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
@@ -38,12 +38,12 @@ public struct JSFloatButton: View {
                         HStack(spacing: 12) {
                             Text(item.title)
                                 .font(.jsLabel14Bold)
-                                .foregroundColor(DSKitAsset.Colors.textPrimary.swiftUIColor)
+                                .foregroundColor(Color.labelNormal)
                                 .padding(.horizontal, 14)
                                 .padding(.vertical, 8)
                                 .background(
                                     RoundedRectangle(cornerRadius: 10)
-                                        .fill(DSKitAsset.Colors.surfacePrimary.swiftUIColor)
+                                        .fill(Color.surfaceElevated)
                                         .jsShadow(.small)
                                 )
 
@@ -60,7 +60,7 @@ public struct JSFloatButton: View {
                                     .padding(14)
                                     .background(
                                         Circle()
-                                            .fill(DSKitAsset.Colors.primaryNormal.swiftUIColor)
+                                            .fill(Color.primaryNormal)
                                             .jsShadow(.medium)
                                     )
                                     .foregroundColor(.white)
@@ -88,7 +88,7 @@ public struct JSFloatButton: View {
                     .padding(18)
                     .background(
                         Circle()
-                            .fill(DSKitAsset.Colors.primaryNormal.swiftUIColor)
+                            .fill(Color.primaryNormal)
                             .jsShadow(.medium)
                     )
                     .foregroundColor(.white)

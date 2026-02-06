@@ -106,14 +106,14 @@ public struct JSAccessibilityPreview: View {
 
                     HStack(spacing: 12) {
                         Circle()
-                            .fill(DSKitAsset.Colors.primary.swiftUIColor)
+                            .fill(Color.primaryNormal)
                             .frame(width: 30, height: 30)
                             .jsTouchTarget()
-                            .background(DSKitAsset.Colors.gray100.swiftUIColor.opacity(0.1))
+                            .background(Color.backgroundAlternative.opacity(0.1))
 
                         Text("Small visual, large touch area")
                             .font(.jsBody14Regular)
-                            .foregroundColor(DSKitAsset.Colors.textSecondary.swiftUIColor)
+                            .foregroundColor(Color.labelNeutral)
                     }
                 }
 
@@ -123,13 +123,13 @@ public struct JSAccessibilityPreview: View {
 
                     HStack(spacing: 12) {
                         Image(systemName: "heart.fill")
-                            .foregroundColor(DSKitAsset.Colors.semanticError.swiftUIColor)
+                            .foregroundColor(Color.destructive)
                             .jsTouchTarget()
                             .jsAccessibility("Like", hint: "Double tap to like this item", traits: .isButton)
 
                         Text("Heart icon with accessibility label")
                             .font(.jsBody14Regular)
-                            .foregroundColor(DSKitAsset.Colors.textSecondary.swiftUIColor)
+                            .foregroundColor(Color.labelNeutral)
                     }
                 }
 
@@ -140,7 +140,7 @@ public struct JSAccessibilityPreview: View {
                     JSAccessibilityGroup("Task: Complete project documentation, Due tomorrow") {
                         HStack {
                             Circle()
-                                .fill(DSKitAsset.Colors.primary.swiftUIColor)
+                                .fill(Color.primaryNormal)
                                 .frame(width: 12, height: 12)
 
                             VStack(alignment: .leading) {
@@ -148,12 +148,12 @@ public struct JSAccessibilityPreview: View {
                                     .font(.jsBody16Regular)
                                 Text("Due tomorrow")
                                     .font(.jsLabel12Regular)
-                                    .foregroundColor(DSKitAsset.Colors.textSecondary.swiftUIColor)
+                                    .foregroundColor(Color.labelNeutral)
                             }
                         }
                     }
                     .padding(12)
-                    .background(DSKitAsset.Colors.surfaceSecondary.swiftUIColor)
+                    .background(Color.backgroundAlternative)
                     .cornerRadius(8)
                 }
 
@@ -166,7 +166,7 @@ public struct JSAccessibilityPreview: View {
                             .font(.jsBody16Regular)
                         Text("(Decorative)")
                             .font(.jsBody16Regular)
-                            .foregroundColor(DSKitAsset.Colors.textSecondary.swiftUIColor)
+                            .foregroundColor(Color.labelNeutral)
                             .jsAccessibilityHidden()
                     }
                 }

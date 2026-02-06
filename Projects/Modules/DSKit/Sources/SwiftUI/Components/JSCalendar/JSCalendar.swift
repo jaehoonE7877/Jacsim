@@ -47,7 +47,7 @@ public struct JSCalendar: View {
             
             handleBar
         }
-        .background(DSKitAsset.Colors.backgroundPrimary.swiftUIColor)
+        .background(Color.backgroundNormal)
         .clipped()
     }
 
@@ -57,12 +57,12 @@ public struct JSCalendar: View {
                 Button(action: { withAnimation { moveToToday() } }) {
                     Text(headerTitle)
                         .font(.jsDisplay22Bold)
-                        .foregroundColor(DSKitAsset.Colors.textPrimary.swiftUIColor)
+                        .foregroundColor(Color.labelNormal)
                         .contentShape(Rectangle())
                 }
                 Text(scopeText)
                     .font(.jsLabel12Medium)
-                    .foregroundColor(DSKitAsset.Colors.textSecondary.swiftUIColor)
+                    .foregroundColor(Color.labelNeutral)
             }
             Spacer()
 
@@ -75,7 +75,7 @@ public struct JSCalendar: View {
                         .padding(.vertical, 8)
                         .background(
                             Capsule()
-                                .fill(DSKitAsset.Colors.primaryNormal.swiftUIColor)
+                                .fill(Color.primaryNormal)
                                 .jsShadow(.medium)
                         )
                 }
@@ -85,7 +85,7 @@ public struct JSCalendar: View {
                 Button(action: { withAnimation { movePage(by: -1) } }) {
                     Image(systemName: "chevron.left")
                         .font(.jsBody14Semibold)
-                        .foregroundColor(DSKitAsset.Colors.textPrimary.swiftUIColor)
+                        .foregroundColor(Color.labelNormal)
                         .frame(width: 36, height: 36)
                         .background(
                             RoundedRectangle(cornerRadius: 12)
@@ -96,7 +96,7 @@ public struct JSCalendar: View {
                 Button(action: { withAnimation { movePage(by: 1) } }) {
                     Image(systemName: "chevron.right")
                         .font(.jsBody14Semibold)
-                        .foregroundColor(DSKitAsset.Colors.textPrimary.swiftUIColor)
+                        .foregroundColor(Color.labelNormal)
                         .frame(width: 36, height: 36)
                         .background(
                             RoundedRectangle(cornerRadius: 12)
@@ -108,7 +108,7 @@ public struct JSCalendar: View {
         }
         .padding(.horizontal, 20)
         .padding(.vertical, 10)
-        .background(DSKitAsset.Colors.backgroundPrimary.swiftUIColor)
+        .background(Color.backgroundNormal)
     }
 
     private var weekdayHeaderView: some View {
@@ -116,7 +116,7 @@ public struct JSCalendar: View {
             ForEach(0..<7) { index in
                 Text(weekdayTitle(for: index))
                     .font(.jsLabel13Bold)
-                    .foregroundColor(index == 0 ? Color.destructive.opacity(0.8) : (index == 6 ? DSKitAsset.Colors.primaryNormal.swiftUIColor.opacity(0.8) : .labelNeutral))
+                    .foregroundColor(index == 0 ? Color.destructive.opacity(0.8) : (index == 6 ? Color.primaryNormal.opacity(0.8) : .labelNeutral))
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 4)
             }
@@ -151,14 +151,14 @@ public struct JSCalendar: View {
             ZStack {
                 if isSelected {
                     RoundedRectangle(cornerRadius: 12)
-                        .fill(DSKitAsset.Colors.primaryNormal.swiftUIColor)
+                        .fill(Color.primaryNormal)
                         .jsShadow(.medium)
                 } else if isToday {
                     RoundedRectangle(cornerRadius: 12)
-                        .stroke(DSKitAsset.Colors.primaryNormal.swiftUIColor.opacity(0.4), lineWidth: 1.5)
+                        .stroke(Color.primaryNormal.opacity(0.4), lineWidth: 1.5)
                         .background(
                             RoundedRectangle(cornerRadius: 12)
-                                .fill(DSKitAsset.Colors.primaryNormal.swiftUIColor.opacity(0.08))
+                                .fill(Color.primaryNormal.opacity(0.08))
                         )
                 } else if hasEvent && !isSelected {
                     RoundedRectangle(cornerRadius: 12)
@@ -170,18 +170,18 @@ public struct JSCalendar: View {
 
                 Text("\(calendar.component(.day, from: date))")
                     .font(.jsHeadline16Bold)
-                    .foregroundColor(isSelected ? .white : (isCurrentMonth ? (isToday ? DSKitAsset.Colors.primaryNormal.swiftUIColor : DSKitAsset.Colors.textPrimary.swiftUIColor) : DSKitAsset.Colors.textTertiary.swiftUIColor))
+                    .foregroundColor(isSelected ? .white : (isCurrentMonth ? (isToday ? Color.primaryNormal : Color.labelNormal) : Color.labelAlternative))
             }
             .frame(height: 42)
 
             if hasEvent {
                 Circle()
-                    .fill(isSelected ? DSKitAsset.Colors.gray100.swiftUIColor.opacity(0.9) : dateColorIndicator(dateColor))
+                    .fill(isSelected ? Color.backgroundAlternative.opacity(0.9) : dateColorIndicator(dateColor))
                     .frame(width: 5, height: 5)
                     .jsShadow(.small)
             } else if isToday && !isSelected {
                 Circle()
-                    .fill(DSKitAsset.Colors.primaryNormal.swiftUIColor.opacity(0.5))
+                    .fill(Color.primaryNormal.opacity(0.5))
                     .frame(width: 4, height: 4)
             } else {
                 Spacer().frame(height: 5)
@@ -203,24 +203,24 @@ public struct JSCalendar: View {
         case .none:
             return Color.clear
         case .low:
-            return DSKitAsset.Colors.destructive.swiftUIColor.opacity(0.1)
+            return Color.destructive.opacity(0.1)
         case .medium:
-            return DSKitAsset.Colors.semanticWarning.swiftUIColor.opacity(0.1)
+            return Color.cautionary.opacity(0.1)
         case .high:
-            return DSKitAsset.Colors.semanticSuccess.swiftUIColor.opacity(0.1)
+            return Color.positive.opacity(0.1)
         }
     }
 
     private func dateColorIndicator(_ color: JSCalendarDateColor) -> Color {
         switch color {
         case .none:
-            return DSKitAsset.Colors.primaryNormal.swiftUIColor
+            return Color.primaryNormal
         case .low:
-            return DSKitAsset.Colors.destructive.swiftUIColor
+            return Color.destructive
         case .medium:
-            return DSKitAsset.Colors.semanticWarning.swiftUIColor
+            return Color.cautionary
         case .high:
-            return DSKitAsset.Colors.semanticSuccess.swiftUIColor
+            return Color.positive
         }
     }
 

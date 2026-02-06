@@ -239,6 +239,6 @@ struct JSStatusChip_Previews: PreviewProvider {
             }
             .padding()
         }
-        .background(DSKitAsset.Colors.backgroundPrimary.swiftUIColor)
+        .background(Color.backgroundNormal)
     }
 }

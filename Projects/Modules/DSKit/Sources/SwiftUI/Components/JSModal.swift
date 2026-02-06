@@ -67,7 +67,7 @@ public struct JSModal<Content: View>: View {
     }
 
     private var overlay: some View {
-        DSKitAsset.Colors.dim.swiftUIColor
+        Color.surfaceOverlay
             .opacity(0.4)
             .ignoresSafeArea()
             .onTapGesture {
@@ -95,7 +95,7 @@ public struct JSModal<Content: View>: View {
             if let title = title {
                 Text(title)
                     .font(.jsHeadline18Bold)
-                    .foregroundColor(DSKitAsset.Colors.textPrimary.swiftUIColor)
+                    .foregroundColor(Color.labelNormal)
                     .padding(.top, 8)
                     .padding(.bottom, 16)
             }
@@ -108,7 +108,7 @@ public struct JSModal<Content: View>: View {
                 .padding(.horizontal, 16)
                 .padding(.bottom, 20)
         }
-        .background(DSKitAsset.Colors.backgroundPrimary.swiftUIColor)
+        .background(Color.backgroundNormal)
         .cornerRadius(16, corners: [.topLeft, .topRight])
         .frame(maxWidth: .infinity)
         .frame(maxHeight: .infinity, alignment: .bottom)
@@ -120,7 +120,7 @@ public struct JSModal<Content: View>: View {
             if let title = title {
                 Text(title)
                     .font(.jsHeadline18Bold)
-                    .foregroundColor(DSKitAsset.Colors.textPrimary.swiftUIColor)
+                    .foregroundColor(Color.labelNormal)
                     .multilineTextAlignment(.center)
             }
 
@@ -129,13 +129,13 @@ public struct JSModal<Content: View>: View {
             buttonStack
         }
         .padding(24)
-        .background(DSKitAsset.Colors.surfacePrimary.swiftUIColor)
+        .background(Color.surfaceElevated)
         .cornerRadius(16)
         .jsShadow(.large)
         .frame(maxWidth: 320)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(
-            DSKitAsset.Colors.dim.swiftUIColor
+            Color.surfaceOverlay
                 .opacity(0.001)
                 .ignoresSafeArea()
                 .onTapGesture { }
@@ -144,7 +144,7 @@ public struct JSModal<Content: View>: View {
 
     private var dragIndicator: some View {
         RoundedRectangle(cornerRadius: 2.5)
-            .fill(DSKitAsset.Colors.gray100.swiftUIColor.opacity(0.5))
+            .fill(Color.backgroundAlternative.opacity(0.5))
             .frame(width: 36, height: 5)
             .padding(.top, 8)
             .padding(.bottom, 4)
@@ -166,7 +166,7 @@ public struct JSModal<Content: View>: View {
                             .foregroundColor(.white)
                             .frame(maxWidth: .infinity)
                             .frame(height: 52)
-                            .background(DSKitAsset.Colors.primaryNormal.swiftUIColor)
+                            .background(Color.primaryNormal)
                             .cornerRadius(12)
                     }
                 }
@@ -180,7 +180,7 @@ public struct JSModal<Content: View>: View {
                     }) {
                         Text(secondary.title)
                             .font(.jsBody16Medium)
-                            .foregroundColor(DSKitAsset.Colors.textPrimary.swiftUIColor)
+                            .foregroundColor(Color.labelNormal)
                             .frame(maxWidth: .infinity)
                             .frame(height: 52)
                     }

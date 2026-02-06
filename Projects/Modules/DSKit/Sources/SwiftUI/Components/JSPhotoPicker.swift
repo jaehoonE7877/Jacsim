@@ -35,16 +35,16 @@ public struct JSPhotoPicker: View {
                             .scaledToFill()
                     } else {
                         RoundedRectangle(cornerRadius: 8)
-                            .fill(DSKitAsset.Colors.surfacePrimary.swiftUIColor.opacity(0.8))
+                            .fill(Color.surfaceElevated.opacity(0.8))
                             .overlay(
                                 VStack(spacing: 12) {
                                     Image(systemName: "camera.fill")
                                         .font(.system(size: 32)) // Icon-only size constraint for visual weight
-                                        .foregroundColor(DSKitAsset.Colors.textSecondary.swiftUIColor)
+                                        .foregroundColor(Color.labelNeutral)
 
                                     Text(placeholderText)
                                         .font(.jsBody14Regular)
-                                        .foregroundColor(DSKitAsset.Colors.textSecondary.swiftUIColor)
+                                        .foregroundColor(Color.labelNeutral)
                                 }
                             )
                     }
@@ -63,7 +63,7 @@ public struct JSPhotoPicker: View {
                                         Image(systemName: "xmark.circle.fill")
                                             .font(.system(size: 24)) // Icon-only size constraint for close button tap target
                                             .foregroundColor(.white)
-                                            .background(DSKitAsset.Colors.dim.swiftUIColor.opacity(0.5))
+                                            .background(Color.surfaceOverlay.opacity(0.5))
                                             .clipShape(Circle())
                                     }
                                     .padding(12)
@@ -82,11 +82,11 @@ public struct JSPhotoPicker: View {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("사진 접근 권한이 필요해요.")
                         .font(.jsBody14Bold)
-                        .foregroundColor(DSKitAsset.Colors.textSecondary.swiftUIColor)
+                        .foregroundColor(Color.labelNeutral)
 
                     Text("설정에서 사진 접근을 허용해주세요.")
                         .font(.jsLabel12Regular)
-                        .foregroundColor(DSKitAsset.Colors.textSecondary.swiftUIColor)
+                        .foregroundColor(Color.labelNeutral)
 
                     Button("설정에서 허용하기") {
                         openSettings()
@@ -94,7 +94,7 @@ public struct JSPhotoPicker: View {
                     .font(.jsLabel13Bold)
                     .padding(.vertical, 6)
                     .padding(.horizontal, 10)
-                    .background(DSKitAsset.Colors.surfacePrimary.swiftUIColor.opacity(0.5))
+                    .background(Color.surfaceElevated.opacity(0.5))
                     .clipShape(RoundedRectangle(cornerRadius: 8))
                 }
             }

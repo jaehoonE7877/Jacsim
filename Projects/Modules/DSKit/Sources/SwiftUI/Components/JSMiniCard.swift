@@ -89,7 +89,7 @@ public struct JSMiniCard: View {
                 .lineLimit(1)
 
             ProgressView(value: progress)
-                .progressViewStyle(LinearProgressViewStyle(tint: DSKitAsset.Colors.primaryNormal.swiftUIColor))
+                .progressViewStyle(LinearProgressViewStyle(tint: Color.primaryNormal))
                 .frame(height: 3)
         }
     }

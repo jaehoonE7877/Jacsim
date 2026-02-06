@@ -253,6 +253,6 @@ struct JSMiniHeroCard_Previews: PreviewProvider {
             }
             .padding(.vertical)
         }
-        .background(DSKitAsset.Colors.backgroundPrimary.swiftUIColor)
+        .background(Color.backgroundNormal)
     }
 }

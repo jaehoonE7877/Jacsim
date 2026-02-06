@@ -49,7 +49,7 @@ public struct JSTabBar: View {
         .padding(.top, 8)
         .padding(.bottom, 16)
         .background(
-            DSKitAsset.Colors.backgroundPrimary.swiftUIColor
+            Color.backgroundNormal
                 .jsShadow(.medium)
         )
     }
@@ -66,12 +66,12 @@ public struct JSTabBar: View {
             VStack(spacing: 4) {
                 Image(systemName: tab.icon)
                     .font(.jsHeadline20Bold)
-                    .foregroundColor(isSelected ? DSKitAsset.Colors.primaryNormal.swiftUIColor : .labelNeutral)
+                    .foregroundColor(isSelected ? Color.primaryNormal : .labelNeutral)
                     .frame(height: 24)
 
                 Text(tab.title)
                     .font(.jsLabel10Regular)
-                    .foregroundColor(isSelected ? DSKitAsset.Colors.primaryNormal.swiftUIColor : .labelNeutral)
+                    .foregroundColor(isSelected ? Color.primaryNormal : .labelNeutral)
             }
             .frame(maxWidth: .infinity)
             .frame(height: 44)

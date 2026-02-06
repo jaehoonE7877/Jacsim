@@ -42,4 +42,32 @@ public extension Font {
     static var jsButtonLarge: Font { .pretendardSemiBold(size: 17) }
     static var jsButtonMedium: Font { .pretendardSemiBold(size: 16) }
     static var jsButtonSmall: Font { .pretendardSemiBold(size: 14) }
+
+    // MARK: - Compatibility Tokens
+    static var jsDisplay28Bold: Font { .pretendardBold(size: 28) }
+    static var jsDisplay26Bold: Font { .pretendardBold(size: 26) }
+    static var jsDisplay22Bold: Font { .pretendardBold(size: 22) }
+
+    static var jsHeadline20Bold: Font { .pretendardSemiBold(size: 20) }
+    static var jsHeadline18Bold: Font { .pretendardSemiBold(size: 18) }
+    static var jsHeadline17Bold: Font { .pretendardSemiBold(size: 17) }
+    static var jsHeadline16Bold: Font { .pretendardSemiBold(size: 16) }
+
+    static var jsBody17Medium: Font { .pretendardMedium(size: 17) }
+    static var jsBody16Bold: Font { .pretendardSemiBold(size: 16) }
+    static var jsBody16Medium: Font { .pretendardMedium(size: 16) }
+    static var jsBody16Regular: Font { .pretendardRegular(size: 16) }
+    static var jsBody15Medium: Font { .pretendardMedium(size: 15) }
+    static var jsBody14Semibold: Font { .pretendardSemiBold(size: 14) }
+    static var jsBody14Bold: Font { .pretendardSemiBold(size: 14) }
+    static var jsBody14Regular: Font { .pretendardRegular(size: 14) }
+
+    static var jsLabel14Bold: Font { .pretendardSemiBold(size: 14) }
+    static var jsLabel13Bold: Font { .pretendardSemiBold(size: 13) }
+    static var jsLabel12Bold: Font { .pretendardSemiBold(size: 12) }
+    static var jsLabel12Medium: Font { .pretendardMedium(size: 12) }
+    static var jsLabel12Regular: Font { .pretendardRegular(size: 12) }
+    static var jsLabel11Bold: Font { .pretendardSemiBold(size: 11) }
+    static var jsLabel10Bold: Font { .pretendardSemiBold(size: 10) }
+    static var jsLabel10Regular: Font { .pretendardRegular(size: 10) }
 }

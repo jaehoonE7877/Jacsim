@@ -44,7 +44,7 @@ public struct JSHeroCardSkeleton: View {
         .frame(height: 320)
         .background(
             RoundedRectangle(cornerRadius: 24)
-                .fill(DSKitAsset.Colors.surfacePrimary.swiftUIColor)
+                .fill(Color.surfaceElevated)
                 .jsShadow(.medium)
         )
     }
@@ -53,5 +53,5 @@ public struct JSHeroCardSkeleton: View {
 #Preview {
     JSHeroCardSkeleton()
         .padding()
-        .background(DSKitAsset.Colors.backgroundPrimary.swiftUIColor)
+        .background(Color.backgroundNormal)
 }

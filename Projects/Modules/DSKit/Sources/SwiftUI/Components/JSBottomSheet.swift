@@ -33,7 +33,7 @@ public struct JSBottomSheet<Content: View>: View {
     public var body: some View {
         ZStack {
             if isPresented.wrappedValue {
-                DSKitAsset.Colors.dim.swiftUIColor
+                Color.surfaceOverlay
                     .opacity(0.4 * max(0, 1 - abs(offset) / 300.0))
                     .ignoresSafeArea()
                     .onTapGesture {
@@ -51,7 +51,7 @@ public struct JSBottomSheet<Content: View>: View {
                         .frame(height: sheetHeight)
                 }
                 .background(
-                    DSKitAsset.Colors.surfacePrimary.swiftUIColor
+                    Color.surfaceElevated
                         .jsCornerRadius(16, corners: [.topLeft, .topRight])
                 )
                 .offset(y: max(0, offset))
@@ -83,7 +83,7 @@ public struct JSBottomSheet<Content: View>: View {
 
     private var dragIndicator: some View {
         RoundedRectangle(cornerRadius: 2.5)
-            .fill(DSKitAsset.Colors.gray100.swiftUIColor.opacity(0.4))
+            .fill(Color.backgroundAlternative.opacity(0.4))
             .frame(width: 36, height: 5)
             .padding(.top, 8)
             .padding(.bottom, 4)
@@ -178,12 +178,12 @@ public struct JSDatePickerBottomSheet: View {
                     }) {
                         Text("취소")
                             .font(.jsHeadline17Bold)
-                            .foregroundColor(DSKitAsset.Colors.textPrimary.swiftUIColor)
+                            .foregroundColor(Color.labelNormal)
                             .frame(maxWidth: .infinity)
                             .frame(height: 50)
                             .background(
                                 RoundedRectangle(cornerRadius: 10)
-                                    .fill(DSKitAsset.Colors.gray100.swiftUIColor.opacity(0.2))
+                                    .fill(Color.backgroundAlternative.opacity(0.2))
                             )
                     }
                     .frame(minWidth: 44, minHeight: 44)
@@ -200,7 +200,7 @@ public struct JSDatePickerBottomSheet: View {
                             .frame(height: 50)
                             .background(
                                 RoundedRectangle(cornerRadius: 10)
-                                    .fill(DSKitAsset.Colors.primaryNormal.swiftUIColor)
+                                    .fill(Color.primaryNormal)
                             )
                     }
                     .frame(minWidth: 44, minHeight: 44)
@@ -215,7 +215,7 @@ public struct JSDatePickerBottomSheet: View {
         HStack {
             Text(title)
                 .font(.jsHeadline18Bold)
-                .foregroundColor(DSKitAsset.Colors.textPrimary.swiftUIColor)
+                .foregroundColor(Color.labelNormal)
 
             Spacer()
 
@@ -225,7 +225,7 @@ public struct JSDatePickerBottomSheet: View {
             }) {
                 Image(systemName: "xmark")
                     .font(.jsBody17Medium)
-                    .foregroundColor(DSKitAsset.Colors.textSecondary.swiftUIColor)
+                    .foregroundColor(Color.labelNeutral)
                     .frame(width: 30, height: 30)
             }
             .frame(minWidth: 44, minHeight: 44)
@@ -251,7 +251,7 @@ struct JSBottomSheet_Previews: PreviewProvider {
                             .padding()
                             .background(
                                 RoundedRectangle(cornerRadius: 10)
-                                    .fill(DSKitAsset.Colors.primaryNormal.swiftUIColor)
+                                    .fill(Color.primaryNormal)
                             )
                     }
                     .padding()

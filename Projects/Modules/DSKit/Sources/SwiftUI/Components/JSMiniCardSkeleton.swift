@@ -28,7 +28,7 @@ public struct JSMiniCardSkeleton: View {
         }
         .padding(12)
         .frame(width: 160)
-        .background(DSKitAsset.Colors.surfacePrimary.swiftUIColor)
+        .background(Color.surfaceElevated)
         .cornerRadius(8)
         .jsShadow(.small)
     }
@@ -43,5 +43,5 @@ public struct JSMiniCardSkeleton: View {
         }
         .padding()
     }
-    .background(DSKitAsset.Colors.backgroundPrimary.swiftUIColor)
+    .background(Color.backgroundNormal)
 }

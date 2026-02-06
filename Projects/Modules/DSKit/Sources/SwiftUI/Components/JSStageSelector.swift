@@ -47,16 +47,16 @@ private struct StageButton: View {
                 Text("일")
                     .font(.jsLabel12Medium)
             }
-            .foregroundColor(isSelected ? .white : DSKitAsset.Colors.textPrimary.swiftUIColor)
+            .foregroundColor(isSelected ? .white : Color.labelNormal)
             .frame(maxWidth: .infinity)
             .frame(height: 80)
             .background(
                 RoundedRectangle(cornerRadius: 8)
-                    .fill(isSelected ? DSKitAsset.Colors.primaryNormal.swiftUIColor : DSKitAsset.Colors.gray100.swiftUIColor.opacity(0.2))
+                    .fill(isSelected ? Color.primaryNormal : Color.backgroundAlternative.opacity(0.2))
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 8)
-                    .stroke(isSelected ? DSKitAsset.Colors.primaryNormal.swiftUIColor : DSKitAsset.Colors.gray100.swiftUIColor.opacity(0.3), lineWidth: isSelected ? 0 : 1)
+                    .stroke(isSelected ? Color.primaryNormal : Color.backgroundAlternative.opacity(0.3), lineWidth: isSelected ? 0 : 1)
             )
         }
         .buttonStyle(PlainButtonStyle())
@@ -88,12 +88,12 @@ public struct JSStageInputView: View {
             VStack(alignment: .leading, spacing: 8) {
                 Text(title)
                     .font(.jsHeadline20Bold)
-                    .foregroundColor(DSKitAsset.Colors.textPrimary.swiftUIColor)
+                    .foregroundColor(Color.labelNormal)
 
                 if let subtitle = subtitle {
                     Text(subtitle)
                         .font(.jsBody16Regular)
-                        .foregroundColor(DSKitAsset.Colors.textSecondary.swiftUIColor)
+                        .foregroundColor(Color.labelNeutral)
                 }
             }
 
@@ -107,11 +107,11 @@ public struct JSStageInputView: View {
 
                 Text("총 \(selectedStage)일")
                     .font(.jsHeadline18Bold)
-                    .foregroundColor(DSKitAsset.Colors.primaryNormal.swiftUIColor)
+                    .foregroundColor(Color.primaryNormal)
                     .padding(8)
                     .background(
                         RoundedRectangle(cornerRadius: 6)
-                            .fill(DSKitAsset.Colors.primaryNormal.swiftUIColor.opacity(0.1))
+                            .fill(Color.primaryNormal.opacity(0.1))
                     )
 
                 Spacer()
@@ -128,7 +128,7 @@ public struct JSStageInputView: View {
                     .frame(height: 50)
                     .background(
                         RoundedRectangle(cornerRadius: 10)
-                            .fill(DSKitAsset.Colors.primaryNormal.swiftUIColor)
+                            .fill(Color.primaryNormal)
                     )
             }
             .frame(minWidth: 44, minHeight: 44)
