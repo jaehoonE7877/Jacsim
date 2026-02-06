@@ -6,11 +6,9 @@ struct TaskUpdateUseCaseTests {
     
     @Test
     func testUpdateTaskInfo() async throws {
-        var updatedTask: Task?
+        let store = MockTaskStore()
         let useCase = TaskUpdateUseCase(
-            updateTask: { task in
-                updatedTask = task
-            }
+            updateTask: { try await store.updateTask($0) }
         )
         
         let originalStage = StageSnapshot(
@@ -43,13 +41,15 @@ struct TaskUpdateUseCaseTests {
         #expect(result.title == "New Title")
         #expect(result.stages.last?.durationDays == 14)
         #expect(result.isNotificationEnabled == true)
+        let updatedTask = try await store.fetchUpdatedTask()
         #expect(updatedTask?.title == "New Title")
     }
     
     @Test
     func testUpdateTaskInfoWithNoStage() async throws {
+        let store = MockTaskStore()
         let useCase = TaskUpdateUseCase(
-            updateTask: { _ in }
+            updateTask: { try await store.updateTask($0) }
         )
         
         let task = Task(
@@ -73,5 +73,17 @@ struct TaskUpdateUseCaseTests {
         #expect(result.stages.isEmpty)
         #expect(result.isNotificationEnabled == false)
         #expect(result.alarmDate == nil)
+    }
+}
+
+private actor MockTaskStore {
+    private var updatedTask: Task?
+
+    func updateTask(_ task: Task) throws {
+        updatedTask = task
+    }
+
+    func fetchUpdatedTask() throws -> Task? {
+        updatedTask
     }
 }
