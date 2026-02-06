@@ -24,24 +24,19 @@ public struct JSCard<Content: View>: View {
     public var body: some View {
         content
             .padding(padding)
-            .background(Color(.systemBackground))
-            .cornerRadius(8)
+            .background(Color.backgroundNormal)
+            .cornerRadius(.jsCornerSmall)
             .overlay(
-                RoundedRectangle(cornerRadius: 8)
+                RoundedRectangle(cornerRadius: .jsCornerSmall)
                     .stroke(borderColor, lineWidth: borderWidth)
             )
-            .shadow(
-                color: shadowColor,
-                radius: shadowRadius,
-                x: 0,
-                y: shadowY
-            )
+            .jsShadow(shadowStyle)
     }
 
     private var borderColor: Color {
         switch style {
         case .outlined:
-            return Color.gray.opacity(0.3)
+            return .labelAlternative
         case .elevated, .flat:
             return .clear
         }
@@ -56,30 +51,12 @@ public struct JSCard<Content: View>: View {
         }
     }
 
-    private var shadowColor: Color {
+    private var shadowStyle: ShadowStyle {
         switch style {
         case .elevated:
-            return .black.opacity(0.08)
+            return .small
         case .outlined, .flat:
             return .clear
-        }
-    }
-
-    private var shadowRadius: CGFloat {
-        switch style {
-        case .elevated:
-            return 8
-        case .outlined, .flat:
-            return 0
-        }
-    }
-
-    private var shadowY: CGFloat {
-        switch style {
-        case .elevated:
-            return 4
-        case .outlined, .flat:
-            return 0
         }
     }
 }
@@ -91,66 +68,66 @@ struct JSCard_Previews: PreviewProvider {
                 JSCard {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Elevated Card")
-                            .font(.system(size: 16, weight: .semibold))
+                            .font(.jsHeadlineSmall)
                         Text("This card has a subtle shadow for depth")
-                            .font(.system(size: 14))
-                            .foregroundColor(.secondary)
+                            .font(.jsBodySmall)
+                            .foregroundColor(.labelAlternative)
                     }
                 }
 
                 JSCard(style: .outlined) {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Outlined Card")
-                            .font(.system(size: 16, weight: .semibold))
+                            .font(.jsHeadlineSmall)
                         Text("This card has a border instead of shadow")
-                            .font(.system(size: 14))
-                            .foregroundColor(.secondary)
+                            .font(.jsBodySmall)
+                            .foregroundColor(.labelAlternative)
                     }
                 }
 
                 JSCard(style: .flat) {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Flat Card")
-                            .font(.system(size: 16, weight: .semibold))
+                            .font(.jsHeadlineSmall)
                         Text("This card has no shadow or border")
-                            .font(.system(size: 14))
-                            .foregroundColor(.secondary)
+                            .font(.jsBodySmall)
+                            .foregroundColor(.labelAlternative)
                     }
                 }
 
                 JSCard(padding: 24) {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Custom Padding")
-                            .font(.system(size: 16, weight: .semibold))
+                            .font(.jsHeadlineSmall)
                         Text("This card has extra large padding")
-                            .font(.system(size: 14))
-                            .foregroundColor(.secondary)
+                            .font(.jsBodySmall)
+                            .foregroundColor(.labelAlternative)
                     }
                 }
 
                 JSCard {
                     HStack(spacing: 12) {
                         RoundedRectangle(cornerRadius: 4)
-                            .fill(.blue)
+                            .fill(Color.primaryNormal)
                             .frame(width: 48, height: 48)
 
                         VStack(alignment: .leading, spacing: 4) {
                             Text("Complex Layout")
-                                .font(.system(size: 16, weight: .semibold))
+                                .font(.jsHeadlineSmall)
                             Text("Cards can contain any content")
-                                .font(.system(size: 14))
-                                .foregroundColor(.secondary)
+                                .font(.jsBodySmall)
+                                .foregroundColor(.labelAlternative)
                         }
 
                         Spacer()
 
                         Image(systemName: "chevron.right")
-                            .foregroundColor(.gray)
+                            .foregroundColor(.labelNeutral)
                     }
                 }
             }
             .padding()
         }
-        .background(Color(.systemGroupedBackground))
+        .background(Color.backgroundAlternative)
     }
 }

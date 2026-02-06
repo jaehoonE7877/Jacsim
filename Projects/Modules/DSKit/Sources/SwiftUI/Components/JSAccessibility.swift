@@ -100,74 +100,75 @@ public struct JSAccessibilityPreview: View {
     public var body: some View {
         ScrollView {
             VStack(spacing: 20) {
-                VStack(alignment: .leading, spacing: 8) {
+                        VStack(alignment: .leading, spacing: 8) {
                     Text("Touch Targets (44pt minimum)")
-                        .font(.system(size: 18, weight: .semibold))
+                        .font(.jsHeadline18Bold)
 
                     HStack(spacing: 12) {
                         Circle()
-                            .fill(.blue)
+                            .fill(DSKitAsset.Colors.primary.swiftUIColor)
                             .frame(width: 30, height: 30)
                             .jsTouchTarget()
-                            .background(Color.gray.opacity(0.1))
+                            .background(DSKitAsset.Colors.gray100.swiftUIColor.opacity(0.1))
 
                         Text("Small visual, large touch area")
-                            .font(.system(size: 14))
-                            .foregroundColor(.gray)
+                            .font(.jsBody14Regular)
+                            .foregroundColor(DSKitAsset.Colors.textSecondary.swiftUIColor)
                     }
                 }
 
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Accessibility Labels")
-                        .font(.system(size: 18, weight: .semibold))
+                        .font(.jsHeadline18Bold)
 
                     HStack(spacing: 12) {
                         Image(systemName: "heart.fill")
-                            .foregroundColor(.red)
+                            .foregroundColor(DSKitAsset.Colors.semanticError.swiftUIColor)
                             .jsTouchTarget()
                             .jsAccessibility("Like", hint: "Double tap to like this item", traits: .isButton)
 
                         Text("Heart icon with accessibility label")
-                            .font(.system(size: 14))
-                            .foregroundColor(.gray)
+                            .font(.jsBody14Regular)
+                            .foregroundColor(DSKitAsset.Colors.textSecondary.swiftUIColor)
                     }
                 }
 
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Accessibility Groups")
-                        .font(.system(size: 18, weight: .semibold))
+                        .font(.jsHeadline18Bold)
 
                     JSAccessibilityGroup("Task: Complete project documentation, Due tomorrow") {
                         HStack {
                             Circle()
-                                .fill(.blue)
+                                .fill(DSKitAsset.Colors.primary.swiftUIColor)
                                 .frame(width: 12, height: 12)
 
                             VStack(alignment: .leading) {
                                 Text("Complete project documentation")
-                                    .font(.system(size: 16))
+                                    .font(.jsBody16Regular)
                                 Text("Due tomorrow")
-                                    .font(.system(size: 12))
-                                    .foregroundColor(.gray)
+                                    .font(.jsLabel12Regular)
+                                    .foregroundColor(DSKitAsset.Colors.textSecondary.swiftUIColor)
                             }
                         }
                     }
                     .padding(12)
-                    .background(Color(.systemGray6))
+                    .background(DSKitAsset.Colors.surfaceSecondary.swiftUIColor)
                     .cornerRadius(8)
                 }
 
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Hidden Elements")
-                        .font(.system(size: 18, weight: .semibold))
+                        .font(.jsHeadline18Bold)
 
                     HStack {
                         Text("Visible text")
+                            .font(.jsBody16Regular)
                         Text("(Decorative)")
-                            .foregroundColor(.gray)
+                            .font(.jsBody16Regular)
+                            .foregroundColor(DSKitAsset.Colors.textSecondary.swiftUIColor)
                             .jsAccessibilityHidden()
                     }
-                    .font(.system(size: 16))
                 }
             }
             .padding()

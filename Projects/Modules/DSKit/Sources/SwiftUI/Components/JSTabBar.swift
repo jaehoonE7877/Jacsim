@@ -49,13 +49,8 @@ public struct JSTabBar: View {
         .padding(.top, 8)
         .padding(.bottom, 16)
         .background(
-            Color(.systemBackground)
-                .shadow(
-                    color: .black.opacity(0.05),
-                    radius: 8,
-                    x: 0,
-                    y: -2
-                )
+            DSKitAsset.Colors.backgroundPrimary.swiftUIColor
+                .jsShadow(.medium)
         )
     }
 
@@ -70,13 +65,13 @@ public struct JSTabBar: View {
         }) {
             VStack(spacing: 4) {
                 Image(systemName: tab.icon)
-                    .font(.system(size: 22, weight: isSelected ? .semibold : .regular))
-                    .foregroundColor(isSelected ? .blue : .gray)
+                    .font(.jsHeadline20Bold)
+                    .foregroundColor(isSelected ? DSKitAsset.Colors.primaryNormal.swiftUIColor : .labelNeutral)
                     .frame(height: 24)
 
                 Text(tab.title)
-                    .font(.system(size: 11, weight: isSelected ? .medium : .regular))
-                    .foregroundColor(isSelected ? .blue : .gray)
+                    .font(.jsLabel10Regular)
+                    .foregroundColor(isSelected ? DSKitAsset.Colors.primaryNormal.swiftUIColor : .labelNeutral)
             }
             .frame(maxWidth: .infinity)
             .frame(height: 44)
@@ -130,7 +125,7 @@ struct JSTabBar_Previews: PreviewProvider {
                     VStack {
                         Spacer()
                         Text("Current Tab: \(tab.title)")
-                            .font(.system(size: 20, weight: .semibold))
+                            .font(.jsHeadline20Bold)
                         Spacer()
                     }
                 }

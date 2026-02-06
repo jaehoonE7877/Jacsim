@@ -35,16 +35,16 @@ public struct JSPhotoPicker: View {
                             .scaledToFill()
                     } else {
                         RoundedRectangle(cornerRadius: 8)
-                            .fill(Color.gray.opacity(0.2))
+                            .fill(DSKitAsset.Colors.surfacePrimary.swiftUIColor.opacity(0.8))
                             .overlay(
                                 VStack(spacing: 12) {
                                     Image(systemName: "camera.fill")
-                                        .font(.system(size: 32))
-                                        .foregroundColor(.gray)
+                                        .font(.system(size: 32)) // Icon-only size constraint for visual weight
+                                        .foregroundColor(DSKitAsset.Colors.textSecondary.swiftUIColor)
 
                                     Text(placeholderText)
-                                        .font(.system(size: 14))
-                                        .foregroundColor(.gray)
+                                        .font(.jsBody14Regular)
+                                        .foregroundColor(DSKitAsset.Colors.textSecondary.swiftUIColor)
                                 }
                             )
                     }
@@ -61,9 +61,9 @@ public struct JSPhotoPicker: View {
                                         selectedImage = nil
                                     }) {
                                         Image(systemName: "xmark.circle.fill")
-                                            .font(.system(size: 24))
+                                            .font(.system(size: 24)) // Icon-only size constraint for close button tap target
                                             .foregroundColor(.white)
-                                            .background(Color.black.opacity(0.5))
+                                            .background(DSKitAsset.Colors.dim.swiftUIColor.opacity(0.5))
                                             .clipShape(Circle())
                                     }
                                     .padding(12)
@@ -81,20 +81,20 @@ public struct JSPhotoPicker: View {
             if showPermissionDenied {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("사진 접근 권한이 필요해요.")
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(.gray)
+                        .font(.jsBody14Bold)
+                        .foregroundColor(DSKitAsset.Colors.textSecondary.swiftUIColor)
 
                     Text("설정에서 사진 접근을 허용해주세요.")
-                        .font(.system(size: 12))
-                        .foregroundColor(.gray)
+                        .font(.jsLabel12Regular)
+                        .foregroundColor(DSKitAsset.Colors.textSecondary.swiftUIColor)
 
                     Button("설정에서 허용하기") {
                         openSettings()
                     }
-                    .font(.system(size: 13, weight: .semibold))
+                    .font(.jsLabel13Bold)
                     .padding(.vertical, 6)
                     .padding(.horizontal, 10)
-                    .background(Color.gray.opacity(0.2))
+                    .background(DSKitAsset.Colors.surfacePrimary.swiftUIColor.opacity(0.5))
                     .clipShape(RoundedRectangle(cornerRadius: 8))
                 }
             }
@@ -212,7 +212,7 @@ struct JSPhotoPicker_Previews: PreviewProvider {
 
                 if image != nil {
                     Text("Image selected")
-                        .font(.system(size: 16))
+                        .font(.jsBody16Regular)
                         .foregroundColor(.green)
                 }
             }

@@ -16,7 +16,7 @@ public struct SkeletonModifier: ViewModifier {
                 Group {
                     if isLoading {
                         shape
-                            .fill(Color(.systemGray5))
+                            .fill(Color.surfaceOverlay.opacity(0.1)) // Keep generic gray for skeleton base
                             .shimmering()
                     }
                 }
@@ -61,8 +61,8 @@ public struct AnimatedMask: AnimatableModifier {
 public struct GradientMask: View {
     let phase: CGFloat
 
-    private let centerColor = Color.black.opacity(0.3)
-    private let edgeColor = Color.black.opacity(1.0)
+    private let centerColor = Color.surfaceOverlay.opacity(0.3)
+    private let edgeColor = Color.surfaceOverlay.opacity(1.0)
 
     public var body: some View {
         GeometryReader { geometry in

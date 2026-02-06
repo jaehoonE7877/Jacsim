@@ -38,7 +38,7 @@ public struct JSMiniHeroCard: View {
                             .scaledToFill()
                     } else {
                         LinearGradient(
-                            colors: [Color.blue.opacity(0.6), Color.purple.opacity(0.6)],
+                            colors: [.primaryNormal.opacity(0.6), .primaryStrong.opacity(0.6)],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         )
@@ -67,7 +67,7 @@ public struct JSMiniHeroCard: View {
                 // Bottom Content (like Hero)
                 VStack(alignment: .leading, spacing: 6) {
                     Text(title)
-                        .font(.system(size: 14, weight: .bold))
+                        .font(.jsLabel14Bold)
                         .foregroundColor(.white)
                         .lineLimit(1)
 
@@ -76,18 +76,18 @@ public struct JSMiniHeroCard: View {
                         GeometryReader { geo in
                             ZStack(alignment: .leading) {
                                 Capsule()
-                                    .fill(Color.white.opacity(0.25))
+                                    .fill(.white.opacity(0.25))
                                     .frame(height: 4)
                                 
                                 Capsule()
-                                    .fill(Color.white)
+                                    .fill(.white)
                                     .frame(width: geo.size.width * CGFloat(progress), height: 4)
                             }
                         }
                         .frame(height: 4)
 
                         Text("\(Int(progress * 100))%")
-                            .font(.system(size: 11, weight: .bold))
+                            .font(.jsLabel11Bold)
                             .foregroundColor(.white)
                     }
                 }
@@ -97,14 +97,9 @@ public struct JSMiniHeroCard: View {
             .clipShape(RoundedRectangle(cornerRadius: 20))
             .overlay(
                 RoundedRectangle(cornerRadius: 20)
-                    .stroke(Color.white.opacity(0.1), lineWidth: 1)
+                    .stroke(.white.opacity(0.1), lineWidth: 1)
             )
-            .shadow(
-                color: .black.opacity(0.15),
-                radius: 16,
-                x: 0,
-                y: 8
-            )
+            .jsShadow(.medium)
         }
         .buttonStyle(PlainButtonStyle())
         .pressEffect()
@@ -116,7 +111,7 @@ private struct StatusBadge: View {
 
     var body: some View {
         Text(isCertified ? "오늘 인증 완료" : "오늘 미인증")
-            .font(.system(size: 10, weight: .semibold))
+            .font(.jsLabel10Bold)
             .foregroundColor(isCertified ? .green : .white)
             .padding(.horizontal, 8)
             .padding(.vertical, 4)
@@ -125,7 +120,7 @@ private struct StatusBadge: View {
                     .fill(.ultraThinMaterial)
                     .overlay(
                         Capsule()
-                            .stroke(isCertified ? Color.green.opacity(0.3) : Color.white.opacity(0.2), lineWidth: 1)
+                            .stroke(isCertified ? .green.opacity(0.3) : .white.opacity(0.2), lineWidth: 1)
                     )
             )
     }
@@ -199,7 +194,7 @@ struct JSMiniHeroCard_Previews: PreviewProvider {
         ScrollView {
             VStack(spacing: 20) {
                 Text("Mini Hero Cards")
-                    .font(.system(size: 18, weight: .semibold))
+                    .font(.jsHeadline18Bold)
 
                 JSMiniHeroCard(
                     title: "두쫀쿠",
@@ -222,7 +217,7 @@ struct JSMiniHeroCard_Previews: PreviewProvider {
                 .padding(.horizontal)
 
                 Text("Carousel")
-                    .font(.system(size: 18, weight: .semibold))
+                    .font(.jsHeadline18Bold)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.horizontal)
                     .padding(.top, 20)
@@ -258,6 +253,6 @@ struct JSMiniHeroCard_Previews: PreviewProvider {
             }
             .padding(.vertical)
         }
-        .background(Color(.systemGroupedBackground))
+        .background(DSKitAsset.Colors.backgroundPrimary.swiftUIColor)
     }
 }

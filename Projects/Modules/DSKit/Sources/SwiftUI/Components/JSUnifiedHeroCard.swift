@@ -41,7 +41,7 @@ public struct JSUnifiedHeroCard: View {
                             .scaledToFill()
                     } else {
                         LinearGradient(
-                            colors: [Color.blue.opacity(0.6), Color.purple.opacity(0.6)],
+                            colors: [.primaryNormal.opacity(0.6), .primaryStrong.opacity(0.6)],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         )
@@ -70,13 +70,13 @@ public struct JSUnifiedHeroCard: View {
 
                     VStack(alignment: .leading, spacing: 8) {
                         Text(title)
-                            .font(.system(size: 26, weight: .bold))
+                            .font(.jsDisplay26Bold)
                             .foregroundColor(.white)
                             .lineLimit(2)
 
                         if let subtitle = subtitle {
                             Text(subtitle)
-                                .font(.system(size: 15, weight: .medium))
+                                .font(.jsBody15Medium)
                                 .foregroundColor(.white.opacity(0.85))
                                 .lineLimit(1)
                         }
@@ -86,18 +86,18 @@ public struct JSUnifiedHeroCard: View {
                             GeometryReader { geo in
                                 ZStack(alignment: .leading) {
                                     Capsule()
-                                        .fill(Color.white.opacity(0.25))
+                                        .fill(.white.opacity(0.25))
                                         .frame(height: 6)
                                     
                                     Capsule()
-                                        .fill(Color.white)
+                                        .fill(.white)
                                         .frame(width: geo.size.width * CGFloat(progress), height: 6)
                                 }
                             }
                             .frame(height: 6)
 
                             Text("\(Int(progress * 100))%")
-                                .font(.system(size: 13, weight: .bold))
+                                .font(.jsLabel13Bold)
                                 .foregroundColor(.white)
                                 .frame(minWidth: 50, alignment: .trailing)
                         }
@@ -109,13 +109,8 @@ public struct JSUnifiedHeroCard: View {
             .frame(height: 320)
             .background(
                 RoundedRectangle(cornerRadius: 20)
-                    .fill(Color(.systemBackground))
-                    .shadow(
-                        color: .black.opacity(0.12),
-                        radius: 16,
-                        x: 0,
-                        y: 8
-                    )
+                    .fill(DSKitAsset.Colors.surfacePrimary.swiftUIColor)
+                    .jsShadow(.medium)
             )
         }
         .buttonStyle(PlainButtonStyle())
@@ -128,7 +123,7 @@ private struct StatusBadge: View {
     
     var body: some View {
         Text(isCertified ? "오늘 인증 완료" : "오늘 미인증")
-            .font(.system(size: 12, weight: .semibold))
+            .font(.jsLabel12Bold)
             .foregroundColor(isCertified ? .green : .white)
             .padding(.horizontal, 10)
             .padding(.vertical, 5)
@@ -137,7 +132,7 @@ private struct StatusBadge: View {
                     .fill(.ultraThinMaterial)
                     .overlay(
                         Capsule()
-                            .stroke(isCertified ? Color.green.opacity(0.3) : Color.white.opacity(0.2), lineWidth: 1)
+                            .stroke(isCertified ? .green.opacity(0.3) : .white.opacity(0.2), lineWidth: 1)
                     )
             )
     }
@@ -169,6 +164,6 @@ struct JSUnifiedHeroCard_Previews: PreviewProvider {
                 .padding()
             }
         }
-        .background(Color.gray.opacity(0.1))
+        .background(Color.backgroundAlternative)
     }
 }

@@ -43,9 +43,9 @@ public struct JSButton: View {
                 .padding(.vertical, verticalPadding)
                 .padding(.horizontal, horizontalPadding)
                 .background(backgroundColor)
-                .cornerRadius(8)
+                .cornerRadius(.jsCornerSmall)
                 .overlay(
-                    RoundedRectangle(cornerRadius: 8)
+                    RoundedRectangle(cornerRadius: .jsCornerSmall)
                         .stroke(borderColor, lineWidth: borderWidth)
                 )
         }
@@ -57,11 +57,11 @@ public struct JSButton: View {
     private var font: Font {
         switch size {
         case .large:
-            return .system(size: 18, weight: .semibold)
+            return .jsButtonLarge
         case .medium:
-            return .system(size: 16, weight: .semibold)
+            return .jsButtonMedium
         case .small:
-            return .system(size: 14, weight: .medium)
+            return .jsButtonSmall
         }
     }
 
@@ -90,20 +90,20 @@ public struct JSButton: View {
     private var foregroundColor: Color {
         switch style {
         case .primary, .destructive:
-            return .white
+            return .labelStrong
         case .secondary, .ghost:
-            return isEnabled ? .blue : .gray
+            return isEnabled ? .primaryNormal : .labelNeutral
         }
     }
 
     private var backgroundColor: Color {
         switch style {
         case .primary:
-            return .blue
+            return .primaryNormal
         case .secondary:
-            return Color(.systemBackground)
+            return .backgroundNormal
         case .destructive:
-            return .red
+            return .destructive
         case .ghost:
             return .clear
         }
@@ -114,7 +114,7 @@ public struct JSButton: View {
         case .primary, .destructive:
             return .clear
         case .secondary:
-            return .gray
+            return .labelNeutral
         case .ghost:
             return .clear
         }

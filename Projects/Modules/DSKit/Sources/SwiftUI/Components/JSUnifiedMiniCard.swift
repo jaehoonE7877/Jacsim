@@ -34,13 +34,8 @@ public struct JSUnifiedMiniCard: View {
             .frame(width: 160)
             .background(
                 RoundedRectangle(cornerRadius: 20)
-                    .fill(Color(.systemBackground))
-                    .shadow(
-                        color: .black.opacity(0.12),
-                        radius: 16,
-                        x: 0,
-                        y: 8
-                    )
+                    .fill(Color.surfaceElevated)
+                    .jsShadow(.medium)
             )
         }
         .buttonStyle(PlainButtonStyle())
@@ -59,8 +54,8 @@ public struct JSUnifiedMiniCard: View {
                 } else {
                     LinearGradient(
                         colors: [
-                            Color.blue.opacity(0.6),
-                            Color.purple.opacity(0.6)
+                            .primaryNormal.opacity(0.6),
+                            .primaryStrong.opacity(0.6)
                         ],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
@@ -71,7 +66,7 @@ public struct JSUnifiedMiniCard: View {
             .clipShape(RoundedRectangle(cornerRadius: 12))
 
             Text("\(completedDays)/\(totalDays)")
-                .font(.system(size: 11, weight: .semibold))
+                .font(.pretendardBold(size: 11))
                 .foregroundColor(.white)
                 .padding(.horizontal, 8)
                 .padding(.vertical, 4)
@@ -80,7 +75,7 @@ public struct JSUnifiedMiniCard: View {
                         .fill(.ultraThinMaterial)
                         .overlay(
                             Capsule()
-                                .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                                .stroke(.white.opacity(0.2), lineWidth: 1)
                         )
                 )
                 .padding(8)
@@ -90,18 +85,18 @@ public struct JSUnifiedMiniCard: View {
     private var contentSection: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(title)
-                .font(.system(size: 15, weight: .semibold))
-                .foregroundColor(.primary)
+                .font(.pretendardBold(size: 15))
+                .foregroundColor(Color.labelNormal)
                 .lineLimit(1)
 
             GeometryReader { geo in
                 ZStack(alignment: .leading) {
                     Capsule()
-                        .fill(Color.gray.opacity(0.2))
+                        .fill(Color.surfaceOverlay.opacity(0.2))
                         .frame(height: 6)
                     
                     Capsule()
-                        .fill(Color.blue)
+                        .fill(DSKitAsset.Colors.primaryNormal.swiftUIColor)
                         .frame(width: geo.size.width * CGFloat(progress), height: 6)
                 }
             }
@@ -170,7 +165,7 @@ struct JSUnifiedMiniCard_Previews: PreviewProvider {
         ScrollView {
             VStack(spacing: 20) {
                 Text("Single MiniCard")
-                    .font(.system(size: 18, weight: .semibold))
+                    .font(.pretendardBold(size: 18))
 
                 JSUnifiedMiniCard(
                     title: "물 마시기",
@@ -182,7 +177,7 @@ struct JSUnifiedMiniCard_Previews: PreviewProvider {
                 .frame(maxWidth: .infinity, alignment: .leading)
 
                 Text("Carousel")
-                    .font(.system(size: 18, weight: .semibold))
+                    .font(.pretendardBold(size: 18))
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.top, 20)
 
@@ -221,6 +216,6 @@ struct JSUnifiedMiniCard_Previews: PreviewProvider {
             }
             .padding()
         }
-        .background(Color(.systemGroupedBackground))
+        .background(Color.backgroundNormal)
     }
 }

@@ -23,7 +23,7 @@ public struct JSProgress: View {
         style: JSProgressStyle = .linear,
         size: JSProgressSize = .medium,
         showPercentage: Bool = false,
-        tintColor: Color = .blue
+        tintColor: Color = .primaryNormal
     ) {
         self.progress = max(0, min(1, progress))
         self.style = style
@@ -45,7 +45,7 @@ public struct JSProgress: View {
         GeometryReader { geometry in
             ZStack(alignment: .leading) {
                 RoundedRectangle(cornerRadius: trackHeight / 2)
-                    .fill(Color.gray.opacity(0.2))
+                    .fill(Color.labelNeutral.opacity(0.2))
                     .frame(height: trackHeight)
 
                 RoundedRectangle(cornerRadius: trackHeight / 2)
@@ -60,7 +60,7 @@ public struct JSProgress: View {
     private var circularProgressView: some View {
         ZStack {
             Circle()
-                .stroke(Color.gray.opacity(0.2), lineWidth: strokeWidth)
+                .stroke(Color.labelNeutral.opacity(0.2), lineWidth: strokeWidth)
 
             Circle()
                 .trim(from: 0, to: progress)
@@ -71,7 +71,7 @@ public struct JSProgress: View {
             if showPercentage {
                 Text("\(Int(progress * 100))%")
                     .font(percentageFont)
-                    .foregroundColor(.primary)
+                    .foregroundColor(.labelNormal)
             }
         }
         .frame(width: circleSize, height: circleSize)
@@ -113,11 +113,11 @@ public struct JSProgress: View {
     private var percentageFont: Font {
         switch size {
         case .small:
-            return .system(size: 12, weight: .medium)
+            return .jsLabel10Regular
         case .medium:
-            return .system(size: 14, weight: .medium)
+            return .jsLabel12Medium
         case .large:
-            return .system(size: 16, weight: .medium)
+            return .jsBody14Regular
         }
     }
 }
@@ -130,7 +130,7 @@ public struct JSProgressIndicator: View {
 
     public init(
         size: JSProgressSize = .medium,
-        tintColor: Color = .blue
+        tintColor: Color = .primaryNormal
     ) {
         self.size = size
         self.tintColor = tintColor
@@ -184,7 +184,7 @@ struct JSProgress_Previews: PreviewProvider {
                 VStack(spacing: 24) {
                     VStack(spacing: 12) {
                         Text("Linear Progress")
-                            .font(.system(size: 16, weight: .semibold))
+                            .font(.jsHeadline16Bold)
 
                         VStack(spacing: 8) {
                             JSProgress(progress: progress, style: .linear, size: .small)
@@ -195,7 +195,7 @@ struct JSProgress_Previews: PreviewProvider {
 
                     VStack(spacing: 12) {
                         Text("Circular Progress")
-                            .font(.system(size: 16, weight: .semibold))
+                            .font(.jsHeadline16Bold)
 
                         HStack(spacing: 20) {
                             JSProgress(progress: progress, style: .circular, size: .small)
@@ -206,7 +206,7 @@ struct JSProgress_Previews: PreviewProvider {
 
                     VStack(spacing: 12) {
                         Text("Loading Indicators")
-                            .font(.system(size: 16, weight: .semibold))
+                            .font(.jsHeadline16Bold)
 
                         HStack(spacing: 20) {
                             JSProgressIndicator(size: .small)
@@ -217,7 +217,7 @@ struct JSProgress_Previews: PreviewProvider {
 
                     VStack(spacing: 12) {
                         Text("Custom Colors")
-                            .font(.system(size: 16, weight: .semibold))
+                            .font(.jsHeadline16Bold)
 
                         HStack(spacing: 20) {
                             JSProgress(progress: 0.7, style: .circular, size: .medium, tintColor: .green)

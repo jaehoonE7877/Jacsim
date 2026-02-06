@@ -28,8 +28,8 @@ public struct JSInputField: View {
         VStack(alignment: .leading, spacing: 8) {
             if !title.isEmpty {
                 Text(title)
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.secondary)
+                    .font(.jsLabelMedium)
+                    .foregroundColor(.labelAlternative)
             }
 
             Group {
@@ -39,14 +39,14 @@ public struct JSInputField: View {
                     TextField(placeholder, text: $text)
                 }
             }
-            .font(.system(size: 16))
+            .font(.jsBodyMedium)
             .padding(16)
             .background(
-                RoundedRectangle(cornerRadius: 8)
-                    .fill(Color(.systemBackground))
+                RoundedRectangle(cornerRadius: .jsCornerSmall)
+                    .fill(Color.backgroundNormal)
             )
             .overlay(
-                RoundedRectangle(cornerRadius: 8)
+                RoundedRectangle(cornerRadius: .jsCornerSmall)
                     .stroke(borderColor, lineWidth: 1)
             )
             .disabled(!isEnabled)
@@ -55,17 +55,17 @@ public struct JSInputField: View {
 
             if let error = errorMessage {
                 Text(error)
-                    .font(.system(size: 12))
-                    .foregroundColor(.red)
+                    .font(.jsLabelSmall)
+                    .foregroundColor(.destructive)
             }
         }
     }
 
     private var borderColor: Color {
         if errorMessage != nil {
-            return .red
+            return .destructive
         }
-        return .gray.opacity(0.3)
+        return .labelAlternative
     }
 }
 

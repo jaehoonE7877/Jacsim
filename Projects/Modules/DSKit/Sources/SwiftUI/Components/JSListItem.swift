@@ -27,7 +27,7 @@ public struct JSListItem: View {
         title: String,
         subtitle: String? = nil,
         icon: String? = nil,
-        iconColor: Color = .blue,
+        iconColor: Color = .primaryNormal,
         style: JSListItemStyle = .defaultStyle,
         accessory: JSListItemAccessory = .disclosure,
         action: (() -> Void)? = nil
@@ -65,7 +65,7 @@ public struct JSListItem: View {
     private var iconView: some View {
         if let icon = icon {
             Image(systemName: icon)
-                .font(.system(size: 20, weight: .medium))
+                .font(.jsHeadlineMedium)
                 .foregroundColor(iconForegroundColor)
                 .frame(width: 32, height: 32)
                 .background(iconBackgroundColor)
@@ -77,14 +77,14 @@ public struct JSListItem: View {
     private var textContent: some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(title)
-                .font(.system(size: 16, weight: .medium))
+                .font(.jsBodyMedium)
                 .foregroundColor(titleColor)
                 .lineLimit(1)
 
             if let subtitle = subtitle {
                 Text(subtitle)
-                    .font(.system(size: 14))
-                    .foregroundColor(.secondary)
+                    .font(.jsLabelMedium)
+                    .foregroundColor(.labelAlternative)
                     .lineLimit(1)
             }
         }
@@ -98,18 +98,18 @@ public struct JSListItem: View {
 
         case .disclosure:
             Image(systemName: "chevron.right")
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(.gray)
+                .font(.jsButtonSmall)
+                .foregroundColor(.labelNeutral)
 
         case .checkmark(let isSelected):
             Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
-                .font(.system(size: 22))
-                .foregroundColor(isSelected ? .blue : .gray)
+                .font(.jsHeadlineLarge)
+                .foregroundColor(isSelected ? .primaryNormal : .labelNeutral)
 
         case .detail(let text):
             Text(text)
-                .font(.system(size: 14))
-                .foregroundColor(.secondary)
+                .font(.jsLabelMedium)
+                .foregroundColor(.labelAlternative)
 
         case .toggle(let isOn):
             Toggle("", isOn: isOn)
@@ -122,16 +122,16 @@ public struct JSListItem: View {
         case .defaultStyle, .destructive:
             return .clear
         case .highlighted:
-            return .blue.opacity(0.08)
+            return .primaryNormal.opacity(0.08)
         }
     }
 
     private var titleColor: Color {
         switch style {
         case .defaultStyle, .highlighted:
-            return .primary
+            return .labelNormal
         case .destructive:
-            return .red
+            return .destructive
         }
     }
 
@@ -140,7 +140,7 @@ public struct JSListItem: View {
         case .defaultStyle, .highlighted:
             return iconColor
         case .destructive:
-            return .red
+            return .destructive
         }
     }
 
@@ -149,7 +149,7 @@ public struct JSListItem: View {
         case .defaultStyle, .highlighted:
             return iconColor.opacity(0.12)
         case .destructive:
-            return .red.opacity(0.12)
+            return .destructive.opacity(0.12)
         }
     }
 }

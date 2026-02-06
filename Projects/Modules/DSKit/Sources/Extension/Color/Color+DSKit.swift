@@ -19,4 +19,18 @@ public extension Color {
     static var positive: Color { Color(uiColor: .positive) }
     static var cautionary: Color { Color(uiColor: .cautionary) }
     static var destructive: Color { Color(uiColor: .destructive) }
+
+    static var streakActive: Color { Color(uiColor: .streakActive) }
+    static var streakCompleted: Color { Color(uiColor: .streakCompleted) }
+    static var streakFrozen: Color { Color(uiColor: .streakFrozen) }
+
+    static var progressLow: Color { Color(uiColor: .progressLow) }
+    static var progressMedium: Color { Color(uiColor: .progressMedium) }
+    static var progressHigh: Color { Color(uiColor: .progressHigh) }
+
+    static var achievement: Color { Color(uiColor: .achievement) }
+
+    static var surfaceElevated: Color { Color(uiColor: .surfaceElevated) }
+    static var surfaceOverlay: Color { Color(uiColor: .surfaceOverlay) }
+    static var surfaceSelected: Color { Color(uiColor: .surfaceSelected) }
 }

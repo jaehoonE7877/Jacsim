@@ -42,21 +42,21 @@ private struct StageButton: View {
         Button(action: onTap) {
             VStack(spacing: 4) {
                 Text("\(stage)")
-                    .font(.system(size: 20, weight: .semibold))
+                    .font(.jsHeadline20Bold)
 
                 Text("일")
-                    .font(.system(size: 12, weight: .medium))
+                    .font(.jsLabel12Medium)
             }
-            .foregroundColor(isSelected ? .white : .primary)
+            .foregroundColor(isSelected ? .white : DSKitAsset.Colors.textPrimary.swiftUIColor)
             .frame(maxWidth: .infinity)
             .frame(height: 80)
             .background(
                 RoundedRectangle(cornerRadius: 8)
-                    .fill(isSelected ? Color.blue : Color.gray.opacity(0.2))
+                    .fill(isSelected ? DSKitAsset.Colors.primaryNormal.swiftUIColor : DSKitAsset.Colors.gray100.swiftUIColor.opacity(0.2))
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 8)
-                    .stroke(isSelected ? Color.blue : Color.gray.opacity(0.3), lineWidth: isSelected ? 0 : 1)
+                    .stroke(isSelected ? DSKitAsset.Colors.primaryNormal.swiftUIColor : DSKitAsset.Colors.gray100.swiftUIColor.opacity(0.3), lineWidth: isSelected ? 0 : 1)
             )
         }
         .buttonStyle(PlainButtonStyle())
@@ -87,13 +87,13 @@ public struct JSStageInputView: View {
         VStack(alignment: .leading, spacing: 20) {
             VStack(alignment: .leading, spacing: 8) {
                 Text(title)
-                    .font(.system(size: 20, weight: .semibold))
-                    .foregroundColor(.primary)
+                    .font(.jsHeadline20Bold)
+                    .foregroundColor(DSKitAsset.Colors.textPrimary.swiftUIColor)
 
                 if let subtitle = subtitle {
                     Text(subtitle)
-                        .font(.system(size: 16))
-                        .foregroundColor(.secondary)
+                        .font(.jsBody16Regular)
+                        .foregroundColor(DSKitAsset.Colors.textSecondary.swiftUIColor)
                 }
             }
 
@@ -106,12 +106,12 @@ public struct JSStageInputView: View {
                 Spacer()
 
                 Text("총 \(selectedStage)일")
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundColor(.blue)
+                    .font(.jsHeadline18Bold)
+                    .foregroundColor(DSKitAsset.Colors.primaryNormal.swiftUIColor)
                     .padding(8)
                     .background(
                         RoundedRectangle(cornerRadius: 6)
-                            .fill(Color.blue.opacity(0.1))
+                            .fill(DSKitAsset.Colors.primaryNormal.swiftUIColor.opacity(0.1))
                     )
 
                 Spacer()
@@ -122,13 +122,13 @@ public struct JSStageInputView: View {
 
             Button(action: { onConfirm?() }) {
                 Text("확인")
-                    .font(.system(size: 17, weight: .semibold))
+                    .font(.jsHeadline17Bold)
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
                     .frame(height: 50)
                     .background(
                         RoundedRectangle(cornerRadius: 10)
-                            .fill(Color.blue)
+                            .fill(DSKitAsset.Colors.primaryNormal.swiftUIColor)
                     )
             }
             .frame(minWidth: 44, minHeight: 44)
@@ -147,7 +147,7 @@ struct JSStageSelector_Previews: PreviewProvider {
                 VStack(spacing: 20) {
                     VStack(alignment: .leading, spacing: 12) {
                         Text("Stage Selector")
-                            .font(.system(size: 18, weight: .semibold))
+                            .font(.jsHeadline18Bold)
 
                         JSStageSelector(
                             selectedStage: $selectedStage,
@@ -159,7 +159,7 @@ struct JSStageSelector_Previews: PreviewProvider {
 
                     VStack(alignment: .leading, spacing: 12) {
                         Text("Stage Input View")
-                            .font(.system(size: 18, weight: .semibold))
+                            .font(.jsHeadline18Bold)
 
                         JSStageInputView(
                             selectedStage: $selectedStage,
