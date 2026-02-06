@@ -12,11 +12,41 @@ public struct TaskEditView: View {
     }
 
     public var body: some View {
-        ZStack(alignment: .bottom) {
-            RedesignScreenScaffold(
-                title: "작심 수정",
-                subtitle: "사진, 목표, 알림을 다시 정리해요"
-            ) {
+        RedesignScreenScaffold(
+            title: "작심 수정",
+            subtitle: "사진, 목표, 알림을 다시 정리해요",
+            stickyFooter: {
+            HStack(spacing: .jsSM) {
+                JSButton(title: "취소", style: .secondary, size: .large) {
+                    store.send(.cancelButtonTapped)
+                }
+
+                JSButton(
+                    title: "저장",
+                    style: .primary,
+                    size: .large,
+                    isEnabled: isSaveEnabled
+                ) {
+                    store.send(.saveButtonTapped)
+                }
+            }
+            .padding(.horizontal, .jsMD)
+            .padding(.vertical, .jsMD)
+            .background(
+                LinearGradient(
+                    colors: [
+                        Color.backgroundNormal.opacity(0),
+                        Color.backgroundNormal,
+                        Color.backgroundNormal
+                    ],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+                .ignoresSafeArea()
+            )
+        }
+        ) {
+            if PresentationRedesignFlags.isSectionEnabled(.taskFormPhoto) {
                 RedesignSectionCard(
                     title: "대표 사진",
                     subtitle: "챌린지를 대표하는 이미지를 바꿀 수 있어요"
@@ -65,24 +95,26 @@ public struct TaskEditView: View {
                         }
                     }
                 }
+            }
 
-                RedesignSectionCard(title: "기본 정보") {
-                    TextField("작심 이름", text: $store.title)
-                        .font(.jsBodyMedium)
-                        .padding()
-                        .background(Color.backgroundNormal)
-                        .cornerRadius(.jsRadiusMD)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: .jsRadiusMD)
-                                .stroke(Color.primaryNormal.opacity(0.5), lineWidth: 1)
-                        )
-                }
+            RedesignSectionCard(title: "기본 정보") {
+                TextField("작심 이름", text: $store.title)
+                    .font(.jsBodyMedium)
+                    .padding()
+                    .background(Color.backgroundNormal)
+                    .cornerRadius(.jsRadiusMD)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: .jsRadiusMD)
+                            .stroke(Color.primaryNormal.opacity(0.5), lineWidth: 1)
+                    )
+            }
 
-                RedesignSectionCard(title: "성공 목표") {
-                    Stepper("\(store.successTarget)회", value: $store.successTarget, in: 1...store.maxSuccessTarget)
-                        .font(.jsBodyMedium)
-                }
+            RedesignSectionCard(title: "성공 목표") {
+                Stepper("\(store.successTarget)회", value: $store.successTarget, in: 1...store.maxSuccessTarget)
+                    .font(.jsBodyMedium)
+            }
 
+            if PresentationRedesignFlags.isSectionEnabled(.taskFormAlarm) {
                 RedesignSectionCard(title: "알림") {
                     Toggle("알림 설정", isOn: $store.isAlarmEnabled)
                         .font(.jsBodyMedium)
@@ -96,40 +128,8 @@ public struct TaskEditView: View {
                         .datePickerStyle(.wheel)
                     }
                 }
-
-                Spacer(minLength: 120)
             }
-
-            HStack(spacing: .jsSM) {
-                JSButton(title: "취소", style: .secondary, size: .large) {
-                    store.send(.cancelButtonTapped)
-                }
-
-                JSButton(
-                    title: "저장",
-                    style: .primary,
-                    size: .large,
-                    isEnabled: isSaveEnabled
-                ) {
-                    store.send(.saveButtonTapped)
-                }
-            }
-            .padding(.horizontal, .jsMD)
-            .padding(.vertical, .jsMD)
-            .background(
-                LinearGradient(
-                    colors: [
-                        Color.backgroundNormal.opacity(0),
-                        Color.backgroundNormal,
-                        Color.backgroundNormal
-                    ],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-                .ignoresSafeArea()
-            )
         }
-        .background(Color.backgroundNormal)
         .navigationTitle("작심 수정")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear { store.send(.onAppear) }

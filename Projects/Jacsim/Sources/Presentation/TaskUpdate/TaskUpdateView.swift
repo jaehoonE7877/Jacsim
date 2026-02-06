@@ -11,28 +11,27 @@ public struct TaskUpdateView: View {
     }
 
     public var body: some View {
-        ZStack(alignment: .bottom) {
-            RedesignScreenScaffold(
-                title: "오늘 인증",
-                subtitle: store.dateText
-            ) {
-                if store.isOverwriteMode {
-                    overwriteBanner
-                }
-
-                if store.saveFailed {
-                    errorMessage
-                }
-
-                photoPickerSection
-                memoInputSection
-
-                Spacer(minLength: 120)
+        RedesignScreenScaffold(
+            title: "오늘 인증",
+            subtitle: store.dateText,
+            stickyFooter: {
+                bottomCTASection
+            }
+        ) {
+            if store.isOverwriteMode {
+                overwriteBanner
             }
 
-            bottomCTASection
+            if store.saveFailed {
+                errorMessage
+            }
+
+            if PresentationRedesignFlags.isSectionEnabled(.taskFormPhoto) {
+                photoPickerSection
+            }
+
+            memoInputSection
         }
-        .background(Color.backgroundNormal)
         .navigationTitle("오늘 인증")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear { store.send(.onAppear) }
@@ -128,10 +127,10 @@ public struct TaskUpdateView: View {
     }
     
     private var errorMessage: some View {
-        RedesignStateBanner(
-            text: "저장에 실패했어요. 다시 시도해주세요",
-            icon: "exclamationmark.circle.fill",
-            tintColor: .destructive
+        RedesignInlineErrorView(
+            model: InlineErrorModel(
+                message: "저장에 실패했어요. 다시 시도해 주세요."
+            )
         )
     }
     

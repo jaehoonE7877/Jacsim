@@ -13,9 +13,11 @@ public struct AllTaskView: View {
     public var body: some View {
         RedesignScreenScaffold(
             title: "작심 모아보기",
-            subtitle: "진행 상태별로 모든 작심을 확인해요"
+            subtitle: "진행 상태별로 모든 작심을 확인해요",
+            state: screenState
         ) {
-            if PresentationRedesignFlags.isEnabled(.allTask) {
+            if PresentationRedesignFlags.isEnabled(.allTask) &&
+                PresentationRedesignFlags.isSectionEnabled(.allTaskSummary) {
                 summaryCard
             }
 
@@ -49,6 +51,36 @@ public struct AllTaskView: View {
         .navigationTitle("작심 모아보기")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear { store.send(.onAppear) }
+    }
+
+    private var screenState: RedesignScreenState {
+        if store.isLoading {
+            return .loading(message: "작심 목록을 불러오는 중이에요")
+        }
+
+        if store.loadFailed {
+            return .error(
+                RedesignErrorStateModel(
+                    title: "작심 목록을 불러오지 못했어요",
+                    message: "네트워크 상태를 확인하고 다시 시도해 주세요",
+                    retry: RetryActionModel {
+                        store.send(.onAppear)
+                    }
+                )
+            )
+        }
+
+        if totalCount == 0 {
+            return .empty(
+                RedesignEmptyStateModel(
+                    title: "아직 작심이 없어요",
+                    message: "첫 작심을 만들면 진행 상태가 여기에 표시돼요",
+                    icon: "square.and.pencil"
+                )
+            )
+        }
+
+        return .content
     }
 
     private var summaryCard: some View {

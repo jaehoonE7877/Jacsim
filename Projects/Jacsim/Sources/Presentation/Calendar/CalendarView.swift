@@ -13,7 +13,8 @@ public struct CalendarView: View {
     public var body: some View {
         RedesignScreenScaffold(
             title: "캘린더",
-            subtitle: "날짜별 작심 인증 상태를 확인해요"
+            subtitle: "날짜별 작심 인증 상태를 확인해요",
+            state: screenState
         ) {
             RedesignSectionCard(
                 title: formattedSelectedDate,
@@ -45,6 +46,36 @@ public struct CalendarView: View {
             }
         }
         .onAppear { store.send(.onAppear) }
+    }
+
+    private var screenState: RedesignScreenState {
+        if store.isLoading {
+            return .loading(message: "캘린더 기록을 준비하는 중이에요")
+        }
+
+        if store.loadFailed {
+            return .error(
+                RedesignErrorStateModel(
+                    title: "캘린더를 불러오지 못했어요",
+                    message: "잠시 후 다시 시도해 주세요",
+                    retry: RetryActionModel {
+                        store.send(.onAppear)
+                    }
+                )
+            )
+        }
+
+        if store.tasks.isEmpty {
+            return .empty(
+                RedesignEmptyStateModel(
+                    title: "표시할 작심이 없어요",
+                    message: "작심을 시작하면 날짜별 인증 상태를 볼 수 있어요",
+                    icon: "calendar.badge.plus"
+                )
+            )
+        }
+
+        return .content
     }
     
     private var tasksForSelectedDate: [Domain.Task] {

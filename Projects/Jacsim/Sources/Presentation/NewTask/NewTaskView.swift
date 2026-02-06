@@ -13,25 +13,28 @@ public struct NewTaskView: View {
     }
 
     public var body: some View {
-        ZStack(alignment: .bottom) {
-            RedesignScreenScaffold(
-                title: "새 작심 만들기",
-                subtitle: "짧고 명확한 목표로 시작해요"
-            ) {
-                if store.saveFailed {
-                    saveFailedBanner
-                }
-
-                titleSection
-                stageSection
-                photoSection
-                alarmSection
-
-                Spacer(minLength: 120)
+        RedesignScreenScaffold(
+            title: "새 작심 만들기",
+            subtitle: "짧고 명확한 목표로 시작해요",
+            stickyFooter: {
+                buttonSection
             }
-            buttonSection
+        ) {
+            if store.saveFailed {
+                saveFailedBanner
+            }
+
+            titleSection
+            stageSection
+
+            if PresentationRedesignFlags.isSectionEnabled(.taskFormPhoto) {
+                photoSection
+            }
+
+            if PresentationRedesignFlags.isSectionEnabled(.taskFormAlarm) {
+                alarmSection
+            }
         }
-        .background(Color.backgroundNormal)
         .navigationBarTitleDisplayMode(.inline)
     }
 
@@ -183,10 +186,10 @@ public struct NewTaskView: View {
     }
 
     private var saveFailedBanner: some View {
-        RedesignStateBanner(
-            text: "저장에 실패했어요. 네트워크 상태를 확인해 주세요.",
-            icon: "exclamationmark.circle.fill",
-            tintColor: .destructive
+        RedesignInlineErrorView(
+            model: InlineErrorModel(
+                message: "저장에 실패했어요. 네트워크 상태를 확인해 주세요."
+            )
         )
     }
 

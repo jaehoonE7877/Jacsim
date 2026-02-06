@@ -9,6 +9,8 @@ public struct AllTaskFeature {
         public var ongoingTasks: [Domain.Task] = []
         public var successTasks: [Domain.Task] = []
         public var failTasks: [Domain.Task] = []
+        public var isLoading: Bool = false
+        public var loadFailed: Bool = false
         
         public var isOngoingExpanded: Bool = true
         public var isSuccessExpanded: Bool = true
@@ -20,6 +22,7 @@ public struct AllTaskFeature {
     public enum Action {
         case onAppear
         case tasksResponse(ongoing: [Domain.Task], success: [Domain.Task], fail: [Domain.Task])
+        case tasksLoadFailed
         case toggleOngoing
         case toggleSuccess
         case toggleFail
@@ -32,16 +35,28 @@ public struct AllTaskFeature {
         Reduce { state, action in
             switch action {
             case .onAppear:
+                state.isLoading = true
+                state.loadFailed = false
                 return .run { [jacsimClient] send in
-                    let ongoing = try await jacsimClient.fetchActiveTasks()
-                    let success = try await jacsimClient.fetchIsSuccess()
-                    let fail = try await jacsimClient.fetchIsFail()
-                    await send(.tasksResponse(ongoing: ongoing, success: success, fail: fail))
+                    do {
+                        let ongoing = try await jacsimClient.fetchActiveTasks()
+                        let success = try await jacsimClient.fetchIsSuccess()
+                        let fail = try await jacsimClient.fetchIsFail()
+                        await send(.tasksResponse(ongoing: ongoing, success: success, fail: fail))
+                    } catch {
+                        await send(.tasksLoadFailed)
+                    }
                 }
             case let .tasksResponse(ongoing, success, fail):
                 state.ongoingTasks = ongoing
                 state.successTasks = success
                 state.failTasks = fail
+                state.isLoading = false
+                state.loadFailed = false
+                return .none
+            case .tasksLoadFailed:
+                state.isLoading = false
+                state.loadFailed = true
                 return .none
             case .toggleOngoing:
                 state.isOngoingExpanded.toggle()

@@ -136,7 +136,8 @@ public struct HomeView: View {
                     skeletonContent
                 } else if let heroTask = store.heroTask {
                     let remainingTasks = Array(store.activeTasks.dropFirst())
-                    if PresentationRedesignFlags.isEnabled(.home) {
+                    if PresentationRedesignFlags.isEnabled(.home) &&
+                        PresentationRedesignFlags.isSectionEnabled(.homeSummary) {
                         homeSummaryCard
                     }
                     VStack(alignment: .leading, spacing: .jsMD) {
@@ -158,7 +159,8 @@ public struct HomeView: View {
                     }
                     .padding(.horizontal, .jsXL)
                     
-                    if !remainingTasks.isEmpty {
+                    if !remainingTasks.isEmpty &&
+                        PresentationRedesignFlags.isSectionEnabled(.homeMiniCards) {
                         VStack(alignment: .leading, spacing: .jsMD) {
                             HStack {
                                 Text("진행 중인 작심들")

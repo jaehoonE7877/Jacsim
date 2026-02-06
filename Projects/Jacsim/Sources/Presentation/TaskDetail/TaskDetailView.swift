@@ -42,16 +42,21 @@ public struct TaskDetailView: View {
                             .frame(height: coverImageHeight)
 
                     VStack(spacing: .jsLG) {
-                        if PresentationRedesignFlags.isEnabled(.taskDetail) {
+                        if PresentationRedesignFlags.isEnabled(.taskDetail) &&
+                            PresentationRedesignFlags.isSectionEnabled(.taskDetailOverview) {
                             overviewBanner
                         }
 
                         stageInfoSection
 
-                        todayStatusSection
+                        if PresentationRedesignFlags.isSectionEnabled(.taskDetailTodayStatus) {
+                            todayStatusSection
+                        }
 
-                        recordListSection
-                            .id("recordListSection")
+                        if PresentationRedesignFlags.isSectionEnabled(.taskDetailRecordList) {
+                            recordListSection
+                                .id("recordListSection")
+                        }
                     }
                     .padding(.top, .jsLG)
                     .padding(.horizontal, .jsMD)
