@@ -21,6 +21,8 @@ func mapToSwiftDataModel(_ task: Domain.Task, existing: UserJacsimModel? = nil) 
     userJacsim.title = task.title
     userJacsim.startDate = task.startDate
     userJacsim.endDate = task.endDate
+    userJacsim.alarm = task.alarm
+    userJacsim.isNotificationEnabled = task.isNotificationEnabled
     userJacsim.success = success
     
     let existingStagesByID: [UUID: StageModel] = Dictionary(
@@ -122,6 +124,8 @@ func mapToDomainModel(_ userJacsim: UserJacsimModel) -> Domain.Task {
         title: userJacsim.title,
         startDate: userJacsim.startDate,
         endDate: userJacsim.endDate,
+        alarm: userJacsim.alarm,
+        isNotificationEnabled: userJacsim.isNotificationEnabled,
         stages: stages,
         records: records,
         isDeleted: false,

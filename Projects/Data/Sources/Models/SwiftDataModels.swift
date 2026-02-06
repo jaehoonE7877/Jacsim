@@ -56,6 +56,17 @@ public final class UserJacsimModel {
 }
 
 @Model
+public final class AppSettingsModel {
+    @Attribute(.unique) public var id: String
+    public var isNotificationEnabled: Bool
+
+    public init(id: String = "global", isNotificationEnabled: Bool = false) {
+        self.id = id
+        self.isNotificationEnabled = isNotificationEnabled
+    }
+}
+
+@Model
 public final class CertifiedModel {
     @Attribute(.unique) public var id: UUID
     public var memo: String
@@ -128,5 +139,6 @@ public final class StageModel {
 }
 
 extension UserJacsimModel: @unchecked Sendable {}
+extension AppSettingsModel: @unchecked Sendable {}
 extension CertifiedModel: @unchecked Sendable {}
 extension StageModel: @unchecked Sendable {}

@@ -13,6 +13,8 @@ public struct Task: Sendable, Codable, Hashable, Identifiable {
     public var title: String
     public var startDate: Date
     public var endDate: Date
+    public var alarm: Date?
+    public var isNotificationEnabled: Bool
     public var stages: [StageSnapshot]
     public var records: [DailyRecordSnapshot]
     public var isDeleted: Bool
@@ -24,6 +26,8 @@ public struct Task: Sendable, Codable, Hashable, Identifiable {
         title: String,
         startDate: Date,
         endDate: Date,
+        alarm: Date? = nil,
+        isNotificationEnabled: Bool = false,
         stages: [StageSnapshot] = [],
         records: [DailyRecordSnapshot] = [],
         isDeleted: Bool = false,
@@ -34,6 +38,8 @@ public struct Task: Sendable, Codable, Hashable, Identifiable {
         self.title = title
         self.startDate = startDate
         self.endDate = endDate
+        self.alarm = alarm
+        self.isNotificationEnabled = isNotificationEnabled
         self.stages = stages
         self.records = records
         self.isDeleted = isDeleted
