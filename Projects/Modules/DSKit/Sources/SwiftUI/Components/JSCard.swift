@@ -13,7 +13,7 @@ public struct JSCard<Content: View>: View {
 
     public init(
         style: JSCardStyle = .elevated,
-        padding: CGFloat = 16,
+        padding: CGFloat = 16.jsScaled(),
         @ViewBuilder content: () -> Content
     ) {
         self.style = style

@@ -18,15 +18,24 @@ public extension Font {
         Font(UIFont.pretendardSemiBold(size: size) as CTFont)
     }
 
+    // MARK: - Adaptive Helpers
+    static func jsDisplayScaledBold(size: CGFloat) -> Font {
+        .pretendardBold(size: size.jsScaled(.displayTypography))
+    }
+
+    static func jsDisplayScaledSemiBold(size: CGFloat) -> Font {
+        .pretendardSemiBold(size: size.jsScaled(.displayTypography))
+    }
+
     // MARK: - Display (Large titles)
-    static var jsDisplayLarge: Font { .pretendardBold(size: 32) }
-    static var jsDisplayMedium: Font { .pretendardBold(size: 28) }
-    static var jsDisplaySmall: Font { .pretendardBold(size: 24) }
+    static var jsDisplayLarge: Font { .jsDisplayScaledBold(size: 32) }
+    static var jsDisplayMedium: Font { .jsDisplayScaledBold(size: 28) }
+    static var jsDisplaySmall: Font { .jsDisplayScaledBold(size: 24) }
 
     // MARK: - Headline (Section titles)
-    static var jsHeadlineLarge: Font { .pretendardSemiBold(size: 22) }
-    static var jsHeadlineMedium: Font { .pretendardSemiBold(size: 20) }
-    static var jsHeadlineSmall: Font { .pretendardSemiBold(size: 18) }
+    static var jsHeadlineLarge: Font { .jsDisplayScaledSemiBold(size: 22) }
+    static var jsHeadlineMedium: Font { .jsDisplayScaledSemiBold(size: 20) }
+    static var jsHeadlineSmall: Font { .jsDisplayScaledSemiBold(size: 18) }
 
     // MARK: - Body (Primary content)
     static var jsBodyLarge: Font { .pretendardMedium(size: 17) }
@@ -44,9 +53,9 @@ public extension Font {
     static var jsButtonSmall: Font { .pretendardSemiBold(size: 14) }
 
     // MARK: - Compatibility Tokens
-    static var jsDisplay28Bold: Font { .pretendardBold(size: 28) }
-    static var jsDisplay26Bold: Font { .pretendardBold(size: 26) }
-    static var jsDisplay22Bold: Font { .pretendardBold(size: 22) }
+    static var jsDisplay28Bold: Font { .jsDisplayScaledBold(size: 28) }
+    static var jsDisplay26Bold: Font { .jsDisplayScaledBold(size: 26) }
+    static var jsDisplay22Bold: Font { .jsDisplayScaledBold(size: 22) }
 
     static var jsHeadline20Bold: Font { .pretendardSemiBold(size: 20) }
     static var jsHeadline18Bold: Font { .pretendardSemiBold(size: 18) }

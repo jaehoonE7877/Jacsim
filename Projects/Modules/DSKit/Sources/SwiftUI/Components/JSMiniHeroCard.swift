@@ -31,20 +31,27 @@ public struct JSMiniHeroCard: View {
         Button(action: onTap) {
             ZStack(alignment: .bottomLeading) {
                 // Full-bleed Image Background (like Hero)
-                Group {
+                ZStack {
+                    LinearGradient(
+                        colors: [.primaryNormal.opacity(0.6), .primaryStrong.opacity(0.6)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                    .opacity(hasImage ? 0 : 1)
+
                     if let image = image {
                         image
                             .resizable()
-                            .scaledToFill()
-                    } else {
-                        LinearGradient(
-                            colors: [.primaryNormal.opacity(0.6), .primaryStrong.opacity(0.6)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
+                            .aspectRatio(contentMode: .fill)
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                            .transition(.opacity)
                     }
                 }
-                .frame(width: 160, height: 200)
+                .animation(.easeOut(duration: 0.18), value: hasImage)
+                .frame(
+                    width: JSMiniHeroCardLayout.size.width,
+                    height: JSMiniHeroCardLayout.size.height
+                )
                 .clipped()
 
                 // Gradient Overlay (like Hero)
@@ -53,7 +60,10 @@ public struct JSMiniHeroCard: View {
                     startPoint: .top,
                     endPoint: .bottom
                 )
-                .frame(width: 160, height: 200)
+                .frame(
+                    width: JSMiniHeroCardLayout.size.width,
+                    height: JSMiniHeroCardLayout.size.height
+                )
 
                 VStack {
                     HStack {
@@ -62,47 +72,56 @@ public struct JSMiniHeroCard: View {
                     }
                     Spacer()
                 }
-                .padding(12)
+                .padding(JSMiniHeroCardLayout.contentPadding)
 
                 // Bottom Content (like Hero)
-                VStack(alignment: .leading, spacing: 6) {
+                VStack(alignment: .leading, spacing: JSMiniHeroCardLayout.titleSpacing) {
                     Text(title)
                         .font(.jsLabel14Bold)
                         .foregroundColor(.white)
                         .lineLimit(1)
 
                     // Progress bar (same style as Hero)
-                    HStack(spacing: 8) {
+                    HStack(spacing: JSMiniHeroCardLayout.progressSpacing) {
                         GeometryReader { geo in
                             ZStack(alignment: .leading) {
                                 Capsule()
                                     .fill(.white.opacity(0.25))
-                                    .frame(height: 4)
+                                    .frame(height: JSMiniHeroCardLayout.progressBarHeight)
                                 
                                 Capsule()
                                     .fill(.white)
-                                    .frame(width: geo.size.width * CGFloat(progress), height: 4)
+                                    .frame(
+                                        width: geo.size.width * CGFloat(progress),
+                                        height: JSMiniHeroCardLayout.progressBarHeight
+                                    )
                             }
                         }
-                        .frame(height: 4)
+                        .frame(height: JSMiniHeroCardLayout.progressBarHeight)
 
                         Text("\(Int(progress * 100))%")
                             .font(.jsLabel11Bold)
                             .foregroundColor(.white)
                     }
                 }
-                .padding(12)
+                .padding(JSMiniHeroCardLayout.contentPadding)
             }
-            .frame(width: 160, height: 200)
-            .clipShape(RoundedRectangle(cornerRadius: 20))
+            .frame(
+                width: JSMiniHeroCardLayout.size.width,
+                height: JSMiniHeroCardLayout.size.height
+            )
+            .clipShape(RoundedRectangle(cornerRadius: JSMiniHeroCardLayout.cornerRadius))
             .overlay(
-                RoundedRectangle(cornerRadius: 20)
+                RoundedRectangle(cornerRadius: JSMiniHeroCardLayout.cornerRadius)
                     .stroke(.white.opacity(0.1), lineWidth: 1)
             )
             .jsShadow(.medium)
         }
-        .buttonStyle(PlainButtonStyle())
-        .pressEffect()
+        .buttonStyle(PressEffectButtonStyle())
+    }
+
+    private var hasImage: Bool {
+        image != nil
     }
 }
 
@@ -113,8 +132,8 @@ private struct StatusBadge: View {
         Text(isCertified ? "오늘 인증 완료" : "오늘 미인증")
             .font(.jsLabel10Bold)
             .foregroundColor(isCertified ? .green : .white)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 4)
+            .padding(.horizontal, JSMiniHeroCardLayout.badgeHorizontalPadding)
+            .padding(.vertical, JSMiniHeroCardLayout.badgeVerticalPadding)
             .background(
                 Capsule()
                     .fill(.ultraThinMaterial)
@@ -128,11 +147,11 @@ private struct StatusBadge: View {
 
 public struct JSMiniHeroCardCarousel: View {
     let cards: [JSMiniHeroCardData]
-    let onCardTap: (Int) -> Void
+    let onCardTap: (UUID) -> Void
 
     public init(
         cards: [JSMiniHeroCardData],
-        onCardTap: @escaping (Int) -> Void
+        onCardTap: @escaping (UUID) -> Void
     ) {
         self.cards = cards
         self.onCardTap = onCardTap
@@ -140,8 +159,8 @@ public struct JSMiniHeroCardCarousel: View {
 
     public var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 12) {
-                ForEach(Array(cards.enumerated()), id: \.offset) { index, card in
+            LazyHStack(spacing: JSMiniHeroCardLayout.carouselSpacing) {
+                ForEach(cards) { card in
                     JSMiniHeroCard(
                         title: card.title,
                         progress: card.progress,
@@ -149,14 +168,14 @@ public struct JSMiniHeroCardCarousel: View {
                         completedDays: card.completedDays,
                         image: card.image,
                         isTodayCertified: card.isTodayCertified,
-                        onTap: { onCardTap(index) }
+                        onTap: { onCardTap(card.id) }
                     )
                 }
             }
-            .padding(.horizontal, 20)
-            .padding(.vertical, 4)
+            .padding(.horizontal, JSMiniHeroCardLayout.carouselHorizontalPadding)
+            .padding(.vertical, JSMiniHeroCardLayout.carouselVerticalPadding)
         }
-        .frame(height: 200)
+        .frame(height: JSMiniHeroCardLayout.size.height)
         .scrollClipDisabled(false)
     }
 }
@@ -246,8 +265,8 @@ struct JSMiniHeroCard_Previews: PreviewProvider {
                             completedDays: 25
                         )
                     ],
-                    onCardTap: { index in
-                        print("Tapped card at index: \(index)")
+                    onCardTap: { id in
+                        print("Tapped card id: \(id)")
                     }
                 )
             }

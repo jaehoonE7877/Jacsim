@@ -51,7 +51,7 @@ public struct JSButton: View {
         }
         .disabled(!isEnabled)
         .opacity(isEnabled ? 1.0 : 0.5)
-        .frame(minHeight: 44)
+        .frame(minHeight: 44.jsScaled(.touchTarget))
     }
 
     private var font: Font {
@@ -68,22 +68,22 @@ public struct JSButton: View {
     private var verticalPadding: CGFloat {
         switch size {
         case .large:
-            return 16
+            return 16.jsScaled()
         case .medium:
-            return 12
+            return 12.jsScaled()
         case .small:
-            return 8
+            return 8.jsScaled()
         }
     }
 
     private var horizontalPadding: CGFloat {
         switch size {
         case .large:
-            return 24
+            return 24.jsScaled()
         case .medium:
-            return 20
+            return 20.jsScaled()
         case .small:
-            return 16
+            return 16.jsScaled()
         }
     }
 

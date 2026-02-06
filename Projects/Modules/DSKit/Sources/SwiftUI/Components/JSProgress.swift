@@ -80,33 +80,33 @@ public struct JSProgress: View {
     private var trackHeight: CGFloat {
         switch size {
         case .small:
-            return 4
+            return 4.jsScaled()
         case .medium:
-            return 8
+            return 8.jsScaled()
         case .large:
-            return 12
+            return 12.jsScaled()
         }
     }
 
     private var strokeWidth: CGFloat {
         switch size {
         case .small:
-            return 3
+            return 3.jsScaled()
         case .medium:
-            return 5
+            return 5.jsScaled()
         case .large:
-            return 8
+            return 8.jsScaled()
         }
     }
 
     private var circleSize: CGFloat {
         switch size {
         case .small:
-            return 24
+            return 24.jsScaled()
         case .medium:
-            return 44
+            return 44.jsScaled(.touchTarget)
         case .large:
-            return 64
+            return 64.jsScaled()
         }
     }
 
@@ -155,22 +155,22 @@ public struct JSProgressIndicator: View {
     private var strokeWidth: CGFloat {
         switch size {
         case .small:
-            return 2
+            return 2.jsScaled()
         case .medium:
-            return 3
+            return 3.jsScaled()
         case .large:
-            return 4
+            return 4.jsScaled()
         }
     }
 
     private var indicatorSize: CGFloat {
         switch size {
         case .small:
-            return 16
+            return 16.jsScaled()
         case .medium:
-            return 24
+            return 24.jsScaled()
         case .large:
-            return 32
+            return 32.jsScaled()
         }
     }
 }

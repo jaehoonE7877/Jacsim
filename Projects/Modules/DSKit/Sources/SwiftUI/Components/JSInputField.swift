@@ -25,7 +25,7 @@ public struct JSInputField: View {
     }
 
     public var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: .jsXS) {
             if !title.isEmpty {
                 Text(title)
                     .font(.jsLabelMedium)
@@ -40,7 +40,7 @@ public struct JSInputField: View {
                 }
             }
             .font(.jsBodyMedium)
-            .padding(16)
+            .padding(.jsMD)
             .background(
                 RoundedRectangle(cornerRadius: .jsCornerSmall)
                     .fill(Color.backgroundNormal)
@@ -51,7 +51,7 @@ public struct JSInputField: View {
             )
             .disabled(!isEnabled)
             .opacity(isEnabled ? 1.0 : 0.5)
-            .frame(minHeight: 44)
+            .frame(minHeight: 44.jsScaled(.touchTarget))
 
             if let error = errorMessage {
                 Text(error)

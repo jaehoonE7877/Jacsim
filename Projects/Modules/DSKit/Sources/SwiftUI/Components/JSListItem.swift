@@ -43,7 +43,7 @@ public struct JSListItem: View {
 
     public var body: some View {
         Button(action: { action?() }) {
-            HStack(spacing: 12) {
+            HStack(spacing: .jsSM) {
                 iconView
 
                 textContent
@@ -52,13 +52,13 @@ public struct JSListItem: View {
 
                 accessoryView
             }
-            .padding(.vertical, 8)
-            .padding(.horizontal, 16)
+            .padding(.vertical, .jsXS)
+            .padding(.horizontal, .jsMD)
             .contentShape(Rectangle())
         }
         .buttonStyle(PlainButtonStyle())
         .background(backgroundColor)
-        .frame(minHeight: 44)
+        .frame(minHeight: 44.jsScaled(.touchTarget))
     }
 
     @ViewBuilder
@@ -67,15 +67,15 @@ public struct JSListItem: View {
             Image(systemName: icon)
                 .font(.jsHeadlineMedium)
                 .foregroundColor(iconForegroundColor)
-                .frame(width: 32, height: 32)
+                .frame(width: 32.jsScaled(), height: 32.jsScaled())
                 .background(iconBackgroundColor)
-                .cornerRadius(4)
+                .cornerRadius(.jsMicro)
         }
     }
 
     @ViewBuilder
     private var textContent: some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: .jsMicro) {
             Text(title)
                 .font(.jsBodyMedium)
                 .foregroundColor(titleColor)

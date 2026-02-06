@@ -75,7 +75,7 @@ public struct JSStatusChip: View {
     }
 
     public var body: some View {
-        let content = HStack(spacing: 6) {
+        let content = HStack(spacing: 6.jsScaled()) {
             Image(systemName: state.icon)
                 .font(.jsButtonSmall)
 
@@ -85,8 +85,8 @@ public struct JSStatusChip: View {
             if let count = count {
                 Text("\(count)")
                     .font(.jsLabel10Regular)
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 2)
+                    .padding(.horizontal, 6.jsScaled())
+                    .padding(.vertical, 2.jsScaled())
                     .background(
                         Capsule()
                             .fill(state.foregroundColor.opacity(0.2))
@@ -94,8 +94,8 @@ public struct JSStatusChip: View {
             }
         }
         .foregroundColor(state.foregroundColor)
-        .padding(.horizontal, 12)
-        .padding(.vertical, 6)
+        .padding(.horizontal, 12.jsScaled())
+        .padding(.vertical, 6.jsScaled())
         .background(
             Capsule()
                 .fill(state.backgroundColor)
@@ -106,7 +106,7 @@ public struct JSStatusChip: View {
                 content
             }
             .buttonStyle(PlainButtonStyle())
-            .frame(minWidth: 44, minHeight: 44)
+            .frame(minWidth: 44.jsScaled(.touchTarget), minHeight: 44.jsScaled(.touchTarget))
             .contentShape(Rectangle())
         } else {
             content
@@ -137,7 +137,7 @@ public struct JSStatusChipGroup: View {
     }
 
     public var body: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: .jsXS) {
             if completedCount > 0 {
                 JSStatusChip(
                     state: .completed,

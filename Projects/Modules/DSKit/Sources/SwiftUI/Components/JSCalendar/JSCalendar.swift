@@ -52,8 +52,8 @@ public struct JSCalendar: View {
     }
 
     private var headerView: some View {
-        HStack(spacing: 12) {
-            VStack(alignment: .leading, spacing: 2) {
+        HStack(spacing: .jsSM) {
+            VStack(alignment: .leading, spacing: 2.jsScaled()) {
                 Button(action: { withAnimation { moveToToday() } }) {
                     Text(headerTitle)
                         .font(.jsDisplay22Bold)
@@ -71,8 +71,8 @@ public struct JSCalendar: View {
                     Text("오늘")
                         .font(.jsLabel13Bold)
                         .foregroundColor(.white)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 8)
+                        .padding(.horizontal, 12.jsScaled())
+                        .padding(.vertical, 8.jsScaled())
                         .background(
                             Capsule()
                                 .fill(Color.primaryNormal)
@@ -81,14 +81,14 @@ public struct JSCalendar: View {
                 }
             }
 
-            HStack(spacing: 10) {
+            HStack(spacing: 10.jsScaled()) {
                 Button(action: { withAnimation { movePage(by: -1) } }) {
                     Image(systemName: "chevron.left")
                         .font(.jsBody14Semibold)
                         .foregroundColor(Color.labelNormal)
-                        .frame(width: 36, height: 36)
+                        .frame(width: 36.jsScaled(), height: 36.jsScaled())
                         .background(
-                            RoundedRectangle(cornerRadius: 12)
+                            RoundedRectangle(cornerRadius: 12.jsScaled())
                                 .fill(Color(uiColor: .secondarySystemGroupedBackground))
                                 .jsShadow(.small)
                         )
@@ -97,17 +97,17 @@ public struct JSCalendar: View {
                     Image(systemName: "chevron.right")
                         .font(.jsBody14Semibold)
                         .foregroundColor(Color.labelNormal)
-                        .frame(width: 36, height: 36)
+                        .frame(width: 36.jsScaled(), height: 36.jsScaled())
                         .background(
-                            RoundedRectangle(cornerRadius: 12)
+                            RoundedRectangle(cornerRadius: 12.jsScaled())
                                 .fill(Color(uiColor: .secondarySystemGroupedBackground))
                                 .jsShadow(.small)
                         )
                 }
             }
         }
-        .padding(.horizontal, 20)
-        .padding(.vertical, 10)
+        .padding(.horizontal, 20.jsScaled())
+        .padding(.vertical, 10.jsScaled())
         .background(Color.backgroundNormal)
     }
 
@@ -118,11 +118,11 @@ public struct JSCalendar: View {
                     .font(.jsLabel13Bold)
                     .foregroundColor(index == 0 ? Color.destructive.opacity(0.8) : (index == 6 ? Color.primaryNormal.opacity(0.8) : .labelNeutral))
                     .frame(maxWidth: .infinity)
-                    .padding(.vertical, 4)
+                    .padding(.vertical, 4.jsScaled())
             }
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 6)
+        .padding(.horizontal, 16.jsScaled())
+        .padding(.vertical, 6.jsScaled())
         .background(Color.clear)
         .zIndex(1)
     }
@@ -131,13 +131,16 @@ public struct JSCalendar: View {
         let days = scope == .month ? daysInMonth : daysInWeek
         let rows = scope == .month ? 6 : 1
         
-        return LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 0), count: 7), spacing: 8) {
+        return LazyVGrid(
+            columns: Array(repeating: GridItem(.flexible(), spacing: 0), count: 7),
+            spacing: 8.jsScaled()
+        ) {
             ForEach(days, id: \.self) { date in
                 dayView(for: date)
             }
         }
-        .padding(.horizontal, 8)
-        .frame(height: CGFloat(rows) * 56)
+        .padding(.horizontal, 8.jsScaled())
+        .frame(height: CGFloat(rows) * 56.jsScaled())
     }
 
     private func dayView(for date: Date) -> some View {
@@ -147,24 +150,24 @@ public struct JSCalendar: View {
         let hasEvent = eventDates.contains { calendar.isDate($0, inSameDayAs: date) }
         let dateColor = dateColors[date] ?? .none
 
-        return VStack(spacing: 6) {
+        return VStack(spacing: 6.jsScaled()) {
             ZStack {
                 if isSelected {
-                    RoundedRectangle(cornerRadius: 12)
+                    RoundedRectangle(cornerRadius: 12.jsScaled())
                         .fill(Color.primaryNormal)
                         .jsShadow(.medium)
                 } else if isToday {
-                    RoundedRectangle(cornerRadius: 12)
+                    RoundedRectangle(cornerRadius: 12.jsScaled())
                         .stroke(Color.primaryNormal.opacity(0.4), lineWidth: 1.5)
                         .background(
-                            RoundedRectangle(cornerRadius: 12)
+                            RoundedRectangle(cornerRadius: 12.jsScaled())
                                 .fill(Color.primaryNormal.opacity(0.08))
                         )
                 } else if hasEvent && !isSelected {
-                    RoundedRectangle(cornerRadius: 12)
+                    RoundedRectangle(cornerRadius: 12.jsScaled())
                         .fill(dateColorBackground(dateColor))
                 } else {
-                    RoundedRectangle(cornerRadius: 12)
+                    RoundedRectangle(cornerRadius: 12.jsScaled())
                         .fill(Color.clear)
                 }
 
@@ -172,23 +175,23 @@ public struct JSCalendar: View {
                     .font(.jsHeadline16Bold)
                     .foregroundColor(isSelected ? .white : (isCurrentMonth ? (isToday ? Color.primaryNormal : Color.labelNormal) : Color.labelAlternative))
             }
-            .frame(height: 42)
+            .frame(height: 42.jsScaled())
 
             if hasEvent {
                 Circle()
                     .fill(isSelected ? Color.backgroundAlternative.opacity(0.9) : dateColorIndicator(dateColor))
-                    .frame(width: 5, height: 5)
+                    .frame(width: 5.jsScaled(), height: 5.jsScaled())
                     .jsShadow(.small)
             } else if isToday && !isSelected {
                 Circle()
                     .fill(Color.primaryNormal.opacity(0.5))
-                    .frame(width: 4, height: 4)
+                    .frame(width: 4.jsScaled(), height: 4.jsScaled())
             } else {
-                Spacer().frame(height: 5)
+                Spacer().frame(height: 5.jsScaled())
             }
         }
-        .padding(.horizontal, 6)
-        .frame(height: 58)
+        .padding(.horizontal, 6.jsScaled())
+        .frame(height: 58.jsScaled())
         .contentShape(Rectangle())
         .onTapGesture {
             withAnimation(.spring(response: 0.28, dampingFraction: 0.85)) {
@@ -229,13 +232,13 @@ public struct JSCalendar: View {
             .onEnded { value in
                 let horizontal = value.translation.width
                 let vertical = value.translation.height
-                if abs(horizontal) > abs(vertical) && abs(horizontal) > 28 {
+                if abs(horizontal) > abs(vertical) && abs(horizontal) > 28.jsScaled() {
                     if horizontal < 0 {
                         movePage(by: 1)
                     } else {
                         movePage(by: -1)
                     }
-                } else if abs(vertical) > 28 {
+                } else if abs(vertical) > 28.jsScaled() {
                     if vertical < 0 {
                         switchScope(to: .week)
                     } else {
@@ -248,8 +251,8 @@ public struct JSCalendar: View {
     private var handleBar: some View {
         Capsule()
             .fill(Color.labelDisable.opacity(0.3))
-            .frame(width: 44, height: 4)
-            .padding(.vertical, 10)
+            .frame(width: 44.jsScaled(), height: 4.jsScaled())
+            .padding(.vertical, 10.jsScaled())
     }
 
     private var scopeText: String {
@@ -313,7 +316,7 @@ public struct JSCalendar: View {
     }
 
     private var daysInMonth: [Date] {
-        guard let monthRange = calendar.range(of: .day, in: .month, for: viewDate),
+        guard calendar.range(of: .day, in: .month, for: viewDate) != nil,
               let firstDayOfMonth = calendar.date(from: calendar.dateComponents([.year, .month], from: viewDate))
         else { return [] }
 

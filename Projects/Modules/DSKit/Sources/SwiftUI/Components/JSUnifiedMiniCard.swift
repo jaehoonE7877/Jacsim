@@ -38,10 +38,9 @@ public struct JSUnifiedMiniCard: View {
                     .jsShadow(.medium)
             )
         }
-        .buttonStyle(PlainButtonStyle())
+        .buttonStyle(PressEffectButtonStyle())
         .frame(minWidth: 44, minHeight: 44)
         .contentShape(Rectangle())
-        .pressEffect()
     }
 
     private var imageSection: some View {

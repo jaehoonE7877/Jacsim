@@ -16,7 +16,7 @@ public struct JSStageSelector: View {
     }
 
     public var body: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: .jsSM) {
             ForEach(stages, id: \.self) { stage in
                 StageButton(
                     stage: stage,
@@ -40,7 +40,7 @@ private struct StageButton: View {
 
     var body: some View {
         Button(action: onTap) {
-            VStack(spacing: 4) {
+            VStack(spacing: .jsMicro) {
                 Text("\(stage)")
                     .font(.jsHeadline20Bold)
 
@@ -49,18 +49,18 @@ private struct StageButton: View {
             }
             .foregroundColor(isSelected ? .white : Color.labelNormal)
             .frame(maxWidth: .infinity)
-            .frame(height: 80)
+            .frame(height: 80.jsScaled())
             .background(
-                RoundedRectangle(cornerRadius: 8)
+                RoundedRectangle(cornerRadius: .jsRadiusSM)
                     .fill(isSelected ? Color.primaryNormal : Color.backgroundAlternative.opacity(0.2))
             )
             .overlay(
-                RoundedRectangle(cornerRadius: 8)
+                RoundedRectangle(cornerRadius: .jsRadiusSM)
                     .stroke(isSelected ? Color.primaryNormal : Color.backgroundAlternative.opacity(0.3), lineWidth: isSelected ? 0 : 1)
             )
         }
         .buttonStyle(PlainButtonStyle())
-        .frame(minWidth: 44, minHeight: 44)
+        .frame(minWidth: 44.jsScaled(.touchTarget), minHeight: 44.jsScaled(.touchTarget))
         .contentShape(Rectangle())
     }
 }
@@ -84,8 +84,8 @@ public struct JSStageInputView: View {
     }
 
     public var body: some View {
-        VStack(alignment: .leading, spacing: 20) {
-            VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: .jsLG) {
+            VStack(alignment: .leading, spacing: .jsXS) {
                 Text(title)
                     .font(.jsHeadline20Bold)
                     .foregroundColor(Color.labelNormal)
@@ -108,15 +108,15 @@ public struct JSStageInputView: View {
                 Text("총 \(selectedStage)일")
                     .font(.jsHeadline18Bold)
                     .foregroundColor(Color.primaryNormal)
-                    .padding(8)
+                    .padding(.jsXS)
                     .background(
-                        RoundedRectangle(cornerRadius: 6)
+                        RoundedRectangle(cornerRadius: 6.jsScaled())
                             .fill(Color.primaryNormal.opacity(0.1))
                     )
 
                 Spacer()
             }
-            .padding(.top, 8)
+            .padding(.top, .jsXS)
 
             Spacer()
 
@@ -125,16 +125,16 @@ public struct JSStageInputView: View {
                     .font(.jsHeadline17Bold)
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
-                    .frame(height: 50)
+                    .frame(height: 50.jsScaled())
                     .background(
-                        RoundedRectangle(cornerRadius: 10)
+                        RoundedRectangle(cornerRadius: 10.jsScaled())
                             .fill(Color.primaryNormal)
                     )
             }
-            .frame(minWidth: 44, minHeight: 44)
+            .frame(minWidth: 44.jsScaled(.touchTarget), minHeight: 44.jsScaled(.touchTarget))
             .contentShape(Rectangle())
         }
-        .padding(16)
+        .padding(.jsMD)
     }
 }
 
