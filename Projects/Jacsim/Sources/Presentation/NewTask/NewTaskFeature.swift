@@ -104,18 +104,23 @@ public struct NewTaskFeature {
                     value: stageType.durationDays - 1,
                     to: startDate
                 ) ?? startDate
-                
-                let createTaskUseCase = CreateTaskUseCase()
-                let task = createTaskUseCase.createTask(
-                    title: trimmedTitle,
-                    startDate: startDate,
-                    endDate: endDate,
-                    stageType: stageType
-                )
-                
-                Logger.taskCreated(title: task.title, taskId: task.id.rawValue.uuidString, startDate: task.startDate, endDate: task.endDate)
                 let isAlarmEnabled = state.isAlarmEnabled
                 let alarmDate = state.alarmDate
+                
+                let createTaskUseCase = CreateTaskUseCase()
+                let task: Task = {
+                    var task = createTaskUseCase.createTask(
+                        title: trimmedTitle,
+                        startDate: startDate,
+                        endDate: endDate,
+                        stageType: stageType
+                    )
+                    task.isNotificationEnabled = isAlarmEnabled
+                    task.alarmDate = isAlarmEnabled ? alarmDate : nil
+                    return task
+                }()
+                
+                Logger.taskCreated(title: task.title, taskId: task.id.rawValue.uuidString, startDate: task.startDate, endDate: task.endDate)
                 return .run { [jacsimClient, notificationScheduler, imageStore, userSettingsRepository] send in
                     do {
                         if let data = image.jpegData(compressionQuality: 0.4) {

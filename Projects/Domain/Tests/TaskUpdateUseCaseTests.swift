@@ -6,8 +6,12 @@ struct TaskUpdateUseCaseTests {
     
     @Test
     func testUpdateTaskInfo() async throws {
-        let mockRepository = MockTaskRepository()
-        let useCase = TaskUpdateUseCase(taskRepository: mockRepository)
+        var updatedTask: Task?
+        let useCase = TaskUpdateUseCase(
+            updateTask: { task in
+                updatedTask = task
+            }
+        )
         
         let originalStage = StageSnapshot(
             id: UUID(),
@@ -31,18 +35,22 @@ struct TaskUpdateUseCaseTests {
         let result = try await useCase.updateTaskInfo(
             task: task,
             title: "New Title",
-            durationDays: 14
+            durationDays: 14,
+            isNotificationEnabled: true,
+            alarmDate: .now
         )
         
         #expect(result.title == "New Title")
         #expect(result.stages.last?.durationDays == 14)
-        #expect(mockRepository.updatedTask?.title == "New Title")
+        #expect(result.isNotificationEnabled == true)
+        #expect(updatedTask?.title == "New Title")
     }
     
     @Test
     func testUpdateTaskInfoWithNoStage() async throws {
-        let mockRepository = MockTaskRepository()
-        let useCase = TaskUpdateUseCase(taskRepository: mockRepository)
+        let useCase = TaskUpdateUseCase(
+            updateTask: { _ in }
+        )
         
         let task = Task(
             id: TaskID(UUID()),
@@ -56,27 +64,14 @@ struct TaskUpdateUseCaseTests {
         let result = try await useCase.updateTaskInfo(
             task: task,
             title: "New Title",
-            durationDays: 14
+            durationDays: 14,
+            isNotificationEnabled: false,
+            alarmDate: .now
         )
         
         #expect(result.title == "New Title")
         #expect(result.stages.isEmpty)
-    }
-}
-
-private actor MockTaskRepository: TaskRepositoryPort {
-    var updatedTask: Task?
-    
-    init() {
-        super.init(
-            fetchActiveTasks: { [] },
-            fetchTask: { _ in nil },
-            addTask: { _ in },
-            updateTask: { [weak self] task in
-                self?.updatedTask = task
-            },
-            deleteTask: { _ in },
-            fetchTasksByStatus: { _ in [] }
-        )
+        #expect(result.isNotificationEnabled == false)
+        #expect(result.alarmDate == nil)
     }
 }
