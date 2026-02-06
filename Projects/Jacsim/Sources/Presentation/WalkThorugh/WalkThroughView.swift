@@ -41,7 +41,7 @@ public struct WalkThroughView: View {
                             Image(uiImage: images[index])
                                 .resizable()
                                 .scaledToFit()
-                                .frame(maxHeight: 320)
+                                .frame(maxHeight: 320.jsScaled())
                                 .padding(.horizontal, .jsMD)
 
                             VStack(spacing: .jsXS) {
@@ -87,7 +87,7 @@ public struct WalkThroughView: View {
                         }
                     }
                     .padding(.horizontal, .jsXL)
-                    .padding(.bottom, 40)
+                    .padding(.bottom, 40.jsScaled())
                 }
             }
         }
@@ -119,7 +119,7 @@ public struct WalkThroughView: View {
             ForEach(0..<store.totalPages, id: \.self) { index in
                 Capsule()
                     .fill(index == store.currentPage ? Color.primaryNormal : Color.labelNeutral.opacity(0.3))
-                    .frame(width: index == store.currentPage ? 20 : .jsXS, height: .jsXS)
+                    .frame(width: index == store.currentPage ? 20.jsScaled() : .jsXS, height: .jsXS)
             }
         }
         .animation(.easeInOut(duration: JSAnimation.durationNormal), value: store.currentPage)

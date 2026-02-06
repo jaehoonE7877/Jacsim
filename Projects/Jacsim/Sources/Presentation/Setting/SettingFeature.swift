@@ -24,7 +24,7 @@ public struct SettingFeature {
         }
     }
 
-    public enum Action {
+    public enum Action: Equatable {
         case useCaseButtonTapped
         case inquiryButtonTapped
         case reviewButtonTapped
@@ -35,7 +35,7 @@ public struct SettingFeature {
         case themeChanged(ThemeMode)
         
         case delegate(Delegate)
-        public enum Delegate {
+        public enum Delegate: Equatable {
             case navigateToWalkThrough
             case presentMailCompose
             case openReviewURL
@@ -44,7 +44,6 @@ public struct SettingFeature {
     }
 
     @Dependency(\.notificationScheduler) var notificationScheduler
-    @Dependency(\.jacsimClient) var jacsimClient
     @Dependency(\.userSettingsRepository) var userSettingsRepository
 
     public var body: some ReducerOf<Self> {
@@ -68,7 +67,6 @@ public struct SettingFeature {
                 state.isNotificationEnabled = isEnabled
                 state.isLoading = true
                 return .run { [notificationScheduler, userSettingsRepository] send in
-                    await userSettingsRepository.updateNotificationEnabled(isEnabled)
                     let reminders = await userSettingsRepository.getAllReminders()
 
                     if isEnabled {
@@ -80,6 +78,7 @@ public struct SettingFeature {
                             await notificationScheduler.cancelReminder(reminder.taskId)
                         }
                     }
+                    await userSettingsRepository.updateNotificationEnabled(isEnabled)
                     await send(.notificationSettingsResponse(isEnabled))
                 }
             case let .notificationSettingsResponse(isEnabled):
