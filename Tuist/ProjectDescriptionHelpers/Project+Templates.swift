@@ -254,7 +254,7 @@ extension Project {
             analyzeAction: .analyzeAction(configuration: "Debug")
         ),
         .scheme(
-            name: "\(Environment.workspaceName)",
+            name: "\(Environment.workspaceName)-Release",
             shared: true,
             buildAction: .buildAction(targets: ["\(Environment.workspaceName)"],
                                       postActions: []),

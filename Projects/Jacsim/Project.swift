@@ -5,7 +5,7 @@ import EnvironmentPlugin
 
 let project = Project.makeModule(
     name: Environment.workspaceName,
-    targets: [.app],
+    targets: [.app, .unitTest],
     internalDependencies: [
         .Modules.dsKit,
         .domain,
