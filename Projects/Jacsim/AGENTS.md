@@ -31,6 +31,7 @@ Projects/Jacsim/
 ## Conventions
 - Add new screens/flows under `Presentation` as Feature units (no UIKit VC addition)
 - External dependencies: Use `ThirdPartyLibs` + `DependencyPlugin` for centralized management, not direct SPM
+- Commit messages: follow root `AGENTS.md` "Commit Convention" (`type: subject`)
 
 ## Anti-Patterns
 - Adding new UIKit-based screens/VCs
