@@ -12,72 +12,78 @@ public struct TaskEditView: View {
     }
 
     public var body: some View {
-        VStack(spacing: .jsXL) {
-            ZStack(alignment: .bottomTrailing) {
-                if let image = store.image {
-                    Image(uiImage: image)
-                        .resizable()
-                        .scaledToFill()
-                        .frame(height: 220)
-                        .clipped()
-                        .cornerRadius(.jsRadiusMD)
-                } else {
-                    Rectangle()
-                        .fill(Color.labelDisable)
-                        .frame(height: 220)
-                        .cornerRadius(.jsRadiusMD)
-                        .overlay(
-                            Image(systemName: "camera")
-                                .font(.jsDisplaySmall)
-                                .scaleEffect(1.6)
-                                .foregroundColor(.labelNeutral)
-                        )
-                }
-
-                PhotosPicker(
-                    selection: $photoPickerItem,
-                    matching: .images
+        ZStack(alignment: .bottom) {
+            RedesignScreenScaffold(
+                title: "작심 수정",
+                subtitle: "사진, 목표, 알림을 다시 정리해요"
+            ) {
+                RedesignSectionCard(
+                    title: "대표 사진",
+                    subtitle: "챌린지를 대표하는 이미지를 바꿀 수 있어요"
                 ) {
-                    Image(systemName: "plus.circle.fill")
-                        .font(.jsDisplayLarge)
-                        .scaleEffect(1.3)
-                        .foregroundColor(.primaryNormal)
-                        .background(Color.backgroundNormal)
-                        .clipShape(Circle())
-                        .padding(.jsXS)
-                }
-                .onChange(of: photoPickerItem) { _, newItem in
-                    guard let newItem else { return }
-                    Task {
-                        if let data = try? await newItem.loadTransferable(type: Data.self),
-                           let image = UIImage(data: data) {
-                            store.send(.imageSelected(image))
+                    ZStack(alignment: .bottomTrailing) {
+                        if let image = store.image {
+                            Image(uiImage: image)
+                                .resizable()
+                                .scaledToFill()
+                                .frame(height: 220)
+                                .clipped()
+                                .cornerRadius(.jsRadiusMD)
+                        } else {
+                            Rectangle()
+                                .fill(Color.labelDisable)
+                                .frame(height: 220)
+                                .cornerRadius(.jsRadiusMD)
+                                .overlay(
+                                    Image(systemName: "camera")
+                                        .font(.jsDisplaySmall)
+                                        .scaleEffect(1.6)
+                                        .foregroundColor(.labelNeutral)
+                                )
+                        }
+
+                        PhotosPicker(
+                            selection: $photoPickerItem,
+                            matching: .images
+                        ) {
+                            Image(systemName: "plus.circle.fill")
+                                .font(.jsDisplayLarge)
+                                .scaleEffect(1.3)
+                                .foregroundColor(.primaryNormal)
+                                .background(Color.backgroundNormal)
+                                .clipShape(Circle())
+                                .padding(.jsXS)
+                        }
+                        .onChange(of: photoPickerItem) { _, newItem in
+                            guard let newItem else { return }
+                            Task {
+                                if let data = try? await newItem.loadTransferable(type: Data.self),
+                                   let image = UIImage(data: data) {
+                                    store.send(.imageSelected(image))
+                                }
+                            }
                         }
                     }
                 }
-            }
-            .padding(.horizontal, .jsMD)
 
-            VStack(alignment: .leading, spacing: .jsSM) {
-                TextField("작심 이름", text: $store.title)
-                    .font(.jsBodyMedium)
-                    .padding()
-                    .background(Color.backgroundNormal)
-                    .cornerRadius(.jsRadiusMD)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: .jsRadiusMD)
-                            .stroke(Color.primaryNormal.opacity(0.5), lineWidth: 1)
-                    )
+                RedesignSectionCard(title: "기본 정보") {
+                    TextField("작심 이름", text: $store.title)
+                        .font(.jsBodyMedium)
+                        .padding()
+                        .background(Color.backgroundNormal)
+                        .cornerRadius(.jsRadiusMD)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: .jsRadiusMD)
+                                .stroke(Color.primaryNormal.opacity(0.5), lineWidth: 1)
+                        )
+                }
 
-                VStack(alignment: .leading, spacing: .jsMicro) {
-                    Text("성공 목표")
-                        .font(.jsLabelMedium)
-                        .foregroundColor(.labelNeutral)
+                RedesignSectionCard(title: "성공 목표") {
                     Stepper("\(store.successTarget)회", value: $store.successTarget, in: 1...store.maxSuccessTarget)
                         .font(.jsBodyMedium)
                 }
 
-                VStack(alignment: .leading, spacing: .jsXS) {
+                RedesignSectionCard(title: "알림") {
                     Toggle("알림 설정", isOn: $store.isAlarmEnabled)
                         .font(.jsBodyMedium)
 
@@ -90,35 +96,38 @@ public struct TaskEditView: View {
                         .datePickerStyle(.wheel)
                     }
                 }
-            }
-            .padding(.horizontal, .jsMD)
 
-            Spacer()
+                Spacer(minLength: 120)
+            }
 
             HStack(spacing: .jsSM) {
-                Button(action: { store.send(.cancelButtonTapped) }) {
-                    Text("취소")
-                        .font(.jsButtonMedium)
-                        .foregroundColor(.labelStrong)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 52)
-                        .background(Color.backgroundNormal)
-                        .cornerRadius(.jsRadiusMD)
+                JSButton(title: "취소", style: .secondary, size: .large) {
+                    store.send(.cancelButtonTapped)
                 }
 
-                Button(action: { store.send(.saveButtonTapped) }) {
-                    Text("저장")
-                        .font(.jsButtonMedium)
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 52)
-                        .background(isSaveEnabled ? Color.primaryNormal : Color.labelDisable)
-                        .cornerRadius(.jsRadiusMD)
+                JSButton(
+                    title: "저장",
+                    style: .primary,
+                    size: .large,
+                    isEnabled: isSaveEnabled
+                ) {
+                    store.send(.saveButtonTapped)
                 }
-                .disabled(!isSaveEnabled)
             }
             .padding(.horizontal, .jsMD)
-            .padding(.bottom, .jsMD)
+            .padding(.vertical, .jsMD)
+            .background(
+                LinearGradient(
+                    colors: [
+                        Color.backgroundNormal.opacity(0),
+                        Color.backgroundNormal,
+                        Color.backgroundNormal
+                    ],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+                .ignoresSafeArea()
+            )
         }
         .background(Color.backgroundNormal)
         .navigationTitle("작심 수정")

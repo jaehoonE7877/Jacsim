@@ -11,27 +11,25 @@ public struct TaskUpdateView: View {
     }
 
     public var body: some View {
-        VStack(spacing: 0) {
-            ScrollView {
-                VStack(spacing: .jsXL) {
-                    if store.isOverwriteMode {
-                        overwriteBanner
-                    }
-                    
-                    photoPickerSection
-                    
-                    memoInputSection
-                    
-                    if store.saveFailed {
-                        errorMessage
-                    }
-                    
-                    Spacer(minLength: 100)
+        ZStack(alignment: .bottom) {
+            RedesignScreenScaffold(
+                title: "오늘 인증",
+                subtitle: store.dateText
+            ) {
+                if store.isOverwriteMode {
+                    overwriteBanner
                 }
-                .padding(.horizontal, .jsMD)
-                .padding(.top, .jsMD)
+
+                if store.saveFailed {
+                    errorMessage
+                }
+
+                photoPickerSection
+                memoInputSection
+
+                Spacer(minLength: 120)
             }
-            
+
             bottomCTASection
         }
         .background(Color.backgroundNormal)
@@ -46,105 +44,95 @@ public struct TaskUpdateView: View {
     }
     
     private var overwriteBanner: some View {
-        HStack(spacing: .jsXS) {
-            Image(systemName: "info.circle.fill")
-                .foregroundColor(.primaryNormal)
-                .font(.jsBodyMedium)
-            
-            Text("오늘 인증은 수정할 수 있어요")
-                .font(.jsBodySmall)
-                .foregroundColor(.labelNormal)
-            
-            Spacer()
-        }
-        .padding(.horizontal, .jsMD)
-        .padding(.vertical, .jsSM)
-        .background(Color.primaryNormal.opacity(0.1))
-        .cornerRadius(.jsRadiusSM)
+        RedesignStateBanner(
+            text: "오늘 인증은 다시 저장하면 덮어써져요",
+            icon: "info.circle.fill",
+            tintColor: .primaryNormal
+        )
     }
     
     private var photoPickerSection: some View {
-        ZStack(alignment: .bottomTrailing) {
-            if let image = store.image {
-                Image(uiImage: image)
-                    .resizable()
-                    .scaledToFill()
-                    .frame(height: 300)
-                    .clipped()
-                    .cornerRadius(.jsRadiusMD)
-            } else {
-                Rectangle()
-                    .fill(Color.backgroundStrong)
-                    .frame(height: 300)
-                    .cornerRadius(.jsRadiusMD)
-                    .overlay(
-                        VStack(spacing: .jsSM) {
-                            Image(systemName: "photo")
-                                .font(.pretendardSemiBold(size: 40))
-                                .foregroundColor(.labelAlternative)
-                            
-                            Text("사진을 추가해주세요")
-                                .font(.jsBodyMedium)
-                                .foregroundColor(.labelAlternative)
-                        }
-                    )
-            }
-            
-            PhotosPicker(
-                selection: Binding(
-                    get: { store.photoPickerItem ?? PhotosPickerItem(itemIdentifier: "") },
-                    set: { store.photoPickerItem = $0 }
-                ),
-                matching: .images
-            ) {
-                Image(systemName: "plus.circle.fill")
-                    .font(.pretendardSemiBold(size: 44))
-                    .foregroundColor(.primaryNormal)
-                    .background(Color.backgroundNormal)
-                    .clipShape(Circle())
-                    .padding(.jsXS)
-            }
-            .onChange(of: store.photoPickerItem) { _, newItem in
-                store.send(.photoPickerItemChanged(newItem))
+        RedesignSectionCard(
+            title: "인증 사진",
+            subtitle: "오늘의 진행 상황을 남겨요"
+        ) {
+            ZStack(alignment: .bottomTrailing) {
+                if let image = store.image {
+                    Image(uiImage: image)
+                        .resizable()
+                        .scaledToFill()
+                        .frame(height: 300)
+                        .clipped()
+                        .cornerRadius(.jsRadiusMD)
+                } else {
+                    Rectangle()
+                        .fill(Color.backgroundStrong)
+                        .frame(height: 300)
+                        .cornerRadius(.jsRadiusMD)
+                        .overlay(
+                            VStack(spacing: .jsSM) {
+                                Image(systemName: "photo")
+                                    .font(.pretendardSemiBold(size: 40))
+                                    .foregroundColor(.labelAlternative)
+                                
+                                Text("사진을 추가해주세요")
+                                    .font(.jsBodyMedium)
+                                    .foregroundColor(.labelAlternative)
+                            }
+                        )
+                }
+
+                PhotosPicker(
+                    selection: Binding(
+                        get: { store.photoPickerItem ?? PhotosPickerItem(itemIdentifier: "") },
+                        set: { store.photoPickerItem = $0 }
+                    ),
+                    matching: .images
+                ) {
+                    Image(systemName: "plus.circle.fill")
+                        .font(.pretendardSemiBold(size: 44))
+                        .foregroundColor(.primaryNormal)
+                        .background(Color.backgroundNormal)
+                        .clipShape(Circle())
+                        .padding(.jsXS)
+                }
+                .onChange(of: store.photoPickerItem) { _, newItem in
+                    store.send(.photoPickerItemChanged(newItem))
+                }
             }
         }
     }
     
     private var memoInputSection: some View {
-        VStack(alignment: .trailing, spacing: .jsXS) {
-            TextField("짧게 기록해요 (선택)", text: $store.memo, axis: .vertical)
-                .font(.jsBodyMedium)
-                .padding()
-                .background(Color.backgroundStrong)
-                .cornerRadius(.jsRadiusMD)
-                .overlay(
-                    RoundedRectangle(cornerRadius: .jsRadiusMD)
-                        .stroke(Color.primaryNormal.opacity(0.5), lineWidth: 1)
-                )
-                .lineLimit(2...4)
-            
-            Text("\(store.memo.trimmingCharacters(in: .whitespacesAndNewlines).count)/20")
-                .font(.jsLabelMedium)
-                .foregroundColor(.labelAssistive)
+        RedesignSectionCard(
+            title: "한 줄 메모",
+            subtitle: "선택사항 · 최대 20자"
+        ) {
+            VStack(alignment: .trailing, spacing: .jsXS) {
+                TextField("짧게 기록해요 (선택)", text: $store.memo, axis: .vertical)
+                    .font(.jsBodyMedium)
+                    .padding()
+                    .background(Color.backgroundStrong)
+                    .cornerRadius(.jsRadiusMD)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: .jsRadiusMD)
+                            .stroke(Color.primaryNormal.opacity(0.5), lineWidth: 1)
+                    )
+                    .lineLimit(2...4)
+                
+                Text("\(store.memo.trimmingCharacters(in: .whitespacesAndNewlines).count)/20")
+                    .font(.jsLabelMedium)
+                    .foregroundColor(.labelAssistive)
+            }
         }
     }
     
     private var errorMessage: some View {
-        HStack(spacing: .jsXS) {
-            Image(systemName: "exclamationmark.circle.fill")
-                .foregroundColor(.destructive)
-                .font(.jsLabelMedium)
-            
-            Text("저장에 실패했어요. 다시 시도해주세요")
-                .font(.jsBodySmall)
-                .foregroundColor(.destructive)
-            
-            Spacer()
-        }
-        .padding(.horizontal, .jsSM)
-        .padding(.vertical, 10)
-        .background(Color.destructive.opacity(0.12))
-        .cornerRadius(.jsRadiusSM)
+        RedesignStateBanner(
+            text: "저장에 실패했어요. 다시 시도해주세요",
+            icon: "exclamationmark.circle.fill",
+            tintColor: .destructive
+        )
     }
     
     private var bottomCTASection: some View {
