@@ -6,8 +6,10 @@ struct TaskUpdateUseCaseTests {
     
     @Test
     func testUpdateTaskInfo() async throws {
-        let mockRepository = MockTaskRepository()
-        let useCase = TaskUpdateUseCase(taskRepository: mockRepository)
+        let store = MockTaskStore()
+        let useCase = TaskUpdateUseCase(
+            updateTask: { try await store.updateTask($0) }
+        )
         
         let originalStage = StageSnapshot(
             id: UUID(),
@@ -31,18 +33,24 @@ struct TaskUpdateUseCaseTests {
         let result = try await useCase.updateTaskInfo(
             task: task,
             title: "New Title",
-            durationDays: 14
+            durationDays: 14,
+            isNotificationEnabled: true,
+            alarmDate: .now
         )
         
         #expect(result.title == "New Title")
         #expect(result.stages.last?.durationDays == 14)
-        #expect(mockRepository.updatedTask?.title == "New Title")
+        #expect(result.isNotificationEnabled == true)
+        let updatedTask = try await store.fetchUpdatedTask()
+        #expect(updatedTask?.title == "New Title")
     }
     
     @Test
     func testUpdateTaskInfoWithNoStage() async throws {
-        let mockRepository = MockTaskRepository()
-        let useCase = TaskUpdateUseCase(taskRepository: mockRepository)
+        let store = MockTaskStore()
+        let useCase = TaskUpdateUseCase(
+            updateTask: { try await store.updateTask($0) }
+        )
         
         let task = Task(
             id: TaskID(UUID()),
@@ -56,27 +64,26 @@ struct TaskUpdateUseCaseTests {
         let result = try await useCase.updateTaskInfo(
             task: task,
             title: "New Title",
-            durationDays: 14
+            durationDays: 14,
+            isNotificationEnabled: false,
+            alarmDate: .now
         )
         
         #expect(result.title == "New Title")
         #expect(result.stages.isEmpty)
+        #expect(result.isNotificationEnabled == false)
+        #expect(result.alarmDate == nil)
     }
 }
 
-private actor MockTaskRepository: TaskRepositoryPort {
-    var updatedTask: Task?
-    
-    init() {
-        super.init(
-            fetchActiveTasks: { [] },
-            fetchTask: { _ in nil },
-            addTask: { _ in },
-            updateTask: { [weak self] task in
-                self?.updatedTask = task
-            },
-            deleteTask: { _ in },
-            fetchTasksByStatus: { _ in [] }
-        )
+private actor MockTaskStore {
+    private var updatedTask: Task?
+
+    func updateTask(_ task: Task) throws {
+        updatedTask = task
+    }
+
+    func fetchUpdatedTask() throws -> Task? {
+        updatedTask
     }
 }

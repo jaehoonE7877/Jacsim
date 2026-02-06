@@ -22,8 +22,8 @@ public struct TaskEditFeature {
             self.title = task.title
             self.successTarget = task.successCount
             self.maxSuccessTarget = maxSuccessTarget
-            self.isAlarmEnabled = false
-            self.alarmDate = Date()
+            self.isAlarmEnabled = task.isNotificationEnabled
+            self.alarmDate = task.alarmDate ?? Date()
         }
     }
 

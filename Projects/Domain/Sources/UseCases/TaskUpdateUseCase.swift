@@ -4,7 +4,9 @@ public protocol TaskUpdateUseCaseProtocol: Sendable {
     func updateTaskInfo(
         task: Task,
         title: String,
-        durationDays: Int
+        durationDays: Int,
+        isNotificationEnabled: Bool,
+        alarmDate: Date
     ) async throws -> Task
 }
 
@@ -20,10 +22,14 @@ public struct TaskUpdateUseCase: TaskUpdateUseCaseProtocol {
     public func updateTaskInfo(
         task: Task,
         title: String,
-        durationDays: Int
+        durationDays: Int,
+        isNotificationEnabled: Bool,
+        alarmDate: Date
     ) async throws -> Task {
         var updatedTask = task
         updatedTask.title = title
+        updatedTask.isNotificationEnabled = isNotificationEnabled
+        updatedTask.alarmDate = isNotificationEnabled ? alarmDate : nil
         
         if var lastStage = updatedTask.stages.last {
             lastStage.durationDays = durationDays

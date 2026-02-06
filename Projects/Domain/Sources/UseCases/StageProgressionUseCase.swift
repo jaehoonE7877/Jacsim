@@ -42,6 +42,14 @@ public struct StageProgressionUseCase: StageProgressionUseCaseProtocol {
         )
         
         task.stages.append(newStage)
+        task.endDate = nextEndDate
+        task.records.removeAll { record in
+            let recordDate = calendar.startOfDay(for: record.date)
+            return recordDate >= calendar.startOfDay(for: nextStartDate)
+                && recordDate <= calendar.startOfDay(for: nextEndDate)
+        }
+        task.records.append(contentsOf: makeRecords(startDate: nextStartDate, endDate: nextEndDate))
+        task.records.sort { $0.date < $1.date }
         try await updateTask(task)
     }
     
@@ -64,12 +72,37 @@ public struct StageProgressionUseCase: StageProgressionUseCaseProtocol {
         
         task.stages.removeLast()
         task.stages.append(newStage)
+        task.endDate = newStage.endDate
         
         task.records.removeAll { record in
             let recordDate = calendar.startOfDay(for: record.date)
             return recordDate >= today
         }
+        task.records.append(contentsOf: makeRecords(startDate: today, endDate: newStage.endDate))
+        task.records.sort { $0.date < $1.date }
         
         try await updateTask(task)
+    }
+
+    private func makeRecords(startDate: Date, endDate: Date) -> [DailyRecordSnapshot] {
+        var records: [DailyRecordSnapshot] = []
+        var currentDate = Calendar.current.startOfDay(for: startDate)
+        let stageEndDate = Calendar.current.startOfDay(for: endDate)
+
+        while currentDate <= stageEndDate {
+            records.append(
+                DailyRecordSnapshot(
+                    id: UUID(),
+                    memo: "",
+                    check: false,
+                    date: currentDate,
+                    imagePath: nil
+                )
+            )
+            currentDate = Calendar.current.date(byAdding: .day, value: 1, to: currentDate)
+                ?? currentDate.addingTimeInterval(86400)
+        }
+
+        return records
     }
 }

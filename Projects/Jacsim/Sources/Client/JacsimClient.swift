@@ -102,11 +102,13 @@ private enum JacsimClientKey: DependencyKey {
                 return taskStatusService.filterFailTasks(allDone)
             },
             deleteAlarm: { _ in },
-            updateTaskInfo: { task, title, successTarget, _, _ in
+            updateTaskInfo: { task, title, successTarget, isAlarmEnabled, alarmDate in
                 _ = try? await taskUpdateUseCase.updateTaskInfo(
                     task: task,
                     title: title,
-                    durationDays: successTarget
+                    durationDays: successTarget,
+                    isNotificationEnabled: isAlarmEnabled,
+                    alarmDate: alarmDate
                 )
             },
             evaluateStageResult: { stage in
