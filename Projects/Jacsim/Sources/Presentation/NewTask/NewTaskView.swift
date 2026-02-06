@@ -6,30 +6,29 @@ import PhotosUI
 
 public struct NewTaskView: View {
     @Bindable var store: StoreOf<NewTaskFeature>
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     public init(store: StoreOf<NewTaskFeature>) {
         self.store = store
     }
 
     public var body: some View {
-        VStack(spacing: 0) {
-            ScrollView(showsIndicators: false) {
-                VStack(alignment: .leading, spacing: .jsXL) {
-                    titleSection
-                    stageSection
-                    photoSection
-                    alarmSection
-
-                    if store.saveFailed {
-                        saveFailedBanner
-                    }
-
-                    Spacer(minLength: 40)
+        ZStack(alignment: .bottom) {
+            RedesignScreenScaffold(
+                title: "새 작심 만들기",
+                subtitle: "짧고 명확한 목표로 시작해요"
+            ) {
+                if store.saveFailed {
+                    saveFailedBanner
                 }
-                .padding(.horizontal, .jsMD)
-                .padding(.top, .jsMD)
-            }
 
+                titleSection
+                stageSection
+                photoSection
+                alarmSection
+
+                Spacer(minLength: 120)
+            }
             buttonSection
         }
         .background(Color.backgroundNormal)
@@ -37,45 +36,48 @@ public struct NewTaskView: View {
     }
 
     private var titleSection: some View {
-        VStack(alignment: .leading, spacing: .jsXS) {
-            Text("제목 입력")
-                .font(.jsHeadlineSmall)
-                .foregroundColor(.labelStrong)
-
+        RedesignSectionCard(
+            title: "제목",
+            subtitle: "나중에 변경할 수 없어요"
+        ) {
             JSInputField(
                 title: "",
                 placeholder: "예: 매일 10분 독서",
                 text: $store.title
             )
-
-            Text("제목은 나중에 바꿀 수 없어요")
-                .font(.jsLabelMedium)
-                .foregroundColor(.labelAssistive)
         }
     }
 
     private var stageSection: some View {
-        VStack(alignment: .leading, spacing: .jsXS) {
-            Text("스테이지 선택")
-                .font(.jsHeadlineSmall)
-                .foregroundColor(.labelStrong)
-
-            Picker("스테이지", selection: $store.stageType) {
-                Text("3일").tag(StageType.three)
-                Text("7일").tag(StageType.seven)
-                Text("15일").tag(StageType.fifteen)
-                Text("30일").tag(StageType.thirty)
+        RedesignSectionCard(
+            title: "스테이지",
+            subtitle: "이번 목표를 며칠 동안 이어갈까요?"
+        ) {
+            JSStageSelector(
+                selectedStage: stageDayBinding,
+                stages: [3, 7, 15, 30]
+            ) { selected in
+                if !reduceMotion {
+                    withAnimation(.easeInOut(duration: JSAnimation.durationNormal)) {
+                        store.stageType = stageType(for: selected)
+                    }
+                } else {
+                    store.stageType = stageType(for: selected)
+                }
             }
-            .pickerStyle(.segmented)
+
+            Text("선택된 기간: \(store.stageType.durationDays)일")
+                .font(.jsBodySmall)
+                .foregroundColor(.labelAlternative)
+                .frame(maxWidth: .infinity, alignment: .trailing)
         }
     }
 
     private var photoSection: some View {
-        VStack(alignment: .leading, spacing: .jsXS) {
-            Text("대표 사진 선택")
-                .font(.jsHeadlineSmall)
-                .foregroundColor(.labelStrong)
-
+        RedesignSectionCard(
+            title: "대표 사진",
+            subtitle: "하루 인증의 기준이 되는 사진을 골라요"
+        ) {
             ZStack(alignment: .bottomTrailing) {
                 if let image = store.image {
                     Image(uiImage: image)
@@ -120,7 +122,10 @@ public struct NewTaskView: View {
     }
 
     private var alarmSection: some View {
-        VStack(alignment: .leading, spacing: .jsSM) {
+        RedesignSectionCard(
+            title: "알림",
+            subtitle: "매일 같은 시간에 인증 리마인드를 받을 수 있어요"
+        ) {
             Toggle("알림 받기", isOn: $store.isAlarmEnabled)
                 .font(.jsBodyMedium)
 
@@ -133,7 +138,6 @@ public struct NewTaskView: View {
                 .datePickerStyle(.wheel)
             }
         }
-        .padding(.top, .jsXS)
     }
 
     private var buttonSection: some View {
@@ -179,22 +183,38 @@ public struct NewTaskView: View {
     }
 
     private var saveFailedBanner: some View {
-        HStack(spacing: .jsXS) {
-            Image(systemName: "exclamationmark.circle.fill")
-                .foregroundColor(.destructive)
-                .font(.jsLabelMedium)
-            Text("저장에 실패했어요. 다시 시도해주세요")
-                .font(.jsBodySmall)
-                .foregroundColor(.destructive)
-            Spacer()
-        }
-        .padding(.horizontal, .jsSM)
-        .padding(.vertical, 10)
-        .background(Color.destructive.opacity(0.12))
-        .cornerRadius(.jsRadiusSM)
+        RedesignStateBanner(
+            text: "저장에 실패했어요. 네트워크 상태를 확인해 주세요.",
+            icon: "exclamationmark.circle.fill",
+            tintColor: .destructive
+        )
     }
 
     private var isFormValid: Bool {
         !store.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && store.image != nil
+    }
+
+    private var stageDayBinding: Binding<Int> {
+        Binding(
+            get: { store.stageType.durationDays },
+            set: { day in
+                store.stageType = stageType(for: day)
+            }
+        )
+    }
+
+    private func stageType(for day: Int) -> StageType {
+        switch day {
+        case 3:
+            return .three
+        case 7:
+            return .seven
+        case 15:
+            return .fifteen
+        case 30:
+            return .thirty
+        default:
+            return .three
+        }
     }
 }

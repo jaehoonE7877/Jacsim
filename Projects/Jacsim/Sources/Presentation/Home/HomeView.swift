@@ -102,7 +102,19 @@ public struct HomeView: View {
                     Text("작심")
                         .font(.jsDisplayMedium)
                         .foregroundColor(.labelStrong)
-                    
+
+                    Spacer(minLength: .jsXS)
+
+                    Text(todayLabel)
+                        .font(.jsLabelMedium)
+                        .foregroundColor(.labelAlternative)
+                        .padding(.horizontal, .jsSM)
+                        .padding(.vertical, .jsMicro)
+                        .background(
+                            Capsule()
+                                .fill(Color.backgroundAlternative)
+                        )
+
                     Spacer()
                     
                     Button(action: {
@@ -124,6 +136,9 @@ public struct HomeView: View {
                     skeletonContent
                 } else if let heroTask = store.heroTask {
                     let remainingTasks = Array(store.activeTasks.dropFirst())
+                    if PresentationRedesignFlags.isEnabled(.home) {
+                        homeSummaryCard
+                    }
                     VStack(alignment: .leading, spacing: .jsMD) {
                         let heroImage = store.heroTaskImageData.flatMap { UIImage(data: $0) }.map { Image(uiImage: $0) }
                         JSUnifiedHeroCard(
@@ -228,6 +243,48 @@ public struct HomeView: View {
         )
     }
 
+    private var homeSummaryCard: some View {
+        RedesignSectionCard(
+            title: "오늘 할 일",
+            subtitle: "인증 가능한 작심 \(store.activeTasks.count)개"
+        ) {
+            HStack(spacing: .jsSM) {
+                summaryMetric(
+                    title: "전체 진행",
+                    value: "\(Int(overallProgress * 100))%",
+                    color: .primaryNormal
+                )
+                summaryMetric(
+                    title: "오늘 완료",
+                    value: "\(todayCompletedCount)개",
+                    color: .positive
+                )
+                summaryMetric(
+                    title: "남은 항목",
+                    value: "\(max(0, store.activeTasks.count - todayCompletedCount))개",
+                    color: .cautionary
+                )
+            }
+        }
+        .padding(.horizontal, .jsXL)
+    }
+
+    private func summaryMetric(title: String, value: String, color: Color) -> some View {
+        VStack(spacing: .jsMicro) {
+            Text(title)
+                .font(.jsLabelSmall)
+                .foregroundColor(.labelAlternative)
+            Text(value)
+                .font(.jsHeadlineSmall)
+                .foregroundColor(color)
+        }
+        .frame(maxWidth: .infinity, minHeight: 72)
+        .background(
+            RoundedRectangle(cornerRadius: .jsRadiusMD)
+                .fill(color.opacity(0.08))
+        )
+    }
+
     private func makeMiniHeroCardData(
         from displayData: [HomeFeature.State.MiniCardDisplayData]
     ) -> [JSMiniHeroCardData] {
@@ -288,6 +345,22 @@ public struct HomeView: View {
             .cornerRadius(.jsRadiusLG)
             .padding(.bottom, .jsXL)
             .padding(.horizontal, .jsXL)
+    }
+
+    private var overallProgress: Double {
+        guard !store.activeTasks.isEmpty else { return 0 }
+        let total = store.activeTasks.reduce(0.0) { partial, task in
+            partial + task.progress
+        }
+        return total / Double(store.activeTasks.count)
+    }
+
+    private var todayCompletedCount: Int {
+        store.activeTasks.filter { $0.isCompleted(on: Date()) }.count
+    }
+
+    private var todayLabel: String {
+        DateFormatType.toString(Date(), to: .fullWithoutYear)
     }
 }
 

@@ -42,6 +42,10 @@ public struct TaskDetailView: View {
                             .frame(height: coverImageHeight)
 
                     VStack(spacing: .jsLG) {
+                        if PresentationRedesignFlags.isEnabled(.taskDetail) {
+                            overviewBanner
+                        }
+
                         stageInfoSection
 
                         todayStatusSection
@@ -307,6 +311,31 @@ public struct TaskDetailView: View {
             }
         }
     }
+
+    private var overviewBanner: some View {
+        RedesignSectionCard(
+            title: "오늘 진행",
+            subtitle: store.todayStatus == .certified ? "오늘 인증을 완료했어요" : "오늘 인증을 아직 하지 않았어요"
+        ) {
+            HStack(spacing: .jsSM) {
+                metricCard(
+                    title: "스테이지 진행률",
+                    value: "\(Int(store.stageProgress * 100))%",
+                    color: progressColor
+                )
+                metricCard(
+                    title: "현재 스테이지",
+                    value: "\(store.currentStage?.stageType.durationDays ?? 7)일",
+                    color: .primaryNormal
+                )
+                metricCard(
+                    title: "인증 상태",
+                    value: store.todayStatus == .certified ? "완료" : "대기",
+                    color: store.todayStatus == .certified ? .positive : .cautionary
+                )
+            }
+        }
+    }
     
     private var stageDateRange: String {
         guard let stage = store.currentStage else { return "" }
@@ -344,14 +373,16 @@ public struct TaskDetailView: View {
     }
     
     private var todayStatusSection: some View {
-        HStack {
-            Text("오늘 상태")
-                .font(.jsHeadlineSmall)
-                .foregroundColor(.labelStrong)
+        RedesignSectionCard(title: "오늘 상태") {
+            HStack {
+                Text(store.todayStatus == .certified ? "오늘 인증을 마쳤어요" : "인증을 완료하면 연속 기록이 이어져요")
+                    .font(.jsBodySmall)
+                    .foregroundColor(.labelAlternative)
 
-            Spacer()
+                Spacer()
 
-            JSStatusChip(state: todayStatusChipState)
+                JSStatusChip(state: todayStatusChipState)
+            }
         }
     }
 
@@ -369,13 +400,21 @@ public struct TaskDetailView: View {
             Text("인증 기록")
                 .font(.jsHeadlineSmall)
                 .foregroundColor(.labelStrong)
-            
-            LazyVStack(spacing: .jsSM) {
-                ForEach(store.dayViewData) { data in
-                    DailyRecordRow(data: data)
-                        .onTapGesture {
-                            store.send(.dayTapped(data.date))
-                        }
+
+            if store.dayViewData.isEmpty {
+                RedesignStateBanner(
+                    text: "아직 인증 기록이 없어요",
+                    icon: "tray",
+                    tintColor: .labelAlternative
+                )
+            } else {
+                LazyVStack(spacing: .jsSM) {
+                    ForEach(store.dayViewData) { data in
+                        DailyRecordRow(data: data)
+                            .onTapGesture {
+                                store.send(.dayTapped(data.date))
+                            }
+                    }
                 }
             }
         }
@@ -497,6 +536,22 @@ public struct TaskDetailView: View {
     
     private func loadCoverImage() -> UIImage? {
         return store.coverImage
+    }
+
+    private func metricCard(title: String, value: String, color: Color) -> some View {
+        VStack(spacing: .jsMicro) {
+            Text(title)
+                .font(.jsLabelSmall)
+                .foregroundColor(.labelAlternative)
+            Text(value)
+                .font(.jsHeadlineSmall)
+                .foregroundColor(color)
+        }
+        .frame(maxWidth: .infinity, minHeight: 72)
+        .background(
+            RoundedRectangle(cornerRadius: .jsRadiusMD)
+                .fill(color.opacity(0.08))
+        )
     }
 }
 
