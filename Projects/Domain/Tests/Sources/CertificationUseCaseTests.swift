@@ -3,49 +3,52 @@ import Testing
 @testable import Domain
 
 struct CertificationUseCaseTests {
-    
     @Test
     func testCertifyToday() async throws {
-        let mockRepository = MockTaskRepository()
-        let useCase = CertificationUseCase(taskRepository: mockRepository)
-        
+        let store = MockTaskStore()
+        let useCase = CertificationUseCase(
+            fetchTask: { try await store.fetchTask(id: $0) },
+            updateTask: { try await store.updateTask($0) }
+        )
+
         let today = Date()
         let yesterday = Calendar.current.date(byAdding: .day, value: -1, to: today)!
-        
-        let records = [
-            DailyRecordSnapshot(id: UUID(), memo: "", check: false, date: yesterday, imagePath: nil),
-            DailyRecordSnapshot(id: UUID(), memo: "", check: false, date: today, imagePath: nil)
-        ]
-        
+
         let task = Task(
             id: TaskID(UUID()),
             title: "Test Task",
             startDate: yesterday,
             endDate: today,
             stages: [],
-            records: records
+            records: [
+                DailyRecordSnapshot(id: UUID(), memo: "", check: false, date: yesterday, imagePath: nil),
+                DailyRecordSnapshot(id: UUID(), memo: "", check: false, date: today, imagePath: nil)
+            ]
         )
-        
-        mockRepository.tasks[task.id] = task
-        
+
+        await store.setTask(task)
+
         try await useCase.certifyToday(
             taskId: task.id,
             index: 1,
             memo: "Completed!",
             imagePath: "image.jpg"
         )
-        
-        let updatedTask = mockRepository.tasks[task.id]
+
+        let updatedTask = try await store.fetchTask(id: task.id)
         #expect(updatedTask?.records[1].check == true)
         #expect(updatedTask?.records[1].memo == "Completed!")
         #expect(updatedTask?.records[1].imagePath == "image.jpg")
     }
-    
+
     @Test
     func testCertifyTodayThrowsForInvalidIndex() async {
-        let mockRepository = MockTaskRepository()
-        let useCase = CertificationUseCase(taskRepository: mockRepository)
-        
+        let store = MockTaskStore()
+        let useCase = CertificationUseCase(
+            fetchTask: { try await store.fetchTask(id: $0) },
+            updateTask: { try await store.updateTask($0) }
+        )
+
         let task = Task(
             id: TaskID(UUID()),
             title: "Test Task",
@@ -54,9 +57,9 @@ struct CertificationUseCaseTests {
             stages: [],
             records: []
         )
-        
-        mockRepository.tasks[task.id] = task
-        
+
+        await store.setTask(task)
+
         await #expect(throws: CertificationError.invalidRecordIndex) {
             try await useCase.certifyToday(
                 taskId: task.id,
@@ -66,56 +69,54 @@ struct CertificationUseCaseTests {
             )
         }
     }
-    
+
     @Test
     func testUpdateMemo() async throws {
-        let mockRepository = MockTaskRepository()
-        let useCase = CertificationUseCase(taskRepository: mockRepository)
-        
+        let store = MockTaskStore()
+        let useCase = CertificationUseCase(
+            fetchTask: { try await store.fetchTask(id: $0) },
+            updateTask: { try await store.updateTask($0) }
+        )
+
         let today = Date()
-        
-        let records = [
-            DailyRecordSnapshot(id: UUID(), memo: "Old memo", check: true, date: today, imagePath: nil)
-        ]
-        
+
         let task = Task(
             id: TaskID(UUID()),
             title: "Test Task",
             startDate: today,
             endDate: today,
             stages: [],
-            records: records
+            records: [
+                DailyRecordSnapshot(id: UUID(), memo: "Old memo", check: true, date: today, imagePath: nil)
+            ]
         )
-        
-        mockRepository.tasks[task.id] = task
-        
+
+        await store.setTask(task)
+
         try await useCase.updateMemo(
             taskId: task.id,
             index: 0,
             memo: "New memo"
         )
-        
-        let updatedTask = mockRepository.tasks[task.id]
+
+        let updatedTask = try await store.fetchTask(id: task.id)
         #expect(updatedTask?.records[0].memo == "New memo")
         #expect(updatedTask?.records[0].check == true)
     }
 }
 
-private actor MockTaskRepository: TaskRepositoryPort {
-    var tasks: [TaskID: Task] = [:]
-    
-    init() {
-        super.init(
-            fetchActiveTasks: { [] },
-            fetchTask: { [weak self] id in
-                self?.tasks[id]
-            },
-            addTask: { _ in },
-            updateTask: { [weak self] task in
-                self?.tasks[task.id] = task
-            },
-            deleteTask: { _ in },
-            fetchTasksByStatus: { _ in [] }
-        )
+private actor MockTaskStore {
+    private var tasks: [TaskID: Task] = [:]
+
+    func setTask(_ task: Task) {
+        tasks[task.id] = task
+    }
+
+    func fetchTask(id: TaskID) throws -> Task? {
+        tasks[id]
+    }
+
+    func updateTask(_ task: Task) throws {
+        tasks[task.id] = task
     }
 }
