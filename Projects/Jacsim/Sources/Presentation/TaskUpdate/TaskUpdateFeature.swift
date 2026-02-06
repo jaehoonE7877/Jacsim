@@ -16,12 +16,14 @@ public struct TaskUpdateFeature {
         public var task: Domain.Task
         public var index: Int
         public var memo: String = ""
+        public var lastAcceptedMemo: String = ""
         public var image: UIImage?
         public var dateText: String
         public var photoPickerItem: PhotosPickerItem?
         public var isSaving: Bool = false
         public var saveFailed: Bool = false
         public var isOverwriteMode: Bool = false
+        public var toastMessage: String? = nil
 
         public init(task: Domain.Task, index: Int) {
             self.task = task
@@ -39,6 +41,7 @@ public struct TaskUpdateFeature {
         case imageSelected(UIImage)
         case photoPickerItemChanged(PhotosPickerItem?)
         case saveCompleted(Result<Void, Error>)
+        case toastDismissed
         case dismiss
         case delegate(Delegate)
 
@@ -55,6 +58,7 @@ public struct TaskUpdateFeature {
         Reduce { state, action in
             switch action {
             case .onAppear:
+                state.lastAcceptedMemo = state.memo
                 guard let key = state.task.imageKey(for: state.index) else { return .none }
                 return .run { [imageStore] send in
                     let imageData = await imageStore.loadImage(key)
@@ -109,13 +113,26 @@ public struct TaskUpdateFeature {
                 state.saveFailed = true
                 return .none
 
+            case .toastDismissed:
+                state.toastMessage = nil
+                return .none
+
             case .dismiss:
                 return .none
 
             case .binding(\.memo):
-                let trimmed = state.memo.trimmingCharacters(in: .whitespacesAndNewlines)
-                if trimmed.count > 20 {
-                    state.memo = String(trimmed.prefix(20))
+                let result = TextInputLimiter.enforce(
+                    previousAcceptedText: state.lastAcceptedMemo,
+                    candidateText: state.memo,
+                    policy: .memo
+                )
+                switch result {
+                case let .accepted(text):
+                    state.memo = text
+                    state.lastAcceptedMemo = text
+                case let .rejected(keep):
+                    state.memo = keep
+                    state.toastMessage = TextInputFieldPolicy.memo.exceededToastMessage
                 }
                 return .none
 

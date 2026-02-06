@@ -11,19 +11,22 @@ public struct TaskEditFeature {
         public var id: TaskID { task.id }
         public var task: Task
         public var title: String
+        public var lastAcceptedTitle: String
         public var successTarget: Int
         public var maxSuccessTarget: Int
         public var image: UIImage?
         public var isAlarmEnabled: Bool
         public var alarmDate: Date
+        public var toastMessage: String? = nil
 
         public init(task: Task, maxSuccessTarget: Int) {
             self.task = task
             self.title = task.title
+            self.lastAcceptedTitle = task.title
             self.successTarget = task.successCount
             self.maxSuccessTarget = maxSuccessTarget
-            self.isAlarmEnabled = false
-            self.alarmDate = Date()
+            self.isAlarmEnabled = task.isNotificationEnabled
+            self.alarmDate = task.alarm ?? Date()
         }
     }
 
@@ -34,6 +37,7 @@ public struct TaskEditFeature {
         case saveButtonTapped
         case cancelButtonTapped
         case imageSelected(UIImage)
+        case toastDismissed
         case delegate(Delegate)
 
         public enum Delegate {
@@ -44,6 +48,7 @@ public struct TaskEditFeature {
 
     @Dependency(\.imageStore) var imageStore
     @Dependency(\.notificationScheduler) var notificationScheduler
+    @Dependency(\.userSettingsRepository) var userSettingsRepository
 
     public var body: some ReducerOf<Self> {
         BindingReducer()
@@ -68,17 +73,20 @@ public struct TaskEditFeature {
                 let image = state.image
                 let isAlarmEnabled = state.isAlarmEnabled
                 let alarmDate = state.alarmDate
-                return .run { [notificationScheduler, title, taskId, successTarget, image, isAlarmEnabled, alarmDate] send in
+                return .run { [notificationScheduler, userSettingsRepository, title, taskId, successTarget, image, isAlarmEnabled, alarmDate] send in
                     await notificationScheduler.cancelReminder(taskId)
                     if isAlarmEnabled {
-                        let components = Calendar.current.dateComponents([.hour, .minute], from: alarmDate)
-                        let hour = components.hour ?? 0
-                        let minute = components.minute ?? 0
-                        func scheduleDailyReminder(_ taskId: TaskID, _ hour: Int, _ minute: Int) async {
-                            let time = DateComponents(hour: hour, minute: minute)
-                            try? await notificationScheduler.scheduleDailyReminder(taskId, title, time)
+                        let isGlobalNotificationEnabled = await userSettingsRepository.isNotificationEnabled()
+                        if isGlobalNotificationEnabled {
+                            let components = Calendar.current.dateComponents([.hour, .minute], from: alarmDate)
+                            let hour = components.hour ?? 0
+                            let minute = components.minute ?? 0
+                            func scheduleDailyReminder(_ taskId: TaskID, _ hour: Int, _ minute: Int) async {
+                                let time = DateComponents(hour: hour, minute: minute)
+                                try? await notificationScheduler.scheduleDailyReminder(taskId, title, time)
+                            }
+                            await scheduleDailyReminder(taskId, hour, minute)
                         }
-                        await scheduleDailyReminder(taskId, hour, minute)
                     }
                     await send(.delegate(.saved(title, successTarget, image, isAlarmEnabled, alarmDate)))
                 }
@@ -88,6 +96,26 @@ public struct TaskEditFeature {
 
             case let .imageSelected(image):
                 state.image = image
+                return .none
+
+            case .toastDismissed:
+                state.toastMessage = nil
+                return .none
+
+            case .binding(\.title):
+                let result = TextInputLimiter.enforce(
+                    previousAcceptedText: state.lastAcceptedTitle,
+                    candidateText: state.title,
+                    policy: .title
+                )
+                switch result {
+                case let .accepted(text):
+                    state.title = text
+                    state.lastAcceptedTitle = text
+                case let .rejected(keep):
+                    state.title = keep
+                    state.toastMessage = TextInputFieldPolicy.title.exceededToastMessage
+                }
                 return .none
 
             case .binding, .delegate:

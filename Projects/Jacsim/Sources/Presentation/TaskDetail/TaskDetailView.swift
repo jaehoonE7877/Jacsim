@@ -3,6 +3,7 @@ import ComposableArchitecture
 import DSKit
 import Domain
 import Darwin
+import UIKit
 
 public struct TaskDetailView: View {
     @Bindable var store: StoreOf<TaskDetailFeature>
@@ -12,7 +13,7 @@ public struct TaskDetailView: View {
     }
 
     @State private var scrollOffset: CGFloat = 0
-    private let minHeaderHeight: CGFloat = 100
+    private let minHeaderHeight: CGFloat = 100.jsScaled()
 
     public var body: some View {
         GeometryReader { geometry in
@@ -61,7 +62,7 @@ public struct TaskDetailView: View {
                     .padding(.top, .jsLG)
                     .padding(.horizontal, .jsMD)
 
-                    Spacer(minLength: 140)
+                    Spacer(minLength: bottomCTASpacerHeight)
                 }
                 .onScrollGeometryChange(for: CGFloat.self) { geometry in
                     geometry.contentOffset.y + geometry.contentInsets.top
@@ -84,24 +85,26 @@ public struct TaskDetailView: View {
                     .background(Color.backgroundNormal)
             }
 
-            bottomCTASection
-                .padding(.horizontal, .jsMD)
-                .padding(.bottom, .jsMD)
-                .background(
-                    LinearGradient(
-                        colors: [
-                            Color.backgroundNormal.opacity(0),
-                            Color.backgroundNormal,
-                            Color.backgroundNormal
-                        ],
-                        startPoint: .top,
-                        endPoint: .bottom
+            if shouldShowBottomCTA {
+                bottomCTASection
+                    .padding(.horizontal, .jsMD)
+                    .padding(.bottom, .jsMD)
+                    .background(
+                        LinearGradient(
+                            colors: [
+                                Color.backgroundNormal.opacity(0),
+                                Color.backgroundNormal,
+                                Color.backgroundNormal
+                            ],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                        .ignoresSafeArea()
+                        .frame(height: 140.jsScaled())
+                        .frame(maxHeight: .infinity, alignment: .bottom)
                     )
-                    .ignoresSafeArea()
-                    .frame(height: 140)
                     .frame(maxHeight: .infinity, alignment: .bottom)
-                )
-                .frame(maxHeight: .infinity, alignment: .bottom)
+            }
             }
             .background(Color.backgroundNormal)
             .ignoresSafeArea(edges: .top)
@@ -113,7 +116,7 @@ public struct TaskDetailView: View {
                 Image(systemName: "chevron.left")
                     .font(.jsHeadlineMedium)
                     .foregroundColor(.white)
-                    .frame(width: 44, height: 44)
+                    .frame(width: 44.jsScaled(.touchTarget), height: 44.jsScaled(.touchTarget))
             },
             trailing: Menu {
                 Button(action: { store.send(.changePhotoButtonTapped) }) {
@@ -137,9 +140,10 @@ public struct TaskDetailView: View {
                 Image(systemName: "ellipsis")
                     .font(.jsHeadlineMedium)
                     .foregroundColor(.white)
-                    .frame(width: 44, height: 44)
+                    .frame(width: 44.jsScaled(.touchTarget), height: 44.jsScaled(.touchTarget))
             }
         )
+        .background(InteractivePopGestureEnabler())
         .sheet(item: $store.scope(state: \.editTask, action: \.editTask)) { store in
             NavigationStack {
                 TaskEditView(store: store)
@@ -155,23 +159,19 @@ public struct TaskDetailView: View {
                     onDismiss: { store.send(.stagePopupDismissed) }
                 )
             }
-        }
-        .alert("작심을 삭제할까요?", isPresented: Binding(
-            get: { store.isDeleteConfirmationPresented },
-            set: { newValue in
-                if !newValue {
-                    store.send(.deleteCancelled)
-                }
+            if store.isDeleteFlowPresented {
+                TaskDropoffGuardPopupView(
+                    step: store.deleteFlowStep,
+                    progressRate: store.stageProgress,
+                    completedDays: store.task.completedDays,
+                    countdown: store.deleteConfirmCountdown,
+                    isDeleteEnabled: store.isDeleteConfirmEnabled,
+                    onKeepGoing: { store.send(.deleteFlowKeepGoing) },
+                    onProceed: { store.send(.deleteFlowProceedToFinal) },
+                    onDelete: { store.send(.deleteFlowDeleteConfirmed) },
+                    onDismiss: { store.send(.deleteFlowDismissed) }
+                )
             }
-        )) {
-            Button("취소", role: .cancel) {
-                store.send(.deleteCancelled)
-            }
-            Button("삭제", role: .destructive) {
-                store.send(.deleteConfirmed)
-            }
-        } message: {
-            Text("모든 기록과 사진이 삭제되며 되돌릴 수 없어요")
         }
     }
 
@@ -219,7 +219,7 @@ public struct TaskDetailView: View {
 
     private var minimizedHeader: some View {
         HStack {
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: .jsMicro) {
                 Text(store.task.title)
                     .font(.jsHeadlineSmall)
                     .foregroundColor(.labelStrong)
@@ -233,7 +233,7 @@ public struct TaskDetailView: View {
             Spacer()
         }
         .padding(.horizontal, .jsMD)
-        .padding(.top, 52)
+        .padding(.top, 52.jsScaled())
         .padding(.bottom, .jsSM)
     }
 
@@ -243,7 +243,7 @@ public struct TaskDetailView: View {
                 Image(uiImage: image)
                     .resizable()
                     .scaledToFill()
-                    .frame(height: 280)
+                    .frame(height: 280.jsScaled())
                     .clipped()
             } else {
                 Rectangle()
@@ -254,7 +254,7 @@ public struct TaskDetailView: View {
                             endPoint: .bottomTrailing
                         )
                     )
-                    .frame(height: 280)
+                    .frame(height: 280.jsScaled())
             }
 
             LinearGradient(
@@ -265,7 +265,7 @@ public struct TaskDetailView: View {
                 startPoint: .top,
                 endPoint: .bottom
             )
-            .frame(height: 280)
+            .frame(height: 280.jsScaled())
 
             VStack(alignment: .leading, spacing: .jsXS) {
                 Text(store.task.title)
@@ -276,14 +276,14 @@ public struct TaskDetailView: View {
             .padding(.jsMD)
             .padding(.bottom, .jsSM)
         }
-        .frame(height: 280)
+        .frame(height: 280.jsScaled())
     }
     
     private var stageInfoSection: some View {
         JSCard(style: .elevated) {
             VStack(alignment: .leading, spacing: .jsMD) {
                 HStack {
-                    VStack(alignment: .leading, spacing: 4) {
+                    VStack(alignment: .leading, spacing: .jsMicro) {
                         Text("\(store.currentStage?.stageType.durationDays ?? 7)일 스테이지")
                             .font(.jsHeadlineSmall)
                             .foregroundColor(.labelStrong)
@@ -438,39 +438,35 @@ public struct TaskDetailView: View {
             habitCompletedCTA
         }
     }
+
+    private var shouldShowBottomCTA: Bool {
+        switch store.challengeState {
+        case .stagePending:
+            return isTodayInChallengeRange && store.todayStatus == .notCertified
+        case .stageSuccess, .stageFail, .habitCompleted:
+            return true
+        }
+    }
+
+    private var bottomCTASpacerHeight: CGFloat {
+        shouldShowBottomCTA ? 140.jsScaled() : .jsXL
+    }
+
+    private var isTodayInChallengeRange: Bool {
+        let today = Calendar.current.startOfDay(for: Date())
+        return today >= Calendar.current.startOfDay(for: store.task.startDate)
+            && today <= Calendar.current.startOfDay(for: store.task.endDate)
+    }
     
     @ViewBuilder
     private var stagePendingCTA: some View {
-        let today = Calendar.current.startOfDay(for: Date())
-        let isTodayInRange = today >= Calendar.current.startOfDay(for: store.task.startDate)
-            && today <= Calendar.current.startOfDay(for: store.task.endDate)
-        
-        if isTodayInRange && store.todayStatus == .notCertified {
+        if isTodayInChallengeRange && store.todayStatus == .notCertified {
             JSButton(
                 title: "오늘 작심 인증하러 가기",
                 style: .primary,
                 size: .large
             ) {
                 store.send(.certifyTodayTapped)
-            }
-                } else if isTodayInRange && store.todayStatus == .certified {
-            JSCard(style: .elevated, padding: 16) {
-                HStack(spacing: 12) {
-                    Image(systemName: "checkmark.circle.fill")
-                        .foregroundColor(.positive)
-                        .font(.jsDisplaySmall)
-                    
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("오늘 인증 완료!")
-                            .font(.jsBodyMedium)
-                            .foregroundColor(.labelStrong)
-                        Text("내일도 함께해요")
-                            .font(.jsBodySmall)
-                            .foregroundColor(.labelAlternative)
-                    }
-                    
-                    Spacer()
-                }
             }
         } else {
             EmptyView()
@@ -552,11 +548,38 @@ public struct TaskDetailView: View {
                 .font(.jsHeadlineSmall)
                 .foregroundColor(color)
         }
-        .frame(maxWidth: .infinity, minHeight: 72)
+        .frame(maxWidth: .infinity, minHeight: 72.jsScaled())
         .background(
             RoundedRectangle(cornerRadius: .jsRadiusMD)
                 .fill(color.opacity(0.08))
         )
+    }
+}
+
+private struct InteractivePopGestureEnabler: UIViewControllerRepresentable {
+    func makeUIViewController(context: Context) -> UIViewController {
+        Controller()
+    }
+
+    func updateUIViewController(_ uiViewController: UIViewController, context: Context) {
+        (uiViewController as? Controller)?.enableSwipeBack()
+    }
+
+    private final class Controller: UIViewController {
+        override func viewWillAppear(_ animated: Bool) {
+            super.viewWillAppear(animated)
+            enableSwipeBack()
+        }
+
+        override func viewDidAppear(_ animated: Bool) {
+            super.viewDidAppear(animated)
+            enableSwipeBack()
+        }
+
+        func enableSwipeBack() {
+            navigationController?.interactivePopGestureRecognizer?.isEnabled = true
+            navigationController?.interactivePopGestureRecognizer?.delegate = nil
+        }
     }
 }
 
@@ -579,14 +602,14 @@ private struct DailyRecordRow: View {
                         )
                 }
             }
-            .frame(width: 64, height: 64)
+            .frame(width: 64.jsScaled(), height: 64.jsScaled())
             .cornerRadius(.jsRadiusSM)
             .overlay(
                 RoundedRectangle(cornerRadius: .jsRadiusSM)
                     .stroke(data.isChecked ? Color.primaryNormal : Color.clear, lineWidth: 2)
             )
             
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: .jsMicro) {
                 Text(formattedDate(data.date))
                     .font(.jsBodyMedium)
                     .foregroundColor(.labelStrong)
@@ -622,6 +645,128 @@ private struct DailyRecordRow: View {
     }
 }
 
+private struct TaskDropoffGuardPopupView: View {
+    let step: TaskDetailFeature.DeleteFlowStep
+    let progressRate: Double
+    let completedDays: Int
+    let countdown: Int
+    let isDeleteEnabled: Bool
+    let onKeepGoing: () -> Void
+    let onProceed: () -> Void
+    let onDelete: () -> Void
+    let onDismiss: () -> Void
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var showPopup = false
+
+    var body: some View {
+        ZStack {
+            Color.surfaceOverlay.opacity(0.5)
+                .ignoresSafeArea()
+                .onTapGesture { onDismiss() }
+
+            JSCard(style: .elevated, padding: .jsLG) {
+                VStack(spacing: .jsMD) {
+                    Image(systemName: step == .firstGuard ? "flame.fill" : "exclamationmark.triangle.fill")
+                        .font(.jsDisplayMedium)
+                        .foregroundColor(step == .firstGuard ? .cautionary : .destructive)
+                        .frame(width: 56.jsScaled(), height: 56.jsScaled())
+                        .background(
+                            Circle()
+                                .fill((step == .firstGuard ? Color.cautionary : Color.destructive).opacity(0.16))
+                        )
+
+                    Text(step == .firstGuard ? "여기서 멈추기엔 아까워요" : "정말 끝낼까요?")
+                        .font(.jsHeadlineSmall)
+                        .foregroundColor(.labelStrong)
+                        .multilineTextAlignment(.center)
+
+                    Text(subtitle)
+                        .font(.jsBodySmall)
+                        .foregroundColor(.labelAlternative)
+                        .multilineTextAlignment(.center)
+
+                    if step == .firstGuard {
+                        HStack(spacing: .jsSM) {
+                            metricPill(title: "진행률", value: "\(Int(progressRate * 100))%")
+                            metricPill(title: "완료 일수", value: "\(completedDays)일")
+                        }
+                    }
+
+                    VStack(spacing: .jsSM) {
+                        JSButton(
+                            title: "계속 도전하기",
+                            style: .primary,
+                            size: .large
+                        ) {
+                            onKeepGoing()
+                        }
+
+                        if step == .firstGuard {
+                            JSButton(
+                                title: "그래도 그만둘래요",
+                                style: .secondary,
+                                size: .large
+                            ) {
+                                onProceed()
+                            }
+                        } else {
+                            JSButton(
+                                title: isDeleteEnabled ? "삭제" : "삭제 (\(max(0, countdown)))",
+                                style: .destructive,
+                                size: .large,
+                                isEnabled: isDeleteEnabled
+                            ) {
+                                onDelete()
+                            }
+                        }
+                    }
+                }
+            }
+            .padding(.horizontal, .jsLG)
+            .scaleEffect(reduceMotion ? 1 : (showPopup ? 1 : 0.96))
+            .opacity(showPopup ? 1 : 0)
+        }
+        .onAppear {
+            if reduceMotion {
+                showPopup = true
+            } else {
+                withAnimation(.easeOut(duration: 0.24)) {
+                    showPopup = true
+                }
+            }
+        }
+    }
+
+    private var subtitle: String {
+        switch step {
+        case .firstGuard:
+            return "지금까지 만든 기록이 사라져요.\n한 번만 더 고민해봐요."
+        case .finalConfirmation:
+            if isDeleteEnabled {
+                return "모든 인증 기록과 사진이 삭제되며,\n이 작업은 되돌릴 수 없어요."
+            }
+            return "삭제 버튼은 \(max(0, countdown))초 후에 활성화돼요.\n정말 삭제할지 마지막으로 확인해 주세요."
+        }
+    }
+
+    private func metricPill(title: String, value: String) -> some View {
+        VStack(spacing: .jsMicro) {
+            Text(title)
+                .font(.jsLabelSmall)
+                .foregroundColor(.labelAlternative)
+            Text(value)
+                .font(.jsHeadlineSmall)
+                .foregroundColor(.labelStrong)
+        }
+        .frame(maxWidth: .infinity, minHeight: 68.jsScaled())
+        .background(
+            RoundedRectangle(cornerRadius: .jsRadiusMD)
+                .fill(Color.backgroundStrong)
+        )
+    }
+}
+
 private struct StageCompletionPopupView: View {
     let result: StageResult
     let hasNextStage: Bool
@@ -643,7 +788,7 @@ private struct StageCompletionPopupView: View {
             JSCard(style: .elevated, padding: .jsLG) {
                 VStack(spacing: .jsMD) {
                     SparkleAnimationView(animate: $animate)
-                        .frame(height: 120)
+                        .frame(height: 120.jsScaled())
 
                     Text(result == .success ? "스테이지를 완료했어요" : "이번 스테이지는 아쉬웠어요")
                         .font(.jsHeadlineSmall)
@@ -698,7 +843,7 @@ private struct SparkleAnimationView: View {
             ForEach(0..<8, id: \.self) { index in
                 Circle()
                     .fill(Color.primaryNormal.opacity(0.8))
-                    .frame(width: 10, height: 10)
+                    .frame(width: 10.jsScaled(), height: 10.jsScaled())
                     .offset(sparkleOffset(for: index))
                     .opacity(animate ? 0 : 1)
                     .scaleEffect(animate ? 1.6 : 0.3)
@@ -708,7 +853,7 @@ private struct SparkleAnimationView: View {
 
     private func sparkleOffset(for index: Int) -> CGSize {
         let angle = Double(index) * (Double.pi / 4)
-        let radius: CGFloat = animate ? 60 : 10
+        let radius: CGFloat = animate ? 60.jsScaled() : 10.jsScaled()
         return CGSize(width: Darwin.cos(angle) * radius, height: Darwin.sin(angle) * radius)
     }
 }

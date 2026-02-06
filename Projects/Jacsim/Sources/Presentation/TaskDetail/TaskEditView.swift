@@ -2,10 +2,12 @@ import SwiftUI
 import ComposableArchitecture
 import DSKit
 import PhotosUI
+import _Concurrency
 
 public struct TaskEditView: View {
     @Bindable var store: StoreOf<TaskEditFeature>
     @State private var photoPickerItem: PhotosPickerItem?
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     public init(store: StoreOf<TaskEditFeature>) {
         self.store = store
@@ -56,13 +58,13 @@ public struct TaskEditView: View {
                             Image(uiImage: image)
                                 .resizable()
                                 .scaledToFill()
-                                .frame(height: 220)
+                                .frame(height: 220.jsScaled())
                                 .clipped()
                                 .cornerRadius(.jsRadiusMD)
                         } else {
                             Rectangle()
                                 .fill(Color.labelDisable)
-                                .frame(height: 220)
+                                .frame(height: 220.jsScaled())
                                 .cornerRadius(.jsRadiusMD)
                                 .overlay(
                                     Image(systemName: "camera")
@@ -98,15 +100,25 @@ public struct TaskEditView: View {
             }
 
             RedesignSectionCard(title: "기본 정보") {
-                TextField("작심 이름", text: $store.title)
-                    .font(.jsBodyMedium)
-                    .padding()
-                    .background(Color.backgroundNormal)
-                    .cornerRadius(.jsRadiusMD)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: .jsRadiusMD)
-                            .stroke(Color.primaryNormal.opacity(0.5), lineWidth: 1)
-                    )
+                VStack(alignment: .trailing, spacing: .jsXS) {
+                    TextField("작심 이름", text: $store.title)
+                        .font(.jsBodyMedium)
+                        .padding()
+                        .background(Color.backgroundNormal)
+                        .cornerRadius(.jsRadiusMD)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: .jsRadiusMD)
+                                .stroke(Color.primaryNormal.opacity(0.5), lineWidth: 1)
+                        )
+
+                    Text("\(store.title.count)/\(TextInputFieldPolicy.title.maxLength)")
+                        .font(.jsLabelMedium)
+                        .foregroundColor(.labelAssistive)
+
+                    Text("공백 포함 · 저장 시 앞뒤 공백은 자동 정리돼요")
+                        .font(.jsLabelSmall)
+                        .foregroundColor(.labelAssistive)
+                }
             }
 
             RedesignSectionCard(title: "성공 목표") {
@@ -133,6 +145,19 @@ public struct TaskEditView: View {
         .navigationTitle("작심 수정")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear { store.send(.onAppear) }
+        .overlay(alignment: .bottom) {
+            if let message = store.toastMessage {
+                RedesignToastView(message: message, style: .error)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                    .task(id: message) {
+                        try? await _Concurrency.Task.sleep(
+                            nanoseconds: RedesignToastView.defaultDismissNanoseconds
+                        )
+                        store.send(.toastDismissed)
+                    }
+            }
+        }
+        .animation(reduceMotion ? .none : .easeInOut(duration: 0.25), value: store.toastMessage)
     }
 
     private var isSaveEnabled: Bool {

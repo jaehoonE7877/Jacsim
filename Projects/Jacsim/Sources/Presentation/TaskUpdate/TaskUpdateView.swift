@@ -2,9 +2,11 @@ import SwiftUI
 import ComposableArchitecture
 import DSKit
 import PhotosUI
+import _Concurrency
 
 public struct TaskUpdateView: View {
     @Bindable var store: StoreOf<TaskUpdateFeature>
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     public init(store: StoreOf<TaskUpdateFeature>) {
         self.store = store
@@ -40,6 +42,19 @@ public struct TaskUpdateView: View {
                 loadingOverlay
             }
         }
+        .overlay(alignment: .bottom) {
+            if let message = store.toastMessage {
+                RedesignToastView(message: message, style: .error)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                    .task(id: message) {
+                        try? await _Concurrency.Task.sleep(
+                            nanoseconds: RedesignToastView.defaultDismissNanoseconds
+                        )
+                        store.send(.toastDismissed)
+                    }
+            }
+        }
+        .animation(reduceMotion ? .none : .easeInOut(duration: 0.25), value: store.toastMessage)
     }
     
     private var overwriteBanner: some View {
@@ -51,50 +66,96 @@ public struct TaskUpdateView: View {
     }
     
     private var photoPickerSection: some View {
-        RedesignSectionCard(
+        let photoHeight: CGFloat = 300.jsScaled()
+        let cardShape = RoundedRectangle(cornerRadius: .jsRadiusLG, style: .continuous)
+
+        return RedesignSectionCard(
             title: "인증 사진",
             subtitle: "오늘의 진행 상황을 남겨요"
         ) {
-            ZStack(alignment: .bottomTrailing) {
-                if let image = store.image {
-                    Image(uiImage: image)
-                        .resizable()
-                        .scaledToFill()
-                        .frame(height: 300)
-                        .clipped()
-                        .cornerRadius(.jsRadiusMD)
-                } else {
-                    Rectangle()
-                        .fill(Color.backgroundStrong)
-                        .frame(height: 300)
-                        .cornerRadius(.jsRadiusMD)
-                        .overlay(
-                            VStack(spacing: .jsSM) {
-                                Image(systemName: "photo")
-                                    .font(.pretendardSemiBold(size: 40))
-                                    .foregroundColor(.labelAlternative)
-                                
-                                Text("사진을 추가해주세요")
-                                    .font(.jsBodyMedium)
-                                    .foregroundColor(.labelAlternative)
-                            }
+            VStack(spacing: .jsSM) {
+                ZStack {
+                    if let image = store.image {
+                        Image(uiImage: image)
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    } else {
+                        VStack(spacing: .jsXS) {
+                            Image(systemName: "photo.on.rectangle.angled")
+                                .font(.jsDisplayMedium)
+                                .foregroundColor(.labelAlternative)
+
+                            Text("인증 사진을 추가해 주세요")
+                                .font(.jsBodyMedium)
+                                .foregroundColor(.labelStrong)
+
+                            Text("가로·세로 비율은 자동으로 맞춰져요")
+                                .font(.jsLabelMedium)
+                                .foregroundColor(.labelAlternative)
+                        }
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .background(Color.backgroundStrong)
+                    }
+                }
+                .frame(maxWidth: .infinity, minHeight: photoHeight, maxHeight: photoHeight)
+                .clipShape(cardShape)
+                .overlay {
+                    cardShape
+                        .stroke(
+                            store.image == nil ? Color.primaryNormal.opacity(0.35) : Color.labelDisable.opacity(0.24),
+                            style: StrokeStyle(
+                                lineWidth: 1,
+                                dash: store.image == nil ? [8, 6] : []
+                            )
                         )
                 }
+                .overlay(alignment: .topTrailing) {
+                    if store.image != nil {
+                        HStack(spacing: .jsMicro) {
+                            Image(systemName: "checkmark.circle.fill")
+                                .foregroundColor(.positive)
 
-                PhotosPicker(
-                    selection: Binding(
-                        get: { store.photoPickerItem ?? PhotosPickerItem(itemIdentifier: "") },
-                        set: { store.photoPickerItem = $0 }
-                    ),
-                    matching: .images
-                ) {
-                    Image(systemName: "plus.circle.fill")
-                        .font(.pretendardSemiBold(size: 44))
-                        .foregroundColor(.primaryNormal)
-                        .background(Color.backgroundNormal)
-                        .clipShape(Circle())
-                        .padding(.jsXS)
+                            Text("선택됨")
+                                .font(.jsLabelMedium)
+                                .foregroundColor(.labelStrong)
+                        }
+                        .padding(.horizontal, .jsXS)
+                        .padding(.vertical, .jsMicro)
+                        .background(Color.backgroundNormal.opacity(0.92))
+                        .clipShape(Capsule())
+                        .padding(.jsSM)
+                    }
                 }
+
+                PhotosPicker(selection: $store.photoPickerItem, matching: .images) {
+                    HStack(spacing: .jsXS) {
+                        Image(systemName: store.image == nil ? "photo.badge.plus" : "arrow.triangle.2.circlepath")
+                            .font(.jsHeadlineSmall)
+                            .foregroundColor(.primaryNormal)
+
+                        Text(store.image == nil ? "인증 사진 선택" : "인증 사진 변경")
+                            .font(.jsButtonMedium)
+                            .foregroundColor(.labelStrong)
+
+                        Spacer(minLength: .jsXS)
+
+                        Image(systemName: "chevron.right")
+                            .font(.jsButtonSmall)
+                            .foregroundColor(.labelAlternative)
+                    }
+                    .padding(.horizontal, .jsMD)
+                    .padding(.vertical, .jsSM)
+                    .background(
+                        RoundedRectangle(cornerRadius: .jsRadiusMD, style: .continuous)
+                            .fill(Color.backgroundStrong)
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: .jsRadiusMD, style: .continuous)
+                            .stroke(Color.labelDisable.opacity(0.24), lineWidth: 1)
+                    )
+                }
+                .buttonStyle(.plain)
                 .onChange(of: store.photoPickerItem) { _, newItem in
                     store.send(.photoPickerItemChanged(newItem))
                 }
@@ -105,7 +166,7 @@ public struct TaskUpdateView: View {
     private var memoInputSection: some View {
         RedesignSectionCard(
             title: "한 줄 메모",
-            subtitle: "선택사항 · 최대 20자"
+            subtitle: "선택사항 · 최대 30자"
         ) {
             VStack(alignment: .trailing, spacing: .jsXS) {
                 TextField("짧게 기록해요 (선택)", text: $store.memo, axis: .vertical)
@@ -119,8 +180,12 @@ public struct TaskUpdateView: View {
                     )
                     .lineLimit(2...4)
                 
-                Text("\(store.memo.trimmingCharacters(in: .whitespacesAndNewlines).count)/20")
+                Text("\(store.memo.count)/\(TextInputFieldPolicy.memo.maxLength)")
                     .font(.jsLabelMedium)
+                    .foregroundColor(.labelAssistive)
+
+                Text("공백 포함 · 저장 시 앞뒤 공백은 자동 정리돼요")
+                    .font(.jsLabelSmall)
                     .foregroundColor(.labelAssistive)
             }
         }
