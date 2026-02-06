@@ -99,13 +99,31 @@ public extension UIColor {
 
 //MARK: - Background
 public extension UIColor {
-    
+
     static var backgroundNormal: UIColor {
         return UIColor { (traits) -> UIColor in
             if traits.userInterfaceStyle == .dark {
                 return UIColor(hexString: "#1B1C1E")
             }
             return UIColor(hexString: "#FFFFFF")
+        }
+    }
+
+    static var backgroundStrong: UIColor {
+        return UIColor { (traits) -> UIColor in
+            if traits.userInterfaceStyle == .dark {
+                return UIColor(hexString: "#000000")
+            }
+            return UIColor(hexString: "#F7F7F8")
+        }
+    }
+
+    static var backgroundAlternative: UIColor {
+        return UIColor { (traits) -> UIColor in
+            if traits.userInterfaceStyle == .dark {
+                return UIColor(hexString: "#2C2D2F")
+            }
+            return UIColor(hexString: "#F2F3F5")
         }
     }
 }

@@ -25,6 +25,7 @@ public extension Project {
         
         let configurationName: ConfigurationName = "Debug"
         let hasDynamicFramework = targets.contains(.dynamicFramework)
+        let hasApp = targets.contains(.app)
         let deploymentTarget = Environment.deploymentTarget
         let destination: Set<Destination> = [.iPhone]
         
@@ -52,20 +53,17 @@ public extension Project {
                 bundleId: "\(Environment.bundlePrefix)",
                 deploymentTargets: deploymentTarget,
                 infoPlist: .extendingDefault(with: infoPlist),
-                sources: ["Sources/**/*.swift"],
-                resources: [
-                    .glob(pattern: "Resources/**", excluding: [])
-                ],
+                buildableFolders: ["Sources", "Resources"],
                 entitlements: "\(name).entitlements",
                 scripts: [.FirebaseCrashlyticsString],
                 dependencies: [
                     internalDependencies,
                     externalDependencies,
                     [
-                        .package(product: "LookinServer", type: .macro, condition: nil)
+
                     ]
                 ].flatMap { $0 },
-                settings: .settings(base: settings.codeSignIdentityAppleDevelopment(),
+                settings: .settings(base: settings.setCodeSignAutomatic(),
                                     configurations: XCConfig.project)
             )
             projectTargets.append(target)
@@ -83,7 +81,7 @@ public extension Project {
                 bundleId: "\(Environment.bundlePrefix).\(name)Interface",
                 deploymentTargets: deploymentTarget,
                 infoPlist: .default,
-                sources: ["Interface/Sources/**/*.swift"],
+                buildableFolders: ["Interface/Sources"],
                 dependencies: interfaceDependencies,
                 settings: .settings(base: settings, configurations: XCConfig.framework)
             )
@@ -108,8 +106,7 @@ public extension Project {
                 bundleId: "\(Environment.bundlePrefix).\(name)",
                 deploymentTargets: deploymentTarget,
                 infoPlist: .default,
-                sources: ["Sources/**/*.swift"],
-                resources: hasResources ? [.glob(pattern: "Resources/**", excluding: ["Resources/dummy.txt"])] : [],
+                buildableFolders: hasResources ? ["Sources", "Resources"] : ["Sources"],
                 dependencies: deps + internalDependencies + externalDependencies,
                 settings: .settings(base: settings.setCodeSignAutomatic(), configurations: XCConfig.framework)
             )
@@ -129,8 +126,7 @@ public extension Project {
                 bundleId: "\(Environment.bundlePrefix).\(name)Demo",
                 deploymentTargets: deploymentTarget,
                 infoPlist: .extendingDefault(with: Project.demoInfoPlist),
-                sources: ["Demo/Sources/**/*.swift"],
-                resources: [.glob(pattern: "Demo/Resources/**", excluding: ["Demo/Resources/dummy.txt"])],
+                buildableFolders: ["Demo/Sources", "Demo/Resources"],
                 dependencies: [
                     deps,
                     [
@@ -148,6 +144,7 @@ public extension Project {
         
         if targets.contains(.unitTest) {
             let deps: [TargetDependency] = [.target(name: name)]
+            let testConfigurations = hasApp ? XCConfig.tests : XCConfig.frameworkTests
             
             let target = Target.target(
                 name: "\(name)Tests",
@@ -156,11 +153,10 @@ public extension Project {
                 bundleId: "\(Environment.bundlePrefix).\(name)Tests",
                 deploymentTargets: deploymentTarget,
                 infoPlist: .default,
-                sources: ["Tests/Sources/**/*.swift"],
-                resources: [],
+                buildableFolders: ["Tests/Sources"],
                 dependencies: deps,
                 settings: .settings(base: SettingsDictionary().setCodeSignAutomatic(),
-                                    configurations: XCConfig.tests)
+                                    configurations: testConfigurations)
             )
             
             projectTargets.append(target)
@@ -175,7 +171,7 @@ public extension Project {
         
         schemes += additionalSchemes
         
-        var scheme = targets.contains(.app)
+        var scheme = hasApp
         ? appSchemes
         : schemes
         
@@ -220,11 +216,11 @@ extension Scheme {
         return Scheme.scheme(
             name: name,
             shared: true,
-            buildAction: .buildAction(targets: ["\(name)DemoApp"]),
+            buildAction: .buildAction(targets: ["\(name)Demo"]),
             testAction: .targets(
                 ["\(name)Tests"],
                 configuration: target,
-                options: .options(coverage: true, codeCoverageTargets: ["\(name)DemoApp"])
+                options: .options(coverage: true, codeCoverageTargets: ["\(name)Demo"])
             ),
             runAction: .runAction(configuration: target),
             archiveAction: .archiveAction(configuration: target),
@@ -237,18 +233,10 @@ extension Scheme {
 extension Project {
     static let appSchemes: [Scheme] = [
         .scheme(
-            name: "\(Environment.workspaceName)-DEBUG",
+            name: "\(Environment.workspaceName)",
             shared: true,
             buildAction: .buildAction(targets: ["\(Environment.workspaceName)"],
-                                      postActions: [
-                                        .executionAction(
-                                            title: "Inspect Build",
-                                            scriptText: """
-                                                                $HOME/.local/bin/mise x -C $SRCROOT -- tuist inspect build
-                                                                """,
-                                            target: "\(Environment.workspaceName)-DEBUG"
-                                        )
-                                      ]),
+                                      postActions: [ ]),
             testAction: .targets(
                 ["\(Environment.workspaceName)Tests"],
                 configuration: "Debug",
@@ -269,17 +257,9 @@ extension Project {
             name: "\(Environment.workspaceName)",
             shared: true,
             buildAction: .buildAction(targets: ["\(Environment.workspaceName)"],
-                                      postActions: [
-                                        .executionAction(
-                                            title: "Inspect Build",
-                                            scriptText: """
-                                                               $HOME/.local/bin/mise x -C $SRCROOT -- tuist inspect build
-                                                               """,
-                                            target: "\(Environment.workspaceName)"
-                                        )
-                                      ]),
+                                      postActions: []),
             runAction: .runAction(
-                configuration: "Release",
+                configuration: "Debug",
                 arguments: .arguments(
                     environmentVariables: ["OS_ACTIVITY_MODE": "disable"],
                     launchArguments: [.launchArgument(name: "-FIRDebugEnabled", isEnabled: true)]

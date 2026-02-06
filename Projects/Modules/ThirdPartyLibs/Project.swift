@@ -12,16 +12,10 @@ let project = Project.makeModule(
         .SPM.FirebaseMessaging,
         .SPM.Promises,
         //MARK: - UI
-        .SPM.Snapkit,
-        .SPM.Then,
-        .SPM.Toast,
         .SPM.IQKeyboardManagerSwift,
         .SPM.Kingfisher,
-        .SPM.FSCalendar,
         .SPM.AcknowList,
         .SPM.CropViewController,
-        .SPM.Floaty,
-        //MARK: - DB
-        .SPM.RealmSwift,
+        .SPM.ComposableArchitecture,
     ]
 )

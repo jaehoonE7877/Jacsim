@@ -12,6 +12,7 @@ public struct XCConfig {
         static var framework: ProjectDescription.Path { return .relativeToRoot("xcconfigs/targets/iOS-Framework.xcconfig") }
         static var demo: ProjectDescription.Path { return .relativeToRoot("xcconfigs/targets/iOS-Demo.xcconfig") }
         static var tests: ProjectDescription.Path { .relativeToRoot("xcconfigs/targets/iOS-Tests.xcconfig") }
+        static var frameworkTests: ProjectDescription.Path { .relativeToRoot("xcconfigs/targets/iOS-FrameworkTests.xcconfig") }
         static func project(_ config: String) -> ProjectDescription.Path { .relativeToRoot("xcconfigs/Base/Projects/Project-\(config).xcconfig") }
         }
     
@@ -23,6 +24,11 @@ public struct XCConfig {
     public static let tests: [Configuration] = [
         .debug(name: "Debug", xcconfig: Path.tests),
         .release(name: "Release", xcconfig: Path.tests),
+    ]
+
+    public static let frameworkTests: [Configuration] = [
+        .debug(name: "Debug", xcconfig: Path.frameworkTests),
+        .release(name: "Release", xcconfig: Path.frameworkTests),
     ]
     public static let demo: [Configuration] = [
         .debug(name: "Debug", xcconfig: Path.demo),

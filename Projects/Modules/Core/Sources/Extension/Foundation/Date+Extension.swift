@@ -14,9 +14,9 @@ public enum DateFormat: String {
     ///yyyy-MM-dd HH:mm:ss
     case default24Format = "yyyy-MM-dd HH:mm:ss"
     ///yyyy년 M월 d일 EEEE
-    case yyyyMdEEEE = "yyyy년 M월 d일 EEEE"
+    case full = "yyyy년 M월 d일 EEEE"
     ///yyyy년 M월 d일 EEEE a hh:mm
-    case yyyyMDEEEEahhmm = "yyyy년 M월 d일 EEEE a hh:mm"
+    case fullWithTime = "yyyy년 M월 d일 EEEE a hh:mm"
     ///yyyyMMddHHmmss
     case YYYYMMDDHHmmss = "yyyyMMddHHmmss"
     ///MM월 dd일 EEEE
@@ -25,25 +25,7 @@ public enum DateFormat: String {
     case ahhmm = "a hh:mm"
 }
 
-public extension Date {
-    ///#오전#오후 구분
-    func isAM() -> Bool {
-        let calendar = Calendar.current
-        let components = calendar.dateComponents([.hour], from: self)
-        if let hour = components.hour {
-            return hour < 12
-        }
-        return false
-    }
-    
-    func convertToString(withFormat format: DateFormat) -> String {
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = format.rawValue
-        dateFormatter.timeZone = .KR
-        dateFormatter.locale = .KR
-        return dateFormatter.string(from: self)
-    }
-}
+public extension Date {}
 
 public extension Date {
     

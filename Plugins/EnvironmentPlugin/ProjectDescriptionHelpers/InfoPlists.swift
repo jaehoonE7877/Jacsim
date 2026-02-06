@@ -9,6 +9,12 @@ import ProjectDescription
 
 public extension Project {
     static let appInfoPlist: [String: Plist.Value] = [
+        "CFBundleURLTypes": [
+            [
+                "CFBundleURLName": "com.jacsim.deepLink",
+                "CFBundleURLSchemes": ["jacsim"]
+            ]
+        ],
         "CFBundleShortVersionString": "\(Environment.appVersion)",
         "CFBundleDevelopmentRegion": "ko",
         "CFBundleVersion": "1",

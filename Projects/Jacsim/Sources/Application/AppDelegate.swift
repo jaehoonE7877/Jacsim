@@ -14,7 +14,6 @@ import FirebaseCrashlytics
 import FirebaseMessaging
 import IQKeyboardManagerSwift
 
-@main
 class AppDelegate: UIResponder, UIApplicationDelegate{
 
 
@@ -57,6 +56,19 @@ class AppDelegate: UIResponder, UIApplicationDelegate{
         return true
     }
 
+    func application(
+        _ app: UIApplication,
+        open url: URL,
+        options: [UIApplication.OpenURLOptionsKey: Any] = [:]
+    ) -> Bool {
+        NotificationCenter.default.post(
+            name: .jacsimDeepLinkReceived,
+            object: nil,
+            userInfo: ["url": url]
+        )
+        return true
+    }
+
     // MARK: UISceneSession Lifecycle
 
     func application(_ application: UIApplication, configurationForConnecting connectingSceneSession: UISceneSession, options: UIScene.ConnectionOptions) -> UISceneConfiguration {
@@ -86,6 +98,15 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
     }
     
     func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse, withCompletionHandler completionHandler: @escaping () -> Void) {
+        let identifier = response.notification.request.identifier
+        if identifier.hasPrefix("jacsim-") {
+            let idString = identifier.replacingOccurrences(of: "jacsim-", with: "")
+            NotificationCenter.default.post(
+                name: .jacsimLocalNotificationTapped,
+                object: nil,
+                userInfo: ["id": idString]
+            )
+        }
         completionHandler()
     }
     

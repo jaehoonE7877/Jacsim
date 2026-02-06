@@ -16,6 +16,7 @@ public extension SettingsDictionary {
     ]
     
     static let baseSettings: Self = [
+        "SWIFT_STRICT_CONCURRENCY" : "complete",
         "OTHER_LDFLAGS" : [
             "$(inherited)",
             "-ObjC"
@@ -74,4 +75,3 @@ public extension SettingsDictionary {
         .baseSettings.automaticCodeSigning(devTeam: "RFHV927M8S")
     }
 }
-
