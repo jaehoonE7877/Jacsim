@@ -90,7 +90,7 @@ public struct JSButton: View {
     private var foregroundColor: Color {
         switch style {
         case .primary, .destructive:
-            return .labelStrong
+            return .white
         case .secondary, .ghost:
             return isEnabled ? .primaryNormal : .labelNeutral
         }
