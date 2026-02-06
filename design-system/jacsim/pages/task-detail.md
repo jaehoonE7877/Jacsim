@@ -1,55 +1,23 @@
 # Task Detail Page Overrides
 
-> **PROJECT:** Jacsim
-> **Generated:** 2026-02-06 20:34:21
-> **Page Type:** Challenge detail and daily certification timeline
+> Applies to: `Projects/Jacsim/Sources/Presentation/TaskDetail/TaskDetailView.swift`
 
-> ⚠️ **IMPORTANT:** Rules in this file **override** `design-system/jacsim/MASTER.md`.
-> Only deviations from the Master are documented here. For all other rules, refer to the Master.
+## Layout Overrides
 
----
+- 커버 이미지 + 축소 헤더 + 본문 섹션 + 하단 CTA 구조 고정
+- 본문은 Stage -> Today Status -> Record List 순서 유지
 
-## Page-Specific Rules
+## State Policy
 
-### Layout Overrides
+- 기록 리스트 스크롤 이동 요청 시 anchor id를 유지
+- Stage popup은 작업 흐름을 막지 않는 짧은 모션 사용
 
-- **Header:** Large cover image with collapsible minimized header
-- **Body sections:** Stage info -> today's status -> record list -> bottom CTA
-- **Bottom area:** Gradient-backed persistent CTA zone
+## Component Overrides
 
-### Spacing Overrides
+- 개요 배너 토글: `PresentationSectionKey.taskDetailOverview`
+- 오늘 상태 토글: `PresentationSectionKey.taskDetailTodayStatus`
+- 기록 목록 토글: `PresentationSectionKey.taskDetailRecordList`
 
-- Keep card and section gaps to `.jsMD` / `.jsLG`
-- Preserve minimum bottom breathing room above CTA zone
+## Accessibility Notes
 
-### Typography Overrides
-
-- Task title: Display or headline token depending on header mode
-- Progress and metadata: body/label token hierarchy only
-
-### Color Overrides
-
-- Stage progress pending: `primaryNormal`
-- Stage success: `positive`
-- Stage fail: `destructive`
-- Status surfaces should use `backgroundStrong`/`backgroundAlternative`
-
-### Component Overrides
-
-- Use `JSCard` for stage summary and contextual feedback blocks
-- Use `JSProgress` for stage progress indicator
-- Use `JSStatusChip` for today/state chips
-
----
-
-## Page-Specific Components
-
-- No unique components for this page
-
----
-
-## Recommendations
-
-- Keep stage result pop-up motion lightweight and readable; avoid ornamental animation that delays action
-- Ensure failed/success state CTAs are visually distinct but token-consistent
-- If token migration is done, remove remaining raw system colors in row/status visuals
+- 삭제/편집/알림 메뉴 액션의 의미를 라벨로 명확히 전달

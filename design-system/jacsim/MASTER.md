@@ -1,111 +1,95 @@
 # Design System Master File
 
-> **LOGIC:** Build screens using `design-system/jacsim/MASTER.md` first.
-> Then apply per-screen overrides from `design-system/jacsim/pages/[page-name].md` if present.
+> **LOGIC:** `MASTER.md`를 기본으로 적용하고, 화면별 규칙은 `pages/<screen>.md`가 override 합니다.
 
 ---
 
 **Project:** Jacsim
-**Generated:** 2026-02-06
-**Product Type:** Habit challenge tracking app (daily certification, stage progression, reminder)
+**Generated:** 2026-02-07
+**Source:** `ui-ux-pro-max` 추천값을 Jacsim(iOS/SwiftUI/DSKit) 기준으로 정규화
 
 ---
 
 ## Global Rules
 
-### Color Tokens (Use DSKit semantic tokens only)
-
-| Purpose | SwiftUI Token | UIKit Token |
-|---|---|---|
-| Brand primary | `Color.primaryNormal` | `UIColor.primaryNormal` |
-| Brand emphasis | `Color.primaryStrong` | `UIColor.primaryStrong` |
-| Text strong | `Color.labelStrong` | `UIColor.labelStrong` |
-| Text default | `Color.labelNormal` | `UIColor.labelNormal` |
-| Text secondary | `Color.labelAlternative` | `UIColor.labelAlternative` |
-| Disabled text | `Color.labelDisable` | `UIColor.labelDisable` |
-| Surface base | `Color.backgroundNormal` | `UIColor.backgroundNormal` |
-| Surface elevated | `Color.backgroundStrong` | `UIColor.backgroundStrong` |
-| Surface alt | `Color.backgroundAlternative` | `UIColor.backgroundAlternative` |
-| Success | `Color.positive` | `UIColor.positive` |
-| Warning | `Color.cautionary` | `UIColor.cautionary` |
-| Error | `Color.destructive` | `UIColor.destructive` |
-
-### Typography Tokens
-
-Use existing Pretendard token set. Do not introduce per-screen hard-coded fonts.
-
-- Display: `Font.jsDisplayLarge`, `Font.jsDisplayMedium`, `Font.jsDisplaySmall`
-- Headline: `Font.jsHeadlineLarge`, `Font.jsHeadlineMedium`, `Font.jsHeadlineSmall`
-- Body: `Font.jsBodyLarge`, `Font.jsBodyMedium`, `Font.jsBodySmall`
-- Label: `Font.jsLabelLarge`, `Font.jsLabelMedium`, `Font.jsLabelSmall`
-- Button: `Font.jsButtonLarge`, `Font.jsButtonMedium`, `Font.jsButtonSmall`
-
-### Spacing Tokens
-
-Use DSKit spacing scale.
-
-| Token | Value |
-|---|---|
-| `JSSpacing.micro` / `.jsMicro` | 4 |
-| `JSSpacing.xs` / `.jsXS` | 8 |
-| `JSSpacing.sm` / `.jsSM` | 12 |
-| `JSSpacing.md` / `.jsMD` | 16 |
-| `JSSpacing.lg` / `.jsLG` | 20 |
-| `JSSpacing.xl` / `.jsXL` | 24 |
-| `JSSpacing.xxl` / `.jsXXL` | 32 |
-| `JSSpacing.touchTarget` / `.jsTouchTarget` | 44 |
-
 ### Visual Direction
 
-- Primary direction: calm utility + progress clarity (not decorative showcase)
-- Card style: subtle elevation, soft radius, strong readability
-- Motion: short and meaningful (`0.2s` to `0.3s`) for transitions, sheet, feedback
-- State color policy: success=`positive`, caution=`cautionary`, fail=`destructive`
+- Direction: Brand-Expressive + Enterprise Clarity
+- Base tone: 높은 가독성, 낮은 장식 밀도, 즉시 행동 가능한 정보 우선
+- Motion: 핵심 피드백에만 0.2~0.3s 모션 사용, `reduceMotion` 활성 시 정적 전환
+
+### Color Token Mapping (DSKit only)
+
+| Skill Role | Hex Hint | Jacsim Token |
+|---|---|---|
+| Primary | `#0D9488` | `Color.primaryNormal` |
+| Secondary | `#14B8A6` | `Color.primaryStrong` |
+| CTA Accent | `#F97316` | `Color.cautionary` |
+| Surface | `#F0FDFA` | `Color.backgroundNormal` |
+| Text | `#134E4A` | `Color.labelStrong` |
+| Success | - | `Color.positive` |
+| Warning | - | `Color.cautionary` |
+| Error | - | `Color.destructive` |
+
+### Typography Rules
+
+- Display: `Font.jsDisplayLarge/Medium/Small`
+- Headline: `Font.jsHeadlineLarge/Medium/Small`
+- Body: `Font.jsBodyLarge/Medium/Small`
+- Label: `Font.jsLabelLarge/Medium/Small`
+- Button: `Font.jsButtonLarge/Medium/Small`
+- 금지: 화면 레벨에서 `.system(...)` 하드코딩
+
+### Layout/Spacing Rules
+
+- Screen padding: 기본 수평 `.jsMD`, 강조 화면 `.jsXL`
+- Section gap: `.jsLG` ~ `.jsXXL`
+- Touch target: 최소 `.jsTouchTarget` (44pt)
+- Bottom CTA가 있는 화면은 스크롤 콘텐츠 하단 여백 최소 `120pt`
+
+### State Model (Mandatory)
+
+모든 핵심 화면은 아래 상태를 가져야 합니다.
+
+- `content`
+- `loading`
+- `empty`
+- `error` (+ retry action 권장)
+
+공통 구현: `RedesignScreenState`, `RedesignInlineErrorView`, `RetryActionModel`
+
+### Component Rules
+
+- CTA: `JSButton` 우선 사용
+- Section surface: `RedesignSectionCard` 또는 `JSCard`
+- Input: `JSInputField` 우선, 오류는 인풋 근처에 표시
+- Status: `JSStatusChip`, `RedesignStateBanner`
+- Calendar/List: `JSCalendar`, `JSListItem`
 
 ---
 
-## Component Specs (SwiftUI/DSKit)
+## Accessibility Rules
 
-### Buttons
-
-- Prefer `JSButton(style:size:)` for CTA and secondary actions
-- Primary CTA: `style: .primary`, minimum height aligned with touch target (44+)
-- Secondary CTA: `style: .secondary`
-- Disabled/Loading: preserve layout while showing `JSProgressIndicator`
-
-### Cards
-
-- Prefer `JSCard` / `JSUnifiedHeroCard` / `JSMiniHeroCard` variants
-- Use semantic background (`backgroundStrong` or `backgroundAlternative`)
-- Keep progress indicators visible in both light/dark mode
-
-### Inputs
-
-- Prefer `JSInputField` and DSKit input wrappers
-- Error state uses `destructive` token only
-- Keep helper text as `labelAssistive` and validation text as `destructive`
-
-### Modal / Sheet
-
-- Prefer DSKit bottom sheet/modal components (`JSBottomSheet`, `JSModal`)
-- Maintain clear dismissal affordance and stable keyboard behavior
+- VoiceOver 라벨/힌트 누락 금지
+- Dynamic Type 큰 사이즈에서 잘림/겹침 금지
+- 텍스트 대비 4.5:1 이상 유지
+- 모션 효과는 `@Environment(\.accessibilityReduceMotion)`로 분기
 
 ---
 
 ## Anti-Patterns (Do NOT Use)
 
-- Hard-coded brand colors (`.blue`, `.green`, `.red`) in production screens when semantic tokens exist
-- Mixed typography (`.system(...)`) in core screen copy where JS font tokens are available
-- Web-specific checklist items in iOS docs (e.g., `cursor-pointer`, CSS hover-centric guidance)
-- Decorative 3D/WebGL/landing-page recommendations unrelated to app task flows
+- SwiftUI 화면에서 CSS/Web 체크리스트 직접 적용
+- 하드코딩 색상(`.blue/.red/.gray/.white`) 남용
+- 실패 상태에서 사용자 복구 경로 부재
+- 의미 없는 장식 애니메이션
 
 ---
 
 ## Delivery Checklist
 
-- [ ] New/updated UI uses DSKit color tokens (`Color+DSKit`, `UIColor+Extension`)
-- [ ] New/updated UI uses DSKit typography and spacing tokens
-- [ ] Success/fail/pending states use semantic status tokens
-- [ ] Add/edit/detail flows keep CTA hierarchy consistent (primary then secondary)
-- [ ] Contrast is readable in both light and dark mode
-- [ ] No new UIKit view controllers for feature screens (SwiftUI + TCA only)
+- [ ] DSKit 토큰만 사용 (`Color/Font/Spacing`)
+- [ ] `loading/empty/error` 상태 확인
+- [ ] 주요 액션에 접근성 라벨 제공
+- [ ] `reduceMotion` 대응 확인
+- [ ] 플래그(`PresentationRedesignFlags`)로 롤백 가능
