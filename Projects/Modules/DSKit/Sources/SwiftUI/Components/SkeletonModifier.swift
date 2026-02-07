@@ -1,12 +1,12 @@
 import SwiftUI
 
-public struct SkeletonModifier: ViewModifier {
+public struct SkeletonModifier<S: Shape & Sendable>: ViewModifier {
     private let isLoading: Bool
-    private let shape: AnyShape
+    private let shape: S
 
-    public init(isLoading: Bool, shape: some Shape) {
+    public init(isLoading: Bool, shape: S) {
         self.isLoading = isLoading
-        self.shape = AnyShape(shape)
+        self.shape = shape
     }
 
     public func body(content: Content) -> some View {
@@ -25,83 +25,57 @@ public struct SkeletonModifier: ViewModifier {
 }
 
 public struct ShimmeringModifier: ViewModifier {
-    @State private var phase: CGFloat = 0
+    @State private var sweepProgress: CGFloat = -1
 
     public func body(content: Content) -> some View {
         content
-            .modifier(AnimatedMask(phase: phase))
+            .overlay {
+                GeometryReader { proxy in
+                    shimmerGradient
+                        .frame(
+                            width: proxy.size.width * 1.6,
+                            height: proxy.size.height * 2.2
+                        )
+                        .rotationEffect(.degrees(-18))
+                        .offset(x: proxy.size.width * sweepProgress)
+                        .mask(content)
+                }
+            }
             .onAppear {
                 withAnimation(
-                    .linear(duration: 2.5)
+                    .linear(duration: 1.8)
                     .repeatForever(autoreverses: false)
                 ) {
-                    phase = 1.0
+                    sweepProgress = 1.35
                 }
             }
     }
-}
 
-public struct AnimatedMask: AnimatableModifier {
-    var phase: CGFloat
-
-    public var animatableData: CGFloat {
-        get { phase }
-        set { phase = newValue }
-    }
-
-    public func body(content: Content) -> some View {
-        content
-            .mask(
-                GradientMask(phase: phase)
-                    .scaleEffect(3)
-            )
-    }
-}
-
-public struct GradientMask: View {
-    let phase: CGFloat
-
-    private let centerColor = Color.surfaceOverlay.opacity(0.3)
-    private let edgeColor = Color.surfaceOverlay.opacity(1.0)
-
-    public var body: some View {
-        GeometryReader { geometry in
-            LinearGradient(
-                gradient: Gradient(stops: [
-                    .init(color: edgeColor, location: phase),
-                    .init(color: centerColor, location: phase + 0.1),
-                    .init(color: edgeColor, location: phase + 0.2)
-                ]),
-                startPoint: UnitPoint(x: 0, y: 0.5),
-                endPoint: UnitPoint(x: 1, y: 0.5)
-            )
-            .rotationEffect(.degrees(-45))
-            .offset(x: -geometry.size.width, y: -geometry.size.height)
-            .frame(width: geometry.size.width * 3, height: geometry.size.height * 3)
-        }
+    private var shimmerGradient: LinearGradient {
+        LinearGradient(
+            gradient: Gradient(stops: [
+                .init(color: .clear, location: 0.0),
+                .init(color: Color.surfaceOverlay.opacity(0.22), location: 0.44),
+                .init(color: Color.surfaceOverlay.opacity(0.46), location: 0.5),
+                .init(color: Color.surfaceOverlay.opacity(0.22), location: 0.56),
+                .init(color: .clear, location: 1.0)
+            ]),
+            startPoint: .leading,
+            endPoint: .trailing
+        )
     }
 }
 
 public extension View {
-    func skeleton(isLoading: Bool = true, shape: some Shape = Rectangle()) -> some View {
+    func skeleton<S: Shape & Sendable>(isLoading: Bool = true, shape: S) -> some View {
         modifier(SkeletonModifier(isLoading: isLoading, shape: shape))
+    }
+
+    func skeleton(isLoading: Bool = true) -> some View {
+        modifier(SkeletonModifier(isLoading: isLoading, shape: Rectangle()))
     }
 
     func shimmering() -> some View {
         modifier(ShimmeringModifier())
-    }
-}
-
-public struct AnyShape: Shape {
-    private let path: (CGRect) -> Path
-
-    public init<S: Shape>(_ shape: S) {
-        self.path = { rect in
-            shape.path(in: rect)
-        }
-    }
-
-    public func path(in rect: CGRect) -> Path {
-        path(rect)
     }
 }

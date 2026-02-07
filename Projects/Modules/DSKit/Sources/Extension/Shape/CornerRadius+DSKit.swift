@@ -55,7 +55,9 @@ public struct ShadowStyle {
     public let x: CGFloat
     public let y: CGFloat
     
-    public static let clear = ShadowStyle(color: .clear, radius: 0, x: 0, y: 0)
+    public static var clear: ShadowStyle {
+        ShadowStyle(color: .clear, radius: 0, x: 0, y: 0)
+    }
     
     public init(color: Color, radius: CGFloat, x: CGFloat, y: CGFloat) {
         self.color = color
