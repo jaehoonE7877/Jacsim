@@ -18,6 +18,10 @@ let xcodeCacheFlag = ProcessInfo.processInfo.environment["TUIST_XCODE_CACHE"]?
     .lowercased()
 let enableXcodeCache = ["1", "true", "yes"].contains(xcodeCacheFlag ?? "")
 
+let envCompatibleXcodeVersion = ProcessInfo.processInfo.environment["TUIST_COMPATIBLE_XCODE_VERSION"]?
+    .trimmingCharacters(in: .whitespacesAndNewlines)
+let compatibleXcodeVersion = (envCompatibleXcodeVersion?.isEmpty == false) ? envCompatibleXcodeVersion! : "26.0"
+
 let cacheProfiles = CacheProfiles.profiles(
     [
         "ci": .profile(.allPossible),
@@ -29,8 +33,9 @@ let cacheProfiles = CacheProfiles.profiles(
 let config = Config(
     fullHandle: fullHandle,
     project: .tuist(
-        // Xcode 26.x 고정(최소 26, 27+ 포함 필요 시 from("26.0")로 전환)
-        compatibleXcodeVersions: CompatibleXcodeVersions.upToNextMajor("26.0"),
+        // Default stays on Xcode 26.x, but CI can override via
+        // TUIST_COMPATIBLE_XCODE_VERSION (e.g. 16.0 on GitHub-hosted runners).
+        compatibleXcodeVersions: CompatibleXcodeVersions.upToNextMajor(compatibleXcodeVersion),
         swiftVersion: Version(string: "6.0"),
         plugins: [
             .local(path: "../Plugins/DependencyPlugin"),
