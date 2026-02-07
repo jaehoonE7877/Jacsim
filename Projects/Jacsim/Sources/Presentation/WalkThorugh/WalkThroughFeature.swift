@@ -52,6 +52,7 @@ public struct WalkThroughFeature {
                     }
                     return .send(.delegate(.completeOnboarding))
                 }
+                let notificationScheduler = notificationScheduler
                 return .run { send in
                     do {
                         let granted = try await notificationScheduler.requestAuthorization()

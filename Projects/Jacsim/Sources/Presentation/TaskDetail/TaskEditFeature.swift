@@ -55,6 +55,7 @@ public struct TaskEditFeature {
             switch action {
             case .onAppear:
                 let key = state.task.mainImageKey
+                let imageStore = imageStore
                 return .run { send in
                     let imageData = await imageStore.loadImage(key)
                     let image = imageData.flatMap { UIImage(data: $0) }

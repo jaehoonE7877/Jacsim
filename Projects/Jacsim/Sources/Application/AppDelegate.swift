@@ -15,6 +15,7 @@ import FirebaseMessaging
 import IQKeyboardManagerSwift
 
 class AppDelegate: UIResponder, UIApplicationDelegate{
+    private let notificationDelegate = AppNotificationDelegate()
 
     private enum FCMTokenError: LocalizedError {
         case tokenNotFound
@@ -32,9 +33,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate{
         
         FirebaseApp.configure()
         Crashlytics.crashlytics().setCrashlyticsCollectionEnabled(true)
-        Messaging.messaging().delegate = self
+        Messaging.messaging().delegate = notificationDelegate
 
-        UNUserNotificationCenter.current().delegate = self
+        UNUserNotificationCenter.current().delegate = notificationDelegate
         Task { @MainActor in
             let granted = await requestNotificationAuthorization()
             guard granted else {
@@ -110,8 +111,7 @@ private extension AppDelegate {
     }
 }
 
-extension AppDelegate: UNUserNotificationCenterDelegate {
-    
+extension AppDelegate {
     func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
         Messaging.messaging().apnsToken = deviceToken
 
@@ -128,13 +128,22 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
     func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {
         print("Failed to register for remote notifications: \(error)")
     }
-    
-    func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification, withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
-        
+}
+
+private final class AppNotificationDelegate: NSObject, UNUserNotificationCenterDelegate, MessagingDelegate {
+    func userNotificationCenter(
+        _ center: UNUserNotificationCenter,
+        willPresent notification: UNNotification,
+        withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
+    ) {
         completionHandler([.badge, .sound, .banner, .list])
     }
-    
-    func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse, withCompletionHandler completionHandler: @escaping () -> Void) {
+
+    func userNotificationCenter(
+        _ center: UNUserNotificationCenter,
+        didReceive response: UNNotificationResponse,
+        withCompletionHandler completionHandler: @escaping () -> Void
+    ) {
         let identifier = response.notification.request.identifier
         if identifier.hasPrefix("jacsim-") {
             let idString = identifier.replacingOccurrences(of: "jacsim-", with: "")
@@ -146,22 +155,14 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
         }
         completionHandler()
     }
-    
-}
 
-extension AppDelegate: MessagingDelegate {
-    
-    // 토큰 갱신 모니터링: 토큰 정보가 언제 바뀔까?
     func messaging(_ messaging: Messaging, didReceiveRegistrationToken fcmToken: String?) {
-      print("Firebase registration token: \(String(describing: fcmToken))")
-      // 토큰을 파베에 등록해서 전달!
-      let dataDict: [String: String] = ["token": fcmToken ?? ""]
-      NotificationCenter.default.post(
-        name: Notification.Name("FCMToken"),
-        object: nil,
-        userInfo: dataDict
-      )
-      // TODO: If necessary send token to application server.
-      // Note: This callback is fired at each app startup and whenever a new token is generated.
+        print("Firebase registration token: \(String(describing: fcmToken))")
+        let dataDict: [String: String] = ["token": fcmToken ?? ""]
+        NotificationCenter.default.post(
+            name: Notification.Name("FCMToken"),
+            object: nil,
+            userInfo: dataDict
+        )
     }
 }
