@@ -32,6 +32,10 @@ echo "Installing dependencies..."
 run_tuist install
 
 echo "Restoring GoogleService-Info.plist..."
+if [ -z "${GOOGLE_SERVICE_INFO_PLIST_BASE64:-}" ]; then
+  echo "Warning: GOOGLE_SERVICE_INFO_PLIST_BASE64 is not set in Xcode Cloud environment."
+  echo "Please add this secret in App Store Connect > Xcode Cloud > Workflow > Environment Variables."
+fi
 bash scripts/ci/prepare-google-service-info.sh
 
 build_number="${CI_BUILD_NUMBER:-1}"
