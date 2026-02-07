@@ -9,16 +9,27 @@ cd "${REPO_ROOT}"
 echo "==> Xcode Cloud post-clone setup started"
 echo "Repository root: ${REPO_ROOT}"
 
+run_tuist() {
+  if command -v tuist >/dev/null 2>&1; then
+    tuist "$@"
+  else
+    mise exec -- tuist "$@"
+  fi
+}
+
 if ! command -v tuist >/dev/null 2>&1; then
-  echo "Installing Tuist..."
-  curl -Ls https://install.tuist.io | bash
-  export PATH="$HOME/.tuist/bin:$PATH"
+  echo "Installing Tuist via mise..."
+  if ! command -v mise >/dev/null 2>&1; then
+    curl -fsSL https://mise.jdx.dev/install.sh | sh
+    export PATH="$HOME/.local/bin:$PATH"
+  fi
+  mise install
 fi
 
-echo "Using Tuist: $(tuist version)"
+echo "Using Tuist: $(run_tuist version)"
 
 echo "Installing dependencies..."
-tuist install
+run_tuist install
 
 echo "Restoring GoogleService-Info.plist..."
 bash scripts/ci/prepare-google-service-info.sh
@@ -31,6 +42,6 @@ fi
 echo "Using build number: ${build_number}"
 
 echo "Generating workspace..."
-TUIST_APP_BUILD_NUMBER="${build_number}" tuist generate --no-open
+TUIST_APP_BUILD_NUMBER="${build_number}" run_tuist generate --no-open
 
 echo "==> Xcode Cloud post-clone setup completed"
