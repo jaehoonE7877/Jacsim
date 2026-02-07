@@ -23,25 +23,38 @@ jobs:
       GOOGLE_SERVICE_INFO_PLIST_BASE64: ${{ secrets.GOOGLE_SERVICE_INFO_PLIST_BASE64 }}
       TUIST_CACHE_PROFILE: ci
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - name: Checkout (policy-compliant)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          git init .
+          git remote add origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          git fetch --no-tags --depth=1 origin "${GITHUB_SHA}"
+          git checkout --detach FETCH_HEAD
+          git remote set-url origin "https://github.com/${GITHUB_REPOSITORY}.git"
 
-      - name: Setup mise
-        uses: jdx/mise-action@v2
+      - name: Setup mise (policy-compliant)
+        run: |
+          set -euo pipefail
+          curl -fsSL https://mise.run | sh
+          "${HOME}/.local/bin/mise" --version
+          "${HOME}/.local/bin/mise" install
+          echo "${HOME}/.local/bin" >> "${GITHUB_PATH}"
 
       - name: Preflight
         run: bash scripts/ci/preflight.sh ci
 
       - name: Authenticate with OIDC (fallback)
         if: ${{ env.TUIST_FULL_HANDLE != '' && env.TUIST_CONFIG_TOKEN == '' }}
-        run: tuist auth login
+        run: mise exec -- tuist auth login
 
       - name: Install dependencies
-        run: tuist install
+        run: mise exec -- tuist install
 
       - name: Setup Tuist Xcode cache (optional)
         if: ${{ env.TUIST_FULL_HANDLE != '' && (env.TUIST_XCODE_CACHE == '1' || env.TUIST_XCODE_CACHE == 'true') }}
-        run: tuist setup cache
+        run: mise exec -- tuist setup cache
 
       - name: Restore GoogleService-Info.plist (optional on CI)
         if: ${{ env.GOOGLE_SERVICE_INFO_PLIST_BASE64 != '' }}
@@ -56,7 +69,7 @@ jobs:
           fi
 
       - name: Generate workspace
-        run: tuist generate --no-open
+        run: mise exec -- tuist generate --no-open
 
       - name: Test
-        run: tuist test Jacsim
+        run: mise exec -- tuist test Jacsim
