@@ -17,7 +17,7 @@ public extension Project {
         ],
         "CFBundleShortVersionString": "\(Environment.appVersion)",
         "CFBundleDevelopmentRegion": "ko",
-        "CFBundleVersion": "1",
+        "CFBundleVersion": "$(CURRENT_PROJECT_VERSION)",
         "CFBundleIdentifier": "com.jaehoon.jaksim",
         "CFBundleDisplayName": "작심",
         "UILaunchStoryboardName": "LaunchScreen",
@@ -46,7 +46,7 @@ public extension Project {
     static let demoInfoPlist: [String: Plist.Value] = [
         "CFBundleShortVersionString": "1.0.0",
         "CFBundleDevelopmentRegion": "ko",
-        "CFBundleVersion": "1",
+        "CFBundleVersion": "$(CURRENT_PROJECT_VERSION)",
         "CFBundleIdentifier": "com.jaehoon.jaksim",
         "CFBundleDisplayName": "작심",
         "UILaunchStoryboardName": "LaunchScreen",

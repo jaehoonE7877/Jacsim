@@ -11,6 +11,15 @@ import EnvironmentPlugin
 import DependencyPlugin
 import ProjectDescription
 
+private let appBuildNumber: String = {
+    let rawValue = ProcessInfo.processInfo.environment["TUIST_APP_BUILD_NUMBER"]?
+        .trimmingCharacters(in: .whitespacesAndNewlines)
+    guard let rawValue, rawValue.range(of: #"^\d+$"#, options: .regularExpression) != nil else {
+        return "1"
+    }
+    return rawValue
+}()
+
 public extension Project {
     static func makeModule(
         name: String,
@@ -46,7 +55,7 @@ public extension Project {
             let infoPlist = name.contains("Demo") ? Project.demoInfoPlist : Project.appInfoPlist
             let versionSetting: [String: SettingValue] = [
                 "MARKETING_VERSION": SettingValue(stringLiteral: Environment.appVersion),
-                "CURRENT_PROJECT_VERSION": "1"
+                "CURRENT_PROJECT_VERSION": SettingValue(stringLiteral: appBuildNumber)
             ]
             let settings: SettingsDictionary = baseSettings
                 .merging(versionSetting)
