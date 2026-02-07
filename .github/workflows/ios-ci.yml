@@ -2,8 +2,6 @@ name: iOS Support CI (Lint/Test)
 
 on:
   pull_request:
-    branches:
-      - main
     paths:
       - "Projects/Domain/**"
       - "Projects/ExternalInterface/**"
