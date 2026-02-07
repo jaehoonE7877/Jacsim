@@ -23,7 +23,7 @@ public actor LocalNotificationSchedulerAdapter {
         let trigger = UNCalendarNotificationTrigger(dateMatching: time, repeats: true)
         let request = UNNotificationRequest(identifier: identifier, content: content, trigger: trigger)
         
-        try await notificationCenter.add(request)
+        try await addNotificationRequest(request)
     }
     
     public func cancelReminder(taskId: TaskID) async {
@@ -39,7 +39,30 @@ public actor LocalNotificationSchedulerAdapter {
     
     public func requestAuthorization() async throws -> Bool {
         let options: UNAuthorizationOptions = [.alert, .sound, .badge]
-        let granted = try await notificationCenter.requestAuthorization(options: options)
-        return granted
+        return try await requestAuthorization(options: options)
+    }
+
+    private func addNotificationRequest(_ request: UNNotificationRequest) async throws {
+        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+            notificationCenter.add(request) { error in
+                if let error {
+                    continuation.resume(throwing: error)
+                } else {
+                    continuation.resume(returning: ())
+                }
+            }
+        }
+    }
+
+    private func requestAuthorization(options: UNAuthorizationOptions) async throws -> Bool {
+        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Bool, Error>) in
+            notificationCenter.requestAuthorization(options: options) { granted, error in
+                if let error {
+                    continuation.resume(throwing: error)
+                } else {
+                    continuation.resume(returning: granted)
+                }
+            }
+        }
     }
 }
