@@ -1,4 +1,6 @@
 import Foundation
+import ComposableArchitecture
+import ExternalInterface
 
 public enum PresentationScreenKey: String, CaseIterable {
     case home
@@ -26,8 +28,9 @@ public enum PresentationSectionKey: String, CaseIterable {
 }
 
 public enum PresentationRedesignFlags {
-    private static let screenNamespace = "presentation.redesign.screen."
-    private static let sectionNamespace = "presentation.redesign.section."
+    private static var appPreferences: AppPreferencesPort {
+        DependencyValues().appPreferences
+    }
 
     public static func isEnabled(_ screen: PresentationScreenKey) -> Bool {
         if ProcessInfo.processInfo.arguments.contains("--disable-redesign") ||
@@ -35,8 +38,7 @@ public enum PresentationRedesignFlags {
             return false
         }
 
-        let key = screenNamespacedKey(for: screen)
-        if let value = UserDefaults.standard.object(forKey: key) as? Bool {
+        if let value = appPreferences.getRedesignScreenEnabled(screen.rawValue) {
             return value
         }
 
@@ -50,8 +52,7 @@ public enum PresentationRedesignFlags {
             return false
         }
 
-        let key = sectionNamespacedKey(for: section)
-        if let value = UserDefaults.standard.object(forKey: key) as? Bool {
+        if let value = appPreferences.getRedesignSectionEnabled(section.rawValue) {
             return value
         }
 
@@ -59,28 +60,20 @@ public enum PresentationRedesignFlags {
     }
 
     public static func set(_ enabled: Bool, for screen: PresentationScreenKey) {
-        UserDefaults.standard.set(enabled, forKey: screenNamespacedKey(for: screen))
+        appPreferences.setRedesignScreenEnabled(screen.rawValue, enabled)
     }
 
     public static func setSection(_ enabled: Bool, for section: PresentationSectionKey) {
-        UserDefaults.standard.set(enabled, forKey: sectionNamespacedKey(for: section))
+        appPreferences.setRedesignSectionEnabled(section.rawValue, enabled)
     }
 
     public static func resetAll() {
         for screen in PresentationScreenKey.allCases {
-            UserDefaults.standard.removeObject(forKey: screenNamespacedKey(for: screen))
+            appPreferences.removeRedesignScreenOverride(screen.rawValue)
         }
 
         for section in PresentationSectionKey.allCases {
-            UserDefaults.standard.removeObject(forKey: sectionNamespacedKey(for: section))
+            appPreferences.removeRedesignSectionOverride(section.rawValue)
         }
-    }
-
-    private static func screenNamespacedKey(for screen: PresentationScreenKey) -> String {
-        screenNamespace + screen.rawValue
-    }
-
-    private static func sectionNamespacedKey(for section: PresentationSectionKey) -> String {
-        sectionNamespace + section.rawValue
     }
 }
