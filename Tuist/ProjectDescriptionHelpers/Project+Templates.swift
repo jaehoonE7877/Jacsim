@@ -23,6 +23,7 @@ private let appBuildNumber: String = {
 public extension Project {
     static func makeModule(
         name: String,
+        swiftLanguageVersion: SwiftLanguageVersion = .v5,
         targets: Set<FeatureTarget> = Set([.staticFramework, .unitTest, .demo]),
         packages: [Package] = [],
         internalDependencies: [TargetDependency] = [],  // 모듈간 의존성
@@ -41,6 +42,7 @@ public extension Project {
         let moduleTags = Array(Set(tags + [name]))
         
         let baseSettings: SettingsDictionary = .baseSettings
+            .setSwiftLanguageVersion(swiftLanguageVersion.rawValue)
         
         var projectTargets: [Target] = []
         var schemes: [Scheme] = []
@@ -170,7 +172,7 @@ public extension Project {
                 infoPlist: .default,
                 buildableFolders: ["Tests/Sources"],
                 dependencies: deps,
-                settings: .settings(base: SettingsDictionary().setCodeSignAutomatic(),
+                settings: .settings(base: baseSettings.setCodeSignAutomatic(),
                                     configurations: testConfigurations),
                 metadata: metadata(["test"])
             )
