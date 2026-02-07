@@ -4,8 +4,9 @@ import DependencyPlugin
 
 let project = Project.makeModule(
     name: "ExternalInterface",
-    targets: [.unitTest, .dynamicFramework],
+    targets: [.unitTest, .staticFramework],
     internalDependencies: [
         .domain
-    ]
+    ],
+    tags: ["module", "external-interface"]
 )

@@ -8,5 +8,6 @@ let project = Project.makeModule(
     internalDependencies: [
         .Modules.core
     ],
-    hasResources: true
+    hasResources: true,
+    tags: ["module", "design-system"]
 )
