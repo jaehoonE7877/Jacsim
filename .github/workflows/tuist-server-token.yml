@@ -12,6 +12,7 @@ jobs:
     env:
       TUIST_FULL_HANDLE: ${{ vars.TUIST_FULL_HANDLE }}
       TUIST_CONFIG_TOKEN: ${{ secrets.TUIST_CONFIG_TOKEN }}
+      TUIST_COMPATIBLE_XCODE_VERSION: "16.0"
     steps:
       - name: Checkout (policy-compliant)
         env:
