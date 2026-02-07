@@ -67,7 +67,7 @@ public struct JSModal<Content: View>: View {
     }
 
     private var overlay: some View {
-        Color.black
+        Color.surfaceOverlay
             .opacity(0.4)
             .ignoresSafeArea()
             .onTapGesture {
@@ -94,8 +94,8 @@ public struct JSModal<Content: View>: View {
 
             if let title = title {
                 Text(title)
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundColor(.primary)
+                    .font(.jsHeadline18Bold)
+                    .foregroundColor(Color.labelNormal)
                     .padding(.top, 8)
                     .padding(.bottom, 16)
             }
@@ -108,7 +108,7 @@ public struct JSModal<Content: View>: View {
                 .padding(.horizontal, 16)
                 .padding(.bottom, 20)
         }
-        .background(Color(.systemBackground))
+        .background(Color.backgroundNormal)
         .cornerRadius(16, corners: [.topLeft, .topRight])
         .frame(maxWidth: .infinity)
         .frame(maxHeight: .infinity, alignment: .bottom)
@@ -119,8 +119,8 @@ public struct JSModal<Content: View>: View {
         VStack(spacing: 20) {
             if let title = title {
                 Text(title)
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundColor(.primary)
+                    .font(.jsHeadline18Bold)
+                    .foregroundColor(Color.labelNormal)
                     .multilineTextAlignment(.center)
             }
 
@@ -129,13 +129,13 @@ public struct JSModal<Content: View>: View {
             buttonStack
         }
         .padding(24)
-        .background(Color(.systemBackground))
+        .background(Color.surfaceElevated)
         .cornerRadius(16)
-        .shadow(color: .black.opacity(0.15), radius: 20, x: 0, y: 10)
+        .jsShadow(.large)
         .frame(maxWidth: 320)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(
-            Color.black
+            Color.surfaceOverlay
                 .opacity(0.001)
                 .ignoresSafeArea()
                 .onTapGesture { }
@@ -144,7 +144,7 @@ public struct JSModal<Content: View>: View {
 
     private var dragIndicator: some View {
         RoundedRectangle(cornerRadius: 2.5)
-            .fill(Color.gray.opacity(0.5))
+            .fill(Color.backgroundAlternative.opacity(0.5))
             .frame(width: 36, height: 5)
             .padding(.top, 8)
             .padding(.bottom, 4)
@@ -162,11 +162,11 @@ public struct JSModal<Content: View>: View {
                         }
                     }) {
                         Text(primary.title)
-                            .font(.system(size: 16, weight: .medium))
+                            .font(.jsBody16Bold)
                             .foregroundColor(.white)
                             .frame(maxWidth: .infinity)
                             .frame(height: 52)
-                            .background(Color.blue)
+                            .background(Color.primaryNormal)
                             .cornerRadius(12)
                     }
                 }
@@ -179,8 +179,8 @@ public struct JSModal<Content: View>: View {
                         }
                     }) {
                         Text(secondary.title)
-                            .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(.primary)
+                            .font(.jsBody16Medium)
+                            .foregroundColor(Color.labelNormal)
                             .frame(maxWidth: .infinity)
                             .frame(height: 52)
                     }
@@ -257,7 +257,7 @@ struct JSModal_Previews: PreviewProvider {
                 secondaryButton: JSModalButton(title: "Cancel", style: .secondary) {}
             ) {
                 Text("This action cannot be undone.")
-                    .font(.system(size: 14))
+                    .font(.jsBody14Regular)
                     .foregroundColor(.secondary)
                     .multilineTextAlignment(.center)
             }

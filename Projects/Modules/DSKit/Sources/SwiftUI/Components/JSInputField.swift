@@ -25,11 +25,11 @@ public struct JSInputField: View {
     }
 
     public var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: .jsXS) {
             if !title.isEmpty {
                 Text(title)
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.secondary)
+                    .font(.jsLabelMedium)
+                    .foregroundColor(.labelAlternative)
             }
 
             Group {
@@ -39,33 +39,33 @@ public struct JSInputField: View {
                     TextField(placeholder, text: $text)
                 }
             }
-            .font(.system(size: 16))
-            .padding(16)
+            .font(.jsBodyMedium)
+            .padding(.jsMD)
             .background(
-                RoundedRectangle(cornerRadius: 8)
-                    .fill(Color(.systemBackground))
+                RoundedRectangle(cornerRadius: .jsCornerSmall)
+                    .fill(Color.backgroundNormal)
             )
             .overlay(
-                RoundedRectangle(cornerRadius: 8)
+                RoundedRectangle(cornerRadius: .jsCornerSmall)
                     .stroke(borderColor, lineWidth: 1)
             )
             .disabled(!isEnabled)
             .opacity(isEnabled ? 1.0 : 0.5)
-            .frame(minHeight: 44)
+            .frame(minHeight: 44.jsScaled(.touchTarget))
 
             if let error = errorMessage {
                 Text(error)
-                    .font(.system(size: 12))
-                    .foregroundColor(.red)
+                    .font(.jsLabelSmall)
+                    .foregroundColor(.destructive)
             }
         }
     }
 
     private var borderColor: Color {
         if errorMessage != nil {
-            return .red
+            return .destructive
         }
-        return .gray.opacity(0.3)
+        return .labelAlternative
     }
 }
 

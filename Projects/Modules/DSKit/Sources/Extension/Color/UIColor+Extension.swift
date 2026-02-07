@@ -159,6 +159,112 @@ public extension UIColor {
     }
 }
 
+//MARK: - Streak
+public extension UIColor {
+    
+    static var streakActive: UIColor {
+        return UIColor { (traits) -> UIColor in
+            if traits.userInterfaceStyle == .dark {
+                return UIColor(hexString: "#FF5722")
+            }
+            return UIColor(hexString: "#FF6B35")
+        }
+    }
+    
+    static var streakCompleted: UIColor {
+        return UIColor { (traits) -> UIColor in
+            if traits.userInterfaceStyle == .dark {
+                return UIColor(hexString: "#66BB6A")
+            }
+            return UIColor(hexString: "#4CAF50")
+        }
+    }
+    
+    static var streakFrozen: UIColor {
+        return UIColor { (traits) -> UIColor in
+            if traits.userInterfaceStyle == .dark {
+                return UIColor(hexString: "#90A4AE")
+            }
+            return UIColor(hexString: "#78909C")
+        }
+    }
+}
+
+//MARK: - Progress
+public extension UIColor {
+    
+    static var progressLow: UIColor {
+        return UIColor { (traits) -> UIColor in
+            if traits.userInterfaceStyle == .dark {
+                return UIColor(hexString: "#EF5350")
+            }
+            return UIColor(hexString: "#F44336")
+        }
+    }
+    
+    static var progressMedium: UIColor {
+        return UIColor { (traits) -> UIColor in
+            if traits.userInterfaceStyle == .dark {
+                return UIColor(hexString: "#FFCA28")
+            }
+            return UIColor(hexString: "#FFC107")
+        }
+    }
+    
+    static var progressHigh: UIColor {
+        return UIColor { (traits) -> UIColor in
+            if traits.userInterfaceStyle == .dark {
+                return UIColor(hexString: "#66BB6A")
+            }
+            return UIColor(hexString: "#4CAF50")
+        }
+    }
+}
+
+//MARK: - Achievement
+public extension UIColor {
+    
+    static var achievement: UIColor {
+        return UIColor { (traits) -> UIColor in
+            if traits.userInterfaceStyle == .dark {
+                return UIColor(hexString: "#FFC107")
+            }
+            return UIColor(hexString: "#FFD700")
+        }
+    }
+}
+
+//MARK: - Surface
+public extension UIColor {
+    
+    static var surfaceElevated: UIColor {
+        return UIColor { (traits) -> UIColor in
+            if traits.userInterfaceStyle == .dark {
+                return UIColor(hexString: "#2C2D2F")
+            }
+            return UIColor(hexString: "#FFFFFF")
+        }
+    }
+    
+    static var surfaceOverlay: UIColor {
+        return UIColor { (traits) -> UIColor in
+            if traits.userInterfaceStyle == .dark {
+                return UIColor(hexString: "#000000", alpha: 0.7)
+            }
+            return UIColor(hexString: "#000000", alpha: 0.5)
+        }
+    }
+    
+    static var surfaceSelected: UIColor {
+        return UIColor { (traits) -> UIColor in
+            if traits.userInterfaceStyle == .dark {
+                return UIColor(hexString: "#1565C0", alpha: 0.3)
+            }
+            return UIColor(hexString: "#E3F2FD")
+        }
+    }
+}
+
 extension UIColor {
     ///Hex값으로 컬러 할당 가능
     /// Tag: #Hex

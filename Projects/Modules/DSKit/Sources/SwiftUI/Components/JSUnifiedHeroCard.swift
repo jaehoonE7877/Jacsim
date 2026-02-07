@@ -32,94 +32,97 @@ public struct JSUnifiedHeroCard: View {
 
     public var body: some View {
         Button(action: onTap) {
-            ZStack(alignment: .bottomLeading) {
-                // Image/Background Area
-                Group {
-                    if let image = image {
-                        image
-                            .resizable()
-                            .scaledToFill()
-                    } else {
-                        LinearGradient(
-                            colors: [Color.blue.opacity(0.6), Color.purple.opacity(0.6)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    }
-                }
-                .frame(height: 320)
-                .clipShape(RoundedRectangle(cornerRadius: 20))
+            GeometryReader { proxy in
+                let cardSize = proxy.size
 
-                // Gradient Overlay
-                LinearGradient(
-                    colors: [.clear, .black.opacity(0.7)],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-                .frame(height: 320)
-                .clipShape(RoundedRectangle(cornerRadius: 20))
+                RoundedRectangle(cornerRadius: JSHeroCardLayout.cornerRadius)
+                    .fill(Color.surfaceElevated)
+                    .overlay {
+                        ZStack(alignment: .bottomLeading) {
+                            if let image = image {
+                                image
+                                    .resizable()
+                                    .scaledToFill()
+                                    .frame(width: cardSize.width, height: cardSize.height)
+                                    .clipped()
+                            } else {
+                                LinearGradient(
+                                    colors: [.primaryNormal.opacity(0.6), .primaryStrong.opacity(0.6)],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                                .frame(width: cardSize.width, height: cardSize.height)
+                            }
 
-                // Content
-                VStack(alignment: .leading, spacing: 16) {
-                    HStack {
-                        Spacer()
-                        StatusBadge(isCertified: isTodayCertified)
-                    }
+                            LinearGradient(
+                                colors: [.clear, .black.opacity(0.7)],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
+                            .frame(width: cardSize.width, height: cardSize.height)
 
-                    Spacer()
+                            VStack(alignment: .leading, spacing: JSHeroCardLayout.contentSpacing) {
+                                HStack {
+                                    Spacer()
+                                    StatusBadge(isCertified: isTodayCertified)
+                                }
 
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text(title)
-                            .font(.system(size: 26, weight: .bold))
-                            .foregroundColor(.white)
-                            .lineLimit(2)
+                                Spacer()
 
-                        if let subtitle = subtitle {
-                            Text(subtitle)
-                                .font(.system(size: 15, weight: .medium))
-                                .foregroundColor(.white.opacity(0.85))
-                                .lineLimit(1)
-                        }
+                                VStack(alignment: .leading, spacing: JSHeroCardLayout.detailSpacing) {
+                                    Text(title)
+                                        .font(.jsDisplay26Bold)
+                                        .foregroundColor(.white)
+                                        .lineLimit(2)
 
-                        // Unified Progress Bar
-                        HStack(spacing: 12) {
-                            GeometryReader { geo in
-                                ZStack(alignment: .leading) {
-                                    Capsule()
-                                        .fill(Color.white.opacity(0.25))
-                                        .frame(height: 6)
-                                    
-                                    Capsule()
-                                        .fill(Color.white)
-                                        .frame(width: geo.size.width * CGFloat(progress), height: 6)
+                                    if let subtitle = subtitle {
+                                        Text(subtitle)
+                                            .font(.jsBody15Medium)
+                                            .foregroundColor(.white.opacity(0.85))
+                                            .lineLimit(1)
+                                    }
+
+                                    // Unified Progress Bar
+                                    HStack(spacing: JSHeroCardLayout.progressSpacing) {
+                                        GeometryReader { geo in
+                                            ZStack(alignment: .leading) {
+                                                Capsule()
+                                                    .fill(.white.opacity(0.25))
+                                                    .frame(height: JSHeroCardLayout.progressBarHeight)
+
+                                                Capsule()
+                                                    .fill(.white)
+                                                    .frame(
+                                                        width: geo.size.width * CGFloat(progress),
+                                                        height: JSHeroCardLayout.progressBarHeight
+                                                    )
+                                            }
+                                        }
+                                        .frame(height: JSHeroCardLayout.progressBarHeight)
+
+                                        Text("\(Int(progress * 100))%")
+                                            .font(.jsLabel13Bold)
+                                            .foregroundColor(.white)
+                                            .frame(
+                                                minWidth: JSHeroCardLayout.progressTextMinWidth,
+                                                alignment: .trailing
+                                            )
+                                    }
+                                    .padding(.top, JSHeroCardLayout.progressTopPadding)
                                 }
                             }
-                            .frame(height: 6)
-
-                            Text("\(Int(progress * 100))%")
-                                .font(.system(size: 13, weight: .bold))
-                                .foregroundColor(.white)
-                                .frame(minWidth: 50, alignment: .trailing)
+                            .padding(JSHeroCardLayout.contentPadding)
                         }
-                        .padding(.top, 8)
+                        .clipShape(RoundedRectangle(cornerRadius: JSHeroCardLayout.cornerRadius))
                     }
-                }
-                .padding(20)
             }
-            .frame(height: 320)
-            .background(
-                RoundedRectangle(cornerRadius: 20)
-                    .fill(Color(.systemBackground))
-                    .shadow(
-                        color: .black.opacity(0.12),
-                        radius: 16,
-                        x: 0,
-                        y: 8
-                    )
-            )
+            .frame(maxWidth: .infinity)
+            .frame(height: JSHeroCardLayout.height)
+            .jsShadow(.medium)
         }
-        .buttonStyle(PlainButtonStyle())
-        .contentShape(RoundedRectangle(cornerRadius: 20))
+        .buttonStyle(PressEffectButtonStyle())
+        .frame(maxWidth: .infinity)
+        .contentShape(RoundedRectangle(cornerRadius: JSHeroCardLayout.cornerRadius))
     }
 }
 
@@ -128,16 +131,16 @@ private struct StatusBadge: View {
     
     var body: some View {
         Text(isCertified ? "오늘 인증 완료" : "오늘 미인증")
-            .font(.system(size: 12, weight: .semibold))
+            .font(.jsLabel12Bold)
             .foregroundColor(isCertified ? .green : .white)
-            .padding(.horizontal, 10)
-            .padding(.vertical, 5)
+            .padding(.horizontal, JSHeroCardLayout.badgeHorizontalPadding)
+            .padding(.vertical, JSHeroCardLayout.badgeVerticalPadding)
             .background(
                 Capsule()
                     .fill(.ultraThinMaterial)
                     .overlay(
                         Capsule()
-                            .stroke(isCertified ? Color.green.opacity(0.3) : Color.white.opacity(0.2), lineWidth: 1)
+                            .stroke(isCertified ? .green.opacity(0.3) : .white.opacity(0.2), lineWidth: 1)
                     )
             )
     }
@@ -169,6 +172,6 @@ struct JSUnifiedHeroCard_Previews: PreviewProvider {
                 .padding()
             }
         }
-        .background(Color.gray.opacity(0.1))
+        .background(Color.backgroundAlternative)
     }
 }

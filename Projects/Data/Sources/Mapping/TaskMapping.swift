@@ -3,22 +3,6 @@ import Domain
 
 func mapToSwiftDataModel(_ task: Domain.Task, existing: UserJacsimModel? = nil) -> UserJacsimModel {
     let success = task.records.filter { $0.check }.count
-    let lastStage = task.stages.last
-    let stageResult = lastStage?.result ?? .inProgress
-    let isDone = stageResult != .inProgress
-    let isSuccess = stageResult == .success
-    let statusRaw = isDone ? ChallengeStatus.done.rawValue : ChallengeStatus.inProgress.rawValue
-    let resultRaw: String = {
-        switch stageResult {
-        case .inProgress:
-            return ChallengeResult.none.rawValue
-        case .success:
-            return ChallengeResult.success.rawValue
-        case .fail:
-            return ChallengeResult.fail.rawValue
-        }
-    }()
-    let currentStageTypeRaw = lastStage?.stageTypeRaw ?? StageType.three.rawValue
     
     let userJacsim: UserJacsimModel = {
         if let existing {
@@ -29,14 +13,7 @@ func mapToSwiftDataModel(_ task: Domain.Task, existing: UserJacsimModel? = nil) 
             title: task.title,
             startDate: task.startDate,
             endDate: task.endDate,
-            isDone: isDone,
-            success: success,
-            isSuccess: isSuccess,
-            alarm: task.alarmDate,
-            statusRaw: statusRaw,
-            resultRaw: resultRaw,
-            currentStageTypeRaw: currentStageTypeRaw,
-            isNotificationEnabled: task.isNotificationEnabled
+            success: success
         )
     }()
     
@@ -44,14 +21,9 @@ func mapToSwiftDataModel(_ task: Domain.Task, existing: UserJacsimModel? = nil) 
     userJacsim.title = task.title
     userJacsim.startDate = task.startDate
     userJacsim.endDate = task.endDate
-    userJacsim.success = success
-    userJacsim.isDone = isDone
-    userJacsim.isSuccess = isSuccess
-    userJacsim.alarm = task.alarmDate
-    userJacsim.statusRaw = statusRaw
-    userJacsim.resultRaw = resultRaw
-    userJacsim.currentStageTypeRaw = currentStageTypeRaw
+    userJacsim.alarm = task.alarm
     userJacsim.isNotificationEnabled = task.isNotificationEnabled
+    userJacsim.success = success
     
     let existingStagesByID: [UUID: StageModel] = Dictionary(
         uniqueKeysWithValues: userJacsim.stages.map { ($0.id, $0) }
@@ -152,7 +124,7 @@ func mapToDomainModel(_ userJacsim: UserJacsimModel) -> Domain.Task {
         title: userJacsim.title,
         startDate: userJacsim.startDate,
         endDate: userJacsim.endDate,
-        alarmDate: userJacsim.alarm,
+        alarm: userJacsim.alarm,
         isNotificationEnabled: userJacsim.isNotificationEnabled,
         stages: stages,
         records: records,

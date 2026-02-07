@@ -5,7 +5,26 @@
 //  Created by Seo Jae Hoon on 2023/11/10.
 //
 
+import Foundation
 import ProjectDescription
+
+private enum SigningEnvironment {
+    static let fallbackTeamID = "RFHV927M8S"
+
+    static var developmentTeamID: String {
+        // Tuist manifests에서 읽히는 TUIST_* 변수를 우선 사용하고,
+        // 누락 시 기존 팀 ID로 fallback하여 로컬 개발 흐름을 깨지 않는다.
+        for key in ["TUIST_APPLE_TEAM_ID", "APPLE_TEAM_ID", "IOS_DEVELOPMENT_TEAM", "DEVELOPMENT_TEAM"] {
+            if let value = ProcessInfo.processInfo.environment[key]?
+                .trimmingCharacters(in: .whitespacesAndNewlines),
+               value.isEmpty == false
+            {
+                return value
+            }
+        }
+        return fallbackTeamID
+    }
+}
 
 public extension SettingsDictionary {
     static let allLoadSettings: Self = [
@@ -72,6 +91,6 @@ public extension SettingsDictionary {
     }
     
     func setCodeSignAutomatic() -> SettingsDictionary {
-        .baseSettings.automaticCodeSigning(devTeam: "RFHV927M8S")
+        .baseSettings.automaticCodeSigning(devTeam: SigningEnvironment.developmentTeamID)
     }
 }

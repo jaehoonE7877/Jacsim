@@ -20,7 +20,8 @@ public extension Project {
         externalDependencies: [TargetDependency] = [],  // 외부 라이브러리 의존성
         interfaceDependencies: [TargetDependency] = [], // Feature Interface 의존성
         dependencies: [TargetDependency] = [],
-        hasResources: Bool = false
+        hasResources: Bool = false,
+        tags: [String] = []
     ) -> Project {
         
         let configurationName: ConfigurationName = "Debug"
@@ -28,11 +29,16 @@ public extension Project {
         let hasApp = targets.contains(.app)
         let deploymentTarget = Environment.deploymentTarget
         let destination: Set<Destination> = [.iPhone]
+        let moduleTags = Array(Set(tags + [name]))
         
         let baseSettings: SettingsDictionary = .baseSettings
         
         var projectTargets: [Target] = []
         var schemes: [Scheme] = []
+
+        func metadata(_ extraTags: [String] = []) -> TargetMetadata {
+            .metadata(tags: moduleTags + extraTags)
+        }
         
         // MARK: - App
         
@@ -59,12 +65,11 @@ public extension Project {
                 dependencies: [
                     internalDependencies,
                     externalDependencies,
-                    [
-
-                    ]
+                    dependencies
                 ].flatMap { $0 },
                 settings: .settings(base: settings.setCodeSignAutomatic(),
-                                    configurations: XCConfig.project)
+                                    configurations: XCConfig.project),
+                metadata: metadata(["app"])
             )
             projectTargets.append(target)
         }
@@ -83,7 +88,8 @@ public extension Project {
                 infoPlist: .default,
                 buildableFolders: ["Interface/Sources"],
                 dependencies: interfaceDependencies,
-                settings: .settings(base: settings, configurations: XCConfig.framework)
+                settings: .settings(base: settings, configurations: XCConfig.framework),
+                metadata: metadata(["interface"])
             )
             
             projectTargets.append(target)
@@ -107,8 +113,9 @@ public extension Project {
                 deploymentTargets: deploymentTarget,
                 infoPlist: .default,
                 buildableFolders: hasResources ? ["Sources", "Resources"] : ["Sources"],
-                dependencies: deps + internalDependencies + externalDependencies,
-                settings: .settings(base: settings.setCodeSignAutomatic(), configurations: XCConfig.framework)
+                dependencies: deps + internalDependencies + externalDependencies + dependencies,
+                settings: .settings(base: settings.setCodeSignAutomatic(), configurations: XCConfig.framework),
+                metadata: metadata(["framework"])
             )
             
             projectTargets.append(target)
@@ -129,12 +136,11 @@ public extension Project {
                 buildableFolders: ["Demo/Sources", "Demo/Resources"],
                 dependencies: [
                     deps,
-                    [
-                        
-                    ]
+                    dependencies
                 ].flatMap { $0 },
                 settings: .settings(base: baseSettings.setCodeSignAutomatic(),
-                                    configurations: XCConfig.demo)
+                                    configurations: XCConfig.demo),
+                metadata: metadata(["demo"])
             )
             
             projectTargets.append(target)
@@ -156,7 +162,8 @@ public extension Project {
                 buildableFolders: ["Tests/Sources"],
                 dependencies: deps,
                 settings: .settings(base: SettingsDictionary().setCodeSignAutomatic(),
-                                    configurations: testConfigurations)
+                                    configurations: testConfigurations),
+                metadata: metadata(["test"])
             )
             
             projectTargets.append(target)
@@ -204,7 +211,7 @@ extension Scheme {
             testAction: .targets(
                 ["\(name)Tests"],
                 configuration: target,
-                options: .options(coverage: true, codeCoverageTargets: ["\(name)"])
+                options: .options(coverage: false)
             ),
             runAction: .runAction(configuration: target),
             archiveAction: .archiveAction(configuration: target),
@@ -220,7 +227,7 @@ extension Scheme {
             testAction: .targets(
                 ["\(name)Tests"],
                 configuration: target,
-                options: .options(coverage: true, codeCoverageTargets: ["\(name)Demo"])
+                options: .options(coverage: false)
             ),
             runAction: .runAction(configuration: target),
             archiveAction: .archiveAction(configuration: target),
@@ -240,7 +247,7 @@ extension Project {
             testAction: .targets(
                 ["\(Environment.workspaceName)Tests"],
                 configuration: "Debug",
-                options: .options(coverage: true, codeCoverageTargets: ["\(Environment.workspaceName)"])
+                options: .options(coverage: false)
             ),
             runAction: .runAction(
                 configuration: "Debug",
@@ -254,12 +261,26 @@ extension Project {
             analyzeAction: .analyzeAction(configuration: "Debug")
         ),
         .scheme(
-            name: "\(Environment.workspaceName)",
+            name: "\(Environment.workspaceName)-CI",
+            shared: true,
+            buildAction: .buildAction(targets: ["\(Environment.workspaceName)"]),
+            testAction: .targets(
+                ["\(Environment.workspaceName)Tests"],
+                configuration: "Debug",
+                options: .options(coverage: true, codeCoverageTargets: ["\(Environment.workspaceName)"])
+            ),
+            runAction: .runAction(configuration: "Debug"),
+            archiveAction: .archiveAction(configuration: "Debug"),
+            profileAction: .profileAction(configuration: "Debug"),
+            analyzeAction: .analyzeAction(configuration: "Debug")
+        ),
+        .scheme(
+            name: "\(Environment.workspaceName)-Release",
             shared: true,
             buildAction: .buildAction(targets: ["\(Environment.workspaceName)"],
                                       postActions: []),
             runAction: .runAction(
-                configuration: "Debug",
+                configuration: "Release",
                 arguments: .arguments(
                     environmentVariables: ["OS_ACTIVITY_MODE": "disable"],
                     launchArguments: [.launchArgument(name: "-FIRDebugEnabled", isEnabled: true)]
@@ -275,13 +296,25 @@ extension Project {
 public extension TargetScript {
     static let FirebaseCrashlyticsString = TargetScript.post(
         script: """
+        OUTPUT_FILE="${DERIVED_FILE_DIR}/FirebaseCrashlyticsUploadDone"
+
+        if [ "$CONFIGURATION" != "Release" ]; then
+          echo "Skipping Crashlytics upload for $CONFIGURATION"
+          touch "$OUTPUT_FILE"
+          exit 0
+        fi
+
         PROJECT_ROOT="$SRCROOT/../.."
         "$PROJECT_ROOT/.build/checkouts/firebase-ios-sdk/Crashlytics/run"
+        touch "$OUTPUT_FILE"
     """,
         name: "Firebase Crashlytics",
         inputPaths: [
             "${DWARF_DSYM_FOLDER_PATH}/${DWARF_DSYM_FILE_NAME}/Contents/Resources/DWARF/${TARGET_NAME}",
             "$(SRCROOT)/$(BUILT_PRODUCTS_DIR)/$(INFOPLIST_PATH)"
         ],
-        basedOnDependencyAnalysis: false)
+        outputPaths: [
+            "$(DERIVED_FILE_DIR)/FirebaseCrashlyticsUploadDone"
+        ],
+        basedOnDependencyAnalysis: true)
 }

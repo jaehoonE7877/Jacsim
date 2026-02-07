@@ -58,6 +58,76 @@ public struct JacsimClientPort: Sendable {
     }
 }
 
+public struct TaskQueryClientPort: Sendable {
+    public var fetchActiveTasks: @Sendable () async throws -> [Domain.Task]
+    public var fetchTask: @Sendable (TaskID) async throws -> Domain.Task?
+    public var fetchTasksByStatus: @Sendable (ChallengeStatus) async throws -> [Domain.Task]
+    public var fetchIsSuccess: @Sendable () async throws -> [Domain.Task]
+    public var fetchIsFail: @Sendable () async throws -> [Domain.Task]
+
+    public init(
+        fetchActiveTasks: @escaping @Sendable () async throws -> [Domain.Task],
+        fetchTask: @escaping @Sendable (TaskID) async throws -> Domain.Task?,
+        fetchTasksByStatus: @escaping @Sendable (ChallengeStatus) async throws -> [Domain.Task],
+        fetchIsSuccess: @escaping @Sendable () async throws -> [Domain.Task],
+        fetchIsFail: @escaping @Sendable () async throws -> [Domain.Task]
+    ) {
+        self.fetchActiveTasks = fetchActiveTasks
+        self.fetchTask = fetchTask
+        self.fetchTasksByStatus = fetchTasksByStatus
+        self.fetchIsSuccess = fetchIsSuccess
+        self.fetchIsFail = fetchIsFail
+    }
+}
+
+public struct TaskCommandClientPort: Sendable {
+    public var addTask: @Sendable (Domain.Task) async throws -> Void
+    public var updateTask: @Sendable (Domain.Task) async throws -> Void
+    public var deleteTask: @Sendable (TaskID) async throws -> Void
+    public var updateTaskInfo: @Sendable (Domain.Task, String, Int, Bool, Date) async -> Void
+
+    public init(
+        addTask: @escaping @Sendable (Domain.Task) async throws -> Void,
+        updateTask: @escaping @Sendable (Domain.Task) async throws -> Void,
+        deleteTask: @escaping @Sendable (TaskID) async throws -> Void,
+        updateTaskInfo: @escaping @Sendable (Domain.Task, String, Int, Bool, Date) async -> Void
+    ) {
+        self.addTask = addTask
+        self.updateTask = updateTask
+        self.deleteTask = deleteTask
+        self.updateTaskInfo = updateTaskInfo
+    }
+}
+
+public struct StageFlowClientPort: Sendable {
+    public var evaluateStageResult: @Sendable (StageSnapshot) async -> StageResult
+    public var createNextStage: @Sendable (TaskID) async -> Void
+    public var resetStageRecords: @Sendable (TaskID) async -> Void
+
+    public init(
+        evaluateStageResult: @escaping @Sendable (StageSnapshot) async -> StageResult,
+        createNextStage: @escaping @Sendable (TaskID) async -> Void,
+        resetStageRecords: @escaping @Sendable (TaskID) async -> Void
+    ) {
+        self.evaluateStageResult = evaluateStageResult
+        self.createNextStage = createNextStage
+        self.resetStageRecords = resetStageRecords
+    }
+}
+
+public struct CertificationClientPort: Sendable {
+    public var updateMemo: @Sendable (TaskID, Int, String) async -> Void
+    public var certifyToday: @Sendable (TaskID, Int, String, String?) async -> Void
+
+    public init(
+        updateMemo: @escaping @Sendable (TaskID, Int, String) async -> Void,
+        certifyToday: @escaping @Sendable (TaskID, Int, String, String?) async -> Void
+    ) {
+        self.updateMemo = updateMemo
+        self.certifyToday = certifyToday
+    }
+}
+
 private enum JacsimClientKey: DependencyKey {
     static let liveValue: JacsimClientPort = {
         let adapter = SwiftDataTaskRepositoryAdapter()
@@ -78,7 +148,7 @@ private enum JacsimClientKey: DependencyKey {
             updateTask: { try await adapter.updateTask($0) }
         )
         let certificationUseCase = CertificationUseCase(
-            fetchTask: { try await adapter.fetchTask(id: $0) },
+            fetchTask: { await adapter.fetchTask(id: $0) },
             updateTask: { try await adapter.updateTask($0) }
         )
         
@@ -103,13 +173,18 @@ private enum JacsimClientKey: DependencyKey {
             },
             deleteAlarm: { _ in },
             updateTaskInfo: { task, title, successTarget, isAlarmEnabled, alarmDate in
-                _ = try? await taskUpdateUseCase.updateTaskInfo(
-                    task: task,
-                    title: title,
-                    durationDays: successTarget,
-                    isNotificationEnabled: isAlarmEnabled,
-                    alarmDate: alarmDate
-                )
+                var task = task
+                task.isNotificationEnabled = isAlarmEnabled
+                task.alarm = isAlarmEnabled ? alarmDate : nil
+                do {
+                    _ = try await taskUpdateUseCase.updateTaskInfo(
+                        task: task,
+                        title: title,
+                        durationDays: successTarget
+                    )
+                } catch {
+                    Logger.certificationFailed(error: error)
+                }
             },
             evaluateStageResult: { stage in
                 stageEvaluationService.evaluateStage(
@@ -119,17 +194,29 @@ private enum JacsimClientKey: DependencyKey {
                 )
             },
             createNextStage: { taskId in
-                try? await stageProgressionUseCase.createNextStage(for: taskId)
+                do {
+                    try await stageProgressionUseCase.createNextStage(for: taskId)
+                } catch {
+                    Logger.certificationFailed(error: error)
+                }
             },
             updateMemo: { taskId, index, memo in
-                try? await certificationUseCase.updateMemo(
-                    taskId: taskId,
-                    index: index,
-                    memo: memo
-                )
+                do {
+                    try await certificationUseCase.updateMemo(
+                        taskId: taskId,
+                        index: index,
+                        memo: memo
+                    )
+                } catch {
+                    Logger.certificationFailed(error: error)
+                }
             },
             resetStageRecords: { taskId in
-                try? await stageProgressionUseCase.resetStageRecords(for: taskId)
+                do {
+                    try await stageProgressionUseCase.resetStageRecords(for: taskId)
+                } catch {
+                    Logger.certificationFailed(error: error)
+                }
             },
             certifyToday: { taskId, index, memo, imagePath in
                 let startTime = Date()
@@ -139,15 +226,19 @@ private enum JacsimClientKey: DependencyKey {
                     memo: memo,
                     imagePath: imagePath
                 )
-                try? await certificationUseCase.certifyToday(
-                    taskId: taskId,
-                    index: index,
-                    memo: memo,
-                    imagePath: imagePath
-                )
-                Logger.certificationSavedToSwiftData(
-                    duration: Date().timeIntervalSince(startTime)
-                )
+                do {
+                    try await certificationUseCase.certifyToday(
+                        taskId: taskId,
+                        index: index,
+                        memo: memo,
+                        imagePath: imagePath
+                    )
+                    Logger.certificationSavedToSwiftData(
+                        duration: Date().timeIntervalSince(startTime)
+                    )
+                } catch {
+                    Logger.certificationFailed(error: error)
+                }
             }
         )
     }()
@@ -171,9 +262,89 @@ private enum JacsimClientKey: DependencyKey {
     )
 }
 
+private enum TaskQueryClientKey: DependencyKey {
+    static let liveValue = TaskQueryClientPort(
+        fetchActiveTasks: { try await JacsimClientKey.liveValue.fetchActiveTasks() },
+        fetchTask: { try await JacsimClientKey.liveValue.fetchTask($0) },
+        fetchTasksByStatus: { try await JacsimClientKey.liveValue.fetchTasksByStatus($0) },
+        fetchIsSuccess: { try await JacsimClientKey.liveValue.fetchIsSuccess() },
+        fetchIsFail: { try await JacsimClientKey.liveValue.fetchIsFail() }
+    )
+
+    static let testValue = TaskQueryClientPort(
+        fetchActiveTasks: { [] },
+        fetchTask: { _ in nil },
+        fetchTasksByStatus: { _ in [] },
+        fetchIsSuccess: { [] },
+        fetchIsFail: { [] }
+    )
+}
+
+private enum TaskCommandClientKey: DependencyKey {
+    static let liveValue = TaskCommandClientPort(
+        addTask: { try await JacsimClientKey.liveValue.addTask($0) },
+        updateTask: { try await JacsimClientKey.liveValue.updateTask($0) },
+        deleteTask: { try await JacsimClientKey.liveValue.deleteTask($0) },
+        updateTaskInfo: { await JacsimClientKey.liveValue.updateTaskInfo($0, $1, $2, $3, $4) }
+    )
+
+    static let testValue = TaskCommandClientPort(
+        addTask: { _ in },
+        updateTask: { _ in },
+        deleteTask: { _ in },
+        updateTaskInfo: { _, _, _, _, _ in }
+    )
+}
+
+private enum StageFlowClientKey: DependencyKey {
+    static let liveValue = StageFlowClientPort(
+        evaluateStageResult: { await JacsimClientKey.liveValue.evaluateStageResult($0) },
+        createNextStage: { await JacsimClientKey.liveValue.createNextStage($0) },
+        resetStageRecords: { await JacsimClientKey.liveValue.resetStageRecords($0) }
+    )
+
+    static let testValue = StageFlowClientPort(
+        evaluateStageResult: { _ in .inProgress },
+        createNextStage: { _ in },
+        resetStageRecords: { _ in }
+    )
+}
+
+private enum CertificationClientKey: DependencyKey {
+    static let liveValue = CertificationClientPort(
+        updateMemo: { await JacsimClientKey.liveValue.updateMemo($0, $1, $2) },
+        certifyToday: { await JacsimClientKey.liveValue.certifyToday($0, $1, $2, $3) }
+    )
+
+    static let testValue = CertificationClientPort(
+        updateMemo: { _, _, _ in },
+        certifyToday: { _, _, _, _ in }
+    )
+}
+
 extension DependencyValues {
     public var jacsimClient: JacsimClientPort {
         get { self[JacsimClientKey.self] }
         set { self[JacsimClientKey.self] = newValue }
+    }
+
+    var taskQueryClient: TaskQueryClientPort {
+        get { self[TaskQueryClientKey.self] }
+        set { self[TaskQueryClientKey.self] = newValue }
+    }
+
+    var taskCommandClient: TaskCommandClientPort {
+        get { self[TaskCommandClientKey.self] }
+        set { self[TaskCommandClientKey.self] = newValue }
+    }
+
+    var stageFlowClient: StageFlowClientPort {
+        get { self[StageFlowClientKey.self] }
+        set { self[StageFlowClientKey.self] = newValue }
+    }
+
+    var certificationClient: CertificationClientPort {
+        get { self[CertificationClientKey.self] }
+        set { self[CertificationClientKey.self] = newValue }
     }
 }

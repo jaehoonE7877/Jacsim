@@ -34,19 +34,13 @@ public struct JSMiniCard: View {
             .frame(width: 160)
             .background(
                 RoundedRectangle(cornerRadius: 8)
-                    .fill(Color(.systemBackground))
-                    .shadow(
-                        color: .black.opacity(0.06),
-                        radius: 8,
-                        x: 0,
-                        y: 2
-                    )
+                    .fill(Color.surfaceElevated)
+                    .jsShadow(.small)
             )
         }
-        .buttonStyle(PlainButtonStyle())
+        .buttonStyle(PressEffectButtonStyle())
         .frame(minWidth: 44, minHeight: 44)
         .contentShape(Rectangle())
-        .pressEffect()
     }
 
     private var imageSection: some View {
@@ -61,8 +55,8 @@ public struct JSMiniCard: View {
                         .fill(
                             LinearGradient(
                                 colors: [
-                                    Color.blue.opacity(0.6),
-                                    Color.blue.opacity(0.8)
+                                    .primaryNormal.opacity(0.6),
+                                    .primaryStrong.opacity(0.8)
                                 ],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
@@ -74,13 +68,13 @@ public struct JSMiniCard: View {
             .clipShape(RoundedRectangle(cornerRadius: 4))
 
             Text("\(completedDays)/\(totalDays)")
-                .font(.system(size: 12, weight: .medium))
+                .font(.pretendardBold(size: 12))
                 .foregroundColor(.white)
                 .padding(.horizontal, 6)
                 .padding(.vertical, 2)
                 .background(
                     Capsule()
-                        .fill(.black.opacity(0.4))
+                        .fill(Color.surfaceOverlay.opacity(0.4))
                 )
                 .padding(6)
         }
@@ -89,12 +83,12 @@ public struct JSMiniCard: View {
     private var contentSection: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(title)
-                .font(.system(size: 15, weight: .medium))
-                .foregroundColor(.primary)
+                .font(.pretendardMedium(size: 15))
+                .foregroundColor(Color.labelNormal)
                 .lineLimit(1)
 
             ProgressView(value: progress)
-                .progressViewStyle(LinearProgressViewStyle(tint: .blue))
+                .progressViewStyle(LinearProgressViewStyle(tint: Color.primaryNormal))
                 .frame(height: 3)
         }
     }
@@ -160,7 +154,7 @@ struct JSMiniCard_Previews: PreviewProvider {
         ScrollView {
             VStack(spacing: 20) {
                 Text("Single MiniCard")
-                    .font(.system(size: 18, weight: .semibold))
+                    .font(.pretendardBold(size: 18))
 
                 JSMiniCard(
                     title: "물 마시기",
@@ -172,7 +166,7 @@ struct JSMiniCard_Previews: PreviewProvider {
                 .frame(maxWidth: .infinity, alignment: .leading)
 
                 Text("Carousel")
-                    .font(.system(size: 18, weight: .semibold))
+                    .font(.pretendardBold(size: 18))
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.top, 20)
 
@@ -211,6 +205,6 @@ struct JSMiniCard_Previews: PreviewProvider {
             }
             .padding()
         }
-        .background(Color(.systemGroupedBackground))
+        .background(Color.backgroundNormal)
     }
 }

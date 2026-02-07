@@ -11,45 +11,71 @@ public struct CalendarView: View {
     }
 
     public var body: some View {
-        VStack(spacing: 0) {
-            HStack {
-                Text("캘린더")
-                    .font(.system(size: 34, weight: .bold))
-                    .foregroundColor(.labelStrong)
-                Spacer()
+        RedesignScreenScaffold(
+            title: "캘린더",
+            subtitle: "날짜별 작심 인증 상태를 확인해요",
+            state: screenState
+        ) {
+            RedesignSectionCard(
+                title: formattedSelectedDate,
+                subtitle: "\(tasksForSelectedDate.count)개의 작심"
+            ) {
+                JSCalendar(
+                    selectedDate: $store.selectedDate,
+                    scope: store.calendarScope,
+                    eventDates: store.eventDates,
+                    dateColors: convertDateColors(store.dateColors)
+                )
+                .onChange(of: store.selectedDate) {
+                    store.send(.dateSelected(store.selectedDate))
+                }
             }
-            .padding(.horizontal, 24)
-            .padding(.top, 16)
-            .padding(.bottom, 16)
 
-            JSCalendar(
-                selectedDate: $store.selectedDate,
-                scope: store.calendarScope,
-                eventDates: store.eventDates,
-                dateColors: convertDateColors(store.dateColors)
-            )
-            .onChange(of: store.selectedDate) {
-                store.send(.dateSelected(store.selectedDate))
-            }
-            .padding(.horizontal, 16)
-            
-            ScrollView {
-                VStack(spacing: 16) {
-                    let tasksForDate = tasksForSelectedDate
-                    
-                    if tasksForDate.isEmpty {
-                        emptyStateView
-                    } else {
+            RedesignSectionCard(title: "오늘의 기록") {
+                let tasksForDate = tasksForSelectedDate
+
+                if tasksForDate.isEmpty {
+                    emptyStateView
+                } else {
+                    VStack(spacing: .jsSM) {
                         ForEach(tasksForDate) { task in
                             taskRow(task: task)
                         }
                     }
                 }
-                .padding(.jsXL)
             }
         }
-        .background(Color.backgroundNormal)
         .onAppear { store.send(.onAppear) }
+    }
+
+    private var screenState: RedesignScreenState {
+        if store.isLoading {
+            return .loading(message: "캘린더 기록을 준비하는 중이에요")
+        }
+
+        if store.loadFailed {
+            return .error(
+                RedesignErrorStateModel(
+                    title: "캘린더를 불러오지 못했어요",
+                    message: "잠시 후 다시 시도해 주세요",
+                    retry: RetryActionModel {
+                        store.send(.onAppear)
+                    }
+                )
+            )
+        }
+
+        if store.tasks.isEmpty {
+            return .empty(
+                RedesignEmptyStateModel(
+                    title: "표시할 작심이 없어요",
+                    message: "작심을 시작하면 날짜별 인증 상태를 볼 수 있어요",
+                    icon: "calendar.badge.plus"
+                )
+            )
+        }
+
+        return .content
     }
     
     private var tasksForSelectedDate: [Domain.Task] {
@@ -64,16 +90,16 @@ public struct CalendarView: View {
     }
     
     private var emptyStateView: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: .jsMD) {
             Image(systemName: "calendar.badge.exclamationmark")
-                .font(.system(size: 48))
-                .foregroundColor(.gray.opacity(0.3))
+                .font(.jsDisplayScaledSemiBold(size: 48))
+                .foregroundColor(.labelAssistive)
             Text("이 날은 작심이 없어요")
-                .font(.system(size: 16))
+                .font(.jsBodyMedium)
                 .foregroundColor(.labelAlternative)
         }
         .frame(maxWidth: .infinity)
-        .padding(.top, 40)
+        .padding(.vertical, .jsXL)
     }
     
     private func taskRow(task: Domain.Task) -> some View {
@@ -85,12 +111,16 @@ public struct CalendarView: View {
             iconColor: isCompleted ? .primaryNormal : .labelDisable,
             accessory: isCompleted ? .checkmark(isSelected: true) : .disclosure
         )
-        .padding(.vertical, 8)
+        .padding(.vertical, .jsXS)
         .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color(.systemBackground))
-                .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 2)
+            RoundedRectangle(cornerRadius: .jsRadiusMD)
+                .fill(Color.backgroundAlternative)
+                .jsShadow(JSShadow.small)
         )
+    }
+
+    private var formattedSelectedDate: String {
+        DateFormatType.toString(store.selectedDate, to: .fullWithoutYear)
     }
     
     private func isTaskCompleted(_ task: Domain.Task, on date: Date) -> Bool {

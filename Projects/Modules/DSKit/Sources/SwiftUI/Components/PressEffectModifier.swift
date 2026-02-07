@@ -2,26 +2,23 @@ import SwiftUI
 
 public struct PressEffectModifier: ViewModifier {
     @State private var isPressed = false
+    private let pressedScale: CGFloat = 0.95
+    private let pressedOpacity: CGFloat = 0.9
     
     public init() {}
     
     public func body(content: Content) -> some View {
         content
-            .scaleEffect(isPressed ? 0.95 : 1.0)
-            .opacity(isPressed ? 0.9 : 1.0)
+            .scaleEffect(isPressed ? pressedScale : 1.0)
+            .opacity(isPressed ? pressedOpacity : 1.0)
             .animation(.easeInOut(duration: 0.1), value: isPressed)
-            .simultaneousGesture(
-                DragGesture(minimumDistance: 10)
-                    .onChanged { value in
-                        let horizontalMovement = abs(value.translation.width)
-                        let verticalMovement = abs(value.translation.height)
-                        if verticalMovement > horizontalMovement {
-                            isPressed = true
-                        }
-                    }
-                    .onEnded { _ in
-                        isPressed = false
-                    }
+            .onLongPressGesture(
+                minimumDuration: 0,
+                maximumDistance: 12,
+                pressing: { isPressing in
+                    isPressed = isPressing
+                },
+                perform: {}
             )
     }
 }
@@ -29,5 +26,25 @@ public struct PressEffectModifier: ViewModifier {
 extension View {
     public func pressEffect() -> some View {
         modifier(PressEffectModifier())
+    }
+}
+
+public struct PressEffectButtonStyle: ButtonStyle {
+    private let pressedScale: CGFloat = 0.95
+    private let pressedOpacity: CGFloat = 0.9
+
+    public init() {}
+
+    public func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? pressedScale : 1.0)
+            .opacity(configuration.isPressed ? pressedOpacity : 1.0)
+            .animation(.easeInOut(duration: 0.1), value: configuration.isPressed)
+    }
+}
+
+extension Button {
+    public func pressEffect() -> some View {
+        buttonStyle(PressEffectButtonStyle())
     }
 }

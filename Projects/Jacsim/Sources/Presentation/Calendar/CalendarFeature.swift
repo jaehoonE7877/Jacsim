@@ -12,6 +12,8 @@ public struct CalendarFeature {
         public var tasks: [Domain.Task] = []
         public var eventDates: [Date] = []
         public var dateColors: [Date: TaskSuccessRate] = [:]
+        public var isLoading: Bool = false
+        public var loadFailed: Bool = false
 
         public init() {}
     }
@@ -21,9 +23,10 @@ public struct CalendarFeature {
         case binding(BindingAction<State>)
         case dateSelected(Date)
         case tasksResponse([Domain.Task])
+        case tasksLoadFailed
     }
 
-    @Dependency(\.taskRepository) var taskRepository
+    @Dependency(\.taskQueryClient) var taskQueryClient
     @Dependency(\.calendarEventService) var calendarEventService
 
     public var body: some ReducerOf<Self> {
@@ -31,9 +34,15 @@ public struct CalendarFeature {
         Reduce { state, action in
             switch action {
             case .onAppear:
-                return .run { send in
-                    let tasks = try await taskRepository.fetchActiveTasks()
-                    await send(.tasksResponse(tasks))
+                state.isLoading = true
+                state.loadFailed = false
+                return .run { [taskQueryClient] send in
+                    do {
+                        let tasks = try await taskQueryClient.fetchActiveTasks()
+                        await send(.tasksResponse(tasks))
+                    } catch {
+                        await send(.tasksLoadFailed)
+                    }
                 }
 
             case let .dateSelected(date):
@@ -44,6 +53,13 @@ public struct CalendarFeature {
                 state.tasks = tasks
                 state.eventDates = calendarEventService.calculateEventDates(from: tasks)
                 state.dateColors = calendarEventService.calculateDateColors(from: tasks)
+                state.isLoading = false
+                state.loadFailed = false
+                return .none
+
+            case .tasksLoadFailed:
+                state.isLoading = false
+                state.loadFailed = true
                 return .none
 
             case .binding:

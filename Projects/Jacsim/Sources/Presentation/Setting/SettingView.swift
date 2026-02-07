@@ -10,8 +10,11 @@ public struct SettingView: View {
     }
 
     public var body: some View {
-        List {
-            Section(header: Text("테마").font(.pretendardMedium(size: 14))) {
+        RedesignScreenScaffold(
+            title: "설정",
+            subtitle: "테마와 알림, 앱 정보를 관리해요"
+        ) {
+            RedesignSectionCard(title: "테마") {
                 Picker("테마", selection: Binding(
                     get: { store.theme },
                     set: { store.send(.themeChanged($0)) }
@@ -21,11 +24,12 @@ public struct SettingView: View {
                     Text("다크").tag(ThemeMode.dark)
                 }
                 .pickerStyle(.segmented)
-                .font(.pretendardMedium(size: 16))
-                .listRowBackground(Color.backgroundNormal)
             }
-            
-            Section {
+
+            RedesignSectionCard(
+                title: "알림",
+                subtitle: "매일 작심 알림을 받을 수 있어요"
+            ) {
                 Toggle(
                     "알림 설정",
                     isOn: Binding(
@@ -33,41 +37,50 @@ public struct SettingView: View {
                         set: { store.send(.notificationToggleChanged($0)) }
                     )
                 )
-                .font(.pretendardMedium(size: 16))
+                .font(.jsBodyMedium)
                 .foregroundColor(.labelNormal)
-                .listRowBackground(Color.backgroundNormal)
 
-                Button(action: { store.send(.useCaseButtonTapped) }) {
-                    rowView(title: "사용법")
+                if store.isLoading {
+                    RedesignStateBanner(
+                        text: "알림 설정을 반영하는 중이에요",
+                        icon: "clock.arrow.circlepath",
+                        tintColor: .primaryNormal
+                    )
                 }
-                
-                Button(action: { store.send(.inquiryButtonTapped) }) {
-                    rowView(title: "문의하기")
+            }
+
+            RedesignSectionCard(title: "도움말") {
+                actionRow(title: "사용법", systemImage: "book.pages") {
+                    store.send(.useCaseButtonTapped)
                 }
-                
-                Button(action: { store.send(.reviewButtonTapped) }) {
-                    rowView(title: "리뷰")
+
+                actionRow(title: "문의하기", systemImage: "envelope") {
+                    store.send(.inquiryButtonTapped)
                 }
-                
+
+                actionRow(title: "리뷰", systemImage: "star.bubble") {
+                    store.send(.reviewButtonTapped)
+                }
+            }
+
+            RedesignSectionCard(title: "앱 정보") {
                 HStack {
-                    Text("버전정보")
-                        .font(.pretendardMedium(size: 16))
+                    Text("버전 정보")
+                        .font(.jsBodyMedium)
                         .foregroundColor(.labelNormal)
+
                     Spacer()
+
                     Text(store.version)
-                        .font(.pretendardMedium(size: 14))
-                        .foregroundColor(.labelNeutral)
+                        .font(.jsLabelLarge)
+                        .foregroundColor(.labelAlternative)
                 }
-                .listRowBackground(Color.backgroundNormal)
-                
-                Button(action: { store.send(.licenceButtonTapped) }) {
-                    rowView(title: "오픈소스 라이선스")
+
+                actionRow(title: "오픈소스 라이선스", systemImage: "doc.text") {
+                    store.send(.licenceButtonTapped)
                 }
             }
         }
-        .listStyle(.insetGrouped)
-        .scrollContentBackground(.hidden)
-        .background(Color.backgroundNormal)
         .navigationTitle("설정")
         .navigationBarTitleDisplayMode(.inline)
         .task {
@@ -75,18 +88,34 @@ public struct SettingView: View {
         }
     }
 
-    private func rowView(title: String) -> some View {
-        HStack {
-            Text(title)
-                .font(.pretendardMedium(size: 16))
-                .foregroundColor(.labelNormal)
-            Spacer()
-            Image(systemName: "chevron.right")
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(.labelNeutral)
+    private func actionRow(
+        title: String,
+        systemImage: String,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            HStack(spacing: .jsSM) {
+                Image(systemName: systemImage)
+                    .foregroundColor(.primaryNormal)
+                    .frame(width: .jsTouchTarget, height: .jsTouchTarget)
+                    .background(
+                        Circle()
+                            .fill(Color.primaryNormal.opacity(0.1))
+                    )
+
+                Text(title)
+                    .font(.jsBodyMedium)
+                    .foregroundColor(.labelStrong)
+
+                Spacer()
+
+                Image(systemName: "chevron.right")
+                    .font(.jsButtonSmall)
+                    .foregroundColor(.labelNeutral)
+            }
+            .contentShape(Rectangle())
         }
-        .contentShape(Rectangle())
-        .listRowBackground(Color.backgroundNormal)
+        .buttonStyle(.plain)
     }
 }
 

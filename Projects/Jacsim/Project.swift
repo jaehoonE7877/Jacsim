@@ -5,11 +5,24 @@ import EnvironmentPlugin
 
 let project = Project.makeModule(
     name: Environment.workspaceName,
-    targets: [.app],
+    targets: [.app, .unitTest],
     internalDependencies: [
+        .Modules.thirdPartyLibs,
         .Modules.dsKit,
         .domain,
         .externalInterface,
         .data
-    ]
+    ],
+    externalDependencies: [
+        .SPM.FirebaseAnalytics,
+        .SPM.FirebaseCrashlytics,
+        .SPM.FirebaseMessaging,
+        .SPM.Promises,
+        .SPM.IQKeyboardManagerSwift,
+        .SPM.Kingfisher,
+        .SPM.AcknowList,
+        .SPM.CropViewController,
+        .SPM.ComposableArchitecture,
+    ],
+    tags: ["app", "jacsim"]
 )

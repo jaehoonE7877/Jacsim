@@ -1,24 +1,19 @@
 # xcconfigs
 
 ## Overview
-- Build settings separated into `.xcconfig` files referenced by Tuist
-
-## Structure
-```
-xcconfigs/
-├── Base/Projects/                  # Project-Debug/Release.xcconfig
-└── targets/                        # iOS-Framework/Demo/Tests.xcconfig
-```
+- 빌드 설정을 `.xcconfig`로 분리해 중앙 관리
+- 프로젝트/타깃 공통 설정을 명시적으로 관리
 
 ## Where to Find
-| Task | Location | Notes |
-|------|----------|-------|
-| xcconfig path mapping | `Plugins/ConfigurationPlugin/ProjectDescriptionHelpers/Configurations.swift` | `XCConfig.Path.*` |
-| Framework settings | `xcconfigs/targets/iOS-Framework.xcconfig` | Module common |
-| Framework+Tests settings | `xcconfigs/targets/iOS-FrameworkTests.xcconfig` | Framework tests (if exists) |
-| Tests settings | `xcconfigs/targets/iOS-Tests.xcconfig` | Test target common |
-| Demo settings | `xcconfigs/targets/iOS-Demo.xcconfig` | Demo app target (if exists) |
-| App (Project) settings | `xcconfigs/Base/Projects/Project-Debug.xcconfig` | Debug/Release |
+| Task | Location |
+|---|---|
+| xcconfig 경로 매핑 | `Plugins/ConfigurationPlugin/ProjectDescriptionHelpers/Configurations.swift` |
+| 프로젝트 공통 설정 | `xcconfigs/Base/Projects/**` |
+| 타깃 타입별 설정 | `xcconfigs/targets/**` |
+
+## Conventions
+- 설정 변경은 xcconfig 기준으로 수행
+- Tuist ConfigurationPlugin 매핑과 항상 동기화
 
 ## Anti-Patterns
-- Changing build settings only in Xcode GUI and leaving them out of sync with `.xcconfig`
+- Xcode GUI에서만 설정 변경 후 xcconfig 미반영

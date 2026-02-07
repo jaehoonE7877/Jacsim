@@ -1,6 +1,5 @@
 import Foundation
 import ComposableArchitecture
-import Domain
 
 public enum ThemeMode: String, Equatable, CaseIterable {
     case system = "system"
@@ -16,15 +15,10 @@ public struct SettingFeature {
         public var isNotificationEnabled: Bool = false
         public var isLoading: Bool = false
         public var theme: ThemeMode = .system
-        public init() {
-            if let raw = UserDefaults.standard.string(forKey: "appearance_theme"),
-               let mode = ThemeMode(rawValue: raw) {
-                self.theme = mode
-            }
-        }
+        public init() {}
     }
 
-    public enum Action {
+    public enum Action: Equatable {
         case useCaseButtonTapped
         case inquiryButtonTapped
         case reviewButtonTapped
@@ -35,7 +29,7 @@ public struct SettingFeature {
         case themeChanged(ThemeMode)
         
         case delegate(Delegate)
-        public enum Delegate {
+        public enum Delegate: Equatable {
             case navigateToWalkThrough
             case presentMailCompose
             case openReviewURL
@@ -44,8 +38,8 @@ public struct SettingFeature {
     }
 
     @Dependency(\.notificationScheduler) var notificationScheduler
-    @Dependency(\.jacsimClient) var jacsimClient
     @Dependency(\.userSettingsRepository) var userSettingsRepository
+    @Dependency(\.appPreferences) var appPreferences
 
     public var body: some ReducerOf<Self> {
         Reduce { state, action in
@@ -59,6 +53,10 @@ public struct SettingFeature {
             case .licenceButtonTapped:
                 return .send(.delegate(.navigateToLicence))
             case .loadNotificationSettings:
+                if let raw = appPreferences.getThemeModeRaw(),
+                   let mode = ThemeMode(rawValue: raw) {
+                    state.theme = mode
+                }
                 state.isLoading = true
                 return .run { [userSettingsRepository] send in
                     let isEnabled = await userSettingsRepository.isNotificationEnabled()
@@ -68,18 +66,14 @@ public struct SettingFeature {
                 state.isNotificationEnabled = isEnabled
                 state.isLoading = true
                 return .run { [notificationScheduler, userSettingsRepository] send in
-                    await userSettingsRepository.updateNotificationEnabled(isEnabled)
+                    let reminderUseCase = ReminderSchedulingUseCase()
                     let reminders = await userSettingsRepository.getAllReminders()
-
-                    if isEnabled {
-                        for reminder in reminders {
-                            try? await notificationScheduler.scheduleDailyReminder(reminder.taskId, reminder.title, reminder.time)
-                        }
-                    } else {
-                        for reminder in reminders {
-                            await notificationScheduler.cancelReminder(reminder.taskId)
-                        }
-                    }
+                    await reminderUseCase.syncGlobalReminders(
+                        isEnabled: isEnabled,
+                        reminders: reminders,
+                        notificationScheduler: notificationScheduler
+                    )
+                    await userSettingsRepository.updateNotificationEnabled(isEnabled)
                     await send(.notificationSettingsResponse(isEnabled))
                 }
             case let .notificationSettingsResponse(isEnabled):
@@ -88,7 +82,8 @@ public struct SettingFeature {
                 return .none
             case let .themeChanged(mode):
                 state.theme = mode
-                UserDefaults.standard.set(mode.rawValue, forKey: "appearance_theme")
+                appPreferences.setThemeModeRaw(mode.rawValue)
+                NotificationCenter.default.post(name: .jacsimThemeChanged, object: nil)
                 return .none
             case .delegate:
                 return .none

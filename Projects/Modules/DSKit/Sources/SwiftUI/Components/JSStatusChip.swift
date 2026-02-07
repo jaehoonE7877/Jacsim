@@ -35,26 +35,26 @@ public enum JSStatusChipState {
     var backgroundColor: Color {
         switch self {
         case .completed:
-            return Color.green.opacity(0.12)
+            return .positive.opacity(0.12)
         case .pending:
-            return Color.blue.opacity(0.12)
+            return .primaryNormal.opacity(0.12)
         case .failed:
-            return Color.red.opacity(0.12)
+            return .destructive.opacity(0.12)
         case .notStarted:
-            return Color.gray.opacity(0.12)
+            return .labelNeutral.opacity(0.12)
         }
     }
 
     var foregroundColor: Color {
         switch self {
         case .completed:
-            return Color.green
+            return .positive
         case .pending:
-            return Color.blue
+            return .primaryNormal
         case .failed:
-            return Color.red
+            return .destructive
         case .notStarted:
-            return Color.gray
+            return .labelNeutral
         }
     }
 }
@@ -75,18 +75,18 @@ public struct JSStatusChip: View {
     }
 
     public var body: some View {
-        let content = HStack(spacing: 6) {
+        let content = HStack(spacing: 6.jsScaled()) {
             Image(systemName: state.icon)
-                .font(.system(size: 14, weight: .medium))
+                .font(.jsButtonSmall)
 
             Text(displayTitle)
-                .font(.system(size: 13, weight: .medium))
+                .font(.jsLabel12Medium)
 
             if let count = count {
                 Text("\(count)")
-                    .font(.system(size: 12, weight: .semibold))
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 2)
+                    .font(.jsLabel10Regular)
+                    .padding(.horizontal, 6.jsScaled())
+                    .padding(.vertical, 2.jsScaled())
                     .background(
                         Capsule()
                             .fill(state.foregroundColor.opacity(0.2))
@@ -94,8 +94,8 @@ public struct JSStatusChip: View {
             }
         }
         .foregroundColor(state.foregroundColor)
-        .padding(.horizontal, 12)
-        .padding(.vertical, 6)
+        .padding(.horizontal, 12.jsScaled())
+        .padding(.vertical, 6.jsScaled())
         .background(
             Capsule()
                 .fill(state.backgroundColor)
@@ -106,7 +106,7 @@ public struct JSStatusChip: View {
                 content
             }
             .buttonStyle(PlainButtonStyle())
-            .frame(minWidth: 44, minHeight: 44)
+            .frame(minWidth: 44.jsScaled(.touchTarget), minHeight: 44.jsScaled(.touchTarget))
             .contentShape(Rectangle())
         } else {
             content
@@ -137,7 +137,7 @@ public struct JSStatusChipGroup: View {
     }
 
     public var body: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: .jsXS) {
             if completedCount > 0 {
                 JSStatusChip(
                     state: .completed,
@@ -175,7 +175,7 @@ struct JSStatusChip_Previews: PreviewProvider {
             VStack(spacing: 20) {
                 VStack(alignment: .leading, spacing: 12) {
                     Text("Individual Chips")
-                        .font(.system(size: 18, weight: .semibold))
+                        .font(.jsHeadline18Bold)
 
                     HStack(spacing: 8) {
                         JSStatusChip(state: .completed)
@@ -187,7 +187,7 @@ struct JSStatusChip_Previews: PreviewProvider {
 
                 VStack(alignment: .leading, spacing: 12) {
                     Text("With Count")
-                        .font(.system(size: 18, weight: .semibold))
+                        .font(.jsHeadline18Bold)
 
                     HStack(spacing: 8) {
                         JSStatusChip(state: .completed, count: 3)
@@ -198,7 +198,7 @@ struct JSStatusChip_Previews: PreviewProvider {
 
                 VStack(alignment: .leading, spacing: 12) {
                     Text("Chip Group")
-                        .font(.system(size: 18, weight: .semibold))
+                        .font(.jsHeadline18Bold)
 
                     JSStatusChipGroup(
                         completedCount: 2,
@@ -212,7 +212,7 @@ struct JSStatusChip_Previews: PreviewProvider {
 
                 VStack(alignment: .leading, spacing: 12) {
                     Text("Empty State")
-                        .font(.system(size: 18, weight: .semibold))
+                        .font(.jsHeadline18Bold)
 
                     JSStatusChipGroup(
                         completedCount: 0,
@@ -224,7 +224,7 @@ struct JSStatusChip_Previews: PreviewProvider {
 
                 VStack(alignment: .leading, spacing: 12) {
                     Text("Tappable Chips")
-                        .font(.system(size: 18, weight: .semibold))
+                        .font(.jsHeadline18Bold)
 
                     HStack(spacing: 8) {
                         JSStatusChip(state: .completed, count: 5) {
@@ -239,6 +239,6 @@ struct JSStatusChip_Previews: PreviewProvider {
             }
             .padding()
         }
-        .background(Color(.systemGroupedBackground))
+        .background(Color.backgroundNormal)
     }
 }

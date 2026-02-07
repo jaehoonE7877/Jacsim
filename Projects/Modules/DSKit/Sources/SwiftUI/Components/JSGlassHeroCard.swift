@@ -41,7 +41,7 @@ public struct JSGlassHeroCard: View {
                         .clipped()
                 } else {
                     LinearGradient(
-                        colors: [Color.blue.opacity(0.6), Color.purple.opacity(0.6)],
+                        colors: [.primaryNormal.opacity(0.6), .primaryStrong.opacity(0.6)],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     )
@@ -59,7 +59,7 @@ public struct JSGlassHeroCard: View {
                     HStack {
                         Spacer()
                         Text(isTodayCertified ? "오늘 인증 완료" : "오늘 미인증")
-                            .font(.system(size: 13, weight: .semibold))
+                            .font(.jsLabel12Bold)
                             .foregroundColor(isTodayCertified ? .green : .white)
                             .padding(.horizontal, 12)
                             .padding(.vertical, 6)
@@ -71,13 +71,13 @@ public struct JSGlassHeroCard: View {
 
                     VStack(alignment: .leading, spacing: 8) {
                         Text(title)
-                            .font(.system(size: 28, weight: .bold))
+                            .font(.jsDisplay28Bold)
                             .foregroundColor(.white)
                             .lineLimit(2)
 
                         if let subtitle = subtitle {
                             Text(subtitle)
-                                .font(.system(size: 15, weight: .medium))
+                                .font(.jsBody15Medium)
                                 .foregroundColor(.white.opacity(0.8))
                                 .lineLimit(1)
                         }
@@ -86,18 +86,18 @@ public struct JSGlassHeroCard: View {
                             GeometryReader { geo in
                                 ZStack(alignment: .leading) {
                                     Capsule()
-                                        .fill(Color.white.opacity(0.3))
+                                        .fill(.white.opacity(0.3))
                                         .frame(height: 6)
                                     
                                     Capsule()
-                                        .fill(Color.white)
+                                        .fill(.white)
                                         .frame(width: geo.size.width * CGFloat(progress), height: 6)
                                 }
                             }
                             .frame(height: 6)
 
                             Text("\(completedDays)/\(totalDays)일")
-                                .font(.system(size: 14, weight: .bold))
+                                .font(.jsLabel14Bold)
                                 .foregroundColor(.white)
                         }
                         .padding(.top, 8)
@@ -107,7 +107,7 @@ public struct JSGlassHeroCard: View {
             }
             .frame(height: 320)
             .cornerRadius(24)
-            .shadow(color: .black.opacity(0.15), radius: 20, x: 0, y: 10)
+            .jsShadow(.large)
         }
         .buttonStyle(PlainButtonStyle())
     }
@@ -139,6 +139,6 @@ struct JSGlassHeroCard_Previews: PreviewProvider {
                 .padding()
             }
         }
-        .background(Color.gray.opacity(0.1))
+        .background(Color.backgroundAlternative)
     }
 }

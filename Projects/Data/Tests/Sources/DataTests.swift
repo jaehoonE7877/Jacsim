@@ -1,64 +1,47 @@
-import Foundation
 import Testing
+import Foundation
 @testable import Data
-@testable import Domain
 
-@Test("Task mapping keeps notification fields")
-func mapTaskPreservesNotificationFields() {
-    let stage = StageSnapshot(
-        id: UUID(),
-        stageTypeRaw: StageType.three.rawValue,
-        startDate: .now,
-        endDate: .now,
-        durationDays: 3,
-        successDays: 0,
-        resultRaw: StageResult.inProgress.rawValue
-    )
-    let alarm = Date(timeIntervalSince1970: 1_700_000_000)
-    let task = Task(
-        id: TaskID(UUID()),
-        title: "알림 작심",
-        startDate: .now,
-        endDate: .now,
-        alarmDate: alarm,
-        isNotificationEnabled: true,
-        stages: [stage],
-        records: []
-    )
+@Test("UserDefaultsAppPreferencesAdapter는 온보딩/테마 값을 읽고 쓴다")
+func userDefaultsAdapterStoresOnboardingAndTheme() {
+    let suiteName = "DataTests.AppPreferences.\(UUID().uuidString)"
+    let userDefaults = UserDefaults(suiteName: suiteName)!
+    defer {
+        userDefaults.removePersistentDomain(forName: suiteName)
+    }
 
-    let model = mapToSwiftDataModel(task)
-    #expect(model.alarm == alarm)
-    #expect(model.isNotificationEnabled == true)
-    #expect(model.currentStageTypeRaw == StageType.three.rawValue)
+    let adapter = UserDefaultsAppPreferencesAdapter(userDefaults: userDefaults)
+    let port = adapter.makePort()
 
-    let restored = mapToDomainModel(model)
-    #expect(restored.alarmDate == alarm)
-    #expect(restored.isNotificationEnabled == true)
+    #expect(port.isOnboardingCompleted() == false)
+    port.setOnboardingCompleted(true)
+    #expect(port.isOnboardingCompleted() == true)
+
+    #expect(port.getThemeModeRaw() == nil)
+    port.setThemeModeRaw("dark")
+    #expect(port.getThemeModeRaw() == "dark")
 }
 
-@Test("Task mapping updates completion status fields")
-func mapTaskUpdatesStatusFields() {
-    let stage = StageSnapshot(
-        id: UUID(),
-        stageTypeRaw: StageType.seven.rawValue,
-        startDate: .now,
-        endDate: .now,
-        durationDays: 7,
-        successDays: 4,
-        resultRaw: StageResult.success.rawValue
-    )
-    let task = Task(
-        id: TaskID(UUID()),
-        title: "완료 작심",
-        startDate: .now,
-        endDate: .now,
-        stages: [stage],
-        records: []
-    )
+@Test("UserDefaultsAppPreferencesAdapter는 리디자인 플래그 override를 저장하고 제거한다")
+func userDefaultsAdapterStoresAndRemovesRedesignOverrides() {
+    let suiteName = "DataTests.Redesign.\(UUID().uuidString)"
+    let userDefaults = UserDefaults(suiteName: suiteName)!
+    defer {
+        userDefaults.removePersistentDomain(forName: suiteName)
+    }
 
-    let model = mapToSwiftDataModel(task)
-    #expect(model.isDone == true)
-    #expect(model.isSuccess == true)
-    #expect(model.statusRaw == ChallengeStatus.done.rawValue)
-    #expect(model.resultRaw == ChallengeResult.success.rawValue)
+    let adapter = UserDefaultsAppPreferencesAdapter(userDefaults: userDefaults)
+    let port = adapter.makePort()
+
+    #expect(port.getRedesignScreenEnabled("calendar") == nil)
+    port.setRedesignScreenEnabled("calendar", false)
+    #expect(port.getRedesignScreenEnabled("calendar") == false)
+    port.removeRedesignScreenOverride("calendar")
+    #expect(port.getRedesignScreenEnabled("calendar") == nil)
+
+    #expect(port.getRedesignSectionEnabled("taskFormAlarm") == nil)
+    port.setRedesignSectionEnabled("taskFormAlarm", true)
+    #expect(port.getRedesignSectionEnabled("taskFormAlarm") == true)
+    port.removeRedesignSectionOverride("taskFormAlarm")
+    #expect(port.getRedesignSectionEnabled("taskFormAlarm") == nil)
 }

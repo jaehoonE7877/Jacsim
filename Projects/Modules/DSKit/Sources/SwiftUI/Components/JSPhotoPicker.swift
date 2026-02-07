@@ -35,16 +35,16 @@ public struct JSPhotoPicker: View {
                             .scaledToFill()
                     } else {
                         RoundedRectangle(cornerRadius: 8)
-                            .fill(Color.gray.opacity(0.2))
+                            .fill(Color.surfaceElevated.opacity(0.8))
                             .overlay(
                                 VStack(spacing: 12) {
                                     Image(systemName: "camera.fill")
-                                        .font(.system(size: 32))
-                                        .foregroundColor(.gray)
+                                        .font(.system(size: 32)) // Icon-only size constraint for visual weight
+                                        .foregroundColor(Color.labelNeutral)
 
                                     Text(placeholderText)
-                                        .font(.system(size: 14))
-                                        .foregroundColor(.gray)
+                                        .font(.jsBody14Regular)
+                                        .foregroundColor(Color.labelNeutral)
                                 }
                             )
                     }
@@ -61,9 +61,9 @@ public struct JSPhotoPicker: View {
                                         selectedImage = nil
                                     }) {
                                         Image(systemName: "xmark.circle.fill")
-                                            .font(.system(size: 24))
+                                            .font(.system(size: 24)) // Icon-only size constraint for close button tap target
                                             .foregroundColor(.white)
-                                            .background(Color.black.opacity(0.5))
+                                            .background(Color.surfaceOverlay.opacity(0.5))
                                             .clipShape(Circle())
                                     }
                                     .padding(12)
@@ -81,20 +81,20 @@ public struct JSPhotoPicker: View {
             if showPermissionDenied {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("사진 접근 권한이 필요해요.")
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(.gray)
+                        .font(.jsBody14Bold)
+                        .foregroundColor(Color.labelNeutral)
 
                     Text("설정에서 사진 접근을 허용해주세요.")
-                        .font(.system(size: 12))
-                        .foregroundColor(.gray)
+                        .font(.jsLabel12Regular)
+                        .foregroundColor(Color.labelNeutral)
 
                     Button("설정에서 허용하기") {
                         openSettings()
                     }
-                    .font(.system(size: 13, weight: .semibold))
+                    .font(.jsLabel13Bold)
                     .padding(.vertical, 6)
                     .padding(.horizontal, 10)
-                    .background(Color.gray.opacity(0.2))
+                    .background(Color.surfaceElevated.opacity(0.5))
                     .clipShape(RoundedRectangle(cornerRadius: 8))
                 }
             }
@@ -120,6 +120,7 @@ public struct JSPhotoPicker: View {
         }
         .sheet(isPresented: $showImagePicker) {
             ImagePicker(sourceType: sourceType, selectedImage: $selectedImage, onImageSelected: onImageSelected)
+                .presentationDragIndicator(.visible)
         }
     }
 
@@ -212,7 +213,7 @@ struct JSPhotoPicker_Previews: PreviewProvider {
 
                 if image != nil {
                     Text("Image selected")
-                        .font(.system(size: 16))
+                        .font(.jsBody16Regular)
                         .foregroundColor(.green)
                 }
             }

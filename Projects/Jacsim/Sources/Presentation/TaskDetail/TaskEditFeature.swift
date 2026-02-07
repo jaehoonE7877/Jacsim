@@ -1,8 +1,9 @@
 import Foundation
 import Domain
 import ComposableArchitecture
+import SwiftUI
 import UIKit
-import Photos
+import PhotosUI
 
 @Reducer
 public struct TaskEditFeature {
@@ -11,19 +12,19 @@ public struct TaskEditFeature {
         public var id: TaskID { task.id }
         public var task: Task
         public var title: String
-        public var successTarget: Int
-        public var maxSuccessTarget: Int
+        public var lastAcceptedTitle: String
         public var image: UIImage?
+        public var photoPickerItem: PhotosPickerItem?
         public var isAlarmEnabled: Bool
         public var alarmDate: Date
+        public var toastMessage: String? = nil
 
-        public init(task: Task, maxSuccessTarget: Int) {
+        public init(task: Task) {
             self.task = task
             self.title = task.title
-            self.successTarget = task.successCount
-            self.maxSuccessTarget = maxSuccessTarget
+            self.lastAcceptedTitle = task.title
             self.isAlarmEnabled = task.isNotificationEnabled
-            self.alarmDate = task.alarmDate ?? Date()
+            self.alarmDate = task.alarm ?? Date()
         }
     }
 
@@ -34,16 +35,19 @@ public struct TaskEditFeature {
         case saveButtonTapped
         case cancelButtonTapped
         case imageSelected(UIImage)
+        case photoPickerItemChanged(PhotosPickerItem?)
+        case toastDismissed
         case delegate(Delegate)
 
         public enum Delegate {
-            case saved(String, Int, UIImage?, Bool, Date)
+            case saved(String, UIImage?, Bool, Date)
             case cancelled
         }
     }
 
     @Dependency(\.imageStore) var imageStore
     @Dependency(\.notificationScheduler) var notificationScheduler
+    @Dependency(\.userSettingsRepository) var userSettingsRepository
 
     public var body: some ReducerOf<Self> {
         BindingReducer()
@@ -64,23 +68,22 @@ public struct TaskEditFeature {
             case .saveButtonTapped:
                 let title = state.title.trimmingCharacters(in: .whitespacesAndNewlines)
                 let taskId = state.task.id
-                let successTarget = state.successTarget
                 let image = state.image
                 let isAlarmEnabled = state.isAlarmEnabled
                 let alarmDate = state.alarmDate
-                return .run { [notificationScheduler, title, taskId, successTarget, image, isAlarmEnabled, alarmDate] send in
-                    await notificationScheduler.cancelReminder(taskId)
-                    if isAlarmEnabled {
-                        let components = Calendar.current.dateComponents([.hour, .minute], from: alarmDate)
-                        let hour = components.hour ?? 0
-                        let minute = components.minute ?? 0
-                        func scheduleDailyReminder(_ taskId: TaskID, _ hour: Int, _ minute: Int) async {
-                            let time = DateComponents(hour: hour, minute: minute)
-                            try? await notificationScheduler.scheduleDailyReminder(taskId, title, time)
-                        }
-                        await scheduleDailyReminder(taskId, hour, minute)
-                    }
-                    await send(.delegate(.saved(title, successTarget, image, isAlarmEnabled, alarmDate)))
+                return .run { [notificationScheduler, userSettingsRepository, title, taskId, image, isAlarmEnabled, alarmDate] send in
+                    let reminderUseCase = ReminderSchedulingUseCase()
+                    let isGlobalNotificationEnabled = await userSettingsRepository.isNotificationEnabled()
+                    await reminderUseCase.scheduleReminderIfNeeded(
+                        taskID: taskId,
+                        title: title,
+                        isAlarmEnabled: isAlarmEnabled,
+                        alarmDate: alarmDate,
+                        isGlobalNotificationEnabled: isGlobalNotificationEnabled,
+                        cancelExistingReminder: true,
+                        notificationScheduler: notificationScheduler
+                    )
+                    await send(.delegate(.saved(title, image, isAlarmEnabled, alarmDate)))
                 }
 
             case .cancelButtonTapped:
@@ -88,6 +91,35 @@ public struct TaskEditFeature {
 
             case let .imageSelected(image):
                 state.image = image
+                return .none
+
+            case let .photoPickerItemChanged(item):
+                guard let item else { return .none }
+                return .run { send in
+                    if let data = try? await item.loadTransferable(type: Data.self),
+                       let image = UIImage(data: data) {
+                        await send(.imageSelected(image))
+                    }
+                }
+
+            case .toastDismissed:
+                state.toastMessage = nil
+                return .none
+
+            case .binding(\.title):
+                let result = TextInputLimiter.enforce(
+                    previousAcceptedText: state.lastAcceptedTitle,
+                    candidateText: state.title,
+                    policy: .title
+                )
+                switch result {
+                case let .accepted(text):
+                    state.title = text
+                    state.lastAcceptedTitle = text
+                case let .rejected(keep):
+                    state.title = keep
+                    state.toastMessage = TextInputFieldPolicy.title.exceededToastMessage
+                }
                 return .none
 
             case .binding, .delegate:

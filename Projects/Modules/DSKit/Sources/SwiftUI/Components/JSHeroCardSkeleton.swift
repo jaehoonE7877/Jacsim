@@ -5,10 +5,11 @@ public struct JSHeroCardSkeleton: View {
 
     public var body: some View {
         ZStack(alignment: .bottomLeading) {
-            RoundedRectangle(cornerRadius: 24)
-                .skeleton(shape: RoundedRectangle(cornerRadius: 24))
+            RoundedRectangle(cornerRadius: JSHeroCardLayout.cornerRadius)
+                .skeleton(shape: RoundedRectangle(cornerRadius: JSHeroCardLayout.cornerRadius))
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
 
-            VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: JSHeroCardLayout.contentSpacing) {
                 HStack {
                     Spacer()
                     RoundedRectangle(cornerRadius: 12)
@@ -18,7 +19,7 @@ public struct JSHeroCardSkeleton: View {
 
                 Spacer()
 
-                VStack(alignment: .leading, spacing: 8) {
+                VStack(alignment: .leading, spacing: JSHeroCardLayout.detailSpacing) {
                     RoundedRectangle(cornerRadius: 8)
                         .frame(height: 28)
                         .skeleton(shape: RoundedRectangle(cornerRadius: 8))
@@ -27,30 +28,27 @@ public struct JSHeroCardSkeleton: View {
                         .frame(width: 160, height: 16)
                         .skeleton(shape: RoundedRectangle(cornerRadius: 6))
 
-                    HStack(spacing: 12) {
+                    HStack(spacing: JSHeroCardLayout.progressSpacing) {
                         RoundedRectangle(cornerRadius: 3)
-                            .frame(height: 6)
+                            .frame(height: JSHeroCardLayout.progressBarHeight)
                             .skeleton(shape: RoundedRectangle(cornerRadius: 3))
 
                         RoundedRectangle(cornerRadius: 6)
-                            .frame(width: 60, height: 14)
+                            .frame(width: JSHeroCardLayout.progressTextMinWidth, height: 14)
                             .skeleton(shape: RoundedRectangle(cornerRadius: 6))
                     }
-                    .padding(.top, 8)
+                    .padding(.top, JSHeroCardLayout.progressTopPadding)
                 }
             }
-            .padding(24)
+            .padding(JSHeroCardLayout.contentPadding)
         }
-        .frame(height: 320)
+        .frame(maxWidth: .infinity)
+        .frame(height: JSHeroCardLayout.height)
         .background(
-            RoundedRectangle(cornerRadius: 24)
-                .fill(Color(.systemBackground))
-                .shadow(
-                    color: .black.opacity(0.12),
-                    radius: 16,
-                    x: 0,
-                    y: 8
-                )
+            RoundedRectangle(cornerRadius: JSHeroCardLayout.cornerRadius)
+                .fill(Color.surfaceElevated)
+                .jsShadow(.medium)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
         )
     }
 }
@@ -58,5 +56,5 @@ public struct JSHeroCardSkeleton: View {
 #Preview {
     JSHeroCardSkeleton()
         .padding()
-        .background(Color(.systemGroupedBackground))
+        .background(Color.backgroundNormal)
 }

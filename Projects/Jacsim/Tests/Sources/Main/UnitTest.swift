@@ -1,65 +1,53 @@
 import Foundation
 import Testing
+import Domain
 
 @testable import Jacsim
 
 @MainActor
 @Test("최소 성공 일수 계산")
 func minimumSuccessDays() {
-    let repository = JacsimRepository.shared
-    #expect(repository.minimumSuccessDays(for: 3) == 2)
-    #expect(repository.minimumSuccessDays(for: 7) == 4)
-    #expect(repository.minimumSuccessDays(for: 15) == 8)
-    #expect(repository.minimumSuccessDays(for: 30) == 15)
+    #expect(minimumSuccessDays(durationDays: 3) == 2)
+    #expect(minimumSuccessDays(durationDays: 7) == 4)
+    #expect(minimumSuccessDays(durationDays: 15) == 8)
+    #expect(minimumSuccessDays(durationDays: 30) == 15)
 }
 
 @MainActor
 @Test("스테이지 결과 판정 - 성공")
 func evaluateStageResultSuccess() {
-    let repository = JacsimRepository.shared
     let endDate = Date().addingTimeInterval(-86400)
-    let startDate = endDate.addingTimeInterval(-86400 * 2)
-    let stage = Stage(
-        stageTypeRaw: StageType.three.rawValue,
-        startDate: startDate,
+    let result = evaluateStageResult(
         endDate: endDate,
         durationDays: 3,
-        successDays: 2
+        successDays: 2,
+        now: Date()
     )
-
-    #expect(repository.evaluateStageResult(stage) == .success)
+    #expect(result == .success)
 }
 
 @MainActor
 @Test("스테이지 결과 판정 - 실패")
 func evaluateStageResultFail() {
-    let repository = JacsimRepository.shared
     let endDate = Date().addingTimeInterval(-86400)
-    let startDate = endDate.addingTimeInterval(-86400 * 2)
-    let stage = Stage(
-        stageTypeRaw: StageType.three.rawValue,
-        startDate: startDate,
+    let result = evaluateStageResult(
         endDate: endDate,
         durationDays: 3,
-        successDays: 1
+        successDays: 1,
+        now: Date()
     )
-
-    #expect(repository.evaluateStageResult(stage) == .fail)
+    #expect(result == .fail)
 }
 
 @MainActor
 @Test("스테이지 결과 판정 - 진행 중")
 func evaluateStageResultInProgress() {
-    let repository = JacsimRepository.shared
     let endDate = Date().addingTimeInterval(86400)
-    let startDate = Date()
-    let stage = Stage(
-        stageTypeRaw: StageType.three.rawValue,
-        startDate: startDate,
+    let result = evaluateStageResult(
         endDate: endDate,
         durationDays: 3,
-        successDays: 2
+        successDays: 2,
+        now: Date()
     )
-
-    #expect(repository.evaluateStageResult(stage) == .inProgress)
+    #expect(result == .inProgress)
 }

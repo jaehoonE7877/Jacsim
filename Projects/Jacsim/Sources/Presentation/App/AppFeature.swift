@@ -9,25 +9,39 @@ public struct AppFeature {
         case main(MainFeature.State)
         
         public init() {
-            let isOnboarded = UserDefaults.standard.bool(forKey: "onboarding")
-            if isOnboarded {
-                self = .main(MainFeature.State())
-            } else {
-                self = .onboarding(WalkThroughFeature.State(fromSetting: false))
-            }
+            self = .onboarding(WalkThroughFeature.State(fromSetting: false))
         }
     }
 
     public enum Action {
+        case onAppear
         case onboarding(WalkThroughFeature.Action)
         case main(MainFeature.Action)
     }
 
+    @Dependency(\.appPreferences) var appPreferences
+
     public var body: some ReducerOf<Self> {
         Reduce { state, action in
             switch action {
+            case .onAppear:
+                let isOnboardingCompleted = appPreferences.isOnboardingCompleted()
+                if isOnboardingCompleted, case .main = state {
+                    return .none
+                }
+                if !isOnboardingCompleted, case .onboarding = state {
+                    return .none
+                }
+
+                if isOnboardingCompleted {
+                    state = .main(MainFeature.State())
+                } else {
+                    state = .onboarding(WalkThroughFeature.State(fromSetting: false))
+                }
+                return .none
+
             case .onboarding(.delegate(.completeOnboarding)):
-                UserDefaults.standard.set(true, forKey: "onboarding")
+                appPreferences.setOnboardingCompleted(true)
                 state = .main(MainFeature.State())
                 return .none
                 

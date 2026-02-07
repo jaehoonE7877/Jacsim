@@ -1,12 +1,10 @@
 import Foundation
-import SwiftData
 import Domain
 import ComposableArchitecture
 import UIKit
 import Photos
 import PhotosUI
 import SwiftUI
-import Data
 import Core
 
 @Reducer
@@ -16,12 +14,14 @@ public struct TaskUpdateFeature {
         public var task: Domain.Task
         public var index: Int
         public var memo: String = ""
+        public var lastAcceptedMemo: String = ""
         public var image: UIImage?
         public var dateText: String
         public var photoPickerItem: PhotosPickerItem?
         public var isSaving: Bool = false
         public var saveFailed: Bool = false
         public var isOverwriteMode: Bool = false
+        public var toastMessage: String? = nil
 
         public init(task: Domain.Task, index: Int) {
             self.task = task
@@ -39,6 +39,7 @@ public struct TaskUpdateFeature {
         case imageSelected(UIImage)
         case photoPickerItemChanged(PhotosPickerItem?)
         case saveCompleted(Result<Void, Error>)
+        case toastDismissed
         case dismiss
         case delegate(Delegate)
 
@@ -47,7 +48,7 @@ public struct TaskUpdateFeature {
         }
     }
 
-    @Dependency(\.jacsimClient) var jacsimClient
+    @Dependency(\.certificationClient) var certificationClient
     @Dependency(\.imageStore) var imageStore
 
     public var body: some ReducerOf<Self> {
@@ -55,6 +56,7 @@ public struct TaskUpdateFeature {
         Reduce { state, action in
             switch action {
             case .onAppear:
+                state.lastAcceptedMemo = state.memo
                 guard let key = state.task.imageKey(for: state.index) else { return .none }
                 return .run { [imageStore] send in
                     let imageData = await imageStore.loadImage(key)
@@ -74,7 +76,7 @@ public struct TaskUpdateFeature {
                 let memo = state.memo.trimmingCharacters(in: .whitespacesAndNewlines)
                 let image = state.image
                 let imagePath = image != nil ? state.task.imageKey(for: index) : nil
-                return .run { [jacsimClient, imageStore] send in
+                return .run { [certificationClient, imageStore] send in
                     Logger.certificationStarted(taskId: taskId.rawValue.uuidString, memo: memo, hasImage: image != nil)
                     let certifyStartTime = Date()
                     do {
@@ -85,7 +87,7 @@ public struct TaskUpdateFeature {
                                 Logger.imageSaved(key: imagePath)
                             }
                         }
-                        try await jacsimClient.certifyToday(taskId, index, memo, imagePath)
+                        await certificationClient.certifyToday(taskId, index, memo, imagePath)
                         Logger.certificationCompleted(
                             duration: Date().timeIntervalSince(certifyStartTime),
                             index: index,
@@ -109,13 +111,26 @@ public struct TaskUpdateFeature {
                 state.saveFailed = true
                 return .none
 
+            case .toastDismissed:
+                state.toastMessage = nil
+                return .none
+
             case .dismiss:
                 return .none
 
             case .binding(\.memo):
-                let trimmed = state.memo.trimmingCharacters(in: .whitespacesAndNewlines)
-                if trimmed.count > 20 {
-                    state.memo = String(trimmed.prefix(20))
+                let result = TextInputLimiter.enforce(
+                    previousAcceptedText: state.lastAcceptedMemo,
+                    candidateText: state.memo,
+                    policy: .memo
+                )
+                switch result {
+                case let .accepted(text):
+                    state.memo = text
+                    state.lastAcceptedMemo = text
+                case let .rejected(keep):
+                    state.memo = keep
+                    state.toastMessage = TextInputFieldPolicy.memo.exceededToastMessage
                 }
                 return .none
 

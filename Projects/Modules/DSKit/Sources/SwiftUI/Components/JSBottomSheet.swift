@@ -33,7 +33,7 @@ public struct JSBottomSheet<Content: View>: View {
     public var body: some View {
         ZStack {
             if isPresented.wrappedValue {
-                Color.black
+                Color.surfaceOverlay
                     .opacity(0.4 * max(0, 1 - abs(offset) / 300.0))
                     .ignoresSafeArea()
                     .onTapGesture {
@@ -51,7 +51,7 @@ public struct JSBottomSheet<Content: View>: View {
                         .frame(height: sheetHeight)
                 }
                 .background(
-                    Color(.systemBackground)
+                    Color.surfaceElevated
                         .jsCornerRadius(16, corners: [.topLeft, .topRight])
                 )
                 .offset(y: max(0, offset))
@@ -83,7 +83,7 @@ public struct JSBottomSheet<Content: View>: View {
 
     private var dragIndicator: some View {
         RoundedRectangle(cornerRadius: 2.5)
-            .fill(Color.gray.opacity(0.4))
+            .fill(Color.backgroundAlternative.opacity(0.4))
             .frame(width: 36, height: 5)
             .padding(.top, 8)
             .padding(.bottom, 4)
@@ -177,13 +177,13 @@ public struct JSDatePickerBottomSheet: View {
                         onDismiss?()
                     }) {
                         Text("취소")
-                            .font(.system(size: 17, weight: .semibold))
-                            .foregroundColor(.primary)
+                            .font(.jsHeadline17Bold)
+                            .foregroundColor(Color.labelNormal)
                             .frame(maxWidth: .infinity)
                             .frame(height: 50)
                             .background(
                                 RoundedRectangle(cornerRadius: 10)
-                                    .fill(Color.gray.opacity(0.2))
+                                    .fill(Color.backgroundAlternative.opacity(0.2))
                             )
                     }
                     .frame(minWidth: 44, minHeight: 44)
@@ -194,13 +194,13 @@ public struct JSDatePickerBottomSheet: View {
                         onConfirm?()
                     }) {
                         Text("확인")
-                            .font(.system(size: 17, weight: .semibold))
+                            .font(.jsHeadline17Bold)
                             .foregroundColor(.white)
                             .frame(maxWidth: .infinity)
                             .frame(height: 50)
                             .background(
                                 RoundedRectangle(cornerRadius: 10)
-                                    .fill(Color.blue)
+                                    .fill(Color.primaryNormal)
                             )
                     }
                     .frame(minWidth: 44, minHeight: 44)
@@ -214,8 +214,8 @@ public struct JSDatePickerBottomSheet: View {
     private var header: some View {
         HStack {
             Text(title)
-                .font(.system(size: 18, weight: .semibold))
-                .foregroundColor(.primary)
+                .font(.jsHeadline18Bold)
+                .foregroundColor(Color.labelNormal)
 
             Spacer()
 
@@ -224,8 +224,8 @@ public struct JSDatePickerBottomSheet: View {
                 onDismiss?()
             }) {
                 Image(systemName: "xmark")
-                    .font(.system(size: 17, weight: .medium))
-                    .foregroundColor(.gray)
+                    .font(.jsBody17Medium)
+                    .foregroundColor(Color.labelNeutral)
                     .frame(width: 30, height: 30)
             }
             .frame(minWidth: 44, minHeight: 44)
@@ -246,12 +246,12 @@ struct JSBottomSheet_Previews: PreviewProvider {
                 VStack {
                     Button(action: { showSheet = true }) {
                         Text("Show Bottom Sheet")
-                            .font(.system(size: 17, weight: .semibold))
+                            .font(.jsHeadline17Bold)
                             .foregroundColor(.white)
                             .padding()
                             .background(
                                 RoundedRectangle(cornerRadius: 10)
-                                    .fill(Color.blue)
+                                    .fill(Color.primaryNormal)
                             )
                     }
                     .padding()

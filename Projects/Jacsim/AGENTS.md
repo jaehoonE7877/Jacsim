@@ -1,38 +1,26 @@
 # Projects/Jacsim
 
 ## Overview
-- Jacsim app target (user-facing), SwiftUI + TCA + SwiftData centric
-- `AppDelegate` attached via `@UIApplicationDelegateAdaptor` for Firebase/push/keyboard setup
-
-## Structure
-```
-Projects/Jacsim/
-├── Sources/
-│   ├── Application/                # JacsimApp/AppDelegate/Notification
-│   ├── Presentation/               # Feature/Screen unit (TCA)
-│   ├── Database/                   # SwiftData models/repository
-│   ├── Persistence/                # Storage adapter/migration (if any)
-│   ├── Client/                     # API/external service clients
-│   └── Utility/                    # Constants/helpers
-├── Resources/                      # AppIcon/storyboard/plist resources
-└── Tests/                          # Test target sources
-```
+- 사용자 앱 타깃 (SwiftUI + TCA)
+- Presentation 레이어와 Application 오케스트레이션 레이어 포함
+- 앱 라이프사이클 초기화는 `AppDelegate`에서 처리
 
 ## Where to Find
-| Task | Location | Notes |
-|------|----------|-------|
-| App entry point | `Projects/Jacsim/Sources/Application/JacsimApp.swift` | SwiftUI `@main` |
-| Push/FCM/Crashlytics | `Projects/Jacsim/Sources/Application/AppDelegate.swift` | No other UIKit extensions here |
-| App root Feature | `Projects/Jacsim/Sources/Presentation/App/AppFeature.swift` | Child Feature composition point |
-| Home/list/detail | `Projects/Jacsim/Sources/Presentation/**` | `*Feature.swift` + `*View.swift` pattern |
-| SwiftData model | `Projects/Jacsim/Sources/Database/UserJacsim.swift` | Model definition |
-| Data access | `Projects/Jacsim/Sources/Database/JacsimRepository.swift` | SwiftData container/query |
+| Task | Location |
+|---|---|
+| App entry | `Projects/Jacsim/Sources/Application/JacsimApp.swift` |
+| App lifecycle | `Projects/Jacsim/Sources/Application/AppDelegate.swift` |
+| Root reducer | `Projects/Jacsim/Sources/Presentation/App/AppFeature.swift` |
+| Home flow | `Projects/Jacsim/Sources/Presentation/Home/**` |
+| App use cases | `Projects/Jacsim/Sources/Application/UseCases/**` |
+| DI client wiring | `Projects/Jacsim/Sources/Client/**` |
 
 ## Conventions
-- Add new screens/flows under `Presentation` as Feature units (no UIKit VC addition)
-- External dependencies: Use `ThirdPartyLibs` + `DependencyPlugin` for centralized management, not direct SPM
+- Presentation은 포트 클라이언트(`taskQueryClient`, `taskCommandClient` 등) 중심으로 사용
+- 구체 인프라 접근은 `Client`/`Application` 계층으로 제한
+- 화면 단위는 `*Feature.swift` + `*View.swift` 쌍으로 유지
 
 ## Anti-Patterns
-- Adding new UIKit-based screens/VCs
-- Introducing new RxSwift/Realm (temporary bridges only during existing code replacement)
-- Modifying generated artifacts like `Derived/`, `.xcodeproj/xcuserdata/`
+- Presentation에서 Data adapter 직접 참조
+- Feature reducer 내부에 UserDefaults/SwiftData 구현 세부 하드코딩
+- 신규 UIKit 기반 화면 추가

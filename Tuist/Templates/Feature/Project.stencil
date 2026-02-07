@@ -5,7 +5,8 @@ import DependencyPlugin
 let project = Project.makeModule(
     name: "{{ name }}Feature",
     targets: [.unitTest, .staticFramework, .demo, .interface],
-        interfaceDependencies: [
+    interfaceDependencies: [
         .Features.BaseFeatureDependency
-    ]
+    ],
+    tags: ["feature"]
 )

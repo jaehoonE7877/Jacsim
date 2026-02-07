@@ -43,47 +43,47 @@ public struct JSButton: View {
                 .padding(.vertical, verticalPadding)
                 .padding(.horizontal, horizontalPadding)
                 .background(backgroundColor)
-                .cornerRadius(8)
+                .cornerRadius(.jsCornerSmall)
                 .overlay(
-                    RoundedRectangle(cornerRadius: 8)
+                    RoundedRectangle(cornerRadius: .jsCornerSmall)
                         .stroke(borderColor, lineWidth: borderWidth)
                 )
         }
         .disabled(!isEnabled)
         .opacity(isEnabled ? 1.0 : 0.5)
-        .frame(minHeight: 44)
+        .frame(minHeight: 44.jsScaled(.touchTarget))
     }
 
     private var font: Font {
         switch size {
         case .large:
-            return .system(size: 18, weight: .semibold)
+            return .jsButtonLarge
         case .medium:
-            return .system(size: 16, weight: .semibold)
+            return .jsButtonMedium
         case .small:
-            return .system(size: 14, weight: .medium)
+            return .jsButtonSmall
         }
     }
 
     private var verticalPadding: CGFloat {
         switch size {
         case .large:
-            return 16
+            return 16.jsScaled()
         case .medium:
-            return 12
+            return 12.jsScaled()
         case .small:
-            return 8
+            return 8.jsScaled()
         }
     }
 
     private var horizontalPadding: CGFloat {
         switch size {
         case .large:
-            return 24
+            return 24.jsScaled()
         case .medium:
-            return 20
+            return 20.jsScaled()
         case .small:
-            return 16
+            return 16.jsScaled()
         }
     }
 
@@ -92,18 +92,18 @@ public struct JSButton: View {
         case .primary, .destructive:
             return .white
         case .secondary, .ghost:
-            return isEnabled ? .blue : .gray
+            return isEnabled ? .primaryNormal : .labelNeutral
         }
     }
 
     private var backgroundColor: Color {
         switch style {
         case .primary:
-            return .blue
+            return .primaryNormal
         case .secondary:
-            return Color(.systemBackground)
+            return .backgroundNormal
         case .destructive:
-            return .red
+            return .destructive
         case .ghost:
             return .clear
         }
@@ -114,7 +114,7 @@ public struct JSButton: View {
         case .primary, .destructive:
             return .clear
         case .secondary:
-            return .gray
+            return .labelNeutral
         case .ghost:
             return .clear
         }

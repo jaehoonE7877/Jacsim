@@ -24,7 +24,7 @@ public struct JSFloatButton: View {
     public var body: some View {
         ZStack(alignment: .bottomTrailing) {
             if isExpanded {
-                Color.black.opacity(0.15)
+                Color.surfaceOverlay.opacity(0.15)
                     .ignoresSafeArea()
                     .onTapGesture {
                         withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
@@ -37,17 +37,14 @@ public struct JSFloatButton: View {
                     ForEach(items) { item in
                         HStack(spacing: 12) {
                             Text(item.title)
-                                .font(.pretendardSemiBold(size: 14))
-                                .foregroundColor(.labelStrong)
+                                .font(.jsLabel14Bold)
+                                .foregroundColor(Color.labelNormal)
                                 .padding(.horizontal, 14)
                                 .padding(.vertical, 8)
                                 .background(
                                     RoundedRectangle(cornerRadius: 10)
-                                        .fill(Color.backgroundNormal)
-                                        .shadow(
-                                            color: Color.black.opacity(0.08),
-                                            radius: 6, x: 0, y: 3
-                                        )
+                                        .fill(Color.surfaceElevated)
+                                        .jsShadow(.small)
                                 )
 
                             Button(action: {
@@ -64,10 +61,7 @@ public struct JSFloatButton: View {
                                     .background(
                                         Circle()
                                             .fill(Color.primaryNormal)
-                                            .shadow(
-                                                color: Color.primaryNormal.opacity(0.35),
-                                                radius: 10, x: 0, y: 5
-                                            )
+                                            .jsShadow(.medium)
                                     )
                                     .foregroundColor(.white)
                             }
@@ -95,10 +89,7 @@ public struct JSFloatButton: View {
                     .background(
                         Circle()
                             .fill(Color.primaryNormal)
-                            .shadow(
-                                color: Color.primaryNormal.opacity(0.4),
-                                radius: 12, x: 0, y: 6
-                            )
+                            .jsShadow(.medium)
                     )
                     .foregroundColor(.white)
                     .rotationEffect(.degrees(isExpanded ? 45 : 0))

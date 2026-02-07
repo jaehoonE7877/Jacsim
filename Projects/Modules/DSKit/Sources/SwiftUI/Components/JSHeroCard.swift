@@ -36,13 +36,8 @@ public struct JSHeroCard: View {
             .padding(16)
             .background(
                 RoundedRectangle(cornerRadius: 12)
-                    .fill(Color(.systemBackground))
-                    .shadow(
-                        color: .black.opacity(0.08),
-                        radius: 12,
-                        x: 0,
-                        y: 4
-                    )
+                    .fill(Color.surfaceElevated)
+                    .jsShadow(.medium)
             )
         }
         .buttonStyle(PlainButtonStyle())
@@ -62,8 +57,8 @@ public struct JSHeroCard: View {
                         .fill(
                             LinearGradient(
                                 colors: [
-                                    Color.blue.opacity(0.8),
-                                    Color.blue
+                                    Color.primaryNormal.opacity(0.8),
+                                    Color.primaryNormal
                                 ],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
@@ -75,7 +70,7 @@ public struct JSHeroCard: View {
             .clipShape(RoundedRectangle(cornerRadius: 8))
 
             LinearGradient(
-                colors: [.clear, .black.opacity(0.6)],
+                colors: [.clear, Color.surfaceOverlay.opacity(0.6)],
                 startPoint: .top,
                 endPoint: .bottom
             )
@@ -86,7 +81,7 @@ public struct JSHeroCard: View {
 
             VStack(alignment: .leading, spacing: 4) {
                 Text("\(completedDays)/\(totalDays)일")
-                    .font(.system(size: 12, weight: .medium))
+                    .font(.jsLabel12Bold)
                     .foregroundColor(.white)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 4)
@@ -102,25 +97,25 @@ public struct JSHeroCard: View {
     private var contentSection: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(title)
-                .font(.system(size: 18, weight: .semibold))
-                .foregroundColor(.primary)
+                .font(.jsHeadline18Bold)
+                .foregroundColor(Color.labelNormal)
                 .lineLimit(1)
 
             if let subtitle = subtitle {
                 Text(subtitle)
-                    .font(.system(size: 14))
-                    .foregroundColor(.secondary)
+                    .font(.jsBody14Regular)
+                    .foregroundColor(Color.labelNeutral)
                     .lineLimit(2)
             }
 
             HStack(spacing: 12) {
                 ProgressView(value: progress)
-                    .progressViewStyle(LinearProgressViewStyle(tint: .blue))
+                    .progressViewStyle(LinearProgressViewStyle(tint: Color.primaryNormal))
                     .frame(height: 4)
 
                 Text("\(Int(progress * 100))%")
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundColor(.blue)
+                    .font(.jsLabel12Bold)
+                    .foregroundColor(Color.primaryNormal)
                     .frame(width: 36, alignment: .trailing)
             }
             .padding(.top, 4)
@@ -161,6 +156,6 @@ struct JSHeroCard_Previews: PreviewProvider {
             }
             .padding()
         }
-        .background(Color(.systemGroupedBackground))
+        .background(Color.backgroundNormal)
     }
 }
