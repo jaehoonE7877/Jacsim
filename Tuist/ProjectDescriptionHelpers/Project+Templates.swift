@@ -287,13 +287,23 @@ public extension TargetScript {
         fi
 
         PROJECT_ROOT="$SRCROOT/../.."
-        "$PROJECT_ROOT/.build/checkouts/firebase-ios-sdk/Crashlytics/run"
+        RUN_SCRIPT_PATH="$PROJECT_ROOT/.build/checkouts/firebase-ios-sdk/Crashlytics/run"
+
+        if [ ! -x "$RUN_SCRIPT_PATH" ]; then
+          echo "error: Crashlytics run script not found at $RUN_SCRIPT_PATH. Run 'tuist install'."
+          exit 1
+        fi
+
+        "$RUN_SCRIPT_PATH"
         touch "$OUTPUT_FILE"
     """,
         name: "Firebase Crashlytics",
         inputPaths: [
+            "${DWARF_DSYM_FOLDER_PATH}/${DWARF_DSYM_FILE_NAME}",
             "${DWARF_DSYM_FOLDER_PATH}/${DWARF_DSYM_FILE_NAME}/Contents/Resources/DWARF/${TARGET_NAME}",
-            "$(SRCROOT)/$(BUILT_PRODUCTS_DIR)/$(INFOPLIST_PATH)"
+            "${DWARF_DSYM_FOLDER_PATH}/${DWARF_DSYM_FILE_NAME}/Contents/Info.plist",
+            "$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/GoogleService-Info.plist",
+            "$(TARGET_BUILD_DIR)/$(EXECUTABLE_PATH)"
         ],
         outputPaths: [
             "$(DERIVED_FILE_DIR)/FirebaseCrashlyticsUploadDone"
