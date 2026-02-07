@@ -13,6 +13,11 @@ let envFullHandle = ProcessInfo.processInfo.environment["TUIST_FULL_HANDLE"]?
     .trimmingCharacters(in: .whitespacesAndNewlines)
 let fullHandle = (envFullHandle?.isEmpty == false) ? envFullHandle : defaultFullHandle
 
+let xcodeCacheFlag = ProcessInfo.processInfo.environment["TUIST_XCODE_CACHE"]?
+    .trimmingCharacters(in: .whitespacesAndNewlines)
+    .lowercased()
+let enableXcodeCache = ["1", "true", "yes"].contains(xcodeCacheFlag ?? "")
+
 let cacheProfiles = CacheProfiles.profiles(
     [
         "ci": .profile(.allPossible),
@@ -37,7 +42,9 @@ let config = Config(
             testInsightsDisabled: false,
             disableSandbox: true,
             includeGenerateScheme: true,
-            enableCaching: true
+            // Default off to avoid CAS socket failures when cache daemon is absent.
+            // Enable explicitly with TUIST_XCODE_CACHE=1.
+            enableCaching: enableXcodeCache
         ),
         installOptions: .options(),
         cacheOptions: .options(

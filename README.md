@@ -53,6 +53,24 @@ tuist test Data
 tuist test ExternalInterface
 ```
 
+## CI/CD 운영
+- **배포 경로 단일화**: TestFlight 배포는 **Xcode Cloud**만 사용
+- **GitHub Actions 역할**: 보조 CI(`lint/test`) 전용
+- **Xcode Cloud 트리거 기본값**: `develop` 브랜치 변경 시 자동 실행
+- **배포 스킴**: `Jacsim-Release`
+- **TestFlight 대상**: Internal Tester
+- **빌드 번호**: Xcode Cloud 자동 증가
+
+### Xcode Cloud 설정 포인트
+- Post-clone 스크립트: `ci_scripts/ci_post_clone.sh`
+- 필수 Secret(예시): `GOOGLE_SERVICE_INFO_PLIST_BASE64`
+- 스크립트는 Tuist 설치/의존성 설치/워크스페이스 생성까지 자동 수행
+
+### Tuist Cache (CAS) 트러블슈팅
+- 기본값은 Xcode cache 비활성화(`TUIST_XCODE_CACHE` 미설정)
+- 필요할 때만 `TUIST_XCODE_CACHE=1`로 활성화하고 `tuist setup cache`를 실행
+- 캐시 소켓 이슈가 발생하면 `TUIST_XCODE_CACHE`를 비워 다시 생성하면 됨
+
 ## 프로젝트 구조
 ```text
 Projects/

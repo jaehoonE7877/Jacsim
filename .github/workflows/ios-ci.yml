@@ -1,4 +1,4 @@
-name: iOS CI
+name: iOS Support CI (Lint/Test)
 
 on:
   pull_request:
@@ -13,13 +13,13 @@ permissions:
   id-token: write
 
 jobs:
-  build-and-test:
+  lint-and-test:
     runs-on: macos-latest
     env:
       TUIST_FULL_HANDLE: ${{ vars.TUIST_FULL_HANDLE }}
       TUIST_APPLE_TEAM_ID: ${{ vars.APPLE_TEAM_ID }}
       TUIST_TOKEN: ${{ secrets.TUIST_TOKEN }}
-      APPLE_TEAM_ID: ${{ vars.APPLE_TEAM_ID }}
+      TUIST_XCODE_CACHE: ${{ vars.TUIST_XCODE_CACHE }}
       GOOGLE_SERVICE_INFO_PLIST_BASE64: ${{ secrets.GOOGLE_SERVICE_INFO_PLIST_BASE64 }}
       TUIST_CACHE_PROFILE: ci
     steps:
@@ -33,21 +33,30 @@ jobs:
         run: bash scripts/ci/preflight.sh ci
 
       - name: Authenticate with OIDC (fallback)
-        if: ${{ env.TUIST_TOKEN == '' }}
+        if: ${{ env.TUIST_FULL_HANDLE != '' && env.TUIST_TOKEN == '' }}
         run: tuist auth login
 
       - name: Install dependencies
         run: tuist install
 
-      - name: Setup Tuist cache and Xcode cache
+      - name: Setup Tuist Xcode cache (optional)
+        if: ${{ env.TUIST_FULL_HANDLE != '' && (env.TUIST_XCODE_CACHE == '1' || env.TUIST_XCODE_CACHE == 'true') }}
         run: tuist setup cache
 
       - name: Restore GoogleService-Info.plist (optional on CI)
         if: ${{ env.GOOGLE_SERVICE_INFO_PLIST_BASE64 != '' }}
         run: bash scripts/ci/prepare-google-service-info.sh
 
+      - name: Lint (optional)
+        run: |
+          if [ -x "scripts/ci/lint.sh" ]; then
+            bash scripts/ci/lint.sh
+          else
+            echo "No lint script configured. Skipping."
+          fi
+
       - name: Generate workspace
         run: tuist generate --no-open
 
-      - name: Build and test
+      - name: Test
         run: tuist test Jacsim-CI
