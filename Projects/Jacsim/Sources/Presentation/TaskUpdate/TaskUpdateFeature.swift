@@ -1,12 +1,10 @@
 import Foundation
-import SwiftData
 import Domain
 import ComposableArchitecture
 import UIKit
 import Photos
 import PhotosUI
 import SwiftUI
-import Data
 import Core
 
 @Reducer
@@ -50,7 +48,7 @@ public struct TaskUpdateFeature {
         }
     }
 
-    @Dependency(\.jacsimClient) var jacsimClient
+    @Dependency(\.certificationClient) var certificationClient
     @Dependency(\.imageStore) var imageStore
 
     public var body: some ReducerOf<Self> {
@@ -78,7 +76,7 @@ public struct TaskUpdateFeature {
                 let memo = state.memo.trimmingCharacters(in: .whitespacesAndNewlines)
                 let image = state.image
                 let imagePath = image != nil ? state.task.imageKey(for: index) : nil
-                return .run { [jacsimClient, imageStore] send in
+                return .run { [certificationClient, imageStore] send in
                     Logger.certificationStarted(taskId: taskId.rawValue.uuidString, memo: memo, hasImage: image != nil)
                     let certifyStartTime = Date()
                     do {
@@ -89,7 +87,7 @@ public struct TaskUpdateFeature {
                                 Logger.imageSaved(key: imagePath)
                             }
                         }
-                        try await jacsimClient.certifyToday(taskId, index, memo, imagePath)
+                        await certificationClient.certifyToday(taskId, index, memo, imagePath)
                         Logger.certificationCompleted(
                             duration: Date().timeIntervalSince(certifyStartTime),
                             index: index,

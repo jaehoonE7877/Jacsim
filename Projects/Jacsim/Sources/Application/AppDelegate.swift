@@ -16,38 +16,34 @@ import IQKeyboardManagerSwift
 
 class AppDelegate: UIResponder, UIApplicationDelegate{
 
+    private enum FCMTokenError: LocalizedError {
+        case tokenNotFound
+
+        var errorDescription: String? {
+            switch self {
+            case .tokenNotFound:
+                return "FCM token is missing in Firebase callback."
+            }
+        }
+    }
+
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         
         FirebaseApp.configure()
         Crashlytics.crashlytics().setCrashlyticsCollectionEnabled(true)
-        if #available(iOS 10.0, *) {
-          // For iOS 10 display notification (sent via APNS)
-          UNUserNotificationCenter.current().delegate = self
-
-          let authOptions: UNAuthorizationOptions = [.alert, .badge, .sound]
-          UNUserNotificationCenter.current().requestAuthorization(
-            options: authOptions,
-            completionHandler: { _, _ in }
-          )
-        } else {
-          let settings: UIUserNotificationSettings =
-            UIUserNotificationSettings(types: [.alert, .badge, .sound], categories: nil)
-          application.registerUserNotificationSettings(settings)
-        }
-
-        application.registerForRemoteNotifications()
-        
         Messaging.messaging().delegate = self
-        
-        Messaging.messaging().token { token, error in
-          if let error = error {
-            print("Error fetching FCM registration token: \(error)")
-          } else if let token = token {
-            print("FCM registration token: \(token)")
-          }
+
+        UNUserNotificationCenter.current().delegate = self
+        Task { @MainActor in
+            let granted = await requestNotificationAuthorization()
+            guard granted else {
+                print("Notification authorization denied")
+                return
+            }
+            UIApplication.shared.registerForRemoteNotifications()
         }
-        
+
         IQKeyboardManager.shared.enable = true
         IQKeyboardManager.shared.enableAutoToolbar = false
         IQKeyboardManager.shared.shouldResignOnTouchOutside = true
@@ -86,10 +82,51 @@ class AppDelegate: UIResponder, UIApplicationDelegate{
 
 }
 
+private extension AppDelegate {
+    func requestNotificationAuthorization() async -> Bool {
+        do {
+            let authOptions: UNAuthorizationOptions = [.alert, .badge, .sound]
+            return try await UNUserNotificationCenter.current().requestAuthorization(options: authOptions)
+        } catch {
+            print("Notification authorization error: \(error)")
+            return false
+        }
+    }
+
+    static func fetchFCMToken() async throws -> String {
+        try await withCheckedThrowingContinuation { continuation in
+            Messaging.messaging().token { token, error in
+                if let error = error {
+                    continuation.resume(throwing: error)
+                    return
+                }
+                guard let token else {
+                    continuation.resume(throwing: FCMTokenError.tokenNotFound)
+                    return
+                }
+                continuation.resume(returning: token)
+            }
+        }
+    }
+}
+
 extension AppDelegate: UNUserNotificationCenterDelegate {
     
     func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
         Messaging.messaging().apnsToken = deviceToken
+
+        Task {
+            do {
+                let token = try await Self.fetchFCMToken()
+                print("FCM registration token: \(token)")
+            } catch {
+                print("Error fetching FCM registration token: \(error)")
+            }
+        }
+    }
+
+    func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {
+        print("Failed to register for remote notifications: \(error)")
     }
     
     func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification, withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {

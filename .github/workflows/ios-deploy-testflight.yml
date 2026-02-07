@@ -1,0 +1,110 @@
+name: iOS Deploy TestFlight
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  deploy-testflight:
+    runs-on: macos-latest
+    env:
+      TUIST_FULL_HANDLE: ${{ vars.TUIST_FULL_HANDLE }}
+      TUIST_APPLE_TEAM_ID: ${{ vars.APPLE_TEAM_ID }}
+      TUIST_TOKEN: ${{ secrets.TUIST_TOKEN }}
+      APPLE_TEAM_ID: ${{ vars.APPLE_TEAM_ID }}
+      ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+      ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+      ASC_PRIVATE_KEY_BASE64: ${{ secrets.ASC_PRIVATE_KEY_BASE64 }}
+      IOS_P12_BASE64: ${{ secrets.IOS_P12_BASE64 }}
+      IOS_P12_PASSWORD: ${{ secrets.IOS_P12_PASSWORD }}
+      IOS_MOBILEPROVISION_BASE64: ${{ secrets.IOS_MOBILEPROVISION_BASE64 }}
+      IOS_KEYCHAIN_PASSWORD: ${{ secrets.IOS_KEYCHAIN_PASSWORD }}
+      GOOGLE_SERVICE_INFO_PLIST_BASE64: ${{ secrets.GOOGLE_SERVICE_INFO_PLIST_BASE64 }}
+      TUIST_CACHE_PROFILE: ci
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup mise
+        uses: jdx/mise-action@v2
+
+      - name: Preflight
+        run: bash scripts/ci/preflight.sh deploy
+
+      - name: Authenticate with OIDC (fallback)
+        if: ${{ env.TUIST_TOKEN == '' }}
+        run: tuist auth login
+
+      - name: Install dependencies
+        run: tuist install
+
+      - name: Setup Tuist cache and Xcode cache
+        run: tuist setup cache
+
+      - name: Restore GoogleService-Info.plist
+        run: bash scripts/ci/prepare-google-service-info.sh
+
+      - name: Prepare App Store Connect API key
+        run: bash scripts/ci/prepare-asc-api-key.sh
+
+      - name: Install signing assets
+        run: bash scripts/ci/install-signing-assets.sh
+
+      - name: Generate workspace
+        run: tuist generate --no-open
+
+      - name: Archive app
+        run: |
+          xcodebuild \
+            -workspace Jacsim.xcworkspace \
+            -scheme Jacsim-Release \
+            -configuration Release \
+            -destination "generic/platform=iOS" \
+            -archivePath "$RUNNER_TEMP/Jacsim.xcarchive" \
+            DEVELOPMENT_TEAM="$APPLE_TEAM_ID" \
+            clean archive
+
+      - name: Export IPA
+        run: |
+          cat > "$RUNNER_TEMP/ExportOptions.plist" <<EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key>
+            <string>app-store</string>
+            <key>signingStyle</key>
+            <string>automatic</string>
+            <key>teamID</key>
+            <string>${APPLE_TEAM_ID}</string>
+            <key>uploadSymbols</key>
+            <true/>
+            <key>compileBitcode</key>
+            <false/>
+          </dict>
+          </plist>
+          EOF
+
+          xcodebuild \
+            -exportArchive \
+            -archivePath "$RUNNER_TEMP/Jacsim.xcarchive" \
+            -exportPath "$RUNNER_TEMP/export" \
+            -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist"
+
+      - name: Upload to TestFlight
+        run: |
+          IPA_PATH="$(find "$RUNNER_TEMP/export" -maxdepth 1 -name '*.ipa' | head -n 1)"
+          if [ -z "${IPA_PATH}" ]; then
+            echo "IPA not found in export path." >&2
+            exit 1
+          fi
+
+          xcrun altool \
+            --upload-app \
+            --type ios \
+            --file "$IPA_PATH" \
+            --apiKey "$ASC_KEY_ID" \
+            --apiIssuer "$ASC_ISSUER_ID"

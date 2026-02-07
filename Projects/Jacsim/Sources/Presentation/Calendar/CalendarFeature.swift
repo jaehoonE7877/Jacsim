@@ -26,7 +26,7 @@ public struct CalendarFeature {
         case tasksLoadFailed
     }
 
-    @Dependency(\.taskRepository) var taskRepository
+    @Dependency(\.taskQueryClient) var taskQueryClient
     @Dependency(\.calendarEventService) var calendarEventService
 
     public var body: some ReducerOf<Self> {
@@ -36,9 +36,9 @@ public struct CalendarFeature {
             case .onAppear:
                 state.isLoading = true
                 state.loadFailed = false
-                return .run { send in
+                return .run { [taskQueryClient] send in
                     do {
-                        let tasks = try await taskRepository.fetchActiveTasks()
+                        let tasks = try await taskQueryClient.fetchActiveTasks()
                         await send(.tasksResponse(tasks))
                     } catch {
                         await send(.tasksLoadFailed)

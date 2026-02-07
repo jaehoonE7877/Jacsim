@@ -18,6 +18,7 @@ public struct HomeFeature {
         public var isLoading: Bool = false
         public var isRefreshing: Bool = false
         public var isFetching: Bool = false
+        public var loadFailed: Bool = false
         public var hasStartedNotificationListener = false
         public var toastMessage: String? = nil
 
@@ -65,6 +66,7 @@ public struct HomeFeature {
         case dateSelected(Date)
         case refreshTriggered
         case tasksResponse([Domain.Task])
+        case tasksLoadFailed
         case heroImageLoaded(Data?)
         case miniCardImageLoaded(id: UUID, imageData: Data?)
         case calendar(CalendarFeature.Action)
@@ -137,12 +139,12 @@ public struct HomeFeature {
         }
     }
 
-    @Dependency(\.taskRepository) var taskRepository
+    @Dependency(\.taskQueryClient) var taskQueryClient
     @Dependency(\.activeTaskService) var activeTaskService
     @Dependency(\.imageStore) var imageStore
 
     private enum LoadingPolicy {
-        static let minimumSkeletonDuration: TimeInterval = 1.1
+        static let minimumSkeletonDuration: TimeInterval = 1.25
     }
 
     private enum CancelID {
@@ -162,24 +164,40 @@ public struct HomeFeature {
                 state.hasStartedNotificationListener = true
                 state.isFetching = true
                 state.isLoading = state.tasks.isEmpty
+                state.loadFailed = false
                 state.loadingStartTime = Date()
                 Logger.homeFetchingTasks()
                 let fetchStartTime = Date()
-                let fetchEffect: Effect<Action> = .run { [taskRepository] send in
-                    let tasks = try await taskRepository.fetchActiveTasks()
-                    Logger.homeTasksFetched(count: tasks.count, duration: Date().timeIntervalSince(fetchStartTime))
-                    if let firstTask = tasks.first {
-                        let completedCount = firstTask.records.filter { $0.check }.count
-                        Logger.homeFirstTaskDetails(title: firstTask.title, totalRecords: firstTask.records.count, completedRecords: completedCount)
+                let fetchEffect: Effect<Action> = .run { [taskQueryClient] send in
+                    do {
+                        let tasks = try await taskQueryClient.fetchActiveTasks()
+                        Logger.homeTasksFetched(
+                            count: tasks.count,
+                            duration: Date().timeIntervalSince(fetchStartTime)
+                        )
+                        if let firstTask = tasks.first {
+                            let completedCount = firstTask.records.filter { $0.check }.count
+                            Logger.homeFirstTaskDetails(
+                                title: firstTask.title,
+                                totalRecords: firstTask.records.count,
+                                completedRecords: completedCount
+                            )
+                        }
+                        // Ensure minimum skeleton display duration for stable loading perception.
+                        let elapsed = Date().timeIntervalSince(fetchStartTime)
+                        let minDisplay = LoadingPolicy.minimumSkeletonDuration
+                        let remaining = minDisplay - elapsed
+                        if remaining > 0 {
+                            try await _Concurrency.Task.sleep(
+                                nanoseconds: UInt64(remaining * 1_000_000_000)
+                            )
+                        }
+                        await send(.tasksResponse(tasks))
+                    } catch is CancellationError {
+                        return
+                    } catch {
+                        await send(.tasksLoadFailed)
                     }
-                    // Ensure minimum skeleton display duration for stable loading perception.
-                    let elapsed = Date().timeIntervalSince(fetchStartTime)
-                    let minDisplay = LoadingPolicy.minimumSkeletonDuration
-                    let remaining = minDisplay - elapsed
-                    if remaining > 0 {
-                        try await _Concurrency.Task.sleep(nanoseconds: UInt64(remaining * 1_000_000_000))
-                    }
-                    await send(.tasksResponse(tasks))
                 }
                 let notificationEffect: Effect<Action> = shouldStartListener ? .run { send in
                     for await notification in NotificationCenter.default.notifications(named: .jacsimLocalNotificationTapped) {
@@ -209,11 +227,18 @@ public struct HomeFeature {
 
             case .refreshTriggered:
                 state.isRefreshing = true
+                state.loadFailed = false
                 return .merge(
                     .cancel(id: CancelID.imageLoading),
-                    .run { [taskRepository] send in
-                        let tasks = try await taskRepository.fetchActiveTasks()
-                        await send(.tasksResponse(tasks))
+                    .run { [taskQueryClient] send in
+                        do {
+                            let tasks = try await taskQueryClient.fetchActiveTasks()
+                            await send(.tasksResponse(tasks))
+                        } catch is CancellationError {
+                            return
+                        } catch {
+                            await send(.tasksLoadFailed)
+                        }
                     }
                 )
                 
@@ -241,6 +266,7 @@ public struct HomeFeature {
                 state.isLoading = false
                 state.isRefreshing = false
                 state.isFetching = false
+                state.loadFailed = false
                 Logger.homeTasksProcessed(
                     duration: Date().timeIntervalSince(processStartTime),
                     activeCount: state.activeTasks.count,
@@ -257,6 +283,13 @@ public struct HomeFeature {
                     }
                 }
                 .cancellable(id: CancelID.imageLoading, cancelInFlight: true)
+
+            case .tasksLoadFailed:
+                state.isLoading = false
+                state.isRefreshing = false
+                state.isFetching = false
+                state.loadFailed = true
+                return .none
                 
             case .settingButtonTapped:
                 state.path.append(.setting(SettingFeature.State()))
@@ -275,9 +308,13 @@ public struct HomeFeature {
                 return .none
 
             case let .notificationTapped(id):
-                return .run { [taskRepository] send in
-                    let task = try await taskRepository.fetchTask(TaskID(id))
-                    await send(.notificationTaskLoaded(task))
+                return .run { [taskQueryClient] send in
+                    do {
+                        let task = try await taskQueryClient.fetchTask(TaskID(id))
+                        await send(.notificationTaskLoaded(task))
+                    } catch {
+                        await send(.notificationTaskLoaded(nil))
+                    }
                 }
 
             case let .notificationTaskLoaded(task):
@@ -299,9 +336,13 @@ public struct HomeFeature {
                 }
                 let idString = url.path.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
                 guard let id = UUID(uuidString: idString) else { return .none }
-                return .run { [taskRepository] send in
-                    let task = try await taskRepository.fetchTask(TaskID(id))
-                    await send(.deepLinkTaskLoaded(task))
+                return .run { [taskQueryClient] send in
+                    do {
+                        let task = try await taskQueryClient.fetchTask(TaskID(id))
+                        await send(.deepLinkTaskLoaded(task))
+                    } catch {
+                        await send(.deepLinkTaskLoaded(nil))
+                    }
                 }
 
             case let .deepLinkTaskLoaded(task):
@@ -376,7 +417,10 @@ public struct HomeFeature {
                 state.toastMessage = nil
                 return .none
 
-            case .binding, .calendar, .delegate, .migrationAlert, .path:
+            case .path:
+                return .none
+
+            case .binding, .calendar, .delegate:
                 return .none
 
             case .destination:

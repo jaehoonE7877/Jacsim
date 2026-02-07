@@ -1,26 +1,19 @@
 # Projects/Modules/Core
 
 ## Overview
-- Common utilities/extensions module
-- Houses Foundation extensions/helpers repeated across modules
-
-## Structure
-```
-Projects/Modules/Core/
-└── Sources/
-    └── Extension/                  # Foundation-centric extensions
-```
+- 공통 유틸/확장/로깅 모듈
+- 앱 비즈니스나 UI가 아닌 재사용 기반 코드 중심
 
 ## Where to Find
-| Task | Location | Notes |
-|------|----------|-------|
-| Date/format/utils | `Projects/Modules/Core/Sources/Extension/Foundation/**` | Common extension location |
-| Tests | `Projects/Modules/Core/Tests/Sources/**` | Module unit tests |
+| Task | Location |
+|---|---|
+| String/Date/Array 확장 | `Projects/Modules/Core/Sources/Extension/Foundation/**` |
+| Logging helper | `Projects/Modules/Core/Sources/Logger.swift` |
 
 ## Conventions
-- Keep `Core` as pure as possible (minimal side effects)
-- External libraries should be introduced via `ThirdPartyLibs` (avoid direct SPM dependency)
+- Side effect 최소화, 순수 유틸 우선
+- 도메인 규칙/화면 로직은 Core에 두지 않음
 
 ## Anti-Patterns
-- Adding UI (views/components) code
-- Putting app-specific business rules in Core
+- SwiftUI/View 코드 추가
+- 앱 전용 정책을 Core에 배치
