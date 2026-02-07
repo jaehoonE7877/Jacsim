@@ -3,6 +3,17 @@ set -euo pipefail
 
 target_path="Projects/Jacsim/Resources/GoogleService-Info.plist"
 
+# Detect CI environment for better error messages
+detect_ci_env() {
+  if [ -n "${CI_XCODE_CLOUD:-}" ] || [ -n "${CI_BUILD_NUMBER:-}" ]; then
+    echo "xcode-cloud"
+  elif [ -n "${GITHUB_ACTIONS:-}" ]; then
+    echo "github-actions"
+  else
+    echo "local"
+  fi
+}
+
 decode_base64() {
   if base64 --help 2>/dev/null | grep -q -- "--decode"; then
     base64 --decode
@@ -47,5 +58,16 @@ if [ -f "${target_path}" ]; then
 fi
 
 echo "Missing GoogleService-Info.plist." >&2
-echo "Set GOOGLE_SERVICE_INFO_PLIST_BASE64 or provide ${target_path}." >&2
+ci_env="$(detect_ci_env)"
+case "${ci_env}" in
+  xcode-cloud)
+    echo "For Xcode Cloud: Add GOOGLE_SERVICE_INFO_PLIST_BASE64 in App Store Connect > App > Xcode Cloud > Workflow > Environment Variables (mark as Secret)." >&2
+    ;;
+  github-actions)
+    echo "For GitHub Actions: Add GOOGLE_SERVICE_INFO_PLIST_BASE64 in Repository Settings > Secrets and variables > Actions > Repository secrets." >&2
+    ;;
+  *)
+    echo "Set GOOGLE_SERVICE_INFO_PLIST_BASE64 or provide ${target_path}." >&2
+    ;;
+esac
 exit 1
