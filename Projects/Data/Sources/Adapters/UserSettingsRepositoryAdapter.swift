@@ -10,7 +10,7 @@ public actor UserSettingsRepositoryAdapter {
 
     private let context: ModelContext
     
-    public init(context: ModelContext = SwiftDataStack.shared.context) {
+    public init(context: ModelContext = SwiftDataStack.shared.makeContext()) {
         self.context = context
     }
     

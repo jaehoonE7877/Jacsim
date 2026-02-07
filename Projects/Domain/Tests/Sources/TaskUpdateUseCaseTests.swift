@@ -72,7 +72,7 @@ struct TaskUpdateUseCaseTests {
         #expect(result.title == "New Title")
         #expect(result.stages.isEmpty)
         #expect(result.isNotificationEnabled == false)
-        #expect(result.alarmDate == nil)
+        #expect(result.alarm == nil)
     }
 }
 

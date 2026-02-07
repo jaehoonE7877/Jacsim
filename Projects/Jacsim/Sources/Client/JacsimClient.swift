@@ -180,7 +180,9 @@ private enum JacsimClientKey: DependencyKey {
                     _ = try await taskUpdateUseCase.updateTaskInfo(
                         task: task,
                         title: title,
-                        durationDays: successTarget
+                        durationDays: successTarget,
+                        isNotificationEnabled: isAlarmEnabled,
+                        alarmDate: alarmDate
                     )
                 } catch {
                     Logger.certificationFailed(error: error)

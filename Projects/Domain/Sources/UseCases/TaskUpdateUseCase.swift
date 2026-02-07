@@ -29,7 +29,7 @@ public struct TaskUpdateUseCase: TaskUpdateUseCaseProtocol {
         var updatedTask = task
         updatedTask.title = title
         updatedTask.isNotificationEnabled = isNotificationEnabled
-        updatedTask.alarmDate = isNotificationEnabled ? alarmDate : nil
+        updatedTask.alarm = isNotificationEnabled ? alarmDate : nil
         
         if var lastStage = updatedTask.stages.last {
             lastStage.durationDays = durationDays
