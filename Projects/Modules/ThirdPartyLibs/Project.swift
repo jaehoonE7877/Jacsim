@@ -4,6 +4,7 @@ import DependencyPlugin
 
 let project = Project.makeModule(
     name: "ThirdPartyLibs",
+    swiftLanguageVersion: .v6,
     targets: [.staticFramework],
     externalDependencies: [
         //MARK: - Firebase
