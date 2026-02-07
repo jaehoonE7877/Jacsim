@@ -275,13 +275,14 @@ public struct NewTaskView: View {
                     }
                 }
 
+                let hasImage = store.image != nil
                 PhotosPicker(selection: $store.photoPickerItem, matching: .images) {
                     HStack(spacing: .jsXS) {
-                        Image(systemName: store.image == nil ? "photo.badge.plus" : "arrow.triangle.2.circlepath")
+                        Image(systemName: hasImage ? "arrow.triangle.2.circlepath" : "photo.badge.plus")
                             .font(.jsHeadlineSmall)
                             .foregroundColor(.primaryNormal)
 
-                        Text(store.image == nil ? "대표 사진 선택" : "대표 사진 변경")
+                        Text(hasImage ? "대표 사진 변경" : "대표 사진 선택")
                             .font(.jsButtonMedium)
                             .foregroundColor(.labelStrong)
 

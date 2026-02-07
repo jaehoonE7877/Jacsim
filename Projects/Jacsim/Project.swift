@@ -5,6 +5,7 @@ import EnvironmentPlugin
 
 let project = Project.makeModule(
     name: Environment.workspaceName,
+    swiftLanguageVersion: .v6,
     targets: [.app, .unitTest],
     internalDependencies: [
         .Modules.thirdPartyLibs,
