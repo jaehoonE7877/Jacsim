@@ -4,16 +4,18 @@ import UIKit
 import DSKit
 
 private enum StartupTransitionPolicy {
-    static let splashMinimumDuration: UInt64 = 1_100_000_000
-    static let splashMaximumDuration: UInt64 = 2_500_000_000
-    static let splashDismissAnimationDuration: Double = 0.3
+    static let splashMinimumDuration: UInt64 = 550_000_000
+    static let splashMaximumDuration: UInt64 = 1_600_000_000
+    static let splashDismissAnimationDuration: Double = 0.24
+    static let splashDismissScale: CGFloat = 0.985
 }
 
 public struct AppView: View {
     let store: StoreOf<AppFeature>
-    @AppStorage("appearance_theme") private var themeRaw: String = "system"
+    @Dependency(\.appPreferences) private var appPreferences
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
+    @State private var themeRaw: String = ThemeMode.system.rawValue
     @State private var isSplashVisible = true
     @State private var hasPlayedSplash = false
     @State private var minDurationPassed = false
@@ -30,6 +32,13 @@ public struct AppView: View {
         case "dark": return .dark
         default: return nil
         }
+    }
+
+    private var splashOverlayTransition: AnyTransition {
+        if reduceMotion {
+            return .opacity
+        }
+        return .opacity.combined(with: .scale(scale: StartupTransitionPolicy.splashDismissScale))
     }
 
     public var body: some View {
@@ -53,13 +62,18 @@ public struct AppView: View {
                     reduceMotion: reduceMotion,
                     hasLogo: UIImage(named: "jacsimMonotone") != nil
                 )
-                .transition(.opacity)
+                .transition(splashOverlayTransition)
                 .zIndex(1000)
             }
         }
         .onAppear {
+            store.send(.onAppear)
+            refreshThemeFromPreferences()
             startSplashIfNeeded()
             updateSplashEligibility(for: store.state)
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .jacsimThemeChanged)) { _ in
+            refreshThemeFromPreferences()
         }
         .onChange(of: store.state) { _, newState in
             updateSplashEligibility(for: newState)
@@ -83,17 +97,38 @@ public struct AppView: View {
         canDismissFromLoad = false
 
         Task { @MainActor in
-            try? await Task.sleep(nanoseconds: StartupTransitionPolicy.splashMinimumDuration)
+            do {
+                try await Task.sleep(nanoseconds: StartupTransitionPolicy.splashMinimumDuration)
+            } catch is CancellationError {
+                return
+            } catch {
+                return
+            }
             minDurationPassed = true
             dismissSplashIfPossible()
         }
 
         Task { @MainActor in
             // Fallback to avoid lingering splash in unexpected states.
-            try? await Task.sleep(nanoseconds: StartupTransitionPolicy.splashMaximumDuration)
+            do {
+                try await Task.sleep(nanoseconds: StartupTransitionPolicy.splashMaximumDuration)
+            } catch is CancellationError {
+                return
+            } catch {
+                return
+            }
             canDismissFromLoad = true
             dismissSplashIfPossible()
         }
+    }
+
+    private func refreshThemeFromPreferences() {
+        if let raw = appPreferences.getThemeModeRaw(),
+           ThemeMode(rawValue: raw) != nil {
+            themeRaw = raw
+            return
+        }
+        themeRaw = ThemeMode.system.rawValue
     }
 
     private func updateSplashEligibility(for state: AppFeature.State) {
@@ -198,10 +233,10 @@ private struct AppStartupSplashView: View {
                     showGlow = true
                     showLogo = true
                 } else {
-                    withAnimation(.easeOut(duration: 0.28)) {
+                    withAnimation(.easeOut(duration: 0.36)) {
                         showGlow = true
                     }
-                    withAnimation(.easeOut(duration: 0.3).delay(0.04)) {
+                    withAnimation(.easeOut(duration: 0.34).delay(0.08)) {
                         showLogo = true
                     }
                 }
