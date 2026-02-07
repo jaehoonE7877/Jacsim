@@ -256,40 +256,13 @@ extension Project {
             testAction: .targets(
                 ["\(Environment.workspaceName)Tests"],
                 configuration: "Debug",
-                options: .options(coverage: false)
-            ),
-            runAction: .runAction(
-                configuration: "Debug",
-                arguments: .arguments(
-                    environmentVariables: ["OS_ACTIVITY_MODE": "disable"],
-                    launchArguments: [.launchArgument(name: "-FIRDebugEnabled", isEnabled: true)]
+                options: .options(
+                    coverage: true,
+                    codeCoverageTargets: ["\(Environment.workspaceName)"]
                 )
             ),
-            archiveAction: .archiveAction(configuration: "Debug"),
-            profileAction: .profileAction(configuration: "Debug"),
-            analyzeAction: .analyzeAction(configuration: "Debug")
-        ),
-        .scheme(
-            name: "\(Environment.workspaceName)-CI",
-            shared: true,
-            buildAction: .buildAction(targets: ["\(Environment.workspaceName)"]),
-            testAction: .targets(
-                ["\(Environment.workspaceName)Tests"],
-                configuration: "Debug",
-                options: .options(coverage: true, codeCoverageTargets: ["\(Environment.workspaceName)"])
-            ),
-            runAction: .runAction(configuration: "Debug"),
-            archiveAction: .archiveAction(configuration: "Debug"),
-            profileAction: .profileAction(configuration: "Debug"),
-            analyzeAction: .analyzeAction(configuration: "Debug")
-        ),
-        .scheme(
-            name: "\(Environment.workspaceName)-Release",
-            shared: true,
-            buildAction: .buildAction(targets: ["\(Environment.workspaceName)"],
-                                      postActions: []),
             runAction: .runAction(
-                configuration: "Release",
+                configuration: "Debug",
                 arguments: .arguments(
                     environmentVariables: ["OS_ACTIVITY_MODE": "disable"],
                     launchArguments: [.launchArgument(name: "-FIRDebugEnabled", isEnabled: true)]
@@ -297,7 +270,7 @@ extension Project {
             ),
             archiveAction: .archiveAction(configuration: "Release"),
             profileAction: .profileAction(configuration: "Release"),
-            analyzeAction: .analyzeAction(configuration: "Release")
+            analyzeAction: .analyzeAction(configuration: "Debug")
         )
     ]
 }
