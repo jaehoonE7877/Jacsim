@@ -2,11 +2,33 @@ name: iOS Support CI (Lint/Test)
 
 on:
   pull_request:
+    paths:
+      - "Projects/Domain/**"
+      - "Projects/ExternalInterface/**"
+      - "Projects/Data/**"
+      - "Projects/Jacsim/**"
+      - "Projects/Modules/**"
+      - "Tuist/**"
+      - "Plugins/**"
+      - "Tuist.swift"
+      - "Workspace.swift"
+      - "Package.swift"
+      - "Package.resolved"
+      - ".mise.toml"
+      - ".tool-versions"
+      - "xcconfigs/**"
+      - "scripts/ci/**"
+      - "scripts/tuist/**"
+      - ".github/workflows/**"
   push:
     branches:
       - main
       - develop
   workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
@@ -14,7 +36,7 @@ permissions:
 
 jobs:
   detect-changes:
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     outputs:
       should_run: ${{ steps.detect.outputs.should_run }}
       schemes_json: ${{ steps.detect.outputs.schemes_json }}
@@ -34,12 +56,28 @@ jobs:
         id: detect
         env:
           EVENT_NAME: ${{ github.event_name }}
+          GITHUB_SHA: ${{ github.sha }}
           BASE_SHA_PR: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA_PR: ${{ github.event.pull_request.head.sha }}
           BASE_SHA_PUSH: ${{ github.event.before }}
           HEAD_SHA_PUSH: ${{ github.sha }}
         run: |
           set -euo pipefail
+
+          emit_fallback_all() {
+            bash scripts/ci/detect-test-schemes.sh --force-all changed_files.txt
+          }
+
+          ensure_commit() {
+            local sha="$1"
+            [[ -z "${sha}" ]] && return 1
+            if git cat-file -e "${sha}^{commit}" >/dev/null 2>&1; then
+              return 0
+            fi
+            git fetch --no-tags --depth=1 origin "${sha}" >/dev/null 2>&1 || return 1
+            git cat-file -e "${sha}^{commit}" >/dev/null 2>&1
+          }
+
           case "${EVENT_NAME}" in
             pull_request)
               base_sha="${BASE_SHA_PR}"
@@ -63,14 +101,47 @@ jobs:
               ;;
           esac
 
+          : > changed_files.txt
+
+          if [[ "${force_all}" == "true" ]]; then
+            echo "workflow_dispatch detected. Running full suite."
+            emit_fallback_all
+            exit 0
+          fi
+
           if [[ -n "${base_sha}" && "${base_sha}" != "0000000000000000000000000000000000000000" ]]; then
-            git fetch --no-tags --depth=1 origin "${base_sha}"
-            git diff --name-only "${base_sha}" "${head_sha}" > changed_files.txt
+            if ! ensure_commit "${base_sha}"; then
+              echo "Failed to fetch base SHA (${base_sha}); fallback to full suite."
+              emit_fallback_all
+              exit 0
+            fi
+
+            if ! ensure_commit "${head_sha}"; then
+              echo "Failed to fetch head SHA (${head_sha}); fallback to GITHUB_SHA."
+              head_sha="${GITHUB_SHA}"
+              if ! ensure_commit "${head_sha}"; then
+                echo "Failed to fetch fallback head SHA (${head_sha}); full suite."
+                emit_fallback_all
+                exit 0
+              fi
+            fi
+
+            if ! git diff --name-only "${base_sha}" "${head_sha}" > changed_files.txt; then
+              echo "Diff failed for ${base_sha}..${head_sha}; fallback to full suite."
+              emit_fallback_all
+              exit 0
+            fi
           else
             if git rev-parse --verify "${head_sha}^" >/dev/null 2>&1; then
-              git diff --name-only "${head_sha}^" "${head_sha}" > changed_files.txt
+              if ! git diff --name-only "${head_sha}^" "${head_sha}" > changed_files.txt; then
+                echo "Diff failed for ${head_sha}^..${head_sha}; full suite."
+                emit_fallback_all
+                exit 0
+              fi
             else
-              : > changed_files.txt
+              echo "No parent commit detected; fallback to full suite."
+              emit_fallback_all
+              exit 0
             fi
           fi
 
@@ -81,16 +152,13 @@ jobs:
             echo "(none detected)"
           fi
 
-          if [[ "${force_all}" == "true" ]]; then
-            bash scripts/ci/detect-test-schemes.sh --force-all changed_files.txt
-          else
-            bash scripts/ci/detect-test-schemes.sh changed_files.txt
-          fi
+          bash scripts/ci/detect-test-schemes.sh changed_files.txt
 
   module-unit-tests:
     needs: detect-changes
     if: ${{ needs.detect-changes.outputs.should_run == 'true' }}
     runs-on: macos-latest
+    timeout-minutes: 40
     strategy:
       fail-fast: false
       max-parallel: 4
