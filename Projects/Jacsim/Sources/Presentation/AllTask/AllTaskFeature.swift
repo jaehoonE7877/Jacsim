@@ -29,7 +29,7 @@ public struct AllTaskFeature {
         case taskTapped(Domain.Task)
     }
 
-    @Dependency(\.jacsimClient) var jacsimClient
+    @Dependency(\.taskQueryClient) var taskQueryClient
 
     public var body: some ReducerOf<Self> {
         Reduce { state, action in
@@ -37,11 +37,11 @@ public struct AllTaskFeature {
             case .onAppear:
                 state.isLoading = true
                 state.loadFailed = false
-                return .run { [jacsimClient] send in
+                return .run { [taskQueryClient] send in
                     do {
-                        let ongoing = try await jacsimClient.fetchActiveTasks()
-                        let success = try await jacsimClient.fetchIsSuccess()
-                        let fail = try await jacsimClient.fetchIsFail()
+                        let ongoing = try await taskQueryClient.fetchActiveTasks()
+                        let success = try await taskQueryClient.fetchIsSuccess()
+                        let fail = try await taskQueryClient.fetchIsFail()
                         await send(.tasksResponse(ongoing: ongoing, success: success, fail: fail))
                     } catch {
                         await send(.tasksLoadFailed)

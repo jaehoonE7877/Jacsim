@@ -140,7 +140,7 @@ public struct NewTaskFeature {
         }
     }
 
-    @Dependency(\.jacsimClient) var jacsimClient
+    @Dependency(\.taskCommandClient) var taskCommandClient
     @Dependency(\.notificationScheduler) var notificationScheduler
     @Dependency(\.imageStore) var imageStore
     @Dependency(\.userSettingsRepository) var userSettingsRepository
@@ -210,22 +210,24 @@ public struct NewTaskFeature {
                     startDate: taskToSave.startDate,
                     endDate: taskToSave.endDate
                 )
-                return .run { [jacsimClient, notificationScheduler, imageStore, userSettingsRepository] send in
+                return .run { [taskCommandClient, notificationScheduler, imageStore, userSettingsRepository] send in
                     do {
                         if let data = image.jpegData(compressionQuality: 0.4) {
                             _ = try await imageStore.saveImage(taskToSave.mainImageKey, data)
                         }
-                        try await jacsimClient.addTask(taskToSave)
+                        try await taskCommandClient.addTask(taskToSave)
                         if isAlarmEnabled {
+                            let reminderUseCase = ReminderSchedulingUseCase()
                             let isNotificationEnabled = await userSettingsRepository.isNotificationEnabled()
-                            if isNotificationEnabled {
-                                let time = Calendar.current.dateComponents([.hour, .minute], from: alarmDate)
-                                try? await notificationScheduler.scheduleDailyReminder(
-                                    taskToSave.id,
-                                    taskToSave.title,
-                                    time
-                                )
-                            }
+                            await reminderUseCase.scheduleReminderIfNeeded(
+                                taskID: taskToSave.id,
+                                title: taskToSave.title,
+                                isAlarmEnabled: isAlarmEnabled,
+                                alarmDate: alarmDate,
+                                isGlobalNotificationEnabled: isNotificationEnabled,
+                                cancelExistingReminder: false,
+                                notificationScheduler: notificationScheduler
+                            )
                         }
                         await send(.saveCompleted(.success(())))
                     } catch {

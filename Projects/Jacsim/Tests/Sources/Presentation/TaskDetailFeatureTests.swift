@@ -70,16 +70,10 @@ func taskDetailEditSaveKeepsCurrentDurationDays() async {
     let store = TestStore(initialState: initialState) {
         TaskDetailFeature()
     } withDependencies: {
-        $0.jacsimClient = JacsimClientPort(
-            fetchActiveTasks: { [] },
-            fetchTask: { _ in nil },
+        $0.taskCommandClient = TaskCommandClientPort(
             addTask: { _ in },
             updateTask: { _ in },
             deleteTask: { _ in },
-            fetchTasksByStatus: { _ in [] },
-            fetchIsSuccess: { [] },
-            fetchIsFail: { [] },
-            deleteAlarm: { _ in },
             updateTaskInfo: { task, title, durationDays, isAlarmEnabled, alarmDate in
                 await updateRecorder.recordUpdate(
                     taskID: task.id,
@@ -88,12 +82,7 @@ func taskDetailEditSaveKeepsCurrentDurationDays() async {
                     isAlarmEnabled: isAlarmEnabled,
                     alarmDate: alarmDate
                 )
-            },
-            evaluateStageResult: { _ in .inProgress },
-            createNextStage: { _ in },
-            updateMemo: { _, _, _ in },
-            resetStageRecords: { _ in },
-            certifyToday: { _, _, _, _ in }
+            }
         )
         $0.imageStore = ImageStorePort(
             saveImage: { key, data in
@@ -143,16 +132,10 @@ func taskDetailEditSaveStoresImageWhenProvided() async {
     let store = TestStore(initialState: initialState) {
         TaskDetailFeature()
     } withDependencies: {
-        $0.jacsimClient = JacsimClientPort(
-            fetchActiveTasks: { [] },
-            fetchTask: { _ in nil },
+        $0.taskCommandClient = TaskCommandClientPort(
             addTask: { _ in },
             updateTask: { _ in },
             deleteTask: { _ in },
-            fetchTasksByStatus: { _ in [] },
-            fetchIsSuccess: { [] },
-            fetchIsFail: { [] },
-            deleteAlarm: { _ in },
             updateTaskInfo: { task, title, durationDays, isAlarmEnabled, alarmDate in
                 await updateRecorder.recordUpdate(
                     taskID: task.id,
@@ -161,12 +144,7 @@ func taskDetailEditSaveStoresImageWhenProvided() async {
                     isAlarmEnabled: isAlarmEnabled,
                     alarmDate: alarmDate
                 )
-            },
-            evaluateStageResult: { _ in .inProgress },
-            createNextStage: { _ in },
-            updateMemo: { _, _, _ in },
-            resetStageRecords: { _ in },
-            certifyToday: { _, _, _, _ in }
+            }
         )
         $0.imageStore = ImageStorePort(
             saveImage: { key, data in

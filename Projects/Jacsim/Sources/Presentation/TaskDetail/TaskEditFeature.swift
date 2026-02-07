@@ -72,20 +72,17 @@ public struct TaskEditFeature {
                 let isAlarmEnabled = state.isAlarmEnabled
                 let alarmDate = state.alarmDate
                 return .run { [notificationScheduler, userSettingsRepository, title, taskId, image, isAlarmEnabled, alarmDate] send in
-                    await notificationScheduler.cancelReminder(taskId)
-                    if isAlarmEnabled {
-                        let isGlobalNotificationEnabled = await userSettingsRepository.isNotificationEnabled()
-                        if isGlobalNotificationEnabled {
-                            let components = Calendar.current.dateComponents([.hour, .minute], from: alarmDate)
-                            let hour = components.hour ?? 0
-                            let minute = components.minute ?? 0
-                            func scheduleDailyReminder(_ taskId: TaskID, _ hour: Int, _ minute: Int) async {
-                                let time = DateComponents(hour: hour, minute: minute)
-                                try? await notificationScheduler.scheduleDailyReminder(taskId, title, time)
-                            }
-                            await scheduleDailyReminder(taskId, hour, minute)
-                        }
-                    }
+                    let reminderUseCase = ReminderSchedulingUseCase()
+                    let isGlobalNotificationEnabled = await userSettingsRepository.isNotificationEnabled()
+                    await reminderUseCase.scheduleReminderIfNeeded(
+                        taskID: taskId,
+                        title: title,
+                        isAlarmEnabled: isAlarmEnabled,
+                        alarmDate: alarmDate,
+                        isGlobalNotificationEnabled: isGlobalNotificationEnabled,
+                        cancelExistingReminder: true,
+                        notificationScheduler: notificationScheduler
+                    )
                     await send(.delegate(.saved(title, image, isAlarmEnabled, alarmDate)))
                 }
 

@@ -3,6 +3,7 @@ import Domain
 import ComposableArchitecture
 import UIKit
 import DSKit
+import Core
 
 @Reducer
 public struct TaskDetailFeature {
@@ -95,7 +96,8 @@ public struct TaskDetailFeature {
         }
     }
 
-    @Dependency(\.jacsimClient) var jacsimClient
+    @Dependency(\.taskCommandClient) var taskCommandClient
+    @Dependency(\.stageFlowClient) var stageFlowClient
     @Dependency(\.imageStore) var imageStore
     @Dependency(\.notificationScheduler) var notificationScheduler
     @Dependency(\.challengeStateService) var challengeStateService
@@ -129,9 +131,9 @@ public struct TaskDetailFeature {
                 }
                 return .merge(
                     .send(.loadImages),
-                    .run { [jacsimClient, stage = evaluation.currentStage] send in
+                    .run { [stageFlowClient, stage = evaluation.currentStage] send in
                         guard let stage else { return }
-                        let result = await jacsimClient.evaluateStageResult(stage)
+                        let result = await stageFlowClient.evaluateStageResult(stage)
                         await send(.stageResultChecked(result))
                     }
                 )
@@ -192,9 +194,13 @@ public struct TaskDetailFeature {
                 let taskId = state.task.id
                 return .merge(
                     .cancel(id: CancelID.deleteFlowCountdown),
-                    .run { [jacsimClient, notificationScheduler] send in
+                    .run { [taskCommandClient, notificationScheduler] send in
                         await notificationScheduler.cancelReminder(taskId)
-                        try? await jacsimClient.deleteTask(taskId)
+                        do {
+                            try await taskCommandClient.deleteTask(taskId)
+                        } catch {
+                            Logger.certificationFailed(error: error)
+                        }
                         await send(.delegate(.taskDeleted))
                     }
                 )
@@ -227,7 +233,15 @@ public struct TaskDetailFeature {
                 state.isDeleteConfirmEnabled = false
                 return .run { send in
                     for _ in 0..<DeleteFlowPolicy.confirmDelaySeconds {
-                        try? await _Concurrency.Task.sleep(nanoseconds: DeleteFlowPolicy.countdownTickNanoseconds)
+                        do {
+                            try await _Concurrency.Task.sleep(
+                                nanoseconds: DeleteFlowPolicy.countdownTickNanoseconds
+                            )
+                        } catch is CancellationError {
+                            return
+                        } catch {
+                            return
+                        }
                         await send(.deleteFlowCountdownTicked)
                     }
                 }
@@ -252,9 +266,13 @@ public struct TaskDetailFeature {
                 let taskId = state.task.id
                 return .merge(
                     .cancel(id: CancelID.deleteFlowCountdown),
-                    .run { [jacsimClient, notificationScheduler] send in
+                    .run { [taskCommandClient, notificationScheduler] send in
                         await notificationScheduler.cancelReminder(taskId)
-                        try? await jacsimClient.deleteTask(taskId)
+                        do {
+                            try await taskCommandClient.deleteTask(taskId)
+                        } catch {
+                            Logger.certificationFailed(error: error)
+                        }
                         await send(.delegate(.taskDeleted))
                     }
                 )
@@ -273,12 +291,16 @@ public struct TaskDetailFeature {
                 let task = state.task
                 let durationDays = task.currentStage?.durationDays ?? task.stages.last?.durationDays ?? 3
                 state.editTask = nil
-                return .run { [jacsimClient, imageStore, task, durationDays] send in
-                    await jacsimClient.updateTaskInfo(task, title, durationDays, isAlarmEnabled, alarmDate)
+                return .run { [taskCommandClient, imageStore, task, durationDays] send in
+                    await taskCommandClient.updateTaskInfo(task, title, durationDays, isAlarmEnabled, alarmDate)
                     if let image {
                         let data = image.jpegData(compressionQuality: 0.4)
                         if let data {
-                            _ = try? await imageStore.saveImage(task.mainImageKey, data)
+                            do {
+                                _ = try await imageStore.saveImage(task.mainImageKey, data)
+                            } catch {
+                                Logger.certificationFailed(error: error)
+                            }
                         }
                     }
                     await send(.onAppear)
@@ -315,8 +337,8 @@ public struct TaskDetailFeature {
 
             case .nextStageButtonTapped:
                 let taskId = state.task.id
-                return .run { [jacsimClient] send in
-                    _ = await jacsimClient.createNextStage(taskId)
+                return .run { [stageFlowClient] send in
+                    await stageFlowClient.createNextStage(taskId)
                     await send(.stagePopupDismissed)
                     await send(.onAppear)
                 }
@@ -327,8 +349,8 @@ public struct TaskDetailFeature {
                 return .none
 
             case .retryStageButtonTapped:
-                return .run { [jacsimClient, taskId = state.task.id] send in
-                    await jacsimClient.resetStageRecords(taskId)
+                return .run { [stageFlowClient, taskId = state.task.id] send in
+                    await stageFlowClient.resetStageRecords(taskId)
                     await send(.onAppear)
                 }
 
