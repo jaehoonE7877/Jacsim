@@ -11,10 +11,33 @@ decode_base64() {
   fi
 }
 
+write_raw_plist_if_present() {
+  local raw_content="$1"
+  if printf '%s' "${raw_content}" | grep -q "<plist"; then
+    printf '%s' "${raw_content}" > "${target_path}"
+    echo "Restored GoogleService-Info.plist from raw plist content."
+    return 0
+  fi
+  return 1
+}
+
 if [ -n "${GOOGLE_SERVICE_INFO_PLIST_BASE64:-}" ]; then
   mkdir -p "$(dirname "${target_path}")"
-  echo "${GOOGLE_SERVICE_INFO_PLIST_BASE64}" | decode_base64 > "${target_path}"
-  echo "Restored GoogleService-Info.plist from secret."
+  encoded="$(printf '%s' "${GOOGLE_SERVICE_INFO_PLIST_BASE64}" | tr -d '\r\n')"
+  tmp_path="${target_path}.tmp"
+
+  if printf '%s' "${encoded}" | decode_base64 > "${tmp_path}" 2>/dev/null; then
+    mv "${tmp_path}" "${target_path}"
+    echo "Restored GoogleService-Info.plist from base64 secret."
+    exit 0
+  fi
+
+  rm -f "${tmp_path}"
+  if write_raw_plist_if_present "${GOOGLE_SERVICE_INFO_PLIST_BASE64}"; then
+    exit 0
+  fi
+
+  echo "Warning: GOOGLE_SERVICE_INFO_PLIST_BASE64 is not valid base64/plist. Skipping restore."
   exit 0
 fi
 
