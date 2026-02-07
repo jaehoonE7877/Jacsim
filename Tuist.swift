@@ -20,7 +20,8 @@ let enableXcodeCache = ["1", "true", "yes"].contains(xcodeCacheFlag ?? "")
 
 let envCompatibleXcodeVersion = ProcessInfo.processInfo.environment["TUIST_COMPATIBLE_XCODE_VERSION"]?
     .trimmingCharacters(in: .whitespacesAndNewlines)
-let compatibleXcodeVersion = (envCompatibleXcodeVersion?.isEmpty == false) ? envCompatibleXcodeVersion! : "26.0"
+let compatibleXcodeVersionString = (envCompatibleXcodeVersion?.isEmpty == false) ? envCompatibleXcodeVersion! : "26.0"
+let compatibleXcodeVersion = Version(string: compatibleXcodeVersionString) ?? Version(string: "26.0")!
 
 let cacheProfiles = CacheProfiles.profiles(
     [
