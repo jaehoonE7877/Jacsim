@@ -1,19 +1,19 @@
 # Plugins
 
 ## Overview
-- Tuist plugins: Centralized management of dependencies, environment, xcconfig via code
+- Tuist 플러그인(Dependency/Environment/Configuration) 관리 영역
+- 의존성 alias, 환경값, 설정 매핑의 단일 소스
 
 ## Where to Find
-| Task | Location | Notes |
-|------|----------|-------|
-| SPM dependency aliases | `Plugins/DependencyPlugin/ProjectDescriptionHelpers/Dependency+SPM.swift` | `TargetDependency.SPM.*` |
-| Internal module dependency aliases | `Plugins/DependencyPlugin/ProjectDescriptionHelpers/Dependency+Project.swift` | `Dep.Modules.*` |
-| App environment (version/bundle/target) | `Plugins/EnvironmentPlugin/ProjectDescriptionHelpers/Enviroment.swift` | iOS 18, bundle prefix |
-| xcconfig connections | `Plugins/ConfigurationPlugin/ProjectDescriptionHelpers/Configurations.swift` | `XCConfig.*` |
+| Task | Location |
+|---|---|
+| 내부/외부 의존 alias | `Plugins/DependencyPlugin/ProjectDescriptionHelpers/**` |
+| 앱 환경값(번들/타깃/버전) | `Plugins/EnvironmentPlugin/ProjectDescriptionHelpers/Enviroment.swift` |
+| xcconfig 매핑 | `Plugins/ConfigurationPlugin/ProjectDescriptionHelpers/Configurations.swift` |
 
 ## Conventions
-- Add aliases first when adding dependencies; projects should only use aliases
-- Version/bundle/target (18.0) managed in one place via EnvironmentPlugin
+- 프로젝트에서는 직접 경로 대신 플러그인 alias 우선 사용
+- 번들 ID/배포 타깃은 중앙에서 관리
 
 ## Anti-Patterns
-- Hardcoding bundleId/target version per target, scattering configuration
+- 타깃별 설정을 각 프로젝트에서 중복 하드코딩

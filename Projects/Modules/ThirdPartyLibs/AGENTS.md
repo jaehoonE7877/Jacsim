@@ -1,22 +1,20 @@
 # Projects/Modules/ThirdPartyLibs
 
 ## Overview
-- Centralizes external dependencies (Framework target) for other modules to depend on indirectly
-- Tuist `DependencyPlugin` `TargetDependency.SPM.*` aliases point here
+- 외부 라이브러리 의존성을 한 곳에서 관리하는 집약 모듈
+- 상위 모듈은 직접 패키지 참조보다 alias 의존을 우선 사용
 
 ## Where to Find
-| Task | Location | Notes |
-|------|----------|-------|
-| SPM package declarations | `Package.swift` | URL/version management |
-| SPM alias list | `Plugins/DependencyPlugin/ProjectDescriptionHelpers/Dependency+SPM.swift` | `TargetDependency.SPM.*` |
-| External deps in ThirdPartyLibs | `Projects/Modules/ThirdPartyLibs/Project.swift` | Lists `.SPM.*` |
+| Task | Location |
+|---|---|
+| 패키지 선언 | `Package.swift` |
+| SPM alias | `Plugins/DependencyPlugin/ProjectDescriptionHelpers/Dependency+SPM.swift` |
+| ThirdPartyLibs 연결 | `Projects/Modules/ThirdPartyLibs/Project.swift` |
 
-## Recommended New Dependency Procedure
-1) Add `.package(...)` to `Package.swift`
-2) Add alias in `Plugins/DependencyPlugin/.../Dependency+SPM.swift`
-3) Include in `externalDependencies` in `Projects/Modules/ThirdPartyLibs/Project.swift`
-4) Upper modules add `Dep.Modules.thirdPartyLibs` or only needed module dependencies
+## Conventions
+- 라이브러리 추가 시 `Package.swift` + alias + ThirdPartyLibs 순으로 반영
+- 중복/불필요 의존성 추가 금지
 
 ## Anti-Patterns
-- Adding direct SPM dependencies in apps/modules, scattering the dependency graph
-- Adding unused external libraries without reason/alternative/cost comparison (prohibited: `memory/constitution.md`)
+- 앱/모듈에서 SPM 직접 참조를 분산 추가
+- 검토 없는 라이브러리 도입
