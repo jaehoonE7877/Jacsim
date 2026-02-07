@@ -137,8 +137,3 @@ public final class StageModel {
         self.dailyRecords = dailyRecords
     }
 }
-
-extension UserJacsimModel: @unchecked Sendable {}
-extension AppSettingsModel: @unchecked Sendable {}
-extension CertifiedModel: @unchecked Sendable {}
-extension StageModel: @unchecked Sendable {}
