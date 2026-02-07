@@ -17,6 +17,6 @@ public extension Project {
         public static let deploymentTarget = DeploymentTargets.iOS("18.0")
         public static let platform = Destinations.iOS
         public static let bundlePrefix = "com.jaehoon.jaksim"
-        public static let appVersion: String = "1.5.0"
+        public static let appVersion: String = "2.0.0"
     }
 }
