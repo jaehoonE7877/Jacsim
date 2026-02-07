@@ -1,4 +1,4 @@
-name: Tuist Server (TUIST_TOKEN)
+name: Tuist Server (TUIST_CONFIG_TOKEN)
 
 on:
   workflow_dispatch:
@@ -11,7 +11,7 @@ jobs:
     runs-on: macos-latest
     env:
       TUIST_FULL_HANDLE: ${{ vars.TUIST_FULL_HANDLE }}
-      TUIST_TOKEN: ${{ secrets.TUIST_TOKEN }}
+      TUIST_CONFIG_TOKEN: ${{ secrets.TUIST_CONFIG_TOKEN }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -26,8 +26,8 @@ jobs:
             echo "Format: account/project (example: my-account/Jacsim)"
             exit 1
           fi
-          if [ -z "${TUIST_TOKEN:-}" ]; then
-            echo "Missing secrets.TUIST_TOKEN"
+          if [ -z "${TUIST_CONFIG_TOKEN:-}" ]; then
+            echo "Missing secrets.TUIST_CONFIG_TOKEN"
             exit 1
           fi
 

@@ -18,7 +18,7 @@ jobs:
     env:
       TUIST_FULL_HANDLE: ${{ vars.TUIST_FULL_HANDLE }}
       TUIST_APPLE_TEAM_ID: ${{ vars.APPLE_TEAM_ID }}
-      TUIST_TOKEN: ${{ secrets.TUIST_TOKEN }}
+      TUIST_CONFIG_TOKEN: ${{ secrets.TUIST_CONFIG_TOKEN }}
       TUIST_XCODE_CACHE: ${{ vars.TUIST_XCODE_CACHE }}
       GOOGLE_SERVICE_INFO_PLIST_BASE64: ${{ secrets.GOOGLE_SERVICE_INFO_PLIST_BASE64 }}
       TUIST_CACHE_PROFILE: ci
@@ -33,7 +33,7 @@ jobs:
         run: bash scripts/ci/preflight.sh ci
 
       - name: Authenticate with OIDC (fallback)
-        if: ${{ env.TUIST_FULL_HANDLE != '' && env.TUIST_TOKEN == '' }}
+        if: ${{ env.TUIST_FULL_HANDLE != '' && env.TUIST_CONFIG_TOKEN == '' }}
         run: tuist auth login
 
       - name: Install dependencies
