@@ -1,0 +1,74 @@
+name: Trigger Xcode Cloud After Tests
+
+on:
+  workflow_run:
+    workflows: ["iOS Support CI (Lint/Test)"]
+    types:
+      - completed
+    branches:
+      - develop
+
+concurrency:
+  group: xcode-cloud-trigger-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  trigger-xcode-cloud:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' && github.ref == 'refs/heads/develop' }}
+    steps:
+      - name: Trigger Xcode Cloud via App Store Connect API
+        env:
+          ISSUER_ID: ${{ secrets.APPSTORE_CONNECT_ISSUER_ID }}
+          KEY_ID: ${{ secrets.APPSTORE_CONNECT_KEY_ID }}
+          PRIVATE_KEY: ${{ secrets.APPSTORE_CONNECT_PRIVATE_KEY }}
+          WORKFLOW_ID: ${{ secrets.XCODE_CLOUD_WORKFLOW_ID }}
+        run: |
+          set -euo pipefail
+          
+          # JWT Token 생성
+          header=$(echo -n '{"alg":"ES256","kid":"'"${KEY_ID}"'","typ":"JWT"}' | base64 -w0 | tr '+/' '-_' | tr -d '=')
+          now=$(date +%s)
+          exp=$((now + 1200))
+          payload=$(echo -n '{"iss":"'"${ISSUER_ID}"'","iat":'"${now}"',"exp":'"${exp}"',"aud":"appstoreconnect-v1"}' | base64 -w0 | tr '+/' '-_' | tr -d '=')
+          
+          # Private Key 포맷 처리
+          key_path="/tmp/asc_key.p8"
+          echo "${PRIVATE_KEY}" > "${key_path}"
+          
+          # JWT 서명
+          signature=$(echo -n "${header}.${payload}" | openssl dgst -sha256 -sign "${key_path}" -binary | base64 -w0 | tr '+/' '-_' | tr -d '=')
+          jwt="${header}.${payload}.${signature}"
+          
+          # Xcode Cloud Workflow 트리거
+          echo "Triggering Xcode Cloud workflow..."
+          response=$(curl -s -X POST \
+            -H "Authorization: Bearer ${jwt}" \
+            -H "Content-Type: application/json" \
+            "https://api.appstoreconnect.apple.com/v1/ciBuildRuns" \
+            -d '{
+              "data": {
+                "type": "ciBuildRuns",
+                "relationships": {
+                  "workflow": {
+                    "data": {
+                      "type": "ciWorkflows",
+                      "id": "'"${WORKFLOW_ID}"'"
+                    }
+                  }
+                }
+              }
+            }')
+          
+          # 결과 확인
+          if echo "${response}" | grep -q '"errors"'; then
+            echo "Failed to trigger Xcode Cloud workflow:"
+            echo "${response}" | jq '.'
+            exit 1
+          fi
+          
+          build_id=$(echo "${response}" | jq -r '.data.id')
+          echo "✅ Successfully triggered Xcode Cloud build: ${build_id}"
+          
+          # Cleanup
+          rm -f "${key_path}"
