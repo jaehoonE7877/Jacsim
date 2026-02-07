@@ -38,6 +38,9 @@ let config = Config(
             .local(path: "../Plugins/ConfigurationPlugin")
         ],
         generationOptions: .options(
+            // On CI environments without Tuist auth, skip server interactions
+            // instead of failing the whole command.
+            optionalAuthentication: true,
             buildInsightsDisabled: false,
             testInsightsDisabled: false,
             disableSandbox: true,
