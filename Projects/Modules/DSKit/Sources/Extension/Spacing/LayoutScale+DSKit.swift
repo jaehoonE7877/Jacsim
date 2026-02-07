@@ -16,7 +16,9 @@ public enum JSLayoutScale {
     public static let maxDisplayRatio: CGFloat = 1.12
 
     public static var shortSide: CGFloat {
-        min(UIScreen.main.bounds.width, UIScreen.main.bounds.height)
+        MainActor.assumeIsolated {
+            min(UIScreen.main.bounds.width, UIScreen.main.bounds.height)
+        }
     }
 
     public static var layoutRatio: CGFloat {

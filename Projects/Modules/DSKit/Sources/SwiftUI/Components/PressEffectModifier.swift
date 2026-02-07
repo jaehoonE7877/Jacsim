@@ -24,6 +24,7 @@ public struct PressEffectModifier: ViewModifier {
 }
 
 extension View {
+    @MainActor
     public func pressEffect() -> some View {
         modifier(PressEffectModifier())
     }
@@ -44,6 +45,7 @@ public struct PressEffectButtonStyle: ButtonStyle {
 }
 
 extension Button {
+    @MainActor
     public func pressEffect() -> some View {
         buttonStyle(PressEffectButtonStyle())
     }

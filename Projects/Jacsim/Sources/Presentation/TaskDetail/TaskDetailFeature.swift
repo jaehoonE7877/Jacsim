@@ -139,16 +139,16 @@ public struct TaskDetailFeature {
                 )
                 
             case .loadImages:
-                return .run { [task = state.task, dayData = state.dayViewData, imageStore] send in
+                return .run { [task = state.task, dayDates = state.dayViewData.map(\.date), imageStore] send in
                     let coverImageData = await imageStore.loadImage(task.mainImageKey)
                     let coverImage = coverImageData.flatMap { UIImage(data: $0) }
                     await send(.coverImageLoaded(coverImage))
 
-                    for data in dayData {
-                        guard let key = task.imageKey(for: task.dayArray.firstIndex(where: { $0 == data.date }) ?? 0) else { continue }
+                    for date in dayDates {
+                        guard let key = task.imageKey(for: task.dayArray.firstIndex(where: { $0 == date }) ?? 0) else { continue }
                         let imageData = await imageStore.loadImage(key)
                         let image = imageData.flatMap { UIImage(data: $0) }
-                        await send(.imageLoaded(data.date, image))
+                        await send(.imageLoaded(date, image))
                     }
                 }
                 

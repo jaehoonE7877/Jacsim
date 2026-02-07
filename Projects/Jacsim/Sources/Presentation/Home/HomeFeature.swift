@@ -272,13 +272,14 @@ public struct HomeFeature {
                     activeCount: state.activeTasks.count,
                     heroTaskTitle: state.heroTask?.title
                 )
-                return .run { [heroTask = state.heroTask, remainingTasks] send in
+                let imageStore = imageStore
+                return .run { [heroTask = state.heroTask, remainingTasks, imageStore] send in
                     if let heroTask = heroTask {
-                        let heroImageData = await self.imageStore.loadImage(heroTask.mainImageKey)
+                        let heroImageData = await imageStore.loadImage(heroTask.mainImageKey)
                         await send(.heroImageLoaded(heroImageData))
                     }
                     for task in remainingTasks {
-                        let imageData = await self.imageStore.loadImage(task.mainImageKey)
+                        let imageData = await imageStore.loadImage(task.mainImageKey)
                         await send(.miniCardImageLoaded(id: task.id.rawValue, imageData: imageData))
                     }
                 }

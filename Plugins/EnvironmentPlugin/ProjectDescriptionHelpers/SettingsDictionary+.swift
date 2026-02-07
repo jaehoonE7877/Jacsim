@@ -41,6 +41,10 @@ public extension SettingsDictionary {
             "-ObjC"
         ]
     ]
+
+    func setSwiftLanguageVersion(_ version: String) -> SettingsDictionary {
+        merging(["SWIFT_VERSION": SettingValue(stringLiteral: version)])
+    }
     
     func setHeaderSearchPath(isModule: Bool) -> SettingsDictionary {
         let GTMString = isModule
@@ -91,6 +95,9 @@ public extension SettingsDictionary {
     }
     
     func setCodeSignAutomatic() -> SettingsDictionary {
-        .baseSettings.automaticCodeSigning(devTeam: SigningEnvironment.developmentTeamID)
+        merging([
+            "CODE_SIGN_STYLE": SettingValue(stringLiteral: "Automatic"),
+            "DEVELOPMENT_TEAM": SettingValue(stringLiteral: SigningEnvironment.developmentTeamID)
+        ])
     }
 }

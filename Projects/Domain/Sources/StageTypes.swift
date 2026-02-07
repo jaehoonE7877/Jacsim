@@ -1,6 +1,6 @@
 import Foundation
 
-public enum StageType: Int, CaseIterable {
+public enum StageType: Int, CaseIterable, Sendable {
     case three = 3
     case seven = 7
     case fifteen = 15
@@ -30,12 +30,12 @@ public enum StageResult: String, Sendable, Codable, Equatable {
     case fail
 }
 
-public enum ChallengeStatus: String {
+public enum ChallengeStatus: String, Sendable {
     case inProgress
     case done
 }
 
-public enum ChallengeResult: String {
+public enum ChallengeResult: String, Sendable {
     case none
     case success
     case fail

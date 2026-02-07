@@ -8,6 +8,11 @@
 import Foundation
 import ProjectDescription
 
+public enum SwiftLanguageVersion: String {
+    case v5 = "5"
+    case v6 = "6"
+}
+
 public enum FeatureTarget {
     case app    // iOS App
     case interface      // Feature Interface

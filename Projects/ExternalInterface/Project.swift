@@ -4,6 +4,7 @@ import DependencyPlugin
 
 let project = Project.makeModule(
     name: "ExternalInterface",
+    swiftLanguageVersion: .v6,
     targets: [.unitTest, .staticFramework],
     internalDependencies: [
         .domain
