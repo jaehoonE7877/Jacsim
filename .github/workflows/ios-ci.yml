@@ -13,15 +13,94 @@ permissions:
   id-token: write
 
 jobs:
-  lint-and-test:
+  detect-changes:
     runs-on: macos-latest
+    outputs:
+      should_run: ${{ steps.detect.outputs.should_run }}
+      schemes_json: ${{ steps.detect.outputs.schemes_json }}
+    steps:
+      - name: Checkout (policy-compliant)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          git init .
+          git remote add origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          git fetch --no-tags --depth=1 origin "${GITHUB_SHA}"
+          git checkout --detach FETCH_HEAD
+          git remote set-url origin "https://github.com/${GITHUB_REPOSITORY}.git"
+
+      - name: Detect changed test schemes
+        id: detect
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_SHA_PR: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA_PR: ${{ github.event.pull_request.head.sha }}
+          BASE_SHA_PUSH: ${{ github.event.before }}
+          HEAD_SHA_PUSH: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          case "${EVENT_NAME}" in
+            pull_request)
+              base_sha="${BASE_SHA_PR}"
+              head_sha="${HEAD_SHA_PR}"
+              force_all="false"
+              ;;
+            push)
+              base_sha="${BASE_SHA_PUSH}"
+              head_sha="${HEAD_SHA_PUSH}"
+              force_all="false"
+              ;;
+            workflow_dispatch)
+              base_sha=""
+              head_sha="${HEAD_SHA_PUSH}"
+              force_all="true"
+              ;;
+            *)
+              base_sha=""
+              head_sha="${HEAD_SHA_PUSH}"
+              force_all="false"
+              ;;
+          esac
+
+          if [[ -n "${base_sha}" && "${base_sha}" != "0000000000000000000000000000000000000000" ]]; then
+            git fetch --no-tags --depth=1 origin "${base_sha}"
+            git diff --name-only "${base_sha}" "${head_sha}" > changed_files.txt
+          else
+            if git rev-parse --verify "${head_sha}^" >/dev/null 2>&1; then
+              git diff --name-only "${head_sha}^" "${head_sha}" > changed_files.txt
+            else
+              : > changed_files.txt
+            fi
+          fi
+
+          echo "Changed files:"
+          if [[ -s changed_files.txt ]]; then
+            sed -n '1,200p' changed_files.txt
+          else
+            echo "(none detected)"
+          fi
+
+          if [[ "${force_all}" == "true" ]]; then
+            bash scripts/ci/detect-test-schemes.sh --force-all changed_files.txt
+          else
+            bash scripts/ci/detect-test-schemes.sh changed_files.txt
+          fi
+
+  module-unit-tests:
+    needs: detect-changes
+    if: ${{ needs.detect-changes.outputs.should_run == 'true' }}
+    runs-on: macos-latest
+    strategy:
+      fail-fast: false
+      max-parallel: 4
+      matrix:
+        scheme: ${{ fromJson(needs.detect-changes.outputs.schemes_json) }}
     env:
       TUIST_FULL_HANDLE: ${{ vars.TUIST_FULL_HANDLE }}
       TUIST_APPLE_TEAM_ID: ${{ vars.APPLE_TEAM_ID }}
       TUIST_CONFIG_TOKEN: ${{ secrets.TUIST_CONFIG_TOKEN }}
-      TUIST_XCODE_CACHE: ${{ vars.TUIST_XCODE_CACHE }}
       TUIST_COMPATIBLE_XCODE_VERSION: "16.0"
-      GOOGLE_SERVICE_INFO_PLIST_BASE64: ${{ secrets.GOOGLE_SERVICE_INFO_PLIST_BASE64 }}
       TUIST_CACHE_PROFILE: ci
     steps:
       - name: Checkout (policy-compliant)
@@ -53,24 +132,41 @@ jobs:
       - name: Install dependencies
         run: mise exec -- tuist install
 
-      - name: Setup Tuist Xcode cache (optional)
-        if: ${{ env.TUIST_FULL_HANDLE != '' && (env.TUIST_XCODE_CACHE == '1' || env.TUIST_XCODE_CACHE == 'true') }}
-        run: mise exec -- tuist setup cache
+      - name: Test (${{ matrix.scheme }})
+        run: mise exec -- tuist test ${{ matrix.scheme }}
 
-      - name: Restore GoogleService-Info.plist (optional on CI)
-        if: ${{ env.GOOGLE_SERVICE_INFO_PLIST_BASE64 != '' }}
-        run: bash scripts/ci/prepare-google-service-info.sh
-
-      - name: Lint (optional)
+  lint-and-test:
+    name: lint-and-test
+    needs:
+      - detect-changes
+      - module-unit-tests
+    if: ${{ always() }}
+    runs-on: macos-latest
+    steps:
+      - name: Finalize CI result
+        env:
+          DETECT_RESULT: ${{ needs.detect-changes.result }}
+          SHOULD_RUN: ${{ needs.detect-changes.outputs.should_run }}
+          TEST_RESULT: ${{ needs.module-unit-tests.result }}
         run: |
-          if [ -x "scripts/ci/lint.sh" ]; then
-            bash scripts/ci/lint.sh
-          else
-            echo "No lint script configured. Skipping."
+          set -euo pipefail
+          echo "detect-changes.result=${DETECT_RESULT}"
+          echo "should_run=${SHOULD_RUN}"
+          echo "module-unit-tests.result=${TEST_RESULT}"
+
+          if [[ "${DETECT_RESULT}" != "success" ]]; then
+            echo "Change detection failed."
+            exit 1
           fi
 
-      - name: Generate workspace
-        run: mise exec -- tuist generate --no-open
+          if [[ "${SHOULD_RUN}" != "true" ]]; then
+            echo "No relevant module changes. Unit tests skipped."
+            exit 0
+          fi
 
-      - name: Test
-        run: mise exec -- tuist test Jacsim
+          if [[ "${TEST_RESULT}" != "success" ]]; then
+            echo "One or more module unit test jobs failed."
+            exit 1
+          fi
+
+          echo "All selected module unit tests passed."
