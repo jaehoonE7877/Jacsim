@@ -55,6 +55,14 @@ public struct HomeView: View {
             if let store = store.scope(state: \.setting, action: \.setting) {
                 SettingView(store: store)
             }
+        case .walkThrough:
+            if let store = store.scope(state: \.walkThrough, action: \.walkThrough) {
+                WalkThroughView(store: store)
+            }
+        case .openSourceLicense:
+            if let store = store.scope(state: \.openSourceLicense, action: \.openSourceLicense) {
+                OpenSourceLicenseView(store: store)
+            }
         }
     }
 

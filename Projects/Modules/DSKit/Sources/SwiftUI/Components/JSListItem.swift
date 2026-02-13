@@ -42,23 +42,33 @@ public struct JSListItem: View {
     }
 
     public var body: some View {
-        Button(action: { action?() }) {
-            HStack(spacing: .jsSM) {
-                iconView
-
-                textContent
-
-                Spacer()
-
-                accessoryView
+        if let action {
+            Button(action: action) {
+                rowContent
             }
-            .padding(.vertical, .jsXS)
-            .padding(.horizontal, .jsMD)
-            .contentShape(Rectangle())
+            .buttonStyle(PlainButtonStyle())
+            .background(backgroundColor)
+            .frame(minHeight: 44.jsScaled(.touchTarget))
+        } else {
+            rowContent
+                .background(backgroundColor)
+                .frame(minHeight: 44.jsScaled(.touchTarget))
         }
-        .buttonStyle(PlainButtonStyle())
-        .background(backgroundColor)
-        .frame(minHeight: 44.jsScaled(.touchTarget))
+    }
+
+    private var rowContent: some View {
+        HStack(spacing: .jsSM) {
+            iconView
+
+            textContent
+
+            Spacer()
+
+            accessoryView
+        }
+        .padding(.vertical, .jsXS)
+        .padding(.horizontal, .jsMD)
+        .contentShape(Rectangle())
     }
 
     @ViewBuilder

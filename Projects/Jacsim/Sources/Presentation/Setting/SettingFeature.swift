@@ -11,11 +11,14 @@ public enum ThemeMode: String, Equatable, CaseIterable {
 public struct SettingFeature {
     @ObservableState
     public struct State: Equatable {
-        public var version: String = "1.0.0"
+        public var version: String
         public var isNotificationEnabled: Bool = false
         public var isLoading: Bool = false
         public var theme: ThemeMode = .system
-        public init() {}
+
+        public init() {
+            version = Bundle.main.shortVersionString
+        }
     }
 
     public enum Action: Equatable {
@@ -89,5 +92,13 @@ public struct SettingFeature {
                 return .none
             }
         }
+    }
+}
+
+private extension Bundle {
+    var shortVersionString: String {
+        (object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String)
+        ?? (object(forInfoDictionaryKey: "CFBundleVersion") as? String)
+        ?? ""
     }
 }

@@ -105,6 +105,8 @@ public struct HomeFeature {
             case update(TaskUpdateFeature.State)
             case allTasks(AllTaskFeature.State)
             case setting(SettingFeature.State)
+            case walkThrough(WalkThroughFeature.State)
+            case openSourceLicense(OpenSourceLicenseFeature.State)
         }
         @CasePathable
         @dynamicMemberLookup
@@ -113,12 +115,16 @@ public struct HomeFeature {
             case update(TaskUpdateFeature.Action)
             case allTasks(AllTaskFeature.Action)
             case setting(SettingFeature.Action)
+            case walkThrough(WalkThroughFeature.Action)
+            case openSourceLicense(OpenSourceLicenseFeature.Action)
         }
         public var body: some ReducerOf<Self> {
             Scope(state: \.detail, action: \.detail) { TaskDetailFeature() }
             Scope(state: \.update, action: \.update) { TaskUpdateFeature() }
             Scope(state: \.allTasks, action: \.allTasks) { AllTaskFeature() }
             Scope(state: \.setting, action: \.setting) { SettingFeature() }
+            Scope(state: \.walkThrough, action: \.walkThrough) { WalkThroughFeature() }
+            Scope(state: \.openSourceLicense, action: \.openSourceLicense) { OpenSourceLicenseFeature() }
         }
     }
 
@@ -142,6 +148,7 @@ public struct HomeFeature {
     @Dependency(\.taskQueryClient) var taskQueryClient
     @Dependency(\.activeTaskService) var activeTaskService
     @Dependency(\.imageStore) var imageStore
+    @Dependency(\.externalNavigationClient) var externalNavigationClient
 
     private enum LoadingPolicy {
         static let minimumSkeletonDuration: TimeInterval = 1.25
@@ -395,6 +402,30 @@ public struct HomeFeature {
                     state.path.append(.update(TaskUpdateFeature.State(task: task, index: index)))
                 }
                 return .none
+
+            case let .path(.element(id: _, action: .allTasks(.delegate(.navigateToDetail(task))))):
+                state.path.append(.detail(TaskDetailFeature.State(task: task)))
+                return .none
+
+            case .path(.element(id: _, action: .setting(.delegate(.navigateToWalkThrough)))):
+                state.path.append(.walkThrough(WalkThroughFeature.State(fromSetting: true)))
+                return .none
+
+            case .path(.element(id: _, action: .setting(.delegate(.navigateToLicence)))):
+                state.path.append(.openSourceLicense(OpenSourceLicenseFeature.State()))
+                return .none
+
+            case .path(.element(id: _, action: .setting(.delegate(.presentMailCompose)))):
+                state.toastMessage = "문의하기를 시도했어요. 메일 앱이 열리지 않으면 메일 설정을 확인해 주세요"
+                return .run { [externalNavigationClient] _ in
+                    _ = await externalNavigationClient.openInquiryMail()
+                }
+
+            case .path(.element(id: _, action: .setting(.delegate(.openReviewURL)))):
+                state.toastMessage = "리뷰 요청을 시도했어요. 의견을 남겨주시면 큰 힘이 돼요"
+                return .run { [externalNavigationClient] _ in
+                    _ = await externalNavigationClient.requestReview()
+                }
 
             case .path(.element(id: _, action: .update(.delegate(.saveSuccess)))):
                 state.path.removeLast()
