@@ -109,7 +109,7 @@ public struct CalendarView: View {
             title: task.title,
             icon: isCompleted ? "checkmark.circle.fill" : "circle",
             iconColor: isCompleted ? .primaryNormal : .labelDisable,
-            accessory: isCompleted ? .checkmark(isSelected: true) : .disclosure
+            accessory: isCompleted ? .checkmark(isSelected: true) : .none
         )
         .padding(.vertical, .jsXS)
         .background(

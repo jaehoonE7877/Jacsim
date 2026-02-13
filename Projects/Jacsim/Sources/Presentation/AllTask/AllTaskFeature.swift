@@ -19,7 +19,7 @@ public struct AllTaskFeature {
         public init() {}
     }
 
-    public enum Action {
+    public enum Action: Equatable {
         case onAppear
         case tasksResponse(ongoing: [Domain.Task], success: [Domain.Task], fail: [Domain.Task])
         case tasksLoadFailed
@@ -27,6 +27,11 @@ public struct AllTaskFeature {
         case toggleSuccess
         case toggleFail
         case taskTapped(Domain.Task)
+        case delegate(Delegate)
+
+        public enum Delegate: Equatable {
+            case navigateToDetail(Domain.Task)
+        }
     }
 
     @Dependency(\.taskQueryClient) var taskQueryClient
@@ -67,7 +72,9 @@ public struct AllTaskFeature {
             case .toggleFail:
                 state.isFailExpanded.toggle()
                 return .none
-            case .taskTapped:
+            case let .taskTapped(task):
+                return .send(.delegate(.navigateToDetail(task)))
+            case .delegate:
                 return .none
             }
         }
