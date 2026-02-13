@@ -46,7 +46,7 @@ public struct JSHeroCardSkeleton: View {
         .frame(height: JSHeroCardLayout.height)
         .background(
             RoundedRectangle(cornerRadius: JSHeroCardLayout.cornerRadius)
-                .fill(Color.surfaceElevated)
+                .fill(Color.skeletonContainer)
                 .jsShadow(.medium)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
         )

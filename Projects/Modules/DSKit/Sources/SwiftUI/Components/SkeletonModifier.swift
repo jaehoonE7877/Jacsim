@@ -16,7 +16,7 @@ public struct SkeletonModifier<S: Shape & Sendable>: ViewModifier {
                 Group {
                     if isLoading {
                         shape
-                            .fill(Color.surfaceOverlay.opacity(0.1)) // Keep generic gray for skeleton base
+                            .fill(Color.skeletonBase)
                             .shimmering()
                     }
                 }
@@ -41,6 +41,7 @@ public struct ShimmeringModifier: ViewModifier {
                         .mask(content)
                 }
             }
+            .clipped()
             .onAppear {
                 withAnimation(
                     .linear(duration: 1.8)
@@ -55,9 +56,9 @@ public struct ShimmeringModifier: ViewModifier {
         LinearGradient(
             gradient: Gradient(stops: [
                 .init(color: .clear, location: 0.0),
-                .init(color: Color.surfaceOverlay.opacity(0.22), location: 0.44),
-                .init(color: Color.surfaceOverlay.opacity(0.46), location: 0.5),
-                .init(color: Color.surfaceOverlay.opacity(0.22), location: 0.56),
+                .init(color: Color.skeletonHighlight.opacity(0.1), location: 0.44),
+                .init(color: Color.skeletonHighlight.opacity(0.22), location: 0.5),
+                .init(color: Color.skeletonHighlight.opacity(0.1), location: 0.56),
                 .init(color: .clear, location: 1.0)
             ]),
             startPoint: .leading,

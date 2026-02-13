@@ -44,13 +44,13 @@ public struct JSMiniCardSkeleton: View {
         )
         .background(
             RoundedRectangle(cornerRadius: JSMiniHeroCardLayout.cornerRadius)
-                .fill(Color.surfaceElevated)
+                .fill(Color.skeletonContainer)
                 .jsShadow(.medium)
         )
         .clipShape(RoundedRectangle(cornerRadius: JSMiniHeroCardLayout.cornerRadius))
         .overlay(
             RoundedRectangle(cornerRadius: JSMiniHeroCardLayout.cornerRadius)
-                .stroke(.white.opacity(0.1), lineWidth: 1)
+                .stroke(Color.skeletonHighlight.opacity(0.2), lineWidth: 1)
         )
     }
 }
