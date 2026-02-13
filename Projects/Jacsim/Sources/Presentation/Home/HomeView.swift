@@ -443,7 +443,11 @@ public struct HomeView: View {
         .padding(.jsMD)
         .background(
             RoundedRectangle(cornerRadius: .jsRadiusMD)
-                .fill(Color.backgroundStrong)
+                .fill(Color.skeletonContainer)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: .jsRadiusMD)
+                .stroke(Color.skeletonHighlight.opacity(0.16), lineWidth: 1)
         )
         .padding(.horizontal, .jsXL)
     }
@@ -461,7 +465,11 @@ public struct HomeView: View {
         .frame(maxWidth: .infinity, minHeight: 72.jsScaled())
         .background(
             RoundedRectangle(cornerRadius: .jsRadiusMD)
-                .fill(Color.backgroundAlternative)
+                .fill(Color.skeletonBase.opacity(0.52))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: .jsRadiusMD)
+                .stroke(Color.skeletonHighlight.opacity(0.2), lineWidth: 1)
         )
     }
 

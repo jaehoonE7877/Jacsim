@@ -4,10 +4,17 @@ import UIKit
 import DSKit
 
 private enum StartupTransitionPolicy {
-    static let splashMinimumDuration: UInt64 = 550_000_000
-    static let splashMaximumDuration: UInt64 = 1_600_000_000
+    static var splashMinimumDuration: UInt64 {
+        UInt64(StartupDisplayPolicy.splashMinimumDuration * 1_000_000_000)
+    }
+    static var splashMaximumDuration: UInt64 {
+        UInt64(StartupDisplayPolicy.splashMaximumDuration * 1_000_000_000)
+    }
     static let splashDismissAnimationDuration: Double = 0.24
     static let splashDismissScale: CGFloat = 0.985
+    static let launchFrameHoldDuration: Double = 0.12
+    static let ambientAnimationDuration: Double = 0.32
+    static let launchLogoWidthRatio: CGFloat = 0.615385
 }
 
 public struct AppView: View {
@@ -69,13 +76,14 @@ public struct AppView: View {
         .onAppear {
             store.send(.onAppear)
             refreshThemeFromPreferences()
-            startSplashIfNeeded()
+            startSplashIfNeeded(for: store.state)
             updateSplashEligibility(for: store.state)
         }
         .onReceive(NotificationCenter.default.publisher(for: .jacsimThemeChanged)) { _ in
             refreshThemeFromPreferences()
         }
         .onChange(of: store.state) { _, newState in
+            startSplashIfNeeded(for: newState)
             updateSplashEligibility(for: newState)
         }
         .onChange(of: minDurationPassed) { _, _ in
@@ -87,8 +95,22 @@ public struct AppView: View {
         .preferredColorScheme(colorScheme)
     }
 
-    private func startSplashIfNeeded() {
+    private func startSplashIfNeeded(for state: AppFeature.State) {
         guard !hasPlayedSplash else { return }
+
+        switch state {
+        case .onboarding:
+            // Startup splash is intentionally skipped for onboarding flow.
+            hasPlayedSplash = true
+            isSplashVisible = false
+            minDurationPassed = true
+            didObserveHomeFetchStart = false
+            canDismissFromLoad = true
+            return
+
+        case .main:
+            break
+        }
 
         hasPlayedSplash = true
         isSplashVisible = true
@@ -132,6 +154,8 @@ public struct AppView: View {
     }
 
     private func updateSplashEligibility(for state: AppFeature.State) {
+        guard isSplashVisible else { return }
+
         switch state {
         case .onboarding:
             canDismissFromLoad = true
@@ -168,77 +192,50 @@ private struct AppStartupSplashView: View {
     let reduceMotion: Bool
     let hasLogo: Bool
 
-    @State private var showLogo = false
-    @State private var showGlow = false
+    @State private var showAmbientHighlight = false
+    @State private var logoScale: CGFloat = 1
+    @State private var didStartAnimation = false
 
     var body: some View {
-        ZStack {
-            Rectangle()
-                .fill(.ultraThinMaterial)
-                .ignoresSafeArea()
-                .overlay {
-                    LinearGradient(
-                        colors: [
-                            Color.backgroundNormal.opacity(0.72),
-                            Color.backgroundStrong.opacity(0.54)
-                        ],
-                        startPoint: .top,
-                        endPoint: .bottom
-                    )
-                    .ignoresSafeArea()
-                }
-
-            Circle()
-                .fill(Color.primaryNormal.opacity(showGlow ? 0.1 : 0.0))
-                .frame(width: 280.jsScaled(), height: 280.jsScaled())
-                .blur(radius: 24.jsScaled())
-                .scaleEffect(reduceMotion ? 1 : (showGlow ? 1 : 0.84))
-
-            Circle()
-                .fill(Color.backgroundAlternative.opacity(showGlow ? 0.22 : 0.12))
-                .frame(width: 220.jsScaled(), height: 220.jsScaled())
-                .blur(radius: 18.jsScaled())
-                .scaleEffect(reduceMotion ? 1 : (showGlow ? 1 : 0.92))
+        GeometryReader { proxy in
+            let logoSize = proxy.size.width * StartupTransitionPolicy.launchLogoWidthRatio
 
             ZStack {
+                Color.backgroundNormal
+                    .ignoresSafeArea()
+
                 Circle()
-                    .fill(Color.backgroundAlternative.opacity(0.74))
-                    .frame(width: 184.jsScaled(), height: 184.jsScaled())
-                    .overlay(
-                        Circle()
-                            .stroke(Color.labelDisable.opacity(0.28), lineWidth: 1.jsScaled())
-                    )
-                    .shadow(
-                        color: Color.surfaceOverlay.opacity(0.24),
-                        radius: 16.jsScaled(),
-                        x: 0,
-                        y: 7.jsScaled()
-                    )
+                    .fill(Color.primaryNormal.opacity(0.08))
+                    .frame(width: logoSize * 1.08, height: logoSize * 1.08)
+                    .blur(radius: 18)
+                    .opacity(showAmbientHighlight ? 1 : 0)
+                    .scaleEffect(showAmbientHighlight ? 1.02 : 0.96)
 
                 if hasLogo {
                     Image("jacsimMonotone")
                         .resizable()
                         .scaledToFit()
-                        .frame(width: 128.jsScaled(), height: 128.jsScaled())
+                        .frame(width: logoSize, height: logoSize)
                 } else {
                     Image(systemName: "checklist")
-                        .font(.system(size: 64.jsScaled(.displayTypography), weight: .semibold))
+                        .font(.system(size: logoSize * 0.32, weight: .semibold))
                         .foregroundColor(.primaryNormal)
+                        .frame(width: logoSize, height: logoSize)
                 }
             }
-            .opacity(showLogo ? 1 : 0)
-            .scaleEffect(reduceMotion ? 1 : (showLogo ? 1 : 0.96))
+            .scaleEffect(logoScale)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
             .onAppear {
-                if reduceMotion {
-                    showGlow = true
-                    showLogo = true
-                } else {
-                    withAnimation(.easeOut(duration: 0.36)) {
-                        showGlow = true
-                    }
-                    withAnimation(.easeOut(duration: 0.34).delay(0.08)) {
-                        showLogo = true
-                    }
+                guard !didStartAnimation else { return }
+                didStartAnimation = true
+                guard !reduceMotion else { return }
+
+                withAnimation(
+                    .easeOut(duration: StartupTransitionPolicy.ambientAnimationDuration)
+                        .delay(StartupTransitionPolicy.launchFrameHoldDuration)
+                ) {
+                    showAmbientHighlight = true
+                    logoScale = 1.012
                 }
             }
         }
