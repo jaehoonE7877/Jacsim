@@ -35,7 +35,6 @@ let package = Package(
         .package(url: "https://github.com/TimOliver/TOCropViewController.git", from: "2.6.1"),
         
         //MARK: - DI
-        .package(url: "https://github.com/Swinject/Swinject.git", from: "2.8.4"),
         .package(url: "https://github.com/pointfreeco/swift-composable-architecture", from: "1.23.1"),
     ]
 )
