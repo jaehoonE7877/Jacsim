@@ -144,7 +144,10 @@ public struct HomeFeature {
     @Dependency(\.imageStore) var imageStore
 
     private enum LoadingPolicy {
-        static let minimumSkeletonDuration: TimeInterval = 1.25
+        // Splash minimum duration overlaps with Home loading.
+        // Keep startup skeleton long enough so users still perceive the animation.
+        static let minimumInitialSkeletonDuration: TimeInterval =
+            StartupDisplayPolicy.initialHomeSkeletonMinimumDuration
     }
 
     private enum CancelID {
@@ -160,10 +163,14 @@ public struct HomeFeature {
             switch action {
             case .onAppear:
                 guard !state.isFetching else { return .none }
+                let shouldShowInitialSkeleton = state.tasks.isEmpty
+                let minimumLoadingDuration = shouldShowInitialSkeleton
+                    ? LoadingPolicy.minimumInitialSkeletonDuration
+                    : 0
                 let shouldStartListener = !state.hasStartedNotificationListener
                 state.hasStartedNotificationListener = true
                 state.isFetching = true
-                state.isLoading = state.tasks.isEmpty
+                state.isLoading = shouldShowInitialSkeleton
                 state.loadFailed = false
                 state.loadingStartTime = Date()
                 Logger.homeFetchingTasks()
@@ -183,14 +190,15 @@ public struct HomeFeature {
                                 completedRecords: completedCount
                             )
                         }
-                        // Ensure minimum skeleton display duration for stable loading perception.
-                        let elapsed = Date().timeIntervalSince(fetchStartTime)
-                        let minDisplay = LoadingPolicy.minimumSkeletonDuration
-                        let remaining = minDisplay - elapsed
-                        if remaining > 0 {
-                            try await _Concurrency.Task.sleep(
-                                nanoseconds: UInt64(remaining * 1_000_000_000)
-                            )
+                        if minimumLoadingDuration > 0 {
+                            // Ensure minimum startup skeleton duration for stable loading perception.
+                            let elapsed = Date().timeIntervalSince(fetchStartTime)
+                            let remaining = minimumLoadingDuration - elapsed
+                            if remaining > 0 {
+                                try await _Concurrency.Task.sleep(
+                                    nanoseconds: UInt64(remaining * 1_000_000_000)
+                                )
+                            }
                         }
                         await send(.tasksResponse(tasks))
                     } catch is CancellationError {
