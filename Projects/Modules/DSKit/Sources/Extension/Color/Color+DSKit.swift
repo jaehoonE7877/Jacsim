@@ -33,4 +33,8 @@ public extension Color {
     static var surfaceElevated: Color { Color(uiColor: .surfaceElevated) }
     static var surfaceOverlay: Color { Color(uiColor: .surfaceOverlay) }
     static var surfaceSelected: Color { Color(uiColor: .surfaceSelected) }
+
+    static var skeletonContainer: Color { Color(uiColor: .skeletonContainer) }
+    static var skeletonBase: Color { Color(uiColor: .skeletonBase) }
+    static var skeletonHighlight: Color { Color(uiColor: .skeletonHighlight) }
 }

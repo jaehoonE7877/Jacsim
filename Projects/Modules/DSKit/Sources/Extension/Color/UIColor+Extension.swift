@@ -265,6 +265,37 @@ public extension UIColor {
     }
 }
 
+//MARK: - Skeleton
+public extension UIColor {
+
+    static var skeletonContainer: UIColor {
+        return UIColor { (traits) -> UIColor in
+            if traits.userInterfaceStyle == .dark {
+                return UIColor(hexString: "#2C2D2F")
+            }
+            return UIColor(hexString: "#FFFFFF")
+        }
+    }
+
+    static var skeletonBase: UIColor {
+        return UIColor { (traits) -> UIColor in
+            if traits.userInterfaceStyle == .dark {
+                return UIColor(hexString: "#3A3D42")
+            }
+            return UIColor(hexString: "#E9EDF2")
+        }
+    }
+
+    static var skeletonHighlight: UIColor {
+        return UIColor { (traits) -> UIColor in
+            if traits.userInterfaceStyle == .dark {
+                return UIColor(hexString: "#6F7785")
+            }
+            return UIColor(hexString: "#D4DCE7")
+        }
+    }
+}
+
 extension UIColor {
     ///Hex값으로 컬러 할당 가능
     /// Tag: #Hex
