@@ -1,6 +1,7 @@
 import SwiftUI
 import ComposableArchitecture
 import DSKit
+import UIKit
 
 public struct WalkThroughView: View {
     @Bindable var store: StoreOf<WalkThroughFeature>
@@ -67,12 +68,19 @@ public struct WalkThroughView: View {
 
                 if !store.fromSetting {
                     if store.currentPage == 2, store.notificationPermissionStatus == .denied {
-                        Text("알림 권한이 꺼져 있어요. 설정 > 알림에서 허용해 주세요.")
-                            .font(.jsBodySmall)
-                            .foregroundColor(.labelAlternative)
-                            .multilineTextAlignment(.center)
-                            .padding(.horizontal, .jsLG)
-                            .padding(.bottom, .jsSM)
+                        VStack(spacing: .jsSM) {
+                            Text("알림 권한이 꺼져 있어요. 설정 > 알림에서 허용해 주세요.")
+                                .font(.jsBodySmall)
+                                .foregroundColor(.labelAlternative)
+                                .multilineTextAlignment(.center)
+
+                            JSButton(title: "설정 열기", style: .secondary, size: .medium) {
+                                openSystemSettings()
+                            }
+                            .padding(.horizontal, .jsXL)
+                        }
+                        .padding(.horizontal, .jsLG)
+                        .padding(.bottom, .jsSM)
                     }
 
                     JSButton(
@@ -123,6 +131,14 @@ public struct WalkThroughView: View {
             }
         }
         .animation(.easeInOut(duration: JSAnimation.durationNormal), value: store.currentPage)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("온보딩 진행 상태")
+        .accessibilityValue("\(store.currentPage + 1) / \(store.totalPages)")
+    }
+
+    private func openSystemSettings() {
+        guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
+        UIApplication.shared.open(url)
     }
 }
 

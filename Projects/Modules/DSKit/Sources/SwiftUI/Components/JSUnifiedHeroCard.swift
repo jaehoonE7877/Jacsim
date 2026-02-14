@@ -9,6 +9,8 @@ public struct JSUnifiedHeroCard: View {
     let image: Image?
     let isTodayCertified: Bool
     let onTap: () -> Void
+    let accessibilityLabelText: String?
+    let accessibilityHintText: String?
 
     public init(
         title: String,
@@ -18,6 +20,8 @@ public struct JSUnifiedHeroCard: View {
         completedDays: Int,
         image: Image? = nil,
         isTodayCertified: Bool,
+        accessibilityLabel: String? = nil,
+        accessibilityHint: String? = nil,
         onTap: @escaping () -> Void
     ) {
         self.title = title
@@ -27,6 +31,8 @@ public struct JSUnifiedHeroCard: View {
         self.completedDays = completedDays
         self.image = image
         self.isTodayCertified = isTodayCertified
+        self.accessibilityLabelText = accessibilityLabel
+        self.accessibilityHintText = accessibilityHint
         self.onTap = onTap
     }
 
@@ -123,6 +129,15 @@ public struct JSUnifiedHeroCard: View {
         .buttonStyle(PressEffectButtonStyle())
         .frame(maxWidth: .infinity)
         .contentShape(RoundedRectangle(cornerRadius: JSHeroCardLayout.cornerRadius))
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(accessibilityLabelText ?? defaultAccessibilityLabel)
+        .accessibilityHint(accessibilityHintText ?? "작심 상세 화면으로 이동합니다")
+    }
+
+    private var defaultAccessibilityLabel: String {
+        let progressText = "진행률 \(Int(progress * 100))퍼센트"
+        let completionText = "\(completedDays)일 완료"
+        return "\(title), \(progressText), \(completionText)"
     }
 }
 

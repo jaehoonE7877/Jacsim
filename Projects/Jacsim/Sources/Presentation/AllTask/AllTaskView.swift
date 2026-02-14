@@ -17,10 +17,7 @@ public struct AllTaskView: View {
             subtitle: "진행 상태별로 모든 작심을 확인해요",
             state: screenState
         ) {
-            if PresentationRedesignFlags.isEnabled(.allTask) &&
-                PresentationRedesignFlags.isSectionEnabled(.allTaskSummary) {
-                summaryCard
-            }
+            summaryCard
 
             sectionView(
                 title: "진행 중",

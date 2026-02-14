@@ -113,7 +113,7 @@ public struct HomeView: View {
         }) {
             HStack(spacing: .jsXS) {
                 Image(systemName: "plus")
-                    .font(.system(size: 19.jsScaled(.displayTypography), weight: .semibold))
+                    .font(.jsHeadlineSmall)
                     .foregroundColor(.white)
 
                 if fabState == .expanded {
@@ -188,6 +188,8 @@ public struct HomeView: View {
                     }
                     .buttonStyle(PlainButtonStyle())
                     .zIndex(10)
+                    .accessibilityLabel("설정")
+                    .accessibilityHint("설정 화면으로 이동합니다")
                 }
                 .padding(.horizontal, .jsXL)
                 .padding(.top, .jsXS)
@@ -197,11 +199,8 @@ public struct HomeView: View {
                         .transition(.opacity)
                 } else if let heroTask = store.heroTask {
                     let remainingTasks = Array(store.activeTasks.dropFirst())
-                    if PresentationRedesignFlags.isEnabled(.home) &&
-                        PresentationRedesignFlags.isSectionEnabled(.homeSummary) {
-                        homeSummaryCard
-                            .transition(.opacity)
-                    }
+                    homeSummaryCard
+                        .transition(.opacity)
                     VStack(alignment: .leading, spacing: .jsMD) {
                         let heroImage = store.heroTaskImageData.flatMap { UIImage(data: $0) }.map { Image(uiImage: $0) }
                         JSUnifiedHeroCard(
@@ -212,6 +211,8 @@ public struct HomeView: View {
                             completedDays: heroTask.completedDays,
                             image: heroImage,
                             isTodayCertified: heroTask.isCompleted(on: Date()),
+                            accessibilityLabel: "\(heroTask.title), 진행률 \(Int(heroTask.progress * 100))퍼센트, \(heroTask.completedDays)일 완료",
+                            accessibilityHint: "작심 상세 화면으로 이동합니다",
                             onTap: {
                                 store.send(.taskTapped(heroTask))
                                 triggerTapFeedback()
@@ -222,8 +223,7 @@ public struct HomeView: View {
                     .frame(maxWidth: .infinity)
                     .padding(.horizontal, .jsXL)
                     
-                    if !remainingTasks.isEmpty &&
-                        PresentationRedesignFlags.isSectionEnabled(.homeMiniCards) {
+                    if !remainingTasks.isEmpty {
                         VStack(alignment: .leading, spacing: .jsMD) {
                             HStack {
                                 Text("진행 중인 작심들")
@@ -240,6 +240,8 @@ public struct HomeView: View {
                                         .font(.jsButtonSmall)
                                         .foregroundColor(.labelAlternative)
                                 }
+                                .accessibilityLabel("전체보기")
+                                .accessibilityHint("모든 작심 목록 화면으로 이동합니다")
                             }
                             .padding(.horizontal, .jsXL)
                             
@@ -313,6 +315,8 @@ public struct HomeView: View {
                     .cornerRadius(.jsRadiusMD)
             }
             .padding(.horizontal, .jsXL)
+            .accessibilityLabel("작심 시작하기")
+            .accessibilityHint("새 할 일 추가 화면을 엽니다")
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 40.jsScaled())
@@ -377,48 +381,45 @@ public struct HomeView: View {
                 totalDays: data.totalDays,
                 completedDays: data.completedDays,
                 image: image,
-                isTodayCertified: data.isTodayCertified
+                isTodayCertified: data.isTodayCertified,
+                accessibilityLabel: "\(data.title), 진행률 \(Int(data.progress * 100))퍼센트, \(data.completedDays)일 완료",
+                accessibilityHint: "작심 상세 화면으로 이동합니다"
             )
         }
     }
 
     private var skeletonContent: some View {
         VStack(alignment: .leading, spacing: 24.jsScaled()) {
-            if PresentationRedesignFlags.isEnabled(.home) &&
-                PresentationRedesignFlags.isSectionEnabled(.homeSummary) {
-                homeSummarySkeleton
-            }
+            homeSummarySkeleton
 
             JSHeroCardSkeleton()
                 .padding(.horizontal, 24.jsScaled())
 
-            if PresentationRedesignFlags.isSectionEnabled(.homeMiniCards) {
-                VStack(alignment: .leading, spacing: 16.jsScaled()) {
-                    HStack {
-                        RoundedRectangle(cornerRadius: 8)
-                            .frame(width: 140.jsScaled(), height: 20.jsScaled())
-                            .skeleton(shape: RoundedRectangle(cornerRadius: 8))
+            VStack(alignment: .leading, spacing: 16.jsScaled()) {
+                HStack {
+                    RoundedRectangle(cornerRadius: 8)
+                        .frame(width: 140.jsScaled(), height: 20.jsScaled())
+                        .skeleton(shape: RoundedRectangle(cornerRadius: 8))
 
-                        Spacer()
+                    Spacer()
 
-                        RoundedRectangle(cornerRadius: 6)
-                            .frame(width: 60.jsScaled(), height: 16.jsScaled())
-                            .skeleton(shape: RoundedRectangle(cornerRadius: 6))
-                    }
-                    .padding(.horizontal, 24.jsScaled())
-
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 12.jsScaled()) {
-                            JSMiniCardSkeleton()
-                            JSMiniCardSkeleton()
-                            JSMiniCardSkeleton()
-                        }
-                        .padding(.horizontal, 20.jsScaled())
-                        .padding(.vertical, 4.jsScaled())
-                    }
-                    .frame(height: 200.jsScaled())
-                    .padding(.horizontal, 0)
+                    RoundedRectangle(cornerRadius: 6)
+                        .frame(width: 60.jsScaled(), height: 16.jsScaled())
+                        .skeleton(shape: RoundedRectangle(cornerRadius: 6))
                 }
+                .padding(.horizontal, 24.jsScaled())
+
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 12.jsScaled()) {
+                        JSMiniCardSkeleton()
+                        JSMiniCardSkeleton()
+                        JSMiniCardSkeleton()
+                    }
+                    .padding(.horizontal, 20.jsScaled())
+                    .padding(.vertical, 4.jsScaled())
+                }
+                .frame(height: 200.jsScaled())
+                .padding(.horizontal, 0)
             }
         }
     }

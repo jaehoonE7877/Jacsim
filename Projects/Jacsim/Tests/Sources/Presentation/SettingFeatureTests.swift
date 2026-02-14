@@ -55,6 +55,10 @@ private actor UserSettingsRecorder {
     }
 }
 
+private enum PermissionRequestError: Error {
+    case failed
+}
+
 @MainActor
 @Test("loadNotificationSettings는 전역 설정값을 반영한다")
 func settingFeatureLoadNotificationSettingsUsesGlobalToggle() async {
@@ -167,4 +171,90 @@ func settingFeatureToggleOnSchedulesAllReminders() async {
     #expect(await scheduler.scheduledCount() == 2)
     #expect(await scheduler.cancelledCount() == 0)
     #expect(await userSettings.lastUpdatedValue() == true)
+}
+
+@MainActor
+@Test("알림 ON 토글 시 권한 거부면 OFF로 복원하고 배너를 노출한다")
+func settingFeatureToggleOnDeniedShowsPermissionBanner() async {
+    let reminders: [ReminderInfo] = [
+        ReminderInfo(taskId: TaskID(UUID()), title: "A", time: DateComponents(hour: 9, minute: 0))
+    ]
+    let userSettings = UserSettingsRecorder(globalNotificationEnabled: false, reminders: reminders)
+    let scheduler = NotificationSchedulerRecorder()
+
+    let store = TestStore(initialState: SettingFeature.State()) {
+        SettingFeature()
+    } withDependencies: {
+        $0.userSettingsRepository = UserSettingsRepositoryPort(
+            isNotificationEnabled: { await userSettings.isNotificationEnabled() },
+            getAllReminders: { await userSettings.getAllReminders() },
+            updateNotificationEnabled: { await userSettings.updateNotificationEnabled($0) }
+        )
+        $0.notificationScheduler = NotificationSchedulerPort(
+            scheduleDailyReminder: { taskID, _, _ in await scheduler.recordScheduled(taskID) },
+            cancelReminder: { taskID in await scheduler.recordCancelled(taskID) },
+            cancelAllReminders: {},
+            requestAuthorization: { false }
+        )
+    }
+
+    await store.send(.notificationToggleChanged(true)) {
+        $0.isNotificationEnabled = true
+        $0.isLoading = true
+        $0.notificationBanner = nil
+    }
+    await store.receive(.notificationSettingsResponse(false)) {
+        $0.isNotificationEnabled = false
+        $0.isLoading = false
+    }
+    await store.receive(.notificationPermissionDenied) {
+        $0.notificationBanner = .permissionDenied
+    }
+
+    #expect(await scheduler.scheduledCount() == 0)
+    #expect(await scheduler.cancelledCount() == 0)
+    #expect(await userSettings.lastUpdatedValue() == nil)
+}
+
+@MainActor
+@Test("알림 ON 토글 시 권한 요청 오류면 오류 배너를 노출한다")
+func settingFeatureToggleOnPermissionErrorShowsErrorBanner() async {
+    let reminders: [ReminderInfo] = [
+        ReminderInfo(taskId: TaskID(UUID()), title: "A", time: DateComponents(hour: 9, minute: 0))
+    ]
+    let userSettings = UserSettingsRecorder(globalNotificationEnabled: false, reminders: reminders)
+    let scheduler = NotificationSchedulerRecorder()
+
+    let store = TestStore(initialState: SettingFeature.State()) {
+        SettingFeature()
+    } withDependencies: {
+        $0.userSettingsRepository = UserSettingsRepositoryPort(
+            isNotificationEnabled: { await userSettings.isNotificationEnabled() },
+            getAllReminders: { await userSettings.getAllReminders() },
+            updateNotificationEnabled: { await userSettings.updateNotificationEnabled($0) }
+        )
+        $0.notificationScheduler = NotificationSchedulerPort(
+            scheduleDailyReminder: { taskID, _, _ in await scheduler.recordScheduled(taskID) },
+            cancelReminder: { taskID in await scheduler.recordCancelled(taskID) },
+            cancelAllReminders: {},
+            requestAuthorization: { throw PermissionRequestError.failed }
+        )
+    }
+
+    await store.send(.notificationToggleChanged(true)) {
+        $0.isNotificationEnabled = true
+        $0.isLoading = true
+        $0.notificationBanner = nil
+    }
+    await store.receive(.notificationSettingsResponse(false)) {
+        $0.isNotificationEnabled = false
+        $0.isLoading = false
+    }
+    await store.receive(.notificationPermissionError) {
+        $0.notificationBanner = .permissionError
+    }
+
+    #expect(await scheduler.scheduledCount() == 0)
+    #expect(await scheduler.cancelledCount() == 0)
+    #expect(await userSettings.lastUpdatedValue() == nil)
 }

@@ -71,14 +71,10 @@ public struct NewTaskView: View {
                 titleSection
                 stageSection
             case .photo:
-                if PresentationRedesignFlags.isSectionEnabled(.taskFormPhoto) {
-                    photoSection
-                }
+                photoSection
             case .alarmConfirm:
                 challengeSummarySection
-                if PresentationRedesignFlags.isSectionEnabled(.taskFormAlarm) {
-                    alarmSection
-                }
+                alarmSection
             }
         }
         .navigationBarTitleDisplayMode(.inline)

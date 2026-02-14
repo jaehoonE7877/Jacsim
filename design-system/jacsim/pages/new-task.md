@@ -14,8 +14,8 @@
 
 ## Component Overrides
 
-- 대표 사진 섹션 토글: `PresentationSectionKey.taskFormPhoto`
-- 알림 섹션 토글: `PresentationSectionKey.taskFormAlarm`
+- 대표 사진 섹션: 사진 단계에서 기본 노출
+- 알림 섹션: 알림 확인 단계에서 기본 노출
 
 ## Accessibility Notes
 

@@ -14,9 +14,7 @@
 
 ## Component Overrides
 
-- 개요 배너 토글: `PresentationSectionKey.taskDetailOverview`
-- 오늘 상태 토글: `PresentationSectionKey.taskDetailTodayStatus`
-- 기록 목록 토글: `PresentationSectionKey.taskDetailRecordList`
+- 본문 섹션은 Stage -> Today Status -> Record List를 고정 노출
 
 ## Accessibility Notes
 

@@ -15,7 +15,7 @@
 
 ## Component Overrides
 
-- 요약 카드 노출은 `PresentationSectionKey.allTaskSummary`
+- 요약 카드는 기본 노출
 - 리스트 아이템은 `JSListItem` + semantic status color
 
 ## Accessibility Notes

@@ -14,8 +14,8 @@
 
 ## Component Overrides
 
-- 요약 카드: `PresentationSectionKey.homeSummary`
-- 미니 카드: `PresentationSectionKey.homeMiniCards`
+- 요약 카드: 기본 노출
+- 미니 카드: 남은 진행 중 작심이 있을 때 노출
 - Hero 카드는 `JSUnifiedHeroCard` 우선
 
 ## Accessibility Notes

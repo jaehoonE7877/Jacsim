@@ -47,15 +47,9 @@ public struct TaskEditView: View {
                 )
             }
         ) {
-            if PresentationRedesignFlags.isSectionEnabled(.taskFormPhoto) {
-                photoSection
-            }
-
+            photoSection
             basicInfoSection
-
-            if PresentationRedesignFlags.isSectionEnabled(.taskFormAlarm) {
-                alarmSection
-            }
+            alarmSection
         }
         .navigationTitle("작심 수정")
         .navigationBarTitleDisplayMode(.inline)

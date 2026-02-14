@@ -14,4 +14,4 @@
 
 ## Component Overrides
 
-- 사진 섹션 토글: `PresentationSectionKey.taskFormPhoto`
+- 사진 섹션: 기본 노출

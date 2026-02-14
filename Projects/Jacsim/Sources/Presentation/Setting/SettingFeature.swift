@@ -1,5 +1,6 @@
 import Foundation
 import ComposableArchitecture
+import UIKit
 
 public enum ThemeMode: String, Equatable, CaseIterable {
     case system = "system"
@@ -9,12 +10,18 @@ public enum ThemeMode: String, Equatable, CaseIterable {
 
 @Reducer
 public struct SettingFeature {
+    public enum NotificationBanner: Equatable {
+        case permissionDenied
+        case permissionError
+    }
+
     @ObservableState
     public struct State: Equatable {
         public var version: String
         public var isNotificationEnabled: Bool = false
         public var isLoading: Bool = false
         public var theme: ThemeMode = .system
+        public var notificationBanner: NotificationBanner? = nil
 
         public init() {
             version = Bundle.main.shortVersionString
@@ -29,6 +36,10 @@ public struct SettingFeature {
         case loadNotificationSettings
         case notificationToggleChanged(Bool)
         case notificationSettingsResponse(Bool)
+        case notificationPermissionDenied
+        case notificationPermissionError
+        case notificationBannerDismissed
+        case openSystemSettingsTapped
         case themeChanged(ThemeMode)
         
         case delegate(Delegate)
@@ -60,6 +71,8 @@ public struct SettingFeature {
                    let mode = ThemeMode(rawValue: raw) {
                     state.theme = mode
                 }
+                state.notificationBanner = nil
+
                 state.isLoading = true
                 return .run { [userSettingsRepository] send in
                     let isEnabled = await userSettingsRepository.isNotificationEnabled()
@@ -68,26 +81,77 @@ public struct SettingFeature {
             case let .notificationToggleChanged(isEnabled):
                 state.isNotificationEnabled = isEnabled
                 state.isLoading = true
-                return .run { [notificationScheduler, userSettingsRepository] send in
-                    let reminderUseCase = ReminderSchedulingUseCase()
-                    let reminders = await userSettingsRepository.getAllReminders()
-                    await reminderUseCase.syncGlobalReminders(
-                        isEnabled: isEnabled,
-                        reminders: reminders,
-                        notificationScheduler: notificationScheduler
-                    )
-                    await userSettingsRepository.updateNotificationEnabled(isEnabled)
-                    await send(.notificationSettingsResponse(isEnabled))
+                state.notificationBanner = nil
+
+                guard isEnabled else {
+                    return .run { [notificationScheduler, userSettingsRepository] send in
+                        let reminderUseCase = ReminderSchedulingUseCase()
+                        let reminders = await userSettingsRepository.getAllReminders()
+                        await reminderUseCase.syncGlobalReminders(
+                            isEnabled: false,
+                            reminders: reminders,
+                            notificationScheduler: notificationScheduler
+                        )
+                        await userSettingsRepository.updateNotificationEnabled(false)
+                        await send(.notificationSettingsResponse(false))
+                    }
                 }
+
+                return .run { [notificationScheduler, userSettingsRepository] send in
+                    do {
+                        let granted = try await notificationScheduler.requestAuthorization()
+                        guard granted else {
+                            await send(.notificationSettingsResponse(false))
+                            await send(.notificationPermissionDenied)
+                            return
+                        }
+
+                        let reminderUseCase = ReminderSchedulingUseCase()
+                        let reminders = await userSettingsRepository.getAllReminders()
+                        await reminderUseCase.syncGlobalReminders(
+                            isEnabled: true,
+                            reminders: reminders,
+                            notificationScheduler: notificationScheduler
+                        )
+                        await userSettingsRepository.updateNotificationEnabled(true)
+                        await send(.notificationSettingsResponse(true))
+                    } catch {
+                        await send(.notificationSettingsResponse(false))
+                        await send(.notificationPermissionError)
+                    }
+                }
+
+            case .notificationPermissionDenied:
+                state.notificationBanner = .permissionDenied
+                return .none
+
+            case .notificationPermissionError:
+                state.notificationBanner = .permissionError
+                return .none
+
+            case .notificationBannerDismissed:
+                state.notificationBanner = nil
+                return .none
+
+            case .openSystemSettingsTapped:
+                return .run { _ in
+                    guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
+                    await MainActor.run {
+                        UIApplication.shared.open(url)
+                    }
+                }
+
             case let .notificationSettingsResponse(isEnabled):
                 state.isNotificationEnabled = isEnabled
                 state.isLoading = false
                 return .none
+
             case let .themeChanged(mode):
                 state.theme = mode
                 appPreferences.setThemeModeRaw(mode.rawValue)
                 NotificationCenter.default.post(name: .jacsimThemeChanged, object: nil)
                 return .none
+
             case .delegate:
                 return .none
             }

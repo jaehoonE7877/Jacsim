@@ -8,6 +8,8 @@ public struct JSMiniHeroCard: View {
     let image: Image?
     let isTodayCertified: Bool
     let onTap: () -> Void
+    let accessibilityLabelText: String?
+    let accessibilityHintText: String?
 
     public init(
         title: String,
@@ -16,6 +18,8 @@ public struct JSMiniHeroCard: View {
         completedDays: Int,
         image: Image? = nil,
         isTodayCertified: Bool = false,
+        accessibilityLabel: String? = nil,
+        accessibilityHint: String? = nil,
         onTap: @escaping () -> Void
     ) {
         self.title = title
@@ -24,6 +28,8 @@ public struct JSMiniHeroCard: View {
         self.completedDays = completedDays
         self.image = image
         self.isTodayCertified = isTodayCertified
+        self.accessibilityLabelText = accessibilityLabel
+        self.accessibilityHintText = accessibilityHint
         self.onTap = onTap
     }
 
@@ -118,10 +124,19 @@ public struct JSMiniHeroCard: View {
             .jsShadow(.medium)
         }
         .buttonStyle(PressEffectButtonStyle())
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(accessibilityLabelText ?? defaultAccessibilityLabel)
+        .accessibilityHint(accessibilityHintText ?? "작심 상세 화면으로 이동합니다")
     }
 
     private var hasImage: Bool {
         image != nil
+    }
+
+    private var defaultAccessibilityLabel: String {
+        let progressText = "진행률 \(Int(progress * 100))퍼센트"
+        let completionText = "\(completedDays)일 완료"
+        return "\(title), \(progressText), \(completionText)"
     }
 }
 
@@ -168,6 +183,8 @@ public struct JSMiniHeroCardCarousel: View {
                         completedDays: card.completedDays,
                         image: card.image,
                         isTodayCertified: card.isTodayCertified,
+                        accessibilityLabel: card.accessibilityLabel,
+                        accessibilityHint: card.accessibilityHint,
                         onTap: { onCardTap(card.id) }
                     )
                 }
@@ -188,6 +205,8 @@ public struct JSMiniHeroCardData: Identifiable {
     public let completedDays: Int
     public let image: Image?
     public let isTodayCertified: Bool
+    public let accessibilityLabel: String?
+    public let accessibilityHint: String?
 
     public init(
         id: UUID,
@@ -196,7 +215,9 @@ public struct JSMiniHeroCardData: Identifiable {
         totalDays: Int,
         completedDays: Int,
         image: Image? = nil,
-        isTodayCertified: Bool = false
+        isTodayCertified: Bool = false,
+        accessibilityLabel: String? = nil,
+        accessibilityHint: String? = nil
     ) {
         self.id = id
         self.title = title
@@ -205,6 +226,8 @@ public struct JSMiniHeroCardData: Identifiable {
         self.completedDays = completedDays
         self.image = image
         self.isTodayCertified = isTodayCertified
+        self.accessibilityLabel = accessibilityLabel
+        self.accessibilityHint = accessibilityHint
     }
 }
 

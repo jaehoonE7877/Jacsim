@@ -28,10 +28,7 @@ public struct TaskUpdateView: View {
                 errorMessage
             }
 
-            if PresentationRedesignFlags.isSectionEnabled(.taskFormPhoto) {
-                photoPickerSection
-            }
-
+            photoPickerSection
             memoInputSection
         }
         .navigationTitle("오늘 인증")

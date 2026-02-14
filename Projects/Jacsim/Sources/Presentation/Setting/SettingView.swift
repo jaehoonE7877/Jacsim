@@ -39,6 +39,7 @@ public struct SettingView: View {
                 )
                 .font(.jsBodyMedium)
                 .foregroundColor(.labelNormal)
+                .disabled(store.isLoading)
 
                 if store.isLoading {
                     RedesignStateBanner(
@@ -46,6 +47,10 @@ public struct SettingView: View {
                         icon: "clock.arrow.circlepath",
                         tintColor: .primaryNormal
                     )
+                }
+
+                if let banner = store.notificationBanner {
+                    notificationBanner(banner)
                 }
             }
 
@@ -88,6 +93,43 @@ public struct SettingView: View {
         }
     }
 
+    @ViewBuilder
+    private func notificationBanner(_ banner: SettingFeature.NotificationBanner) -> some View {
+        switch banner {
+        case .permissionDenied:
+            RedesignStateBanner(
+                text: "알림 권한이 꺼져 있어요. 시스템 설정에서 알림을 허용해 주세요",
+                icon: "bell.slash.fill",
+                tintColor: .destructive
+            )
+
+            HStack(spacing: .jsSM) {
+                JSButton(title: "설정 열기", style: .secondary, size: .medium) {
+                    store.send(.openSystemSettingsTapped)
+                }
+                JSButton(title: "닫기", style: .secondary, size: .medium) {
+                    store.send(.notificationBannerDismissed)
+                }
+            }
+
+        case .permissionError:
+            RedesignStateBanner(
+                text: "권한 요청 중 문제가 발생했어요. 다시 시도하거나 설정에서 확인해 주세요",
+                icon: "exclamationmark.triangle.fill",
+                tintColor: .destructive
+            )
+
+            HStack(spacing: .jsSM) {
+                JSButton(title: "설정 열기", style: .secondary, size: .medium) {
+                    store.send(.openSystemSettingsTapped)
+                }
+                JSButton(title: "닫기", style: .secondary, size: .medium) {
+                    store.send(.notificationBannerDismissed)
+                }
+            }
+        }
+    }
+
     private func actionRow(
         title: String,
         systemImage: String,
@@ -116,6 +158,8 @@ public struct SettingView: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .accessibilityLabel(title)
+        .accessibilityHint("해당 설정 화면으로 이동합니다")
     }
 }
 

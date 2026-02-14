@@ -67,14 +67,10 @@ public struct TaskDetailView: View {
                     VStack(spacing: .jsLG) {
                         stageInfoSection
 
-                        if PresentationRedesignFlags.isSectionEnabled(.taskDetailTodayStatus) {
-                            todayStatusSection
-                        }
+                        todayStatusSection
 
-                        if PresentationRedesignFlags.isSectionEnabled(.taskDetailRecordList) {
-                            recordListSection
-                                .id("recordListSection")
-                        }
+                        recordListSection
+                            .id("recordListSection")
                     }
                     .padding(.top, .jsLG)
                     .padding(.horizontal, .jsMD)
@@ -414,14 +410,25 @@ public struct TaskDetailView: View {
             } else {
                 LazyVStack(spacing: .jsSM) {
                     ForEach(store.dayViewData) { data in
-                        DailyRecordRow(data: data)
-                            .onTapGesture {
-                                store.send(.dayTapped(data.date))
-                            }
+                        Button(action: {
+                            store.send(.dayTapped(data.date))
+                        }) {
+                            DailyRecordRow(data: data)
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("\(formattedDateForAccessibility(data.date)), \(data.isChecked ? "인증 완료" : "미인증")")
+                        .accessibilityHint("해당 날짜 인증 화면으로 이동합니다")
                     }
                 }
             }
         }
+    }
+
+    private func formattedDateForAccessibility(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "ko_KR")
+        formatter.dateFormat = "M월 d일 EEEE"
+        return formatter.string(from: date)
     }
 
     @ViewBuilder
