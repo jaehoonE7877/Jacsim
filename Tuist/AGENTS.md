@@ -1,20 +1,33 @@
 # Tuist
 
-## Overview
-- 프로젝트/타깃/템플릿을 코드로 생성하는 기준 레이어
-- 모듈 구조와 빌드 구성을 선언적으로 유지
+**Purpose**: Declarative project/target/template generation layer. Source of truth for module structure and build config.
 
-## Where to Find
-| Task | Location |
+## Key Paths
+
+| Task | Path |
 |---|---|
-| 모듈 생성 템플릿 | `Tuist/ProjectDescriptionHelpers/Project+Templates.swift` |
-| 타깃 종류 정의 | `Tuist/ProjectDescriptionHelpers/FeatureTarget.swift` |
-| 템플릿 파일 | `Tuist/Templates/**` |
-| 워크스페이스 구성 | `Workspace.swift` |
+| Module templates | `ProjectDescriptionHelpers/Project+Templates.swift` |
+| Target type definitions | `ProjectDescriptionHelpers/FeatureTarget.swift` |
+| Scaffold templates | `Templates/**` |
+| Workspace config | `../Workspace.swift` |
 
-## Conventions
-- 타깃 구조 변경은 템플릿/헬퍼에 먼저 반영
-- xcconfig 매핑과 함께 변경해 드리프트 방지
+## Verify
 
-## Anti-Patterns
-- Xcode UI에서만 설정 수정 후 Tuist 정의 미반영
+```bash
+tuist generate   # must complete without errors after changes
+```
+
+## Rules
+
+### ✅ Do
+
+- Reflect target/structure changes in templates and helpers first
+- Keep xcconfig mappings in sync when modifying build configuration
+
+### ⚠️ Ask First
+
+- Changes to `Tuist.swift`, `Workspace.swift`, or plugin references — they affect all modules
+
+### 🚫 Do Not
+
+- Modify settings only through Xcode UI without updating Tuist definitions

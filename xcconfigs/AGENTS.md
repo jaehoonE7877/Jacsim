@@ -1,19 +1,26 @@
 # xcconfigs
 
-## Overview
-- 빌드 설정을 `.xcconfig`로 분리해 중앙 관리
-- 프로젝트/타깃 공통 설정을 명시적으로 관리
+**Purpose**: Centralized `.xcconfig` build settings for all projects and targets.
 
-## Where to Find
-| Task | Location |
+## Key Paths
+
+| Task | Path |
 |---|---|
-| xcconfig 경로 매핑 | `Plugins/ConfigurationPlugin/ProjectDescriptionHelpers/Configurations.swift` |
-| 프로젝트 공통 설정 | `xcconfigs/Base/Projects/**` |
-| 타깃 타입별 설정 | `xcconfigs/targets/**` |
+| xcconfig → Tuist mapping | `../Plugins/ConfigurationPlugin/ProjectDescriptionHelpers/Configurations.swift` |
+| Project-level settings | `Base/Projects/**` |
+| Target-type settings | `targets/**` |
 
-## Conventions
-- 설정 변경은 xcconfig 기준으로 수행
-- Tuist ConfigurationPlugin 매핑과 항상 동기화
+## Rules
 
-## Anti-Patterns
-- Xcode GUI에서만 설정 변경 후 xcconfig 미반영
+### ✅ Do
+
+- Make build setting changes via xcconfig files, not Xcode GUI
+- Keep ConfigurationPlugin mapping in sync after any change
+
+### ⚠️ Ask First
+
+- xcconfig changes may affect all targets — confirm scope before editing
+
+### 🚫 Do Not
+
+- Edit Xcode build settings through the GUI without reflecting changes here
