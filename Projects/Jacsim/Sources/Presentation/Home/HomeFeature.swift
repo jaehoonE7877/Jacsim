@@ -145,7 +145,7 @@ public struct HomeFeature {
         }
     }
 
-    @Dependency(\.taskQueryClient) var taskQueryClient
+    @Dependency(\.taskRepository) var taskRepository
     @Dependency(\.activeTaskService) var activeTaskService
     @Dependency(\.imageStore) var imageStore
     @Dependency(\.externalNavigationClient) var externalNavigationClient
@@ -182,9 +182,9 @@ public struct HomeFeature {
                 state.loadingStartTime = Date()
                 Logger.homeFetchingTasks()
                 let fetchStartTime = Date()
-                let fetchEffect: Effect<Action> = .run { [taskQueryClient] send in
+                let fetchEffect: Effect<Action> = .run { [taskRepository] send in
                     do {
-                        let tasks = try await taskQueryClient.fetchActiveTasks()
+                        let tasks = try await taskRepository.fetchActiveTasks()
                         Logger.homeTasksFetched(
                             count: tasks.count,
                             duration: Date().timeIntervalSince(fetchStartTime)
@@ -245,9 +245,9 @@ public struct HomeFeature {
                 state.loadFailed = false
                 return .merge(
                     .cancel(id: CancelID.imageLoading),
-                    .run { [taskQueryClient] send in
+                    .run { [taskRepository] send in
                         do {
-                            let tasks = try await taskQueryClient.fetchActiveTasks()
+                            let tasks = try await taskRepository.fetchActiveTasks()
                             await send(.tasksResponse(tasks))
                         } catch is CancellationError {
                             return
@@ -324,9 +324,9 @@ public struct HomeFeature {
                 return .none
 
             case let .notificationTapped(id):
-                return .run { [taskQueryClient] send in
+                return .run { [taskRepository] send in
                     do {
-                        let task = try await taskQueryClient.fetchTask(TaskID(id))
+                        let task = try await taskRepository.fetchTask(TaskID(id))
                         await send(.notificationTaskLoaded(task))
                     } catch {
                         await send(.notificationTaskLoaded(nil))
@@ -352,9 +352,9 @@ public struct HomeFeature {
                 }
                 let idString = url.path.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
                 guard let id = UUID(uuidString: idString) else { return .none }
-                return .run { [taskQueryClient] send in
+                return .run { [taskRepository] send in
                     do {
-                        let task = try await taskQueryClient.fetchTask(TaskID(id))
+                        let task = try await taskRepository.fetchTask(TaskID(id))
                         await send(.deepLinkTaskLoaded(task))
                     } catch {
                         await send(.deepLinkTaskLoaded(nil))

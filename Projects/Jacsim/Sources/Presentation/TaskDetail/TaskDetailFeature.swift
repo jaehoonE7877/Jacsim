@@ -96,11 +96,13 @@ public struct TaskDetailFeature {
         }
     }
 
-    @Dependency(\.taskCommandClient) var taskCommandClient
-    @Dependency(\.stageFlowClient) var stageFlowClient
+    @Dependency(\.taskRepository) var taskRepository
     @Dependency(\.imageStore) var imageStore
     @Dependency(\.notificationScheduler) var notificationScheduler
     @Dependency(\.challengeStateService) var challengeStateService
+    @Dependency(\.updateTaskSettingsUseCase) var updateTaskSettingsUseCase
+    @Dependency(\.stageEvaluationService) var stageEvaluationService
+    @Dependency(\.stageProgressionUseCase) var stageProgressionUseCase
 
     private enum DeleteFlowPolicy {
         static let confirmDelaySeconds = 2
@@ -131,9 +133,13 @@ public struct TaskDetailFeature {
                 }
                 return .merge(
                     .send(.loadImages),
-                    .run { [stageFlowClient, stage = evaluation.currentStage] send in
+                    .run { [stageEvaluationService, stage = evaluation.currentStage] send in
                         guard let stage else { return }
-                        let result = await stageFlowClient.evaluateStageResult(stage)
+                        let result = stageEvaluationService.evaluateStage(
+                            endDate: stage.endDate,
+                            durationDays: stage.durationDays,
+                            successDays: stage.successDays
+                        )
                         await send(.stageResultChecked(result))
                     }
                 )
@@ -194,10 +200,10 @@ public struct TaskDetailFeature {
                 let taskId = state.task.id
                 return .merge(
                     .cancel(id: CancelID.deleteFlowCountdown),
-                    .run { [taskCommandClient, notificationScheduler] send in
+                    .run { [taskRepository, notificationScheduler] send in
                         await notificationScheduler.cancelReminder(taskId)
                         do {
-                            try await taskCommandClient.deleteTask(taskId)
+                            try await taskRepository.deleteTask(taskId)
                         } catch {
                             Logger.certificationFailed(error: error)
                         }
@@ -266,10 +272,10 @@ public struct TaskDetailFeature {
                 let taskId = state.task.id
                 return .merge(
                     .cancel(id: CancelID.deleteFlowCountdown),
-                    .run { [taskCommandClient, notificationScheduler] send in
+                    .run { [taskRepository, notificationScheduler] send in
                         await notificationScheduler.cancelReminder(taskId)
                         do {
-                            try await taskCommandClient.deleteTask(taskId)
+                            try await taskRepository.deleteTask(taskId)
                         } catch {
                             Logger.certificationFailed(error: error)
                         }
@@ -291,17 +297,20 @@ public struct TaskDetailFeature {
                 let task = state.task
                 let durationDays = task.currentStage?.durationDays ?? task.stages.last?.durationDays ?? 3
                 state.editTask = nil
-                return .run { [taskCommandClient, imageStore, task, durationDays] send in
-                    await taskCommandClient.updateTaskInfo(task, title, durationDays, isAlarmEnabled, alarmDate)
-                    if let image {
-                        let data = image.jpegData(compressionQuality: 0.4)
-                        if let data {
-                            do {
-                                _ = try await imageStore.saveImage(task.mainImageKey, data)
-                            } catch {
-                                Logger.certificationFailed(error: error)
-                            }
-                        }
+                let mainImageData = image?.jpegData(compressionQuality: 0.4)
+                let input = UpdateTaskSettingsUseCase.Input(
+                    task: task,
+                    title: title,
+                    durationDays: durationDays,
+                    isAlarmEnabled: isAlarmEnabled,
+                    alarmDate: alarmDate,
+                    mainImageData: mainImageData
+                )
+                return .run { [updateTaskSettingsUseCase] send in
+                    do {
+                        try await updateTaskSettingsUseCase.execute(input)
+                    } catch {
+                        Logger.certificationFailed(error: error)
                     }
                     await send(.onAppear)
                 }
@@ -337,8 +346,12 @@ public struct TaskDetailFeature {
 
             case .nextStageButtonTapped:
                 let taskId = state.task.id
-                return .run { [stageFlowClient] send in
-                    await stageFlowClient.createNextStage(taskId)
+                return .run { [stageProgressionUseCase] send in
+                    do {
+                        try await stageProgressionUseCase.createNextStage(for: taskId)
+                    } catch {
+                        Logger.certificationFailed(error: error)
+                    }
                     await send(.stagePopupDismissed)
                     await send(.onAppear)
                 }
@@ -349,8 +362,12 @@ public struct TaskDetailFeature {
                 return .none
 
             case .retryStageButtonTapped:
-                return .run { [stageFlowClient, taskId = state.task.id] send in
-                    await stageFlowClient.resetStageRecords(taskId)
+                return .run { [stageProgressionUseCase, taskId = state.task.id] send in
+                    do {
+                        try await stageProgressionUseCase.resetStageRecords(for: taskId)
+                    } catch {
+                        Logger.certificationFailed(error: error)
+                    }
                     await send(.onAppear)
                 }
 

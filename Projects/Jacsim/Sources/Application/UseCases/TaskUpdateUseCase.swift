@@ -1,24 +1,14 @@
 import Foundation
+import Domain
+import ExternalInterface
 
-public protocol TaskUpdateUseCaseProtocol: Sendable {
-    func updateTaskInfo(
-        task: Task,
-        title: String,
-        durationDays: Int,
-        isNotificationEnabled: Bool,
-        alarmDate: Date
-    ) async throws -> Task
-}
+public struct TaskUpdateUseCase: Sendable {
+    private let taskRepository: TaskRepositoryPort
 
-public struct TaskUpdateUseCase: TaskUpdateUseCaseProtocol {
-    public typealias UpdateTaskHandler = @Sendable (Task) async throws -> Void
-    
-    private let updateTask: UpdateTaskHandler
-    
-    public init(updateTask: @escaping UpdateTaskHandler) {
-        self.updateTask = updateTask
+    public init(taskRepository: TaskRepositoryPort) {
+        self.taskRepository = taskRepository
     }
-    
+
     public func updateTaskInfo(
         task: Task,
         title: String,
@@ -30,14 +20,14 @@ public struct TaskUpdateUseCase: TaskUpdateUseCaseProtocol {
         updatedTask.title = title
         updatedTask.isNotificationEnabled = isNotificationEnabled
         updatedTask.alarm = isNotificationEnabled ? alarmDate : nil
-        
+
         if var lastStage = updatedTask.stages.last {
             lastStage.durationDays = durationDays
             let index = updatedTask.stages.count - 1
             updatedTask.stages[index] = lastStage
         }
-        
-        try await updateTask(updatedTask)
+
+        try await taskRepository.updateTask(updatedTask)
         return updatedTask
     }
 }

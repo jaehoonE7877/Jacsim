@@ -1,15 +1,16 @@
 import Foundation
 import Testing
-@testable import Domain
+import Domain
+import ExternalInterface
+
+@testable import Jacsim
 
 struct CertificationUseCaseTests {
     @Test
     func testCertifyToday() async throws {
         let store = MockTaskStore()
-        let useCase = CertificationUseCase(
-            fetchTask: { try await store.fetchTask(id: $0) },
-            updateTask: { try await store.updateTask($0) }
-        )
+        let repository = makeRepositoryPort(store: store)
+        let useCase = CertificationUseCase(taskRepository: repository)
 
         let today = Date()
         let yesterday = Calendar.current.date(byAdding: .day, value: -1, to: today)!
@@ -35,7 +36,7 @@ struct CertificationUseCaseTests {
             imagePath: "image.jpg"
         )
 
-        let updatedTask = try await store.fetchTask(id: task.id)
+        let updatedTask = await store.fetchTask(id: task.id)
         #expect(updatedTask?.records[1].check == true)
         #expect(updatedTask?.records[1].memo == "Completed!")
         #expect(updatedTask?.records[1].imagePath == "image.jpg")
@@ -44,10 +45,8 @@ struct CertificationUseCaseTests {
     @Test
     func testCertifyTodayThrowsForInvalidIndex() async {
         let store = MockTaskStore()
-        let useCase = CertificationUseCase(
-            fetchTask: { try await store.fetchTask(id: $0) },
-            updateTask: { try await store.updateTask($0) }
-        )
+        let repository = makeRepositoryPort(store: store)
+        let useCase = CertificationUseCase(taskRepository: repository)
 
         let task = Task(
             id: TaskID(UUID()),
@@ -73,10 +72,8 @@ struct CertificationUseCaseTests {
     @Test
     func testUpdateMemo() async throws {
         let store = MockTaskStore()
-        let useCase = CertificationUseCase(
-            fetchTask: { try await store.fetchTask(id: $0) },
-            updateTask: { try await store.updateTask($0) }
-        )
+        let repository = makeRepositoryPort(store: store)
+        let useCase = CertificationUseCase(taskRepository: repository)
 
         let today = Date()
 
@@ -99,7 +96,7 @@ struct CertificationUseCaseTests {
             memo: "New memo"
         )
 
-        let updatedTask = try await store.fetchTask(id: task.id)
+        let updatedTask = await store.fetchTask(id: task.id)
         #expect(updatedTask?.records[0].memo == "New memo")
         #expect(updatedTask?.records[0].check == true)
     }
@@ -112,11 +109,22 @@ private actor MockTaskStore {
         tasks[task.id] = task
     }
 
-    func fetchTask(id: TaskID) throws -> Task? {
+    func fetchTask(id: TaskID) -> Task? {
         tasks[id]
     }
 
-    func updateTask(_ task: Task) throws {
+    func updateTask(_ task: Task) {
         tasks[task.id] = task
     }
+}
+
+private func makeRepositoryPort(store: MockTaskStore) -> TaskRepositoryPort {
+    TaskRepositoryPort(
+        fetchActiveTasks: { [] },
+        fetchTask: { id in await store.fetchTask(id: id) },
+        addTask: { _ in },
+        updateTask: { task in await store.updateTask(task) },
+        deleteTask: { _ in },
+        fetchTasksByStatus: { _ in [] }
+    )
 }

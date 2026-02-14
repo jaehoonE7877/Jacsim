@@ -4,21 +4,29 @@ import ExternalInterface
 import Core
 
 public struct ReminderSchedulingUseCase: Sendable {
-    public init() {}
+    private let notificationScheduler: NotificationSchedulerPort
+    private let userSettingsRepository: UserSettingsRepositoryPort
+
+    public init(
+        notificationScheduler: NotificationSchedulerPort,
+        userSettingsRepository: UserSettingsRepositoryPort
+    ) {
+        self.notificationScheduler = notificationScheduler
+        self.userSettingsRepository = userSettingsRepository
+    }
 
     public func scheduleReminderIfNeeded(
         taskID: TaskID,
         title: String,
         isAlarmEnabled: Bool,
         alarmDate: Date,
-        isGlobalNotificationEnabled: Bool,
-        cancelExistingReminder: Bool,
-        notificationScheduler: NotificationSchedulerPort
+        cancelExistingReminder: Bool
     ) async {
         if cancelExistingReminder {
             await notificationScheduler.cancelReminder(taskID)
         }
 
+        let isGlobalNotificationEnabled = await userSettingsRepository.isNotificationEnabled()
         guard isAlarmEnabled, isGlobalNotificationEnabled else { return }
 
         let time = Calendar.current.dateComponents([.hour, .minute], from: alarmDate)
@@ -30,10 +38,9 @@ public struct ReminderSchedulingUseCase: Sendable {
     }
 
     public func syncGlobalReminders(
-        isEnabled: Bool,
-        reminders: [ReminderInfo],
-        notificationScheduler: NotificationSchedulerPort
+        isEnabled: Bool
     ) async {
+        let reminders = await userSettingsRepository.getAllReminders()
         if isEnabled {
             for reminder in reminders {
                 do {

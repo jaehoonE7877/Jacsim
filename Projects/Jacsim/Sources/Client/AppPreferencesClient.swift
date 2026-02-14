@@ -1,12 +1,8 @@
 import ComposableArchitecture
 import ExternalInterface
-import Data
 
 private enum AppPreferencesKey: DependencyKey {
-    static let liveValue: AppPreferencesPort = {
-        let adapter = UserDefaultsAppPreferencesAdapter()
-        return adapter.makePort()
-    }()
+    static let liveValue: AppPreferencesPort = DependencyAssembly.appPreferences
 
     static let testValue: AppPreferencesPort = .inMemory()
 }

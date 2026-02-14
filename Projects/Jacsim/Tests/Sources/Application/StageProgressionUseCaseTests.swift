@@ -1,6 +1,9 @@
 import Foundation
 import Testing
-@testable import Domain
+import Domain
+import ExternalInterface
+
+@testable import Jacsim
 
 struct StageProgressionUseCaseTests {
     private let calendar = Calendar.current
@@ -8,10 +11,8 @@ struct StageProgressionUseCaseTests {
     @Test
     func createNextStageExtendsTaskAndAppendsRecords() async throws {
         let store = MockTaskStore()
-        let useCase = StageProgressionUseCase(
-            fetchTask: { await store.fetchTask(id: $0) },
-            updateTask: { try await store.updateTask($0) }
-        )
+        let repository = makeRepositoryPort(store: store)
+        let useCase = StageProgressionUseCase(taskRepository: repository)
 
         let baseStart = calendar.startOfDay(for: Date(timeIntervalSince1970: 1_700_000_000))
         let baseEnd = calendar.date(byAdding: .day, value: 2, to: baseStart)!
@@ -47,10 +48,8 @@ struct StageProgressionUseCaseTests {
     @Test
     func createNextStageDoesNothingForFinalStage() async throws {
         let store = MockTaskStore()
-        let useCase = StageProgressionUseCase(
-            fetchTask: { await store.fetchTask(id: $0) },
-            updateTask: { try await store.updateTask($0) }
-        )
+        let repository = makeRepositoryPort(store: store)
+        let useCase = StageProgressionUseCase(taskRepository: repository)
 
         let start = calendar.startOfDay(for: .now)
         let end = calendar.date(byAdding: .day, value: 29, to: start)!
@@ -83,10 +82,8 @@ struct StageProgressionUseCaseTests {
     @Test
     func resetStageRecordsRebuildsCurrentStageRange() async throws {
         let store = MockTaskStore()
-        let useCase = StageProgressionUseCase(
-            fetchTask: { await store.fetchTask(id: $0) },
-            updateTask: { try await store.updateTask($0) }
-        )
+        let repository = makeRepositoryPort(store: store)
+        let useCase = StageProgressionUseCase(taskRepository: repository)
 
         let today = calendar.startOfDay(for: .now)
         let oldStart = calendar.date(byAdding: .day, value: -7, to: today)!
@@ -169,7 +166,18 @@ private actor MockTaskStore {
         tasks[id]
     }
 
-    func updateTask(_ task: Task) throws {
+    func updateTask(_ task: Task) {
         tasks[task.id] = task
     }
+}
+
+private func makeRepositoryPort(store: MockTaskStore) -> TaskRepositoryPort {
+    TaskRepositoryPort(
+        fetchActiveTasks: { [] },
+        fetchTask: { id in await store.fetchTask(id: id) },
+        addTask: { _ in },
+        updateTask: { task in await store.updateTask(task) },
+        deleteTask: { _ in },
+        fetchTasksByStatus: { _ in [] }
+    )
 }

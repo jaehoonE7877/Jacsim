@@ -52,11 +52,34 @@ private actor NotificationSchedulerSpy {
     }
 }
 
+private actor UserSettingsRepositorySpy {
+    private(set) var isEnabled: Bool
+    private(set) var reminders: [ReminderInfo]
+
+    init(isEnabled: Bool, reminders: [ReminderInfo] = []) {
+        self.isEnabled = isEnabled
+        self.reminders = reminders
+    }
+
+    func isNotificationEnabled() -> Bool {
+        isEnabled
+    }
+
+    func getAllReminders() -> [ReminderInfo] {
+        reminders
+    }
+}
+
 @Test("scheduleReminderIfNeeded cancels existing and schedules when all flags are ON")
 func scheduleReminderIfNeededSchedulesWithExtractedTime() async throws {
     let scheduler = NotificationSchedulerSpy()
     let port = makeSchedulerPort(spy: scheduler)
-    let useCase = ReminderSchedulingUseCase()
+    let repoSpy = UserSettingsRepositorySpy(isEnabled: true)
+    let userSettingsRepository = makeUserSettingsRepositoryPort(spy: repoSpy)
+    let useCase = ReminderSchedulingUseCase(
+        notificationScheduler: port,
+        userSettingsRepository: userSettingsRepository
+    )
     let taskID = TaskID(UUID())
     let alarmDate = fixedDate(year: 2026, month: 5, day: 1, hour: 8, minute: 30)
 
@@ -65,9 +88,7 @@ func scheduleReminderIfNeededSchedulesWithExtractedTime() async throws {
         title: "Morning",
         isAlarmEnabled: true,
         alarmDate: alarmDate,
-        isGlobalNotificationEnabled: true,
-        cancelExistingReminder: true,
-        notificationScheduler: port
+        cancelExistingReminder: true
     )
 
     #expect(await scheduler.cancelledCount() == 1)
@@ -82,28 +103,34 @@ func scheduleReminderIfNeededSchedulesWithExtractedTime() async throws {
 func scheduleReminderIfNeededSkipsScheduleWhenDisabled() async {
     let scheduler = NotificationSchedulerSpy()
     let port = makeSchedulerPort(spy: scheduler)
-    let useCase = ReminderSchedulingUseCase()
+    let repoEnabledSpy = UserSettingsRepositorySpy(isEnabled: true)
+    let useCaseEnabled = ReminderSchedulingUseCase(
+        notificationScheduler: port,
+        userSettingsRepository: makeUserSettingsRepositoryPort(spy: repoEnabledSpy)
+    )
     let taskID = TaskID(UUID())
     let alarmDate = fixedDate(year: 2026, month: 5, day: 1, hour: 9, minute: 0)
 
-    await useCase.scheduleReminderIfNeeded(
+    await useCaseEnabled.scheduleReminderIfNeeded(
         taskID: taskID,
         title: "Disabled Alarm",
         isAlarmEnabled: false,
         alarmDate: alarmDate,
-        isGlobalNotificationEnabled: true,
-        cancelExistingReminder: false,
-        notificationScheduler: port
+        cancelExistingReminder: false
     )
 
-    await useCase.scheduleReminderIfNeeded(
+    let repoDisabledSpy = UserSettingsRepositorySpy(isEnabled: false)
+    let useCaseDisabled = ReminderSchedulingUseCase(
+        notificationScheduler: port,
+        userSettingsRepository: makeUserSettingsRepositoryPort(spy: repoDisabledSpy)
+    )
+
+    await useCaseDisabled.scheduleReminderIfNeeded(
         taskID: taskID,
         title: "Global Off",
         isAlarmEnabled: true,
         alarmDate: alarmDate,
-        isGlobalNotificationEnabled: false,
-        cancelExistingReminder: false,
-        notificationScheduler: port
+        cancelExistingReminder: false
     )
 
     #expect(await scheduler.cancelledCount() == 0)
@@ -115,16 +142,18 @@ func scheduleReminderIfNeededDoesNotFailOnScheduleError() async {
     let taskID = TaskID(UUID())
     let scheduler = NotificationSchedulerSpy(failingTaskIDs: [taskID])
     let port = makeSchedulerPort(spy: scheduler)
-    let useCase = ReminderSchedulingUseCase()
+    let repoSpy = UserSettingsRepositorySpy(isEnabled: true)
+    let useCase = ReminderSchedulingUseCase(
+        notificationScheduler: port,
+        userSettingsRepository: makeUserSettingsRepositoryPort(spy: repoSpy)
+    )
 
     await useCase.scheduleReminderIfNeeded(
         taskID: taskID,
         title: "Error Case",
         isAlarmEnabled: true,
         alarmDate: fixedDate(year: 2026, month: 6, day: 1, hour: 7, minute: 10),
-        isGlobalNotificationEnabled: true,
-        cancelExistingReminder: false,
-        notificationScheduler: port
+        cancelExistingReminder: false
     )
 
     #expect(await scheduler.scheduledCount() == 1)
@@ -141,13 +170,13 @@ func syncGlobalRemindersEnabledSchedulesAll() async {
 
     let scheduler = NotificationSchedulerSpy()
     let port = makeSchedulerPort(spy: scheduler)
-    let useCase = ReminderSchedulingUseCase()
-
-    await useCase.syncGlobalReminders(
-        isEnabled: true,
-        reminders: reminders,
-        notificationScheduler: port
+    let repoSpy = UserSettingsRepositorySpy(isEnabled: true, reminders: reminders)
+    let useCase = ReminderSchedulingUseCase(
+        notificationScheduler: port,
+        userSettingsRepository: makeUserSettingsRepositoryPort(spy: repoSpy)
     )
+
+    await useCase.syncGlobalReminders(isEnabled: true)
 
     #expect(await scheduler.scheduledCount() == 2)
     #expect(await scheduler.cancelledCount() == 0)
@@ -164,13 +193,13 @@ func syncGlobalRemindersDisabledCancelsAll() async {
 
     let scheduler = NotificationSchedulerSpy()
     let port = makeSchedulerPort(spy: scheduler)
-    let useCase = ReminderSchedulingUseCase()
-
-    await useCase.syncGlobalReminders(
-        isEnabled: false,
-        reminders: reminders,
-        notificationScheduler: port
+    let repoSpy = UserSettingsRepositorySpy(isEnabled: true, reminders: reminders)
+    let useCase = ReminderSchedulingUseCase(
+        notificationScheduler: port,
+        userSettingsRepository: makeUserSettingsRepositoryPort(spy: repoSpy)
     )
+
+    await useCase.syncGlobalReminders(isEnabled: false)
 
     #expect(await scheduler.scheduledCount() == 0)
     #expect(await scheduler.cancelledCount() == 2)
@@ -187,13 +216,13 @@ func syncGlobalRemindersContinuesAfterOneScheduleFailure() async {
 
     let scheduler = NotificationSchedulerSpy(failingTaskIDs: [first])
     let port = makeSchedulerPort(spy: scheduler)
-    let useCase = ReminderSchedulingUseCase()
-
-    await useCase.syncGlobalReminders(
-        isEnabled: true,
-        reminders: reminders,
-        notificationScheduler: port
+    let repoSpy = UserSettingsRepositorySpy(isEnabled: true, reminders: reminders)
+    let useCase = ReminderSchedulingUseCase(
+        notificationScheduler: port,
+        userSettingsRepository: makeUserSettingsRepositoryPort(spy: repoSpy)
     )
+
+    await useCase.syncGlobalReminders(isEnabled: true)
 
     #expect(await scheduler.scheduledCount() == 2)
     #expect(await scheduler.cancelledCount() == 0)
@@ -209,6 +238,14 @@ private func makeSchedulerPort(spy: NotificationSchedulerSpy) -> NotificationSch
         },
         cancelAllReminders: {},
         requestAuthorization: { true }
+    )
+}
+
+private func makeUserSettingsRepositoryPort(spy: UserSettingsRepositorySpy) -> UserSettingsRepositoryPort {
+    UserSettingsRepositoryPort(
+        isNotificationEnabled: { await spy.isNotificationEnabled() },
+        getAllReminders: { await spy.getAllReminders() },
+        updateNotificationEnabled: { _ in }
     )
 }
 

@@ -140,10 +140,7 @@ public struct NewTaskFeature {
         }
     }
 
-    @Dependency(\.taskCommandClient) var taskCommandClient
-    @Dependency(\.notificationScheduler) var notificationScheduler
-    @Dependency(\.imageStore) var imageStore
-    @Dependency(\.userSettingsRepository) var userSettingsRepository
+    @Dependency(\.createNewTaskUseCase) var createNewTaskUseCase
 
     public var body: some ReducerOf<Self> {
         BindingReducer()
@@ -184,51 +181,27 @@ public struct NewTaskFeature {
                 state.saveFailed = false
                 state.stepValidationError = nil
                 let stageType = state.stageType
-                let startDate = Calendar.current.startOfDay(for: Date())
-                let endDate = Calendar.current.date(
-                    byAdding: .day,
-                    value: stageType.durationDays - 1,
-                    to: startDate
-                ) ?? startDate
-                
                 let isAlarmEnabled = state.isAlarmEnabled
                 let alarmDate = state.alarmDate
-                let createTaskUseCase = CreateTaskUseCase()
-                var task = createTaskUseCase.createTask(
+
+                let mainImageData = image.jpegData(compressionQuality: 0.4)
+                let input = CreateNewTaskUseCase.Input(
                     title: trimmedTitle,
-                    startDate: startDate,
-                    endDate: endDate,
-                    stageType: stageType
+                    stageType: stageType,
+                    isAlarmEnabled: isAlarmEnabled,
+                    alarmDate: alarmDate,
+                    mainImageData: mainImageData
                 )
-                task.isNotificationEnabled = isAlarmEnabled
-                task.alarm = isAlarmEnabled ? alarmDate : nil
-                let taskToSave = task
-                
-                Logger.taskCreated(
-                    title: taskToSave.title,
-                    taskId: taskToSave.id.rawValue.uuidString,
-                    startDate: taskToSave.startDate,
-                    endDate: taskToSave.endDate
-                )
-                return .run { [taskCommandClient, notificationScheduler, imageStore, userSettingsRepository] send in
+
+                return .run { [createNewTaskUseCase] send in
                     do {
-                        if let data = image.jpegData(compressionQuality: 0.4) {
-                            _ = try await imageStore.saveImage(taskToSave.mainImageKey, data)
-                        }
-                        try await taskCommandClient.addTask(taskToSave)
-                        if isAlarmEnabled {
-                            let reminderUseCase = ReminderSchedulingUseCase()
-                            let isNotificationEnabled = await userSettingsRepository.isNotificationEnabled()
-                            await reminderUseCase.scheduleReminderIfNeeded(
-                                taskID: taskToSave.id,
-                                title: taskToSave.title,
-                                isAlarmEnabled: isAlarmEnabled,
-                                alarmDate: alarmDate,
-                                isGlobalNotificationEnabled: isNotificationEnabled,
-                                cancelExistingReminder: false,
-                                notificationScheduler: notificationScheduler
-                            )
-                        }
+                        let task = try await createNewTaskUseCase.execute(input)
+                        Logger.taskCreated(
+                            title: task.title,
+                            taskId: task.id.rawValue.uuidString,
+                            startDate: task.startDate,
+                            endDate: task.endDate
+                        )
                         await send(.saveCompleted(.success(())))
                     } catch {
                         await send(.saveCompleted(.failure(error)))

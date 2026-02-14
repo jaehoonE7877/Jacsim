@@ -1,83 +1,37 @@
 import Foundation
 import Testing
 import ComposableArchitecture
-import Domain
 import ExternalInterface
 
 @testable import Jacsim
 
-private actor NotificationSchedulerRecorder {
-    private(set) var scheduledTaskIDs: [TaskID] = []
-    private(set) var cancelledTaskIDs: [TaskID] = []
+private actor GlobalNotificationSettingRecorder {
+    private(set) var values: [Bool] = []
+    private let outcome: GlobalNotificationSettingUseCase.Outcome
 
-    func recordScheduled(_ taskID: TaskID) {
-        scheduledTaskIDs.append(taskID)
+    init(outcome: GlobalNotificationSettingUseCase.Outcome) {
+        self.outcome = outcome
     }
 
-    func recordCancelled(_ taskID: TaskID) {
-        cancelledTaskIDs.append(taskID)
+    func setEnabled(_ isEnabled: Bool) -> GlobalNotificationSettingUseCase.Outcome {
+        values.append(isEnabled)
+        return outcome
     }
 
-    func scheduledCount() -> Int { scheduledTaskIDs.count }
-    func cancelledCount() -> Int { cancelledTaskIDs.count }
-}
-
-private actor UserSettingsRecorder {
-    private(set) var globalNotificationEnabled: Bool
-    private(set) var reminders: [ReminderInfo]
-    private(set) var updatedValues: [Bool] = []
-
-    init(globalNotificationEnabled: Bool, reminders: [ReminderInfo]) {
-        self.globalNotificationEnabled = globalNotificationEnabled
-        self.reminders = reminders
-    }
-
-    func isNotificationEnabled() -> Bool {
-        globalNotificationEnabled
-    }
-
-    func getAllReminders() -> [ReminderInfo] {
-        reminders
-    }
-
-    func updateNotificationEnabled(_ enabled: Bool) {
-        updatedValues.append(enabled)
-        globalNotificationEnabled = enabled
-
-        // Simulate previously buggy persistence behavior where reminders disappeared on OFF.
-        if !enabled {
-            reminders = []
-        }
-    }
-
-    func lastUpdatedValue() -> Bool? {
-        updatedValues.last
-    }
-}
-
-private enum PermissionRequestError: Error {
-    case failed
+    func callCount() -> Int { values.count }
+    func lastValue() -> Bool? { values.last }
 }
 
 @MainActor
 @Test("loadNotificationSettings는 전역 설정값을 반영한다")
 func settingFeatureLoadNotificationSettingsUsesGlobalToggle() async {
-    let userSettings = UserSettingsRecorder(globalNotificationEnabled: false, reminders: [])
-    let scheduler = NotificationSchedulerRecorder()
-
     let store = TestStore(initialState: SettingFeature.State()) {
         SettingFeature()
     } withDependencies: {
         $0.userSettingsRepository = UserSettingsRepositoryPort(
-            isNotificationEnabled: { await userSettings.isNotificationEnabled() },
-            getAllReminders: { await userSettings.getAllReminders() },
-            updateNotificationEnabled: { await userSettings.updateNotificationEnabled($0) }
-        )
-        $0.notificationScheduler = NotificationSchedulerPort(
-            scheduleDailyReminder: { taskID, _, _ in await scheduler.recordScheduled(taskID) },
-            cancelReminder: { taskID in await scheduler.recordCancelled(taskID) },
-            cancelAllReminders: {},
-            requestAuthorization: { true }
+            isNotificationEnabled: { false },
+            getAllReminders: { [] },
+            updateNotificationEnabled: { _ in }
         )
     }
 
@@ -91,14 +45,9 @@ func settingFeatureLoadNotificationSettingsUsesGlobalToggle() async {
 }
 
 @MainActor
-@Test("알림 OFF 토글 시 reminder 목록이 비워져도 cancel이 수행된다")
-func settingFeatureToggleOffCancelsAllFetchedReminders() async {
-    let reminders: [ReminderInfo] = [
-        ReminderInfo(taskId: TaskID(UUID()), title: "A", time: DateComponents(hour: 21, minute: 0)),
-        ReminderInfo(taskId: TaskID(UUID()), title: "B", time: DateComponents(hour: 22, minute: 30))
-    ]
-    let userSettings = UserSettingsRecorder(globalNotificationEnabled: true, reminders: reminders)
-    let scheduler = NotificationSchedulerRecorder()
+@Test("알림 OFF 토글은 use case로 위임하고 OFF로 반영한다")
+func settingFeatureToggleOffDelegatesToUseCase() async {
+    let recorder = GlobalNotificationSettingRecorder(outcome: .disabled)
 
     var initialState = SettingFeature.State()
     initialState.isNotificationEnabled = true
@@ -106,95 +55,62 @@ func settingFeatureToggleOffCancelsAllFetchedReminders() async {
     let store = TestStore(initialState: initialState) {
         SettingFeature()
     } withDependencies: {
-        $0.userSettingsRepository = UserSettingsRepositoryPort(
-            isNotificationEnabled: { await userSettings.isNotificationEnabled() },
-            getAllReminders: { await userSettings.getAllReminders() },
-            updateNotificationEnabled: { await userSettings.updateNotificationEnabled($0) }
-        )
-        $0.notificationScheduler = NotificationSchedulerPort(
-            scheduleDailyReminder: { taskID, _, _ in await scheduler.recordScheduled(taskID) },
-            cancelReminder: { taskID in await scheduler.recordCancelled(taskID) },
-            cancelAllReminders: {},
-            requestAuthorization: { true }
+        $0.globalNotificationSettingUseCase = GlobalNotificationSettingUseCase(
+            setEnabled: { await recorder.setEnabled($0) }
         )
     }
 
     await store.send(.notificationToggleChanged(false)) {
         $0.isNotificationEnabled = false
         $0.isLoading = true
+        $0.notificationBanner = nil
     }
     await store.receive(.notificationSettingsResponse(false)) {
         $0.isNotificationEnabled = false
         $0.isLoading = false
     }
 
-    #expect(await scheduler.cancelledCount() == 2)
-    #expect(await scheduler.scheduledCount() == 0)
-    #expect(await userSettings.lastUpdatedValue() == false)
+    #expect(await recorder.callCount() == 1)
+    #expect(await recorder.lastValue() == false)
 }
 
 @MainActor
-@Test("알림 ON 토글 시 alarm이 있는 reminder를 모두 재등록한다")
-func settingFeatureToggleOnSchedulesAllReminders() async {
-    let reminders: [ReminderInfo] = [
-        ReminderInfo(taskId: TaskID(UUID()), title: "A", time: DateComponents(hour: 7, minute: 45)),
-        ReminderInfo(taskId: TaskID(UUID()), title: "B", time: DateComponents(hour: 20, minute: 15))
-    ]
-    let userSettings = UserSettingsRecorder(globalNotificationEnabled: false, reminders: reminders)
-    let scheduler = NotificationSchedulerRecorder()
+@Test("알림 ON 토글 성공 시 ON으로 반영한다")
+func settingFeatureToggleOnSuccess() async {
+    let recorder = GlobalNotificationSettingRecorder(outcome: .enabled)
 
     let store = TestStore(initialState: SettingFeature.State()) {
         SettingFeature()
     } withDependencies: {
-        $0.userSettingsRepository = UserSettingsRepositoryPort(
-            isNotificationEnabled: { await userSettings.isNotificationEnabled() },
-            getAllReminders: { await userSettings.getAllReminders() },
-            updateNotificationEnabled: { await userSettings.updateNotificationEnabled($0) }
-        )
-        $0.notificationScheduler = NotificationSchedulerPort(
-            scheduleDailyReminder: { taskID, _, _ in await scheduler.recordScheduled(taskID) },
-            cancelReminder: { taskID in await scheduler.recordCancelled(taskID) },
-            cancelAllReminders: {},
-            requestAuthorization: { true }
+        $0.globalNotificationSettingUseCase = GlobalNotificationSettingUseCase(
+            setEnabled: { await recorder.setEnabled($0) }
         )
     }
 
     await store.send(.notificationToggleChanged(true)) {
         $0.isNotificationEnabled = true
         $0.isLoading = true
+        $0.notificationBanner = nil
     }
     await store.receive(.notificationSettingsResponse(true)) {
         $0.isNotificationEnabled = true
         $0.isLoading = false
     }
 
-    #expect(await scheduler.scheduledCount() == 2)
-    #expect(await scheduler.cancelledCount() == 0)
-    #expect(await userSettings.lastUpdatedValue() == true)
+    #expect(await recorder.callCount() == 1)
+    #expect(await recorder.lastValue() == true)
 }
 
 @MainActor
 @Test("알림 ON 토글 시 권한 거부면 OFF로 복원하고 배너를 노출한다")
 func settingFeatureToggleOnDeniedShowsPermissionBanner() async {
-    let reminders: [ReminderInfo] = [
-        ReminderInfo(taskId: TaskID(UUID()), title: "A", time: DateComponents(hour: 9, minute: 0))
-    ]
-    let userSettings = UserSettingsRecorder(globalNotificationEnabled: false, reminders: reminders)
-    let scheduler = NotificationSchedulerRecorder()
+    let recorder = GlobalNotificationSettingRecorder(outcome: .permissionDenied)
 
     let store = TestStore(initialState: SettingFeature.State()) {
         SettingFeature()
     } withDependencies: {
-        $0.userSettingsRepository = UserSettingsRepositoryPort(
-            isNotificationEnabled: { await userSettings.isNotificationEnabled() },
-            getAllReminders: { await userSettings.getAllReminders() },
-            updateNotificationEnabled: { await userSettings.updateNotificationEnabled($0) }
-        )
-        $0.notificationScheduler = NotificationSchedulerPort(
-            scheduleDailyReminder: { taskID, _, _ in await scheduler.recordScheduled(taskID) },
-            cancelReminder: { taskID in await scheduler.recordCancelled(taskID) },
-            cancelAllReminders: {},
-            requestAuthorization: { false }
+        $0.globalNotificationSettingUseCase = GlobalNotificationSettingUseCase(
+            setEnabled: { await recorder.setEnabled($0) }
         )
     }
 
@@ -211,33 +127,20 @@ func settingFeatureToggleOnDeniedShowsPermissionBanner() async {
         $0.notificationBanner = .permissionDenied
     }
 
-    #expect(await scheduler.scheduledCount() == 0)
-    #expect(await scheduler.cancelledCount() == 0)
-    #expect(await userSettings.lastUpdatedValue() == nil)
+    #expect(await recorder.callCount() == 1)
+    #expect(await recorder.lastValue() == true)
 }
 
 @MainActor
 @Test("알림 ON 토글 시 권한 요청 오류면 오류 배너를 노출한다")
 func settingFeatureToggleOnPermissionErrorShowsErrorBanner() async {
-    let reminders: [ReminderInfo] = [
-        ReminderInfo(taskId: TaskID(UUID()), title: "A", time: DateComponents(hour: 9, minute: 0))
-    ]
-    let userSettings = UserSettingsRecorder(globalNotificationEnabled: false, reminders: reminders)
-    let scheduler = NotificationSchedulerRecorder()
+    let recorder = GlobalNotificationSettingRecorder(outcome: .permissionError)
 
     let store = TestStore(initialState: SettingFeature.State()) {
         SettingFeature()
     } withDependencies: {
-        $0.userSettingsRepository = UserSettingsRepositoryPort(
-            isNotificationEnabled: { await userSettings.isNotificationEnabled() },
-            getAllReminders: { await userSettings.getAllReminders() },
-            updateNotificationEnabled: { await userSettings.updateNotificationEnabled($0) }
-        )
-        $0.notificationScheduler = NotificationSchedulerPort(
-            scheduleDailyReminder: { taskID, _, _ in await scheduler.recordScheduled(taskID) },
-            cancelReminder: { taskID in await scheduler.recordCancelled(taskID) },
-            cancelAllReminders: {},
-            requestAuthorization: { throw PermissionRequestError.failed }
+        $0.globalNotificationSettingUseCase = GlobalNotificationSettingUseCase(
+            setEnabled: { await recorder.setEnabled($0) }
         )
     }
 
@@ -254,7 +157,6 @@ func settingFeatureToggleOnPermissionErrorShowsErrorBanner() async {
         $0.notificationBanner = .permissionError
     }
 
-    #expect(await scheduler.scheduledCount() == 0)
-    #expect(await scheduler.cancelledCount() == 0)
-    #expect(await userSettings.lastUpdatedValue() == nil)
+    #expect(await recorder.callCount() == 1)
+    #expect(await recorder.lastValue() == true)
 }

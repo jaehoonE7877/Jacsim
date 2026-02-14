@@ -48,7 +48,7 @@ public struct TaskUpdateFeature {
         }
     }
 
-    @Dependency(\.certificationClient) var certificationClient
+    @Dependency(\.certifyTaskTodayUseCase) var certifyTaskTodayUseCase
     @Dependency(\.imageStore) var imageStore
 
     public var body: some ReducerOf<Self> {
@@ -71,33 +71,19 @@ public struct TaskUpdateFeature {
             case .certifyButtonTapped:
                 state.isSaving = true
                 state.saveFailed = false
-                let taskId = state.task.id
-                let index = state.index
                 let memo = state.memo.trimmingCharacters(in: .whitespacesAndNewlines)
-                let image = state.image
-                let imagePath = image != nil ? state.task.imageKey(for: index) : nil
-                return .run { [certificationClient, imageStore] send in
-                    Logger.certificationStarted(taskId: taskId.rawValue.uuidString, memo: memo, hasImage: image != nil)
-                    let certifyStartTime = Date()
+                let imageData = state.image?.jpegData(compressionQuality: 0.4)
+                let input = CertifyTaskTodayUseCase.Input(
+                    task: state.task,
+                    index: state.index,
+                    memo: memo,
+                    imageData: imageData
+                )
+                return .run { [certifyTaskTodayUseCase] send in
                     do {
-                        if let image = image {
-                            let data = image.jpegData(compressionQuality: 0.4)
-                            if let data, let imagePath = imagePath {
-                                _ = try await imageStore.saveImage(imagePath, data)
-                                Logger.imageSaved(key: imagePath)
-                            }
-                        }
-                        await certificationClient.certifyToday(taskId, index, memo, imagePath)
-                        Logger.certificationCompleted(
-                            duration: Date().timeIntervalSince(certifyStartTime),
-                            index: index,
-                            check: true,
-                            memo: memo,
-                            imagePath: imagePath
-                        )
+                        try await certifyTaskTodayUseCase.execute(input)
                         await send(.saveCompleted(.success(())))
                     } catch {
-                        Logger.certificationFailed(error: error)
                         await send(.saveCompleted(.failure(error)))
                     }
                 }

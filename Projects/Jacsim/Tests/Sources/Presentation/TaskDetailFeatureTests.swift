@@ -2,66 +2,45 @@ import Foundation
 import Testing
 import ComposableArchitecture
 import Domain
-import ExternalInterface
 import UIKit
 
 @testable import Jacsim
 
-private actor TaskDetailUpdateRecorder {
-    struct UpdateCall: Equatable {
+private actor UpdateTaskSettingsRecorder {
+    struct Call: Equatable {
         let taskID: TaskID
         let title: String
         let durationDays: Int
         let isAlarmEnabled: Bool
         let alarmDate: Date
+        let imageByteCount: Int
     }
 
-    private(set) var updateCalls: [UpdateCall] = []
+    private(set) var calls: [Call] = []
 
-    func recordUpdate(
-        taskID: TaskID,
-        title: String,
-        durationDays: Int,
-        isAlarmEnabled: Bool,
-        alarmDate: Date
-    ) {
-        updateCalls.append(
-            UpdateCall(
-                taskID: taskID,
-                title: title,
-                durationDays: durationDays,
-                isAlarmEnabled: isAlarmEnabled,
-                alarmDate: alarmDate
+    func record(_ input: UpdateTaskSettingsUseCase.Input) {
+        let byteCount = input.mainImageData?.count ?? 0
+        calls.append(
+            Call(
+                taskID: input.task.id,
+                title: input.title,
+                durationDays: input.durationDays,
+                isAlarmEnabled: input.isAlarmEnabled,
+                alarmDate: input.alarmDate,
+                imageByteCount: byteCount
             )
         )
     }
 
-    func lastCall() -> UpdateCall? { updateCalls.last }
-    func callCount() -> Int { updateCalls.count }
-}
-
-private actor TaskDetailImageSaveRecorder {
-    struct SaveCall: Equatable {
-        let key: String
-        let byteCount: Int
-    }
-
-    private(set) var saveCalls: [SaveCall] = []
-
-    func recordSave(key: String, data: Data) {
-        saveCalls.append(SaveCall(key: key, byteCount: data.count))
-    }
-
-    func callCount() -> Int { saveCalls.count }
-    func firstCall() -> SaveCall? { saveCalls.first }
+    func callCount() -> Int { calls.count }
+    func lastCall() -> Call? { calls.last }
 }
 
 @MainActor
-@Test("작심 수정 저장은 기존 스테이지 기간을 유지해 updateTaskInfo를 호출한다")
+@Test("작심 수정 저장은 기존 스테이지 기간을 유지해 updateTaskSettingsUseCase를 호출한다")
 func taskDetailEditSaveKeepsCurrentDurationDays() async {
     let task = makeTaskForDetailTests(durationDays: 7, completedRecords: 1)
-    let updateRecorder = TaskDetailUpdateRecorder()
-    let imageRecorder = TaskDetailImageSaveRecorder()
+    let recorder = UpdateTaskSettingsRecorder()
     let editedAlarmDate = Calendar.current.date(from: DateComponents(hour: 6, minute: 45)) ?? Date()
 
     var initialState = TaskDetailFeature.State(task: task)
@@ -70,28 +49,8 @@ func taskDetailEditSaveKeepsCurrentDurationDays() async {
     let store = TestStore(initialState: initialState) {
         TaskDetailFeature()
     } withDependencies: {
-        $0.taskCommandClient = TaskCommandClientPort(
-            addTask: { _ in },
-            updateTask: { _ in },
-            deleteTask: { _ in },
-            updateTaskInfo: { task, title, durationDays, isAlarmEnabled, alarmDate in
-                await updateRecorder.recordUpdate(
-                    taskID: task.id,
-                    title: title,
-                    durationDays: durationDays,
-                    isAlarmEnabled: isAlarmEnabled,
-                    alarmDate: alarmDate
-                )
-            }
-        )
-        $0.imageStore = ImageStorePort(
-            saveImage: { key, data in
-                await imageRecorder.recordSave(key: key, data: data)
-                return key
-            },
-            loadImage: { _ in nil },
-            deleteImage: { _ in },
-            imageExists: { _ in false }
+        $0.updateTaskSettingsUseCase = UpdateTaskSettingsUseCase(
+            execute: { input in await recorder.record(input) }
         )
     }
     store.exhaustivity = .off
@@ -107,22 +66,21 @@ func taskDetailEditSaveKeepsCurrentDurationDays() async {
     }
     await store.finish()
 
-    #expect(await updateRecorder.callCount() == 1)
-    let lastCall = await updateRecorder.lastCall()
-    #expect(lastCall?.taskID == task.id)
-    #expect(lastCall?.title == "수정 제목")
-    #expect(lastCall?.durationDays == 7)
-    #expect(lastCall?.isAlarmEnabled == true)
-    #expect(lastCall?.alarmDate == editedAlarmDate)
-    #expect(await imageRecorder.callCount() == 0)
+    #expect(await recorder.callCount() == 1)
+    let last = await recorder.lastCall()
+    #expect(last?.taskID == task.id)
+    #expect(last?.title == "수정 제목")
+    #expect(last?.durationDays == 7)
+    #expect(last?.isAlarmEnabled == true)
+    #expect(last?.alarmDate == editedAlarmDate)
+    #expect(last?.imageByteCount == 0)
 }
 
 @MainActor
-@Test("작심 수정 저장에서 이미지가 있으면 대표 이미지 키로 저장한다")
-func taskDetailEditSaveStoresImageWhenProvided() async {
+@Test("작심 수정 저장에서 이미지가 있으면 use case 입력에 JPEG 데이터가 포함된다")
+func taskDetailEditSavePassesImageDataWhenProvided() async {
     let task = makeTaskForDetailTests(durationDays: 15, completedRecords: 0)
-    let updateRecorder = TaskDetailUpdateRecorder()
-    let imageRecorder = TaskDetailImageSaveRecorder()
+    let recorder = UpdateTaskSettingsRecorder()
     let image = makeSolidTestImage()
     let editedAlarmDate = Calendar.current.date(from: DateComponents(hour: 21, minute: 0)) ?? Date()
 
@@ -132,28 +90,8 @@ func taskDetailEditSaveStoresImageWhenProvided() async {
     let store = TestStore(initialState: initialState) {
         TaskDetailFeature()
     } withDependencies: {
-        $0.taskCommandClient = TaskCommandClientPort(
-            addTask: { _ in },
-            updateTask: { _ in },
-            deleteTask: { _ in },
-            updateTaskInfo: { task, title, durationDays, isAlarmEnabled, alarmDate in
-                await updateRecorder.recordUpdate(
-                    taskID: task.id,
-                    title: title,
-                    durationDays: durationDays,
-                    isAlarmEnabled: isAlarmEnabled,
-                    alarmDate: alarmDate
-                )
-            }
-        )
-        $0.imageStore = ImageStorePort(
-            saveImage: { key, data in
-                await imageRecorder.recordSave(key: key, data: data)
-                return key
-            },
-            loadImage: { _ in nil },
-            deleteImage: { _ in },
-            imageExists: { _ in false }
+        $0.updateTaskSettingsUseCase = UpdateTaskSettingsUseCase(
+            execute: { input in await recorder.record(input) }
         )
     }
     store.exhaustivity = .off
@@ -169,11 +107,9 @@ func taskDetailEditSaveStoresImageWhenProvided() async {
     }
     await store.finish()
 
-    #expect(await updateRecorder.callCount() == 1)
-    #expect(await imageRecorder.callCount() == 1)
-    let firstSave = await imageRecorder.firstCall()
-    #expect(firstSave?.key == task.mainImageKey)
-    #expect((firstSave?.byteCount ?? 0) > 0)
+    #expect(await recorder.callCount() == 1)
+    let last = await recorder.lastCall()
+    #expect((last?.imageByteCount ?? 0) > 0)
 }
 
 private func makeTaskForDetailTests(

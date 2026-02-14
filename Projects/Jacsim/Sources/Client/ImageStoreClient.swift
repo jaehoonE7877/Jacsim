@@ -1,17 +1,8 @@
 import ComposableArchitecture
 import ExternalInterface
-import Data
 
 private enum ImageStoreKey: DependencyKey {
-    static let liveValue: ImageStorePort = {
-        let adapter = DocumentImageStoreAdapter()
-        return ImageStorePort(
-            saveImage: { try await adapter.saveImage(key: $0, data: $1) },
-            loadImage: { await adapter.loadImage(key: $0) },
-            deleteImage: { await adapter.deleteImage(key: $0) },
-            imageExists: { await adapter.imageExists(key: $0) }
-        )
-    }()
+    static let liveValue: ImageStorePort = DependencyAssembly.imageStore
     
     static let testValue = ImageStorePort(
         saveImage: { _, _ in "" },

@@ -1,20 +1,9 @@
 import ComposableArchitecture
 import ExternalInterface
 import Domain
-import Data
 
 private enum TaskRepositoryKey: DependencyKey {
-    static let liveValue: TaskRepositoryPort = {
-        let adapter = SwiftDataTaskRepositoryAdapter()
-        return TaskRepositoryPort(
-            fetchActiveTasks: { await adapter.fetchActiveTasks() },
-            fetchTask: { await adapter.fetchTask(id: $0) },
-            addTask: { try await adapter.addTask($0) },
-            updateTask: { try await adapter.updateTask($0) },
-            deleteTask: { try await adapter.deleteTask(id: $0) },
-            fetchTasksByStatus: { await adapter.fetchTasksByStatus($0) }
-        )
-    }()
+    static let liveValue: TaskRepositoryPort = DependencyAssembly.taskRepository
 
     static let testValue = TaskRepositoryPort(
         fetchActiveTasks: { [] },
@@ -27,14 +16,7 @@ private enum TaskRepositoryKey: DependencyKey {
 }
 
 private enum UserSettingsRepositoryKey: DependencyKey {
-    static let liveValue: UserSettingsRepositoryPort = {
-        let adapter = UserSettingsRepositoryAdapter()
-        return UserSettingsRepositoryPort(
-            isNotificationEnabled: { await adapter.isNotificationEnabled() },
-            getAllReminders: { await adapter.getAllReminders() },
-            updateNotificationEnabled: { await adapter.updateNotificationEnabled($0) }
-        )
-    }()
+    static let liveValue: UserSettingsRepositoryPort = DependencyAssembly.userSettingsRepository
 
     static let testValue = UserSettingsRepositoryPort(
         isNotificationEnabled: { false },
@@ -46,6 +28,16 @@ private enum UserSettingsRepositoryKey: DependencyKey {
 private enum ActiveTaskServiceKey: DependencyKey {
     static let liveValue: ActiveTaskService = ActiveTaskService()
     static let testValue: ActiveTaskService = ActiveTaskService()
+}
+
+private enum TaskStatusServiceKey: DependencyKey {
+    static let liveValue: TaskStatusService = TaskStatusService()
+    static let testValue: TaskStatusService = TaskStatusService()
+}
+
+private enum StageEvaluationServiceKey: DependencyKey {
+    static let liveValue: StageEvaluationService = StageEvaluationService()
+    static let testValue: StageEvaluationService = StageEvaluationService()
 }
 
 private enum CalendarEventServiceKey: DependencyKey {
@@ -72,6 +64,16 @@ extension DependencyValues {
     var activeTaskService: ActiveTaskService {
         get { self[ActiveTaskServiceKey.self] }
         set { self[ActiveTaskServiceKey.self] = newValue }
+    }
+
+    var taskStatusService: TaskStatusService {
+        get { self[TaskStatusServiceKey.self] }
+        set { self[TaskStatusServiceKey.self] = newValue }
+    }
+
+    var stageEvaluationService: StageEvaluationService {
+        get { self[StageEvaluationServiceKey.self] }
+        set { self[StageEvaluationServiceKey.self] = newValue }
     }
 
     var calendarEventService: CalendarEventService {
