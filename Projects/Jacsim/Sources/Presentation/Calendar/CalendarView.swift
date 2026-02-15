@@ -1,6 +1,6 @@
 import SwiftUI
 import ComposableArchitecture
-import DSKit
+import DesignSystem
 import Domain
 
 public struct CalendarView: View {

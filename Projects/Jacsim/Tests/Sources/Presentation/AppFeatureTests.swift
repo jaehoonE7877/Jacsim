@@ -1,6 +1,6 @@
 import Testing
 import ComposableArchitecture
-import ExternalInterface
+import Ports
 
 @testable import Jacsim
 
@@ -13,7 +13,7 @@ func appFeatureRoutesToMainOnAppearWhenOnboardingCompleted() async {
     let store = TestStore(initialState: AppFeature.State()) {
         AppFeature()
     } withDependencies: {
-        $0.appPreferences = appPreferences
+        $0.appPreferencesUseCase = AppPreferencesUseCase.live(appPreferences: appPreferences)
     }
     store.exhaustivity = .off
 
@@ -31,7 +31,7 @@ func appFeatureCompleteOnboardingUpdatesStateAndPreference() async {
     let store = TestStore(initialState: AppFeature.State()) {
         AppFeature()
     } withDependencies: {
-        $0.appPreferences = appPreferences
+        $0.appPreferencesUseCase = AppPreferencesUseCase.live(appPreferences: appPreferences)
     }
     store.exhaustivity = .off
 
@@ -42,8 +42,5 @@ func appFeatureCompleteOnboardingUpdatesStateAndPreference() async {
 }
 
 private func ifCaseMain(_ state: AppFeature.State) -> Bool {
-    if case .main = state {
-        return true
-    }
-    return false
+    state.main != nil
 }

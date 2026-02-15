@@ -1,7 +1,7 @@
 import SwiftUI
 import ComposableArchitecture
 import Domain
-import DSKit
+import DesignSystem
 
 public struct AllTaskView: View {
     let store: StoreOf<AllTaskFeature>

@@ -1,7 +1,7 @@
 import Foundation
 import ComposableArchitecture
 import Domain
-import DSKit
+import DesignSystem
 
 @Reducer
 public struct CalendarFeature {
@@ -26,8 +26,8 @@ public struct CalendarFeature {
         case tasksLoadFailed
     }
 
-    @Dependency(\.taskRepository) var taskRepository
-    @Dependency(\.calendarEventService) var calendarEventService
+    @Dependency(\.taskQueryUseCase) var taskQueryUseCase
+    @Dependency(\.calendarEventServiceUseCase) var calendarEventServiceUseCase
 
     public var body: some ReducerOf<Self> {
         BindingReducer()
@@ -36,9 +36,9 @@ public struct CalendarFeature {
             case .onAppear:
                 state.isLoading = true
                 state.loadFailed = false
-                return .run { [taskRepository] send in
+                return .run { [taskQueryUseCase] send in
                     do {
-                        let tasks = try await taskRepository.fetchActiveTasks()
+                        let tasks = try await taskQueryUseCase.fetchActiveTasks()
                         await send(.tasksResponse(tasks))
                     } catch {
                         await send(.tasksLoadFailed)
@@ -51,8 +51,8 @@ public struct CalendarFeature {
 
             case let .tasksResponse(tasks):
                 state.tasks = tasks
-                state.eventDates = calendarEventService.calculateEventDates(from: tasks)
-                state.dateColors = calendarEventService.calculateDateColors(from: tasks)
+                state.eventDates = calendarEventServiceUseCase.calculateEventDates(tasks)
+                state.dateColors = calendarEventServiceUseCase.calculateDateColors(tasks)
                 state.isLoading = false
                 state.loadFailed = false
                 return .none

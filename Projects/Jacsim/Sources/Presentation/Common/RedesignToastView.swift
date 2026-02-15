@@ -1,5 +1,5 @@
 import SwiftUI
-import DSKit
+import DesignSystem
 
 enum RedesignToastStyle: Equatable {
     case `default`

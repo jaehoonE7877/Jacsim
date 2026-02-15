@@ -4,7 +4,7 @@ import ComposableArchitecture
 
 @Reducer
 public struct WalkThroughFeature {
-    @Dependency(\.notificationScheduler) var notificationScheduler
+    @Dependency(\.requestNotificationPermissionUseCase) var requestNotificationPermissionUseCase
 
     @ObservableState
     public struct State: Equatable {
@@ -52,10 +52,10 @@ public struct WalkThroughFeature {
                     }
                     return .send(.delegate(.completeOnboarding))
                 }
-                let notificationScheduler = notificationScheduler
+                let requestNotificationPermissionUseCase = requestNotificationPermissionUseCase
                 return .run { send in
                     do {
-                        let granted = try await notificationScheduler.requestAuthorization()
+                        let granted = try await requestNotificationPermissionUseCase.requestAuthorization()
                         await send(.notificationPermissionResponse(granted))
                     } catch {
                         await send(.notificationPermissionResponse(false))

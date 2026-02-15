@@ -1,5 +1,5 @@
 import ComposableArchitecture
-import ExternalInterface
+import Ports
 
 private enum NotificationSchedulerKey: DependencyKey {
     static let liveValue: NotificationSchedulerPort = DependencyAssembly.notificationScheduler

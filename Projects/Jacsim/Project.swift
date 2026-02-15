@@ -9,10 +9,11 @@ let project = Project.makeModule(
     targets: [.app, .unitTest],
     internalDependencies: [
         .Modules.thirdPartyLibs,
-        .Modules.dsKit,
+        .Modules.designSystem,
         .domain,
-        .externalInterface,
-        .data
+        .ports,
+        .adapters,
+        .workflows
     ],
     externalDependencies: [
         .SPM.FirebaseAnalytics,

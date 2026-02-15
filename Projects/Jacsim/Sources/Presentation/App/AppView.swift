@@ -1,7 +1,7 @@
 import SwiftUI
 import ComposableArchitecture
 import UIKit
-import DSKit
+import DesignSystem
 
 private enum StartupTransitionPolicy {
     static var splashMinimumDuration: UInt64 {
@@ -19,10 +19,8 @@ private enum StartupTransitionPolicy {
 
 public struct AppView: View {
     let store: StoreOf<AppFeature>
-    @Dependency(\.appPreferences) private var appPreferences
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    @State private var themeRaw: String = ThemeMode.system.rawValue
     @State private var isSplashVisible = true
     @State private var hasPlayedSplash = false
     @State private var minDurationPassed = false
@@ -34,7 +32,7 @@ public struct AppView: View {
     }
 
     private var colorScheme: ColorScheme? {
-        switch themeRaw {
+        switch store.state.themeRaw {
         case "light": return .light
         case "dark": return .dark
         default: return nil
@@ -50,16 +48,11 @@ public struct AppView: View {
 
     public var body: some View {
         Group {
-            switch store.state {
-            case .onboarding:
-                if let onboardingStore = store.scope(state: \.onboarding, action: \.onboarding) {
-                    WalkThroughView(store: onboardingStore)
-                }
-            case .main:
-                if let mainStore = store.scope(state: \.main, action: \.main) {
-                    NavigationStack {
-                        MainView(store: mainStore)
-                    }
+            if let onboardingStore = store.scope(state: \.onboarding, action: \.onboarding) {
+                WalkThroughView(store: onboardingStore)
+            } else if let mainStore = store.scope(state: \.main, action: \.main) {
+                NavigationStack {
+                    MainView(store: mainStore)
                 }
             }
         }
@@ -75,12 +68,11 @@ public struct AppView: View {
         }
         .onAppear {
             store.send(.onAppear)
-            refreshThemeFromPreferences()
             startSplashIfNeeded(for: store.state)
             updateSplashEligibility(for: store.state)
         }
         .onReceive(NotificationCenter.default.publisher(for: .jacsimThemeChanged)) { _ in
-            refreshThemeFromPreferences()
+            store.send(.themePreferenceRefreshRequested)
         }
         .onChange(of: store.state) { _, newState in
             startSplashIfNeeded(for: newState)
@@ -98,8 +90,7 @@ public struct AppView: View {
     private func startSplashIfNeeded(for state: AppFeature.State) {
         guard !hasPlayedSplash else { return }
 
-        switch state {
-        case .onboarding:
+        if state.onboarding != nil {
             // Startup splash is intentionally skipped for onboarding flow.
             hasPlayedSplash = true
             isSplashVisible = false
@@ -107,9 +98,6 @@ public struct AppView: View {
             didObserveHomeFetchStart = false
             canDismissFromLoad = true
             return
-
-        case .main:
-            break
         }
 
         hasPlayedSplash = true
@@ -144,23 +132,13 @@ public struct AppView: View {
         }
     }
 
-    private func refreshThemeFromPreferences() {
-        if let raw = appPreferences.getThemeModeRaw(),
-           ThemeMode(rawValue: raw) != nil {
-            themeRaw = raw
-            return
-        }
-        themeRaw = ThemeMode.system.rawValue
-    }
-
     private func updateSplashEligibility(for state: AppFeature.State) {
         guard isSplashVisible else { return }
 
-        switch state {
-        case .onboarding:
+        if state.onboarding != nil {
             canDismissFromLoad = true
 
-        case let .main(mainState):
+        } else if let mainState = state.main {
             let isFetching = mainState.home.isFetching
             if isFetching {
                 didObserveHomeFetchStart = true

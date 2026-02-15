@@ -1,7 +1,7 @@
 import Foundation
 import Testing
 import ComposableArchitecture
-import ExternalInterface
+import Ports
 
 @testable import Jacsim
 
@@ -28,10 +28,8 @@ func settingFeatureLoadNotificationSettingsUsesGlobalToggle() async {
     let store = TestStore(initialState: SettingFeature.State()) {
         SettingFeature()
     } withDependencies: {
-        $0.userSettingsRepository = UserSettingsRepositoryPort(
-            isNotificationEnabled: { false },
-            getAllReminders: { [] },
-            updateNotificationEnabled: { _ in }
+        $0.notificationSettingQueryUseCase = NotificationSettingQueryUseCase(
+            isNotificationEnabled: { false }
         )
     }
 

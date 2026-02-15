@@ -45,7 +45,7 @@ public struct TaskEditFeature {
         }
     }
 
-    @Dependency(\.imageStore) var imageStore
+    @Dependency(\.loadImageUseCase) var loadImageUseCase
 
     public var body: some ReducerOf<Self> {
         BindingReducer()
@@ -53,9 +53,9 @@ public struct TaskEditFeature {
             switch action {
             case .onAppear:
                 let key = state.task.mainImageKey
-                let imageStore = imageStore
+                let loadImageUseCase = loadImageUseCase
                 return .run { send in
-                    let imageData = await imageStore.loadImage(key)
+                    let imageData = await loadImageUseCase.loadImage(key)
                     let image = imageData.flatMap { UIImage(data: $0) }
                     await send(.imageLoaded(image))
                 }

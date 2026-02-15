@@ -51,8 +51,8 @@ public struct SettingFeature {
         }
     }
 
-    @Dependency(\.userSettingsRepository) var userSettingsRepository
-    @Dependency(\.appPreferences) var appPreferences
+    @Dependency(\.notificationSettingQueryUseCase) var notificationSettingQueryUseCase
+    @Dependency(\.appPreferencesUseCase) var appPreferencesUseCase
     @Dependency(\.globalNotificationSettingUseCase) var globalNotificationSettingUseCase
 
     public var body: some ReducerOf<Self> {
@@ -67,15 +67,15 @@ public struct SettingFeature {
             case .licenceButtonTapped:
                 return .send(.delegate(.navigateToLicence))
             case .loadNotificationSettings:
-                if let raw = appPreferences.getThemeModeRaw(),
+                if let raw = appPreferencesUseCase.getThemeModeRaw(),
                    let mode = ThemeMode(rawValue: raw) {
                     state.theme = mode
                 }
                 state.notificationBanner = nil
 
                 state.isLoading = true
-                return .run { [userSettingsRepository] send in
-                    let isEnabled = await userSettingsRepository.isNotificationEnabled()
+                return .run { [notificationSettingQueryUseCase] send in
+                    let isEnabled = await notificationSettingQueryUseCase.isNotificationEnabled()
                     await send(.notificationSettingsResponse(isEnabled))
                 }
             case let .notificationToggleChanged(isEnabled):
@@ -126,7 +126,7 @@ public struct SettingFeature {
 
             case let .themeChanged(mode):
                 state.theme = mode
-                appPreferences.setThemeModeRaw(mode.rawValue)
+                appPreferencesUseCase.setThemeModeRaw(mode.rawValue)
                 NotificationCenter.default.post(name: .jacsimThemeChanged, object: nil)
                 return .none
 

@@ -1,16 +1,16 @@
 import SwiftUI
 import ComposableArchitecture
-import DSKit
+import DesignSystem
 import UIKit
 
 public struct WalkThroughView: View {
     @Bindable var store: StoreOf<WalkThroughFeature>
     
     private let images = [
-        DSKitAsset.Assets.onboardingImg1.image,
-        DSKitAsset.Assets.onboardingImg2.image,
-        DSKitAsset.Assets.onboardingImg3.image,
-        DSKitAsset.Assets.onboardingImg4.image
+        DesignSystemAsset.Assets.onboardingImg1.image,
+        DesignSystemAsset.Assets.onboardingImg2.image,
+        DesignSystemAsset.Assets.onboardingImg3.image,
+        DesignSystemAsset.Assets.onboardingImg4.image
     ]
     private let titles = [
         "작심을 루틴으로 만들어요",

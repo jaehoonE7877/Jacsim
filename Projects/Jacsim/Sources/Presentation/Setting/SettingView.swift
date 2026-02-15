@@ -1,6 +1,6 @@
 import SwiftUI
 import ComposableArchitecture
-import DSKit
+import DesignSystem
 
 public struct SettingView: View {
     let store: StoreOf<SettingFeature>

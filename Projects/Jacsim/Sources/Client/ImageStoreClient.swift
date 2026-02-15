@@ -1,5 +1,5 @@
 import ComposableArchitecture
-import ExternalInterface
+import Ports
 
 private enum ImageStoreKey: DependencyKey {
     static let liveValue: ImageStorePort = DependencyAssembly.imageStore

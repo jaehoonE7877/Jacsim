@@ -3,7 +3,7 @@ import Domain
 import ComposableArchitecture
 import SwiftUI
 import PhotosUI
-import Core
+import Shared
 
 @Reducer
 public struct NewTaskFeature {

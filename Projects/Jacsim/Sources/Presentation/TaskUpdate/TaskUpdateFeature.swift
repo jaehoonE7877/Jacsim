@@ -5,7 +5,7 @@ import UIKit
 import Photos
 import PhotosUI
 import SwiftUI
-import Core
+import Shared
 
 @Reducer
 public struct TaskUpdateFeature {
@@ -49,7 +49,7 @@ public struct TaskUpdateFeature {
     }
 
     @Dependency(\.certifyTaskTodayUseCase) var certifyTaskTodayUseCase
-    @Dependency(\.imageStore) var imageStore
+    @Dependency(\.loadImageUseCase) var loadImageUseCase
 
     public var body: some ReducerOf<Self> {
         BindingReducer()
@@ -58,8 +58,8 @@ public struct TaskUpdateFeature {
             case .onAppear:
                 state.lastAcceptedMemo = state.memo
                 guard let key = state.task.imageKey(for: state.index) else { return .none }
-                return .run { [imageStore] send in
-                    let imageData = await imageStore.loadImage(key)
+                return .run { [loadImageUseCase] send in
+                    let imageData = await loadImageUseCase.loadImage(key)
                     let image = imageData.flatMap { UIImage(data: $0) }
                     await send(.imageLoaded(image))
                 }

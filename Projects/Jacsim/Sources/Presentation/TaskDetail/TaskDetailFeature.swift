@@ -2,8 +2,8 @@ import Foundation
 import Domain
 import ComposableArchitecture
 import UIKit
-import DSKit
-import Core
+import DesignSystem
+import Shared
 
 @Reducer
 public struct TaskDetailFeature {
@@ -96,12 +96,11 @@ public struct TaskDetailFeature {
         }
     }
 
-    @Dependency(\.taskRepository) var taskRepository
-    @Dependency(\.imageStore) var imageStore
-    @Dependency(\.notificationScheduler) var notificationScheduler
-    @Dependency(\.challengeStateService) var challengeStateService
+    @Dependency(\.deleteTaskUseCase) var deleteTaskUseCase
+    @Dependency(\.loadImageUseCase) var loadImageUseCase
+    @Dependency(\.challengeStateServiceUseCase) var challengeStateServiceUseCase
     @Dependency(\.updateTaskSettingsUseCase) var updateTaskSettingsUseCase
-    @Dependency(\.stageEvaluationService) var stageEvaluationService
+    @Dependency(\.stageEvaluationServiceUseCase) var stageEvaluationServiceUseCase
     @Dependency(\.stageProgressionUseCase) var stageProgressionUseCase
 
     private enum DeleteFlowPolicy {
@@ -117,10 +116,7 @@ public struct TaskDetailFeature {
         Reduce { state, action in
             switch action {
             case .onAppear:
-                let evaluation = challengeStateService.evaluateChallengeState(
-                    for: state.task,
-                    today: Date()
-                )
+                let evaluation = challengeStateServiceUseCase.evaluateChallengeState(state.task, Date())
                 state.challengeState = evaluation.challengeState
                 state.todayStatus = evaluation.todayStatus
                 state.currentStage = evaluation.currentStage
@@ -133,26 +129,27 @@ public struct TaskDetailFeature {
                 }
                 return .merge(
                     .send(.loadImages),
-                    .run { [stageEvaluationService, stage = evaluation.currentStage] send in
+                    .run { [stageEvaluationServiceUseCase, stage = evaluation.currentStage] send in
                         guard let stage else { return }
-                        let result = stageEvaluationService.evaluateStage(
-                            endDate: stage.endDate,
-                            durationDays: stage.durationDays,
-                            successDays: stage.successDays
+                        let result = stageEvaluationServiceUseCase.evaluateStage(
+                            stage.endDate,
+                            stage.durationDays,
+                            stage.successDays,
+                            Date()
                         )
                         await send(.stageResultChecked(result))
                     }
                 )
                 
             case .loadImages:
-                return .run { [task = state.task, dayDates = state.dayViewData.map(\.date), imageStore] send in
-                    let coverImageData = await imageStore.loadImage(task.mainImageKey)
+                return .run { [task = state.task, dayDates = state.dayViewData.map(\.date), loadImageUseCase] send in
+                    let coverImageData = await loadImageUseCase.loadImage(task.mainImageKey)
                     let coverImage = coverImageData.flatMap { UIImage(data: $0) }
                     await send(.coverImageLoaded(coverImage))
 
                     for date in dayDates {
                         guard let key = task.imageKey(for: task.dayArray.firstIndex(where: { $0 == date }) ?? 0) else { continue }
-                        let imageData = await imageStore.loadImage(key)
+                        let imageData = await loadImageUseCase.loadImage(key)
                         let image = imageData.flatMap { UIImage(data: $0) }
                         await send(.imageLoaded(date, image))
                     }
@@ -200,10 +197,9 @@ public struct TaskDetailFeature {
                 let taskId = state.task.id
                 return .merge(
                     .cancel(id: CancelID.deleteFlowCountdown),
-                    .run { [taskRepository, notificationScheduler] send in
-                        await notificationScheduler.cancelReminder(taskId)
+                    .run { [deleteTaskUseCase] send in
                         do {
-                            try await taskRepository.deleteTask(taskId)
+                            try await deleteTaskUseCase.execute(taskId)
                         } catch {
                             Logger.certificationFailed(error: error)
                         }
@@ -272,10 +268,9 @@ public struct TaskDetailFeature {
                 let taskId = state.task.id
                 return .merge(
                     .cancel(id: CancelID.deleteFlowCountdown),
-                    .run { [taskRepository, notificationScheduler] send in
-                        await notificationScheduler.cancelReminder(taskId)
+                    .run { [deleteTaskUseCase] send in
                         do {
-                            try await taskRepository.deleteTask(taskId)
+                            try await deleteTaskUseCase.execute(taskId)
                         } catch {
                             Logger.certificationFailed(error: error)
                         }

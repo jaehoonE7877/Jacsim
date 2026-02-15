@@ -1,5 +1,5 @@
 import ComposableArchitecture
-import ExternalInterface
+import Ports
 
 private enum AppPreferencesKey: DependencyKey {
     static let liveValue: AppPreferencesPort = DependencyAssembly.appPreferences

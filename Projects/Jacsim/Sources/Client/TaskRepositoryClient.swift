@@ -1,5 +1,5 @@
 import ComposableArchitecture
-import ExternalInterface
+import Ports
 import Domain
 
 private enum TaskRepositoryKey: DependencyKey {

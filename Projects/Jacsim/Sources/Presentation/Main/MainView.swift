@@ -1,6 +1,6 @@
 import SwiftUI
 import ComposableArchitecture
-import DSKit
+import DesignSystem
 
 public struct MainView: View {
     @Bindable var store: StoreOf<MainFeature>

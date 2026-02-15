@@ -1,8 +1,8 @@
 import Foundation
 import ComposableArchitecture
 import Domain
-import DSKit
-import Core
+import DesignSystem
+import Shared
 
 @Reducer
 public struct HomeFeature {
@@ -145,9 +145,9 @@ public struct HomeFeature {
         }
     }
 
-    @Dependency(\.taskRepository) var taskRepository
-    @Dependency(\.activeTaskService) var activeTaskService
-    @Dependency(\.imageStore) var imageStore
+    @Dependency(\.taskQueryUseCase) var taskQueryUseCase
+    @Dependency(\.activeTaskServiceUseCase) var activeTaskServiceUseCase
+    @Dependency(\.loadImageUseCase) var loadImageUseCase
     @Dependency(\.externalNavigationClient) var externalNavigationClient
 
     private enum LoadingPolicy {
@@ -182,9 +182,9 @@ public struct HomeFeature {
                 state.loadingStartTime = Date()
                 Logger.homeFetchingTasks()
                 let fetchStartTime = Date()
-                let fetchEffect: Effect<Action> = .run { [taskRepository] send in
+                let fetchEffect: Effect<Action> = .run { [taskQueryUseCase] send in
                     do {
-                        let tasks = try await taskRepository.fetchActiveTasks()
+                        let tasks = try await taskQueryUseCase.fetchActiveTasks()
                         Logger.homeTasksFetched(
                             count: tasks.count,
                             duration: Date().timeIntervalSince(fetchStartTime)
@@ -245,9 +245,9 @@ public struct HomeFeature {
                 state.loadFailed = false
                 return .merge(
                     .cancel(id: CancelID.imageLoading),
-                    .run { [taskRepository] send in
+                    .run { [taskQueryUseCase] send in
                         do {
-                            let tasks = try await taskRepository.fetchActiveTasks()
+                            let tasks = try await taskQueryUseCase.fetchActiveTasks()
                             await send(.tasksResponse(tasks))
                         } catch is CancellationError {
                             return
@@ -260,7 +260,7 @@ public struct HomeFeature {
             case let .tasksResponse(tasks):
                 let processStartTime = Date()
                 state.tasks = tasks
-                state.activeTasks = activeTaskService.filterActiveTasks(tasks, referenceDate: Date())
+                state.activeTasks = activeTaskServiceUseCase.filterActiveTasks(tasks, Date())
                 state.heroTask = state.activeTasks.first
                 let remainingTasks = Array(state.activeTasks.dropFirst())
                 state.miniCardDisplayData = remainingTasks.map { task in
@@ -287,14 +287,14 @@ public struct HomeFeature {
                     activeCount: state.activeTasks.count,
                     heroTaskTitle: state.heroTask?.title
                 )
-                let imageStore = imageStore
-                return .run { [heroTask = state.heroTask, remainingTasks, imageStore] send in
+                let loadImageUseCase = loadImageUseCase
+                return .run { [heroTask = state.heroTask, remainingTasks, loadImageUseCase] send in
                     if let heroTask = heroTask {
-                        let heroImageData = await imageStore.loadImage(heroTask.mainImageKey)
+                        let heroImageData = await loadImageUseCase.loadImage(heroTask.mainImageKey)
                         await send(.heroImageLoaded(heroImageData))
                     }
                     for task in remainingTasks {
-                        let imageData = await imageStore.loadImage(task.mainImageKey)
+                        let imageData = await loadImageUseCase.loadImage(task.mainImageKey)
                         await send(.miniCardImageLoaded(id: task.id.rawValue, imageData: imageData))
                     }
                 }
@@ -324,9 +324,9 @@ public struct HomeFeature {
                 return .none
 
             case let .notificationTapped(id):
-                return .run { [taskRepository] send in
+                return .run { [taskQueryUseCase] send in
                     do {
-                        let task = try await taskRepository.fetchTask(TaskID(id))
+                        let task = try await taskQueryUseCase.fetchTask(TaskID(id))
                         await send(.notificationTaskLoaded(task))
                     } catch {
                         await send(.notificationTaskLoaded(nil))
@@ -352,9 +352,9 @@ public struct HomeFeature {
                 }
                 let idString = url.path.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
                 guard let id = UUID(uuidString: idString) else { return .none }
-                return .run { [taskRepository] send in
+                return .run { [taskQueryUseCase] send in
                     do {
-                        let task = try await taskRepository.fetchTask(TaskID(id))
+                        let task = try await taskQueryUseCase.fetchTask(TaskID(id))
                         await send(.deepLinkTaskLoaded(task))
                     } catch {
                         await send(.deepLinkTaskLoaded(nil))

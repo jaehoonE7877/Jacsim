@@ -1,6 +1,6 @@
-import Data
+import Adapters
 import Domain
-import ExternalInterface
+import Ports
 import Foundation
 
 enum DependencyAssembly {

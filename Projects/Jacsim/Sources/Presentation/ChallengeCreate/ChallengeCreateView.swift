@@ -1,5 +1,5 @@
 import ComposableArchitecture
-import DSKit
+import DesignSystem
 import SwiftUI
 
 public struct ChallengeCreateView: View {

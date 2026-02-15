@@ -1,7 +1,7 @@
 import SwiftUI
 import ComposableArchitecture
 import Domain
-import DSKit
+import DesignSystem
 import _Concurrency
 
 public struct HomeView: View {
