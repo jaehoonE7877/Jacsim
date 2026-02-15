@@ -19,8 +19,11 @@ tuist build Jacsim
 # Test (per-module)
 tuist test Jacsim
 tuist test Domain
-tuist test Data
-tuist test ExternalInterface
+tuist test Workflows
+tuist test Ports
+tuist test Adapters
+tuist test Shared
+tuist test DesignSystem
 ```
 
 > No lint/format tool is configured yet. Do **not** introduce one without approval.
@@ -43,13 +46,14 @@ Your change is correct when **all** of the following pass:
 ```text
 ./
 ├── Projects/
-│   ├── Jacsim/             # App target (Presentation + Application)
+│   ├── Jacsim/             # App target (Presentation)
+│   ├── Workflows/          # Application UseCases (Orchestration)
 │   ├── Domain/             # Business rules / entities
-│   ├── ExternalInterface/  # Port contracts (DIP boundary)
-│   ├── Data/               # Adapter implementations
+│   ├── ExternalInterface/  # Port contracts (Ports)
+│   ├── Data/               # Adapter implementations (Adapters)
 │   └── Modules/
-│       ├── Core/           # Shared utilities / extensions
-│       ├── DSKit/          # Design system (tokens + components)
+│       ├── Core/           # Shared utilities / extensions (Shared)
+│       ├── DSKit/          # Design system (DesignSystem)
 │       └── ThirdPartyLibs/ # Third-party dependency aggregation
 ├── Tuist/                  # Project generation helpers & templates
 ├── Plugins/                # Tuist plugins (Dependency/Environment/Configuration)
@@ -68,19 +72,19 @@ Your change is correct when **all** of the following pass:
 | App entry | `Projects/Jacsim/Sources/Application/JacsimApp.swift` |
 | App lifecycle | `Projects/Jacsim/Sources/Application/AppDelegate.swift` |
 | TCA screens | `Projects/Jacsim/Sources/Presentation/**` |
-| Use cases | `Projects/Jacsim/Sources/Application/UseCases/**` |
+| Use cases | `Projects/Workflows/Sources/UseCases/**` |
 | Domain logic | `Projects/Domain/Sources/**` |
 | Port contracts | `Projects/ExternalInterface/Sources/**` |
 | Data adapters | `Projects/Data/Sources/Adapters/**` |
-| Design system | `Projects/Modules/DSKit/**` |
-| Common utils | `Projects/Modules/Core/**` |
+| Design system | `Projects/Modules/DSKit/Sources/**` |
+| Common utils | `Projects/Modules/Core/Sources/**` |
 
 ---
 
 ## 4. Code Style
 
 - **UI**: SwiftUI + TCA only. No new UIKit screens.
-- **Architecture**: Port & Adapter — Presentation → Domain ← Data via ExternalInterface ports.
+- **Architecture**: Port & Adapter — Presentation → Workflows → Ports ← Adapters.
 - **Screen pattern**: `*Feature.swift` (TCA Reducer) + `*View.swift` (SwiftUI View) pair.
 - **Dependency access**: Use port clients (`taskQueryClient`, `taskCommandClient`, etc.), never concrete adapters in Presentation.
 - **Third-party deps**: Reference via plugin alias (`Plugins/DependencyPlugin`), not raw SPM URLs.
@@ -150,6 +154,7 @@ Read these **only when working on the corresponding module**:
 | Module | Guide | When to Read |
 |---|---|---|
 | App (Jacsim) | `Projects/Jacsim/AGENTS.md` | Adding/modifying screens, use cases, app lifecycle |
+| Workflows | `Projects/Workflows/AGENTS.md` | Adding/modifying use cases, application orchestration |
 | DSKit | `Projects/Modules/DSKit/AGENTS.md` | Changing design tokens or shared UI components |
 | Core | `Projects/Modules/Core/AGENTS.md` | Adding shared utilities or extensions |
 | ThirdPartyLibs | `Projects/Modules/ThirdPartyLibs/AGENTS.md` | Managing external dependencies |

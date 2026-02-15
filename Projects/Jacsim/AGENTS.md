@@ -1,6 +1,6 @@
 # Projects/Jacsim
 
-**Purpose**: App target — SwiftUI + TCA Presentation layer and Application orchestration layer.
+**Purpose**: App target — SwiftUI + TCA Presentation layer (orchestration moved to Workflows)
 
 ## Key Paths
 
@@ -10,7 +10,7 @@
 | App lifecycle | `Sources/Application/AppDelegate.swift` |
 | Root reducer | `Sources/Presentation/App/AppFeature.swift` |
 | Home flow | `Sources/Presentation/Home/**` |
-| Use cases | `Sources/Application/UseCases/**` |
+| Use cases | `Projects/Workflows/Sources/UseCases/**` (external module) |
 | DI client wiring | `Sources/Client/**` |
 
 ## Test
@@ -24,8 +24,8 @@ tuist test Jacsim
 ### ✅ Do
 
 - Use port clients (`taskQueryClient`, `taskCommandClient`) for data access
-- Keep concrete infrastructure access in `Client/` or `Application/` layer
-- For multi-step workflows, call Application use cases via dependencies (e.g. `createNewTaskUseCase`, `updateTaskSettingsUseCase`)
+- Keep concrete infrastructure access in `Client/` layer
+- For multi-step workflows, call Workflows use cases via dependencies (e.g. `createNewTaskUseCase`, `updateTaskSettingsUseCase`)
 - Every screen: `*Feature.swift` + `*View.swift` pair
 
 ### 🚫 Do Not

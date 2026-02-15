@@ -14,22 +14,33 @@ SwiftUI + TCA 기반 iOS 앱입니다.
 - **Tuist 멀티모듈**: 빌드·의존성·설정을 모듈 단위로 관리
 
 ## 아키텍처
+
+<p align="center">
+  <img src="architecture.svg" width="900" alt="Jacsim architecture (Port & Adapter)" />
+</p>
+
+<details>
+<summary>Text version</summary>
+
 ```text
-Presentation(App) ──▶ Application UseCases ──▶ ExternalInterface(Ports)
-      ▲                                                   │
-      │                                                   ▼
-      └────────────── Domain Rules ◀────────────── Data Adapters
+Presentation(App) ──▶ Workflows(UseCases) ──▶ Ports
+      ▲                                         │
+      │                                         ▼
+      └────────────── Domain Rules ◀────────── Adapters
 ```
+
+</details>
 
 ### 모듈 책임
 | Module | Responsibility |
 |---|---|
-| `Projects/Jacsim` | App entry, Presentation(TCA), Application use case orchestration |
+| `Projects/Jacsim` | App entry, Presentation(TCA) |
+| `Projects/Workflows` | 애플리케이션 유스케이스 오케스트레이션 |
 | `Projects/Domain` | 비즈니스 규칙, 엔티티, 도메인 서비스 |
-| `Projects/ExternalInterface` | Port(프로토콜) 계약 정의 |
-| `Projects/Data` | SwiftData/UserDefaults/알림 등 외부 I/O Adapter 구현 |
-| `Projects/Modules/Core` | 공통 유틸/확장 |
-| `Projects/Modules/DSKit` | 디자인 토큰/공통 UI 컴포넌트 |
+| `Projects/ExternalInterface` | `Ports`: Port(프로토콜) 계약 정의 |
+| `Projects/Data` | `Adapters`: 외부 I/O Adapter 구현 (SwiftData, UserDefaults 등) |
+| `Projects/Modules/Core` | `Shared`: 공통 유틸리티 및 익스텐션 |
+| `Projects/Modules/DSKit` | `DesignSystem`: 디자인 토큰 및 UI 컴포넌트 |
 | `Projects/Modules/ThirdPartyLibs` | 외부 라이브러리 집약 |
 
 ## 빠른 시작
@@ -49,8 +60,11 @@ tuist build Jacsim
 ```bash
 tuist test Jacsim
 tuist test Domain
-tuist test Data
-tuist test ExternalInterface
+tuist test Workflows
+tuist test Ports
+tuist test Adapters
+tuist test Shared
+tuist test DesignSystem
 ```
 
 ## CI/CD 운영
@@ -89,13 +103,14 @@ tuist test ExternalInterface
 ## 프로젝트 구조
 ```text
 Projects/
-├── Jacsim/              # App(Presentation/Application)
+├── Jacsim/              # App(Presentation)
+├── Workflows/           # Application UseCases
 ├── Domain/              # Domain logic
-├── ExternalInterface/   # Port contracts
-├── Data/                # Adapter implementations
+├── ExternalInterface/   # Ports
+├── Data/                # Adapters
 └── Modules/
-    ├── Core/
-    ├── DSKit/
+    ├── Core/            # Shared
+    ├── DSKit/           # DesignSystem
     └── ThirdPartyLibs/
 ```
 
