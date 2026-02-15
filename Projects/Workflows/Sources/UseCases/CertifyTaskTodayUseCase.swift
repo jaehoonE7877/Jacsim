@@ -1,7 +1,7 @@
 import Foundation
 import Domain
-import ExternalInterface
-import Core
+import Ports
+import Shared
 
 public struct CertifyTaskTodayUseCase: Sendable {
     public struct Input: Sendable, Equatable {
@@ -31,7 +31,7 @@ public struct CertifyTaskTodayUseCase: Sendable {
 }
 
 extension CertifyTaskTodayUseCase {
-    static func live(
+    public static func live(
         taskRepository: TaskRepositoryPort,
         imageStore: ImageStorePort
     ) -> Self {

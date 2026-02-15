@@ -1,9 +1,9 @@
 import Foundation
 import Testing
 import Domain
-import ExternalInterface
+import Ports
 
-@testable import Jacsim
+@testable import Workflows
 
 struct TaskUpdateUseCaseTests {
     @Test

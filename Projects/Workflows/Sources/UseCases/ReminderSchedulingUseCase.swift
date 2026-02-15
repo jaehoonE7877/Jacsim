@@ -1,7 +1,7 @@
 import Foundation
 import Domain
-import ExternalInterface
-import Core
+import Ports
+import Shared
 
 public struct ReminderSchedulingUseCase: Sendable {
     private let notificationScheduler: NotificationSchedulerPort

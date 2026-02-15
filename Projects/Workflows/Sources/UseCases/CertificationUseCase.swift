@@ -1,6 +1,6 @@
 import Foundation
 import Domain
-import ExternalInterface
+import Ports
 
 public struct CertificationUseCase: Sendable {
     private let taskRepository: TaskRepositoryPort

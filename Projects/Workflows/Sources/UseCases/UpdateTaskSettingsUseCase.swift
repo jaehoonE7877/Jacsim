@@ -1,6 +1,6 @@
 import Foundation
 import Domain
-import ExternalInterface
+import Ports
 
 public struct UpdateTaskSettingsUseCase: Sendable {
     public struct Input: Sendable, Equatable {
@@ -36,7 +36,7 @@ public struct UpdateTaskSettingsUseCase: Sendable {
 }
 
 extension UpdateTaskSettingsUseCase {
-    static func live(
+    public static func live(
         taskRepository: TaskRepositoryPort,
         imageStore: ImageStorePort,
         reminderSchedulingUseCase: ReminderSchedulingUseCase

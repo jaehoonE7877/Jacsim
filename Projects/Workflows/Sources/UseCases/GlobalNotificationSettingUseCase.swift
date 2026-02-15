@@ -1,5 +1,5 @@
 import Foundation
-import ExternalInterface
+import Ports
 
 public struct GlobalNotificationSettingUseCase: Sendable {
     public enum Outcome: Sendable, Equatable {
@@ -17,7 +17,7 @@ public struct GlobalNotificationSettingUseCase: Sendable {
 }
 
 extension GlobalNotificationSettingUseCase {
-    static func live(
+    public static func live(
         userSettingsRepository: UserSettingsRepositoryPort,
         notificationScheduler: NotificationSchedulerPort,
         reminderSchedulingUseCase: ReminderSchedulingUseCase

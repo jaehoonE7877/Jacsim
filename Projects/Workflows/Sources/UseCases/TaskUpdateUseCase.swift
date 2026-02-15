@@ -1,6 +1,6 @@
 import Foundation
 import Domain
-import ExternalInterface
+import Ports
 
 public struct TaskUpdateUseCase: Sendable {
     private let taskRepository: TaskRepositoryPort

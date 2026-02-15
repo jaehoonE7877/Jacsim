@@ -1,9 +1,9 @@
 import Foundation
 import Testing
 import Domain
-import ExternalInterface
+import Ports
 
-@testable import Jacsim
+@testable import Workflows
 
 // Protects reminder orchestration business rules: cancel/schedule branching,
 // global toggle synchronization, and error-resilient scheduling with port doubles.
