@@ -1,7 +1,7 @@
 import Foundation
 import SwiftData
 import Domain
-import ExternalInterface
+import Ports
 
 public actor UserSettingsRepositoryAdapter {
     private enum GlobalSettings {

@@ -3,11 +3,11 @@ import ProjectDescriptionHelpers
 import DependencyPlugin
 
 let project = Project.makeModule(
-    name: "ExternalInterface",
+    name: "Ports",
     swiftLanguageVersion: .v6,
     targets: [.unitTest, .staticFramework],
     internalDependencies: [
         .domain
     ],
-    tags: ["module", "external-interface"]
+    tags: ["module", "ports"]
 )

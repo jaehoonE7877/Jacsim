@@ -1,5 +1,5 @@
 import Testing
-import ExternalInterface
+import Ports
 
 @Test("AppPreferencesPort inMemory는 값을 저장하고 조회한다")
 func appPreferencesPortInMemoryStoresValues() {

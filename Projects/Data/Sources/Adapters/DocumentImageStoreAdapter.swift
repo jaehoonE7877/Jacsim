@@ -1,5 +1,5 @@
 import Foundation
-import ExternalInterface
+import Ports
 
 public actor DocumentImageStoreAdapter {
     private let fileManager: FileManager

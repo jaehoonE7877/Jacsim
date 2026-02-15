@@ -1,4 +1,4 @@
-# Projects/Modules/Core
+# Projects/Modules/Core (Shared)
 
 **Purpose**: Shared utilities, extensions, and logging — no business logic or UI.
 

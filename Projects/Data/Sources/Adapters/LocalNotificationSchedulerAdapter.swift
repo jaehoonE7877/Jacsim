@@ -1,7 +1,7 @@
 import Foundation
 import UserNotifications
 import Domain
-import ExternalInterface
+import Ports
 
 public actor LocalNotificationSchedulerAdapter {
     private let notificationCenter: UNUserNotificationCenter

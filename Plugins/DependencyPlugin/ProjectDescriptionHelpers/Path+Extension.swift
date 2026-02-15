@@ -20,7 +20,7 @@ public extension ProjectDescription.Path {
         return .relativeToRoot("Projects/App")
     }
     
-    static var data: Self {
+    static var adapters: Self {
         return .relativeToRoot("Projects/Data")
     }
     
@@ -28,15 +28,19 @@ public extension ProjectDescription.Path {
         return .relativeToRoot("Projects/Domain")
     }
     
-    static var core: Self {
+    static var shared: Self {
         return .relativeToRoot("Projects/Modules/Core")
     }
     
-    static var dsKit: Self {
+    static var designSystem: Self {
         return .relativeToRoot("Projects/Modules/DSKit")
     }
     
-    static var externalInterface: Self {
+    static var ports: Self {
         return .relativeToRoot("Projects/ExternalInterface")
+    }
+
+    static var workflows: Self {
+        return .relativeToRoot("Projects/Workflows")
     }
 }

@@ -1,4 +1,4 @@
-# Projects/Modules/DSKit
+# Projects/Modules/DSKit (DesignSystem)
 
 **Purpose**: Design system — tokens, shared SwiftUI components, and UI extensions. No business logic.
 

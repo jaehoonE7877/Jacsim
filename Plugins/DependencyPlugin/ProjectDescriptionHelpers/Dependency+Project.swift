@@ -17,21 +17,23 @@ public extension Dep {
 //MARK: -- Root
 
 public extension Dep {
-    static let data = Dep.project(target: "Data", path: .data)
+    static let adapters = Dep.project(target: "Adapters", path: .adapters)
     
     static let domain = Dep.project(target: "Domain", path: .domain)
 
-    static let externalInterface = Dep.project(target: "ExternalInterface", path: .externalInterface)
+    static let ports = Dep.project(target: "Ports", path: .ports)
+
+    static let workflows = Dep.project(target: "Workflows", path: .workflows)
 }
 
 //MARK: -- Modules
 
 public extension Dep.Modules {
-    static let dsKit = Dep.project(target: "DSKit", path: .dsKit, condition: .none)
+    static let designSystem = Dep.project(target: "DesignSystem", path: .designSystem, condition: .none)
     
     static let thirdPartyLibs = Dep.project(target: "ThirdPartyLibs", path: .relativeToModules("ThirdPartyLibs"), condition: .none)
 
-    static let core = Dep.project(target: "Core", path: .core, condition: .none)
+    static let shared = Dep.project(target: "Shared", path: .shared, condition: .none)
 }
 
 // MARK: - Feature

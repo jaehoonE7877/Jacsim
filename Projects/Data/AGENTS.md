@@ -1,4 +1,4 @@
-# Projects/Data
+# Projects/Data (Adapters)
 
 **Purpose**: Adapter implementations — concrete infrastructure adapters that implement ExternalInterface ports. Handles SwiftData, UserDefaults, UserNotifications, and file system I/O.
 
@@ -15,14 +15,14 @@
 ## Test
 
 ```bash
-tuist test Data
+tuist test Adapters
 ```
 
 ## Rules
 
 ### ✅ Do
 
-- Implement ports defined in `ExternalInterface` (e.g., `TaskRepositoryPort`, `AppPreferencesPort`)
+- Implement ports defined in `Ports` (ExternalInterface) (e.g., `TaskRepositoryPort`, `AppPreferencesPort`)
 - Keep mapping logic in dedicated `*Mapping.swift` files
 - Use `@Sendable` for all port closures to ensure thread safety
 - Handle errors gracefully and map to domain-appropriate errors

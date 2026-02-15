@@ -11,18 +11,18 @@ import UIKit
 public extension UIFont {
     
     static func pretendardBold(size: CGFloat) -> UIFont {
-        return DSKitFontFamily.Pretendard.bold.font(size: size)
+        return DesignSystemFontFamily.Pretendard.bold.font(size: size)
     }
     
     static func pretendardMedium(size: CGFloat) -> UIFont {
-        return DSKitFontFamily.Pretendard.medium.font(size: size)
+        return DesignSystemFontFamily.Pretendard.medium.font(size: size)
     }
     
     static func pretendardRegular(size: CGFloat) -> UIFont {
-        return DSKitFontFamily.Pretendard.regular.font(size: size)
+        return DesignSystemFontFamily.Pretendard.regular.font(size: size)
     }
     
     static func pretendardSemiBold(size: CGFloat) -> UIFont {
-        return DSKitFontFamily.Pretendard.semiBold.font(size: size)
+        return DesignSystemFontFamily.Pretendard.semiBold.font(size: size)
     }
 }

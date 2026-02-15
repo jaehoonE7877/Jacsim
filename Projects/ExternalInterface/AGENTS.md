@@ -1,4 +1,4 @@
-# Projects/ExternalInterface
+# Projects/ExternalInterface (Ports)
 
 **Purpose**: Port contracts — protocol definitions that form the Dependency Inversion boundary between Domain and Data layers. No implementation, only interfaces.
 
@@ -16,7 +16,7 @@
 ## Test
 
 ```bash
-tuist test ExternalInterface
+tuist test Ports
 ```
 
 ## Rules
@@ -55,14 +55,14 @@ public struct TaskRepositoryPort {
 
 ## Architecture Role
 
-ExternalInterface sits at the **Dependency Inversion boundary**:
+Ports (ExternalInterface) sits at the **Dependency Inversion boundary**:
 
 ```
-Presentation (App) ──▶ Application UseCases ──▶ ExternalInterface (Ports)
-                                                          │
-Domain ◀────────────────────────────────────────────── Data (Adapters)
+Presentation (App) ──▶ Workflows (UseCases) ──▶ Ports
+                                                    │
+Domain ◀────────────────────────────────────── Adapters
 ```
 
 - **Domain** defines entities and business rules
-- **ExternalInterface** defines how Domain requests external services
-- **Data** implements those requests using concrete infrastructure
+- **Ports** (ExternalInterface) defines how Domain requests external services
+- **Adapters** (Data) implements those requests using concrete infrastructure
