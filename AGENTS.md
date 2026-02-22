@@ -26,18 +26,18 @@ tuist test Shared
 tuist test DesignSystem
 ```
 
-> No lint/format tool is configured yet. Do **not** introduce one without approval.
+> No lint/format tool이 아직 구성되어 있지 않습니다. 승인 없이 새로 도입하지 마세요.
 
 ---
 
 ## 2. Success Criteria
 
-Your change is correct when **all** of the following pass:
+변경이 적절하려면 아래 조건을 **모두** 충족해야 합니다:
 
-1. `tuist generate` completes without errors
-2. `tuist build Jacsim` succeeds
-3. `tuist test <affected-scheme>` passes for every module you touched
-4. No new compiler warnings introduced
+1. `tuist generate`가 오류 없이 완료되어야 함
+2. `tuist build Jacsim`이 성공해야 함
+3. 수정한 각 모듈에 대해 `tuist test <affected-scheme>`가 통과해야 함
+4. 새로 추가된 컴파일러 경고가 없어야 함
 
 ---
 
@@ -67,27 +67,27 @@ Your change is correct when **all** of the following pass:
 
 ### Where to Find
 
-| Task | Path |
+| 작업 | 경로 |
 |---|---|
-| App entry | `Projects/Jacsim/Sources/Application/JacsimApp.swift` |
-| App lifecycle | `Projects/Jacsim/Sources/Application/AppDelegate.swift` |
-| TCA screens | `Projects/Jacsim/Sources/Presentation/**` |
-| Use cases | `Projects/Workflows/Sources/UseCases/**` |
-| Domain logic | `Projects/Domain/Sources/**` |
-| Port contracts | `Projects/ExternalInterface/Sources/**` |
-| Data adapters | `Projects/Data/Sources/Adapters/**` |
+| 앱 진입점 | `Projects/Jacsim/Sources/Application/JacsimApp.swift` |
+| 앱 라이프사이클 | `Projects/Jacsim/Sources/Application/AppDelegate.swift` |
+| TCA 화면 | `Projects/Jacsim/Sources/Presentation/**` |
+| Use case | `Projects/Workflows/Sources/UseCases/**` |
+| Domain 로직 | `Projects/Domain/Sources/**` |
+| Port 계약 | `Projects/ExternalInterface/Sources/**` |
+| Data 어댑터 | `Projects/Data/Sources/Adapters/**` |
 | Design system | `Projects/Modules/DSKit/Sources/**` |
-| Common utils | `Projects/Modules/Core/Sources/**` |
+| 공통 유틸리티 | `Projects/Modules/Core/Sources/**` |
 
 ---
 
 ## 4. Code Style
 
-- **UI**: SwiftUI + TCA only. No new UIKit screens.
+- **UI**: SwiftUI + TCA만 사용. 새 UIKit 화면을 추가하지 않는다.
 - **Architecture**: Port & Adapter — Presentation → Workflows → Ports ← Adapters.
 - **Screen pattern**: `*Feature.swift` (TCA Reducer) + `*View.swift` (SwiftUI View) pair.
-- **Dependency access**: Use port clients (`taskQueryClient`, `taskCommandClient`, etc.), never concrete adapters in Presentation.
-- **Third-party deps**: Reference via plugin alias (`Plugins/DependencyPlugin`), not raw SPM URLs.
+- **Dependency access**: `taskQueryClient`, `taskCommandClient` 등의 port client를 사용하고, Presentation에서 concrete adapter를 직접 쓰지 않는다.
+- **Third-party deps**: raw SPM URL 대신 plugin alias(`Plugins/DependencyPlugin`)를 사용한다.
 
 ```swift
 // ✅ Good — Feature + View pair, port client dependency
@@ -108,60 +108,60 @@ struct HomeView: View {
 
 ### 🚫 Never Do
 
-| Rule | Detail |
+| 규칙 | 상세 |
 |---|---|
-| Generated files | Never edit `Projects/**/Derived/**`, `.build/**`, `.derivedData/**`, `build/**` |
-| Secrets | Never commit API keys, credentials, or personal identifiers to any file |
-| Legacy frameworks | Never add new RxSwift or Realm usage |
-| UIKit screens | Never create new UIKit-based views |
-| Production deploy | Never trigger Xcode Cloud or App Store workflows |
-| CI workflows | Never modify `.github/workflows/**` without explicit approval |
+| Generated files | `Projects/**/Derived/**`, `.build/**`, `.derivedData/**`, `build/**`는 수정하지 않는다 |
+| Secrets | API keys, credentials, 개인 식별 정보는 어떤 파일에도 커밋하지 않는다 |
+| Legacy frameworks | 신규 RxSwift 또는 Realm 사용을 추가하지 않는다 |
+| UIKit screens | UIKit 기반 새 뷰를 만들지 않는다 |
+| Production deploy | Xcode Cloud 또는 App Store workflows를 직접 트리거하지 않는다 |
+| CI workflows | 명시적 승인 없이 `.github/workflows/**`를 수정하지 않는다 |
 
 ### ⚠️ Ask First
 
-| Rule | Detail |
+| 규칙 | 상세 |
 |---|---|
-| New dependency | Adding a package to `Package.swift` requires human approval |
-| Tuist config | Changes to `Tuist.swift`, `Workspace.swift`, or `Plugins/**` need review |
-| xcconfig changes | Modifying `xcconfigs/**` may affect all targets — confirm scope |
-| Module creation | New modules under `Projects/` must follow Tuist template conventions |
-| Design system | `DSKit` token/component changes affect the entire app UI |
+| 신규 의존성 | `Package.swift`에 패키지를 추가하려면 사람 승인 필요 |
+| Tuist config | `Tuist.swift`, `Workspace.swift`, `Plugins/**` 변경은 리뷰가 필요하다 |
+| xcconfig 변경 | `xcconfigs/**` 수정은 모든 타겟에 영향이 있을 수 있으므로 범위를 먼저 확인한다 |
+| 모듈 생성 | `Projects/` 하위 신규 모듈은 Tuist 템플릿 규칙을 따라야 함 |
+| Design system | `DSKit`의 토큰/컴포넌트 변경은 앱 전체 UI에 영향을 준다 |
 
 ---
 
 ## 6. Git & PR Workflow
 
-- **Branch**: feature/*, fix/*, refactor/* from `develop`
-- **Commit prefix**: `Feat:`, `Fix:`, `Refactor:`, `Chore:`, `Docs:` (Korean body OK)
-- **PR**: Fill `.github/PULL_REQUEST_TEMPLATE.md` — include test command output
-- **CI gate**: `tuist test <scheme>` must pass via `ios-ci.yml` before merge
+- **Branch**: `develop`에서 `feature/*`, `fix/*`, `refactor/*` 브랜치 사용
+- **Commit prefix**: `Feat:`, `Fix:`, `Refactor:`, `Chore:`, `Docs:` (본문은 한국어 가능)
+- **PR**: `.github/PULL_REQUEST_TEMPLATE.md`를 작성하고 테스트 명령 출력 결과를 포함한다
+- **CI gate**: 병합 전 `ios-ci.yml`을 통해 `tuist test <scheme>` 통과 필요
 
 ---
 
 ## 7. Context Hygiene
 
-- **Read only what you need.** Start from this file, then the relevant sub-AGENTS.md, then source files.
-- **Never read** `.build/`, `.derivedData/`, `build/`, `*.xcodeproj/` contents — they are generated and huge.
-- **Large outputs**: If a command produces > 200 lines, summarize instead of pasting in full.
-- **Token budget**: Prefer reading the `Where to Find` table above before scanning directories.
+- **필요한 범위만 읽는다.** 먼저 이 파일을 확인한 뒤 관련 sub-AGENTS.md, 다음으로 소스 파일을 본다.
+- **Never read** `.build/`, `.derivedData/`, `build/`, `*.xcodeproj/`의 내용을 읽지 않는다 — 생성물이라 크기가 큼.
+- **Large outputs**: 200줄을 넘는 명령 결과는 전체 출력 대신 요약해서 확인한다.
+- **Token budget**: 디렉터리를 스캔하기 전에 먼저 위의 `Where to Find` 테이블을 참고한다.
 
 ---
 
 ## 8. Sub-Module Guides
 
-Read these **only when working on the corresponding module**:
+해당 모듈 작업 시에만 아래 AGENTS를 읽는다:
 
-| Module | Guide | When to Read |
+| 모듈 | 가이드 | 읽을 대상 |
 |---|---|---|
-| App (Jacsim) | `Projects/Jacsim/AGENTS.md` | Adding/modifying screens, use cases, app lifecycle |
-| Workflows | `Projects/Workflows/AGENTS.md` | Adding/modifying use cases, application orchestration |
-| DSKit | `Projects/Modules/DSKit/AGENTS.md` | Changing design tokens or shared UI components |
-| Core | `Projects/Modules/Core/AGENTS.md` | Adding shared utilities or extensions |
-| ThirdPartyLibs | `Projects/Modules/ThirdPartyLibs/AGENTS.md` | Managing external dependencies |
-| Features (legacy) | `Projects/Features/AGENTS.md` | Referencing old experimental code |
-| Tuist | `Tuist/AGENTS.md` | Modifying project generation or templates |
-| Plugins | `Plugins/AGENTS.md` | Changing dependency aliases or environment config |
-| xcconfigs | `xcconfigs/AGENTS.md` | Editing build settings |
+| App (Jacsim) | `Projects/Jacsim/AGENTS.md` | 화면 추가/수정, Use case 작업, 앱 라이프사이클 변경 |
+| Workflows | `Projects/Workflows/AGENTS.md` | Use case 추가/수정, 애플리케이션 오케스트레이션 |
+| DSKit | `Projects/Modules/DSKit/AGENTS.md` | Design token 또는 공통 UI 컴포넌트 변경 |
+| Core | `Projects/Modules/Core/AGENTS.md` | 공통 유틸리티 또는 extension 추가 |
+| ThirdPartyLibs | `Projects/Modules/ThirdPartyLibs/AGENTS.md` | 외부 dependency 관리 |
+| Features (legacy) | `Projects/Features/AGENTS.md` | 오래된 실험 코드 참조 |
+| Tuist | `Tuist/AGENTS.md` | 프로젝트 생성 또는 템플릿 수정 |
+| Plugins | `Plugins/AGENTS.md` | dependency alias 또는 환경 설정 변경 |
+| xcconfigs | `xcconfigs/AGENTS.md` | Build settings 수정 |
 
 ---
 
