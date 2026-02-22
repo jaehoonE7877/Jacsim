@@ -1,6 +1,6 @@
 # Projects/Features
 
-**Purpose**: Legacy/experimental feature modules. Active screen development happens in `Projects/Jacsim/Sources/Presentation`.
+**Purpose**: legacy/experimental 기능 모듈입니다. 실제 활성 화면 개발은 `Projects/Jacsim/Sources/Presentation`에서 진행합니다.
 
 ## Key Paths
 
@@ -13,10 +13,10 @@
 
 ### ✅ Do
 
-- Reference this directory only for legacy context
-- New features follow the main app structure and Tuist templates
+- 이 디렉터리는 과거/레거시 context 참조 용도로만 사용
+- 신규 기능은 앱 본체 구조와 Tuist 템플릿 규칙을 따라 추가
 
 ### 🚫 Do Not
 
-- Add new active features here — use `Projects/Jacsim/Sources/Presentation/`
-- Manually create `.xcodeproj` files (use `tuist generate`)
+- 여기에 신규 활성 기능을 추가하지 않음 — `Projects/Jacsim/Sources/Presentation/`에 구현
+- `.xcodeproj` 파일을 수동 생성하지 않음 (`tuist generate` 사용)
