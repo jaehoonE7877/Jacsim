@@ -33,10 +33,12 @@ tuist test Workflows
 - Add UI code or view logic
 - Put business rules that belong in Domain
 
-## UseCase Pattern
+## UseCase 패턴
+
+UseCase는 `execute()`를 통해 시작되며, 포트와 도메인 서비스를 조합해 여러 단계의 비즈니스 흐름을 조율하는 오케스트레이션 계층입니다.
 
 ```swift
-// ✅ Good — Use case coordinates ports and domain services
+// ✅ Good — Use case는 포트와 도메인 서비스를 조율합니다
 public struct CreateNewTaskUseCase: Sendable {
     @Dependency(\.taskRepositoryClient) var taskRepository
     @Dependency(\.notificationSchedulerClient) var notificationScheduler
@@ -53,16 +55,16 @@ public struct CreateNewTaskUseCase: Sendable {
     }
 }
 
-// ❌ Bad — Use case references concrete implementations or UI
+// ❌ Bad — Use case에서 구체 구현체나 UI를 직접 참조합니다
 public struct CreateNewTaskUseCase {
     let realm = try! Realm()  // Never do this
     let viewModel: TaskViewModel  // Never reference UI
 }
 ```
 
-## Architecture Role
+## 아키텍처 역할
 
-Workflows sits between **Presentation** and **Ports**:
+Workflows는 **Presentation**과 **Ports** 사이에 위치합니다:
 
 ```
 Presentation (App) ──▶ Workflows (UseCases) ──▶ Ports
@@ -71,31 +73,31 @@ Presentation (App) ──▶ Workflows (UseCases) ──▶ Ports
                               Domain Services
 ```
 
-- **Presentation** triggers use cases via dependencies
-- **Workflows** orchestrates the business process
-- **Ports** abstracts infrastructure concerns
-- **Domain** provides business rules and entities
+- **Presentation**: 의존성 주입(Dependency Injection)으로 UseCase를 트리거
+- **Workflows**: 포트와 도메인 서비스를 조합해 비즈니스 과정을 오케스트레이션
+- **Ports**: 인프라 세부사항을 추상화
+- **Domain**: 핵심 비즈니스 규칙과 엔티티를 제공합니다
 
 ## Available Use Cases
 
 | Use Case | Purpose |
 |---|---|
-| `CreateNewTaskUseCase` | 새 작업 생성 및 초기 설정 |
-| `UpdateTaskSettingsUseCase` | 작업 설정 업데이트 |
-| `CertifyTaskTodayUseCase` | 오늘 작업 인증 처리 |
-| `StageProgressionUseCase` | 챌린지 단계 진행 관리 |
-| `ReminderSchedulingUseCase` | 알림 스케줄링 |
+| `CreateNewTaskUseCase` | `Task` 생성 및 초기 설정 조정 |
+| `UpdateTaskSettingsUseCase` | 작업 설정 업데이트 처리 |
+| `CertifyTaskTodayUseCase` | 당일 작업 인증 처리 |
+| `StageProgressionUseCase` | 챌린지 단계 진행 상태 관리 |
+| `ReminderSchedulingUseCase` | 알림 스케줄 조정 |
 | `GlobalNotificationSettingUseCase` | 전역 알림 설정 관리 |
-| `TaskUpdateUseCase` | 작업 데이터 업데이트 |
-| `CertificationUseCase` | 인증 로직 |
-| `DeleteTaskUseCase` | 작업 삭제 |
-| `LoadImageUseCase` | 이미지 로드 |
-| `RequestNotificationPermissionUseCase` | 알림 권한 요청 |
-| `AppPreferencesUseCase` | 앱 설정 관리 |
-| `NotificationSettingQueryUseCase` | 알림 설정 조회 |
-| `ActiveTaskServiceUseCase` | 활성 작업 서비스 |
-| `TaskStatusServiceUseCase` | 작업 상태 서비스 |
-| `CalendarEventServiceUseCase` | 캘린더 이벤트 서비스 |
-| `ChallengeStateServiceUseCase` | 챌린지 상태 서비스 |
-| `StageEvaluationServiceUseCase` | 단계 평가 서비스 |
-| `TaskQueryUseCase` | 작업 조회 |
+| `TaskUpdateUseCase` | 작업 데이터 변경 처리 |
+| `CertificationUseCase` | 인증 비즈니스 로직 실행 |
+| `DeleteTaskUseCase` | 작업 삭제 처리 |
+| `LoadImageUseCase` | 이미지 로드 수행 |
+| `RequestNotificationPermissionUseCase` | 알림 권한 요청 처리 |
+| `AppPreferencesUseCase` | 앱 설정 조회 및 관리 |
+| `NotificationSettingQueryUseCase` | 알림 설정 조회 전용 처리 |
+| `ActiveTaskServiceUseCase` | 활성 작업 서비스 처리 |
+| `TaskStatusServiceUseCase` | 작업 상태 처리 |
+| `CalendarEventServiceUseCase` | 캘린더 이벤트 동기화 처리 |
+| `ChallengeStateServiceUseCase` | 챌린지 상태 관리 |
+| `StageEvaluationServiceUseCase` | 단계 평가 처리 |
+| `TaskQueryUseCase` | 작업 조회 처리 |
