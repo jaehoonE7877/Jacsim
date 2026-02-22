@@ -1,6 +1,6 @@
 # xcconfigs
 
-**Purpose**: Centralized `.xcconfig` build settings for all projects and targets.
+**Purpose**: 모든 project와 target의 `.xcconfig` build settings를 중앙 관리합니다.
 
 ## Key Paths
 
@@ -14,13 +14,13 @@
 
 ### ✅ Do
 
-- Make build setting changes via xcconfig files, not Xcode GUI
-- Keep ConfigurationPlugin mapping in sync after any change
+- build setting 변경은 Xcode GUI 대신 xcconfig 파일에서 수행
+- 변경 시 ConfigurationPlugin mapping을 즉시 동기화
 
 ### ⚠️ Ask First
 
-- xcconfig changes may affect all targets — confirm scope before editing
+- xcconfig 변경은 전체 target에 영향을 줄 수 있어 수정 범위를 먼저 확인
 
 ### 🚫 Do Not
 
-- Edit Xcode build settings through the GUI without reflecting changes here
+- Xcode GUI에서 build settings를 바꾼 뒤 여기에 반영하지 않기

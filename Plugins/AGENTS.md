@@ -1,6 +1,6 @@
 # Plugins
 
-**Purpose**: Tuist plugins (Dependency / Environment / Configuration) — single source of truth for dependency aliases, environment values, and xcconfig mappings.
+**Purpose**: Tuist Plugin (Dependency / Environment / Configuration)은 dependency alias, environment value, xcconfig mapping을 관리하는 단일 진실 출처입니다.
 
 ## Key Paths
 
@@ -14,13 +14,13 @@
 
 ### ✅ Do
 
-- Use plugin aliases in projects instead of hardcoded paths/values
-- Keep bundle ID and deployment target centralized in EnvironmentPlugin
+- 프로젝트에서는 하드코딩된 path/value 대신 Plugin alias 사용
+- bundle ID와 deployment target은 EnvironmentPlugin에서 일괄 관리
 
 ### ⚠️ Ask First
 
-- Plugin changes propagate to all modules — confirm scope before editing
+- Plugin 변경은 모든 module에 전파되므로 수정 범위를 먼저 확인
 
 ### 🚫 Do Not
 
-- Duplicate target-specific settings across individual project files
+- 개별 project 파일에서 target-specific 설정을 중복 정의하지 않기
