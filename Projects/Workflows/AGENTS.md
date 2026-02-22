@@ -38,7 +38,7 @@ tuist test Workflows
 UseCase는 `execute()`를 통해 시작되며, 포트와 도메인 서비스를 조합해 여러 단계의 비즈니스 흐름을 조율하는 오케스트레이션 계층입니다.
 
 ```swift
-// ✅ Good — Use case는 포트와 도메인 서비스를 조율합니다
+// ✅ Good — Use case coordinates ports and domain services
 public struct CreateNewTaskUseCase: Sendable {
     @Dependency(\.taskRepositoryClient) var taskRepository
     @Dependency(\.notificationSchedulerClient) var notificationScheduler
@@ -55,7 +55,7 @@ public struct CreateNewTaskUseCase: Sendable {
     }
 }
 
-// ❌ Bad — Use case에서 구체 구현체나 UI를 직접 참조합니다
+// ❌ Bad — Use case references concrete implementations or UI
 public struct CreateNewTaskUseCase {
     let realm = try! Realm()  // Never do this
     let viewModel: TaskViewModel  // Never reference UI
