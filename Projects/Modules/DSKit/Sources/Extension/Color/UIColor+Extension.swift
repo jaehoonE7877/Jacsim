@@ -8,7 +8,7 @@
 
 import UIKit
 
-//MARK: - Primary
+//MARK: - 기본 색상
 public extension UIColor {
     
     static var primaryNormal: UIColor {
@@ -39,7 +39,7 @@ public extension UIColor {
     }
 }
 
-//MARK: - Label
+//MARK: - 라벨
 public extension UIColor {
     
     static var labelNormal: UIColor {
@@ -97,7 +97,7 @@ public extension UIColor {
     }
 }
 
-//MARK: - Background
+//MARK: - 배경
 public extension UIColor {
 
     static var backgroundNormal: UIColor {
@@ -128,7 +128,7 @@ public extension UIColor {
     }
 }
 
-//MARK: - Status
+//MARK: - 상태
 public extension UIColor {
     
     static var positive: UIColor {
@@ -159,7 +159,7 @@ public extension UIColor {
     }
 }
 
-//MARK: - Streak
+//MARK: - 연속 기록
 public extension UIColor {
     
     static var streakActive: UIColor {
@@ -190,7 +190,7 @@ public extension UIColor {
     }
 }
 
-//MARK: - Progress
+//MARK: - 진행 상태
 public extension UIColor {
     
     static var progressLow: UIColor {
@@ -221,7 +221,7 @@ public extension UIColor {
     }
 }
 
-//MARK: - Achievement
+//MARK: - 업적
 public extension UIColor {
     
     static var achievement: UIColor {
@@ -234,7 +234,7 @@ public extension UIColor {
     }
 }
 
-//MARK: - Surface
+//MARK: - 표면
 public extension UIColor {
     
     static var surfaceElevated: UIColor {
@@ -265,7 +265,7 @@ public extension UIColor {
     }
 }
 
-//MARK: - Skeleton
+//MARK: - 스켈레톤
 public extension UIColor {
 
     static var skeletonContainer: UIColor {
@@ -297,8 +297,8 @@ public extension UIColor {
 }
 
 extension UIColor {
-    ///Hex값으로 컬러 할당 가능
-    /// Tag: #Hex
+    /// Hex 값으로 컬러를 할당할 수 있습니다
+    /// 태그: #Hex
     convenience init(hexString: String, alpha: CGFloat = 1.0) {
          var hexFormatted: String = hexString.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines).uppercased()
          
