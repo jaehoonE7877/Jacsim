@@ -20,7 +20,7 @@ SwiftUI + TCA 기반 iOS 앱입니다.
 </p>
 
 <details>
-<summary>Text version</summary>
+<summary>텍스트 버전</summary>
 
 ```text
 Presentation(App) ──▶ Workflows(UseCases) ──▶ Ports
@@ -32,16 +32,16 @@ Presentation(App) ──▶ Workflows(UseCases) ──▶ Ports
 </details>
 
 ### 모듈 책임
-| Module | Responsibility |
+| 모듈 | 책임 |
 |---|---|
-| `Projects/Jacsim` | App entry, Presentation(TCA) |
+| `Projects/Jacsim` | 앱 진입점, Presentation(TCA) |
 | `Projects/Workflows` | 애플리케이션 유스케이스 오케스트레이션 |
 | `Projects/Domain` | 비즈니스 규칙, 엔티티, 도메인 서비스 |
 | `Projects/ExternalInterface` | `Ports`: Port(프로토콜) 계약 정의 |
 | `Projects/Data` | `Adapters`: 외부 I/O Adapter 구현 (SwiftData, UserDefaults 등) |
 | `Projects/Modules/Core` | `Shared`: 공통 유틸리티 및 익스텐션 |
 | `Projects/Modules/DSKit` | `DesignSystem`: 디자인 토큰 및 UI 컴포넌트 |
-| `Projects/Modules/ThirdPartyLibs` | 외부 라이브러리 집약 |
+| `Projects/Modules/ThirdPartyLibs` | 외부 라이브러리 집합 |
 
 ## 빠른 시작
 ### 요구사항
@@ -77,10 +77,10 @@ tuist test DesignSystem
 
 ### Xcode Cloud/App Store Connect 콘솔 설정값
 1. App Store Connect > 앱 > Xcode Cloud에서 워크플로를 생성하고, 스킴은 `Jacsim-Release`를 선택
-2. Start Condition은 `Branch Changes`, 브랜치는 `develop`으로 설정 (Develop 머지 시 자동 실행)
+2. 시작 조건은 `Branch Changes`, 브랜치는 `develop`으로 설정 (Develop 머지 시 자동 실행)
 3. Action은 `Archive - iOS App` + `Distribute to TestFlight`를 사용하고 Internal Tester로 배포
-4. Environment Variables/Secrets에 `GOOGLE_SERVICE_INFO_PLIST_BASE64`를 등록
-5. Custom Build Script의 Post-clone 경로를 `ci_scripts/ci_post_clone.sh`로 등록
+4. 환경 변수/시크릿에 `GOOGLE_SERVICE_INFO_PLIST_BASE64`를 등록
+5. 커스텀 빌드 스크립트의 Post-clone 경로를 `ci_scripts/ci_post_clone.sh`로 등록
 
 ### Xcode Cloud 자동 빌드 번호 동작
 - Xcode Cloud의 `CI_BUILD_NUMBER`를 Post-clone에서 `TUIST_APP_BUILD_NUMBER`로 전달
@@ -88,12 +88,12 @@ tuist test DesignSystem
 - `CFBundleVersion`은 `$(CURRENT_PROJECT_VERSION)`를 사용하므로 매 빌드마다 자동 증가
 
 ### 공식 문서
-- Getting started with Xcode Cloud: https://developer.apple.com/documentation/xcode/getting-started-with-xcode-cloud
-- Add Xcode Cloud workflows: https://developer.apple.com/help/app-store-connect/manage-builds/add-xcode-cloud-workflows/
-- Configure workflow actions: https://developer.apple.com/help/app-store-connect/manage-builds/configure-actions-for-xcode-cloud-workflows/
-- Custom build scripts: https://developer.apple.com/documentation/xcode/writing-custom-build-scripts
-- Xcode Cloud environment variables: https://developer.apple.com/documentation/xcode/environment-variable-reference
-- TestFlight internal testers: https://developer.apple.com/help/app-store-connect/test-a-beta-version/invite-internal-testers
+- Xcode Cloud 시작 가이드: https://developer.apple.com/documentation/xcode/getting-started-with-xcode-cloud
+- Xcode Cloud 워크플로 추가: https://developer.apple.com/help/app-store-connect/manage-builds/add-xcode-cloud-workflows/
+- 워크플로 동작 구성: https://developer.apple.com/help/app-store-connect/manage-builds/configure-actions-for-xcode-cloud-workflows/
+- 커스텀 빌드 스크립트: https://developer.apple.com/documentation/xcode/writing-custom-build-scripts
+- Xcode Cloud 환경 변수: https://developer.apple.com/documentation/xcode/environment-variable-reference
+- TestFlight 내부 테스터 초대: https://developer.apple.com/help/app-store-connect/test-a-beta-version/invite-internal-testers
 
 ### Tuist Cache (CAS) 트러블슈팅
 - 기본값은 Xcode cache 비활성화(`TUIST_XCODE_CACHE` 미설정)
@@ -104,8 +104,8 @@ tuist test DesignSystem
 ```text
 Projects/
 ├── Jacsim/              # App(Presentation)
-├── Workflows/           # Application UseCases
-├── Domain/              # Domain logic
+├── Workflows/           # 애플리케이션 유스케이스
+├── Domain/              # 도메인 규칙
 ├── ExternalInterface/   # Ports
 ├── Data/                # Adapters
 └── Modules/
@@ -120,7 +120,7 @@ Projects/
 - Data는 Port 구현 중심, 비즈니스 규칙은 Domain에 배치
 - 생성 산출물(`Derived`, `.build`, `build`) 직접 수정 금지
 
-## Contributing
+## 기여 가이드
 - 브랜치/PR/커밋 규칙은 `AGENTS.md`의 컨벤션을 따릅니다.
 - 커밋 타입: `Feat`, `Fix`, `Docs`, `Style`, `Refactor`, `Test`, `Chore`
 

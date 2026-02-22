@@ -17,9 +17,8 @@
 - 필요 시 명령만 첨부: `tuist build --scheme Jacsim`, `tuist test --scheme Core`
 
 📸 스크린샷/영상 (선택)
-- UI 변경이 있다면 Before/After 또는 짧은 캡처
+- UI 변경이 있다면 변경 전/후 또는 짧은 캡처
 
 🔗 이슈
 Closes: #
 Refs: #
-
