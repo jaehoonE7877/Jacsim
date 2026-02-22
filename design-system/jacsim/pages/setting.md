@@ -1,17 +1,17 @@
-# Setting Page Overrides
+# 설정 페이지 오버라이드
 
-> Applies to: `Projects/Jacsim/Sources/Presentation/Setting/SettingView.swift`
+> 적용 대상: `Projects/Jacsim/Sources/Presentation/Setting/SettingView.swift`
 
-## Layout Overrides
+## 레이아웃 오버라이드
 
 - 테마/알림/도움말/앱정보를 카드 섹션으로 분리
 - 환경 설정은 즉시 반영되도록 피드백 배너 유지
 
-## State Policy
+## 상태 정책
 
 - 설정 반영 중에는 상태 배너로 진행 상태를 표시
 
-## Component Overrides
+## 컴포넌트 오버라이드
 
-- 도움말/문의/리뷰 액션은 동일 row 패턴 유지
+- 도움말/문의/리뷰 액션은 동일 행 패턴 유지
 - 우측 디스클로저/아이콘 크기 일관성 유지
