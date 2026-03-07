@@ -139,7 +139,9 @@ public struct AllTaskView: View {
                     }
                     .padding(.vertical, .jsXS)
                 }
-                .jsAccessibility("\(title), \(tasks.count)개의 작심", traits: .isButton)
+                .accessibilityLabel("\(title) 작심 \(tasks.count)개")
+                .accessibilityValue(isExpanded ? "펼쳐짐" : "접힘")
+                .accessibilityHint(isExpanded ? "두 번 탭해 접습니다" : "두 번 탭해 펼칩니다")
 
                 if isExpanded {
                     VStack(spacing: .jsSM) {

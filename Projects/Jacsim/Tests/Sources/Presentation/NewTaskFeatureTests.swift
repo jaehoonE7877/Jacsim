@@ -49,3 +49,57 @@ func newTaskStepMovesToAlarmConfirmWhenPhotoExists() async {
         $0.currentStep = .alarmConfirm
     }
 }
+
+@MainActor
+@Test("저장 시 제목이 비어 있으면 기본 정보 단계로 되돌리고 오류를 노출한다")
+func newTaskSaveRoutesBackToBasicInfoWhenTitleIsMissing() async {
+    var initialState = NewTaskFeature.State()
+    initialState.currentStep = .alarmConfirm
+    initialState.image = UIImage(systemName: "photo")
+
+    let store = TestStore(initialState: initialState) {
+        NewTaskFeature()
+    }
+
+    await store.send(.saveButtonTapped) {
+        $0.currentStep = .basicInfo
+        $0.stepValidationError = .emptyTitle
+    }
+}
+
+@MainActor
+@Test("저장 시 대표 사진이 없으면 사진 단계로 되돌리고 오류를 노출한다")
+func newTaskSaveRoutesBackToPhotoWhenImageIsMissing() async {
+    var initialState = NewTaskFeature.State()
+    initialState.title = "작심"
+    initialState.lastAcceptedTitle = "작심"
+    initialState.currentStep = .alarmConfirm
+
+    let store = TestStore(initialState: initialState) {
+        NewTaskFeature()
+    }
+
+    await store.send(.saveButtonTapped) {
+        $0.currentStep = .photo
+        $0.stepValidationError = .missingPhoto
+    }
+}
+
+@MainActor
+@Test("사진 선택은 사진 단계의 검증 오류를 해제한다")
+func newTaskImageSelectionClearsPhotoValidationError() async {
+    let image = UIImage(systemName: "photo")!
+    var initialState = NewTaskFeature.State()
+    initialState.currentStep = .photo
+    initialState.stepValidationError = .missingPhoto
+
+    let store = TestStore(initialState: initialState) {
+        NewTaskFeature()
+    }
+
+    await store.send(.imageSelected(image)) {
+        $0.image = image
+        $0.saveFailed = false
+        $0.stepValidationError = nil
+    }
+}

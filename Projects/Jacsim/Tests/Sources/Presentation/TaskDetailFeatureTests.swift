@@ -112,6 +112,50 @@ func taskDetailEditSavePassesImageDataWhenProvided() async {
     #expect((last?.imageByteCount ?? 0) > 0)
 }
 
+@MainActor
+@Test("오늘 인증 버튼은 오늘 인덱스로 인증 화면 이동 delegate를 보낸다")
+func taskDetailCertifyTodayRoutesToTodayUpdate() async {
+    let task = makeTaskForDetailTests(durationDays: 7, completedRecords: 0)
+    let todayIndex = task.dayArray.firstIndex {
+        Calendar.current.isDate($0, inSameDayAs: Date())
+    }!
+
+    let store = TestStore(initialState: TaskDetailFeature.State(task: task)) {
+        TaskDetailFeature()
+    }
+
+    await store.send(.certifyTodayTapped)
+    await store.receive(.delegate(.navigateToUpdate(task, todayIndex)))
+}
+
+@MainActor
+@Test("기록 날짜 탭은 해당 날짜 인덱스로 인증 화면 이동 delegate를 보낸다")
+func taskDetailDayTappedRoutesToMatchingUpdateIndex() async {
+    let task = makeTaskForDetailTests(durationDays: 7, completedRecords: 0)
+    let targetIndex = 2
+    let targetDate = task.dayArray[targetIndex]
+
+    let store = TestStore(initialState: TaskDetailFeature.State(task: task)) {
+        TaskDetailFeature()
+    }
+
+    await store.send(.dayTapped(targetDate))
+    await store.receive(.delegate(.navigateToUpdate(task, targetIndex)))
+}
+
+@MainActor
+@Test("뒤로 가기 버튼은 이전 화면 이동 delegate를 보낸다")
+func taskDetailBackButtonRoutesBack() async {
+    let task = makeTaskForDetailTests(durationDays: 7, completedRecords: 0)
+
+    let store = TestStore(initialState: TaskDetailFeature.State(task: task)) {
+        TaskDetailFeature()
+    }
+
+    await store.send(.backButtonTapped)
+    await store.receive(.delegate(.navigateBack))
+}
+
 private func makeTaskForDetailTests(
     durationDays: Int,
     completedRecords: Int

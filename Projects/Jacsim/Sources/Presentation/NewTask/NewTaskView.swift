@@ -369,6 +369,11 @@ public struct NewTaskView: View {
 
     private var buttonSection: some View {
         VStack(spacing: FooterLayout.primarySecondarySpacing) {
+            if let disabledReason = primaryButtonDisabledReason {
+                disabledReasonBanner(text: disabledReason)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
+
             ZStack {
                 JSButton(
                     title: primaryButtonTitle,
@@ -468,6 +473,19 @@ public struct NewTaskView: View {
         }
     }
 
+    private var primaryButtonDisabledReason: String? {
+        guard !store.isSaving, !isPrimaryButtonEnabled else { return nil }
+
+        switch store.currentStep {
+        case .basicInfo:
+            return "작심 제목을 입력하면 다음 단계로 이동할 수 있어요."
+        case .photo:
+            return "대표 사진을 선택하면 다음 단계로 이동할 수 있어요."
+        case .alarmConfirm:
+            return "제목과 대표 사진을 모두 준비하면 챌린지를 시작할 수 있어요."
+        }
+    }
+
     private func primaryButtonTapped() {
         switch store.currentStep {
         case .basicInfo, .photo:
@@ -483,6 +501,15 @@ public struct NewTaskView: View {
                 message: "저장에 실패했어요. 네트워크 상태를 확인해 주세요."
             )
         )
+    }
+
+    private func disabledReasonBanner(text: String) -> some View {
+        RedesignStateBanner(
+            text: text,
+            icon: "info.circle.fill",
+            tintColor: .primaryNormal
+        )
+        .accessibilityLabel(text)
     }
 
     private var stageDayBinding: Binding<Int> {

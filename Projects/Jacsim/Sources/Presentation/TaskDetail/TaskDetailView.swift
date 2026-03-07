@@ -129,9 +129,11 @@ public struct TaskDetailView: View {
                 Button(action: { store.send(.backButtonTapped) }) {
                     Image(systemName: "chevron.left")
                         .font(.jsHeadlineMedium)
-                        .foregroundColor(.white)
+                        .foregroundColor(.labelStrong)
                         .frame(width: 44.jsScaled(.touchTarget), height: 44.jsScaled(.touchTarget))
                 }
+                .accessibilityLabel("뒤로 가기")
+                .accessibilityHint("이전 화면으로 돌아갑니다")
             }
 
             ToolbarItem(placement: .principal) {
@@ -160,10 +162,6 @@ public struct TaskDetailView: View {
                         Label("알림 설정", systemImage: "bell")
                     }
 
-                    Button(action: { store.send(.editMemoButtonTapped) }) {
-                        Label("작심 메모 편집", systemImage: "note.text")
-                    }
-
                     Divider()
 
                     Button(role: .destructive, action: { store.send(.deleteButtonTapped) }) {
@@ -172,9 +170,11 @@ public struct TaskDetailView: View {
                 } label: {
                     Image(systemName: "ellipsis")
                         .font(.jsHeadlineMedium)
-                        .foregroundColor(.white)
+                        .foregroundColor(.labelStrong)
                         .frame(width: 44.jsScaled(.touchTarget), height: 44.jsScaled(.touchTarget))
                 }
+                .accessibilityLabel("작심 옵션")
+                .accessibilityHint("대표 사진 변경, 알림 설정, 삭제 메뉴를 엽니다")
             }
         }
         .background(InteractivePopGestureEnabler())

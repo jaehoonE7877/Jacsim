@@ -198,7 +198,17 @@ public struct TaskUpdateView: View {
     }
     
     private var bottomCTASection: some View {
-        VStack(spacing: 0) {
+        VStack(spacing: .jsXS) {
+            if let disabledReason = buttonDisabledReason {
+                RedesignStateBanner(
+                    text: disabledReason,
+                    icon: "info.circle.fill",
+                    tintColor: .primaryNormal
+                )
+                .padding(.horizontal, .jsMD)
+                .accessibilityLabel(disabledReason)
+            }
+
             JSButton(
                 title: "오늘 작심 완료했어요",
                 style: .primary,
@@ -207,6 +217,11 @@ public struct TaskUpdateView: View {
             ) {
                 store.send(.certifyButtonTapped)
             }
+            .accessibilityHint(
+                isButtonEnabled
+                ? "오늘 인증을 저장합니다"
+                : "인증 사진을 선택하면 활성화됩니다"
+            )
             .padding(.horizontal, .jsMD)
             .padding(.vertical, .jsMD)
         }
@@ -246,5 +261,10 @@ public struct TaskUpdateView: View {
     
     private var isButtonEnabled: Bool {
         store.image != nil
+    }
+
+    private var buttonDisabledReason: String? {
+        guard !store.isSaving, !isButtonEnabled else { return nil }
+        return "인증 사진을 선택하면 오늘 작심을 완료할 수 있어요."
     }
 }
