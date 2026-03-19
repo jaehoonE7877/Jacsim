@@ -12,7 +12,7 @@ private enum ImageStoreKey: DependencyKey {
     )
 }
 
-extension DependencyValues {
+public extension DependencyValues {
     var imageStore: ImageStorePort {
         get { self[ImageStoreKey.self] }
         set { self[ImageStoreKey.self] = newValue }

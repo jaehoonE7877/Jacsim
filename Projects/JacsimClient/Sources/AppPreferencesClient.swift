@@ -7,7 +7,7 @@ private enum AppPreferencesKey: DependencyKey {
     static let testValue: AppPreferencesPort = .inMemory()
 }
 
-extension DependencyValues {
+public extension DependencyValues {
     var appPreferences: AppPreferencesPort {
         get { self[AppPreferencesKey.self] }
         set { self[AppPreferencesKey.self] = newValue }

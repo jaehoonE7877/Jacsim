@@ -13,6 +13,7 @@ import FirebaseCore
 import FirebaseCrashlytics
 import FirebaseMessaging
 import IQKeyboardManagerSwift
+import JacsimClient
 
 class AppDelegate: UIResponder, UIApplicationDelegate{
     private let notificationDelegate = AppNotificationDelegate()
@@ -30,6 +31,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate{
 
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+        if OnboardingCaptureScreen.current != nil {
+            return true
+        }
         
         FirebaseApp.configure()
         Crashlytics.crashlytics().setCrashlyticsCollectionEnabled(true)
@@ -86,8 +90,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate{
 private extension AppDelegate {
     func requestNotificationAuthorization() async -> Bool {
         do {
-            let authOptions: UNAuthorizationOptions = [.alert, .badge, .sound]
-            return try await UNUserNotificationCenter.current().requestAuthorization(options: authOptions)
+            return try await UseCaseAssembly.requestNotificationPermissionUseCase.requestAuthorization()
         } catch {
             print("Notification authorization error: \(error)")
             return false

@@ -10,10 +10,9 @@ let project = Project.makeModule(
     internalDependencies: [
         .Modules.thirdPartyLibs,
         .Modules.designSystem,
-        .domain,
-        .ports,
-        .adapters,
-        .workflows
+        .Modules.shared,
+        .jacsimClient,
+        .domain
     ],
     externalDependencies: [
         .SPM.FirebaseAnalytics,

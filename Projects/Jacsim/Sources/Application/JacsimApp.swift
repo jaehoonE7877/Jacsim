@@ -11,14 +11,18 @@ struct JacsimApp: App {
 
     var body: some Scene {
         WindowGroup {
-            AppView(store: store)
-                .onOpenURL { url in
-                    NotificationCenter.default.post(
-                        name: .jacsimDeepLinkReceived,
-                        object: nil,
-                        userInfo: ["url": url]
-                    )
-                }
+            if let captureScreen = OnboardingCaptureScreen.current {
+                OnboardingCaptureRootView(screen: captureScreen)
+            } else {
+                AppView(store: store)
+                    .onOpenURL { url in
+                        NotificationCenter.default.post(
+                            name: .jacsimDeepLinkReceived,
+                            object: nil,
+                            userInfo: ["url": url]
+                        )
+                    }
+            }
         }
     }
 }
