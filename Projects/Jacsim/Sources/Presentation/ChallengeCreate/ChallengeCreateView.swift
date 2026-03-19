@@ -10,8 +10,14 @@ public struct ChallengeCreateView: View {
     }
 
     public var body: some View {
-        NewTaskView(store: store.scope(state: \.newTask, action: \.newTask))
-            .presentationDetents([.large])
-            .presentationDragIndicator(.visible)
+        NavigationStack {
+            NewTaskView(store: store.scope(state: \.newTask, action: \.newTask))
+        }
+        .interactiveDismissDisabled(store.newTask.hasUnsavedChanges || store.newTask.isSaving)
+        .presentationBackground(Color.backgroundNormal)
+        .presentationBackgroundInteraction(.disabled)
+        .presentationCornerRadius(32)
+        .presentationDetents([.large])
+        .presentationDragIndicator(.visible)
     }
 }

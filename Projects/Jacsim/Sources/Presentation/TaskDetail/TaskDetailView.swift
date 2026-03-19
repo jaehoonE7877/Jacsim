@@ -84,8 +84,12 @@ public struct TaskDetailView: View {
                 }
                 .onChange(of: store.shouldScrollToRecords) { _, shouldScroll in
                     guard shouldScroll else { return }
-                    withAnimation(.easeInOut) {
+                    if reduceMotion {
                         proxy.scrollTo("recordListSection", anchor: .top)
+                    } else {
+                        withAnimation(JSAnimation.navigation) {
+                            proxy.scrollTo("recordListSection", anchor: .top)
+                        }
                     }
                     store.send(.scrollToRecordsCompleted)
                 }
@@ -122,67 +126,80 @@ public struct TaskDetailView: View {
             .background(Color.backgroundNormal)
             .ignoresSafeArea(edges: .top)
         }
+        .allowsHitTesting(!store.isStagePopupPresented)
+        .accessibilityHidden(store.isStagePopupPresented)
         .onAppear { store.send(.onAppear) }
-        .navigationBarBackButtonHidden(true)
         .toolbar {
-            ToolbarItem(placement: .topBarLeading) {
-                Button(action: { store.send(.backButtonTapped) }) {
-                    Image(systemName: "chevron.left")
-                        .font(.jsHeadlineMedium)
-                        .foregroundColor(.labelStrong)
-                        .frame(width: 44.jsScaled(.touchTarget), height: 44.jsScaled(.touchTarget))
-                }
-                .accessibilityLabel("뒤로 가기")
-                .accessibilityHint("이전 화면으로 돌아갑니다")
-            }
+            if !store.isStagePopupPresented {
+                ToolbarItem(placement: .principal) {
+                    VStack(spacing: .jsMicro) {
+                        Text(store.task.title)
+                            .font(.jsHeadlineSmall)
+                            .foregroundColor(.labelStrong)
+                            .lineLimit(1)
 
-            ToolbarItem(placement: .principal) {
-                VStack(spacing: .jsMicro) {
-                    Text(store.task.title)
-                        .font(.jsHeadlineSmall)
-                        .foregroundColor(.labelStrong)
-                        .lineLimit(1)
-
-                    Text(navigationStageSubtitle)
-                        .font(.jsLabelMedium)
-                        .foregroundColor(.labelAlternative)
-                        .lineLimit(1)
-                }
-                .opacity(isHeaderMinimized ? 1 : 0)
-                .animation(.easeOut(duration: 0.12), value: isHeaderMinimized)
-            }
-
-            ToolbarItem(placement: .topBarTrailing) {
-                Menu {
-                    Button(action: { store.send(.changePhotoButtonTapped) }) {
-                        Label("대표 사진 변경", systemImage: "photo")
+                        Text(navigationStageSubtitle)
+                            .font(.jsLabelMedium)
+                            .foregroundColor(.labelNeutral)
+                            .lineLimit(1)
                     }
-
-                    Button(action: { store.send(.notificationSettingsButtonTapped) }) {
-                        Label("알림 설정", systemImage: "bell")
-                    }
-
-                    Divider()
-
-                    Button(role: .destructive, action: { store.send(.deleteButtonTapped) }) {
-                        Label("삭제", systemImage: "trash")
-                    }
-                } label: {
-                    Image(systemName: "ellipsis")
-                        .font(.jsHeadlineMedium)
-                        .foregroundColor(.labelStrong)
-                        .frame(width: 44.jsScaled(.touchTarget), height: 44.jsScaled(.touchTarget))
+                    .opacity(isHeaderMinimized ? 1 : 0)
+                    .animation(JSAnimation.toast, value: isHeaderMinimized)
                 }
-                .accessibilityLabel("작심 옵션")
-                .accessibilityHint("대표 사진 변경, 알림 설정, 삭제 메뉴를 엽니다")
+
+                ToolbarItem(placement: .topBarTrailing) {
+                    Menu {
+                        Button(action: { store.send(.changePhotoButtonTapped) }) {
+                            Label("대표 사진 변경", systemImage: "photo")
+                        }
+
+                        Button(action: { store.send(.notificationSettingsButtonTapped) }) {
+                            Label("알림 설정", systemImage: "bell")
+                        }
+
+                        Divider()
+
+                        Button(role: .destructive, action: { store.send(.deleteButtonTapped) }) {
+                            Label("삭제", systemImage: "trash")
+                        }
+                    } label: {
+                        Image(systemName: "ellipsis")
+                            .font(.jsHeadlineMedium)
+                            .foregroundColor(.labelStrong)
+                            .frame(width: 44.jsScaled(.touchTarget), height: 44.jsScaled(.touchTarget))
+                    }
+                    .accessibilityLabel("작심 옵션")
+                    .accessibilityHint("대표 사진 변경, 알림 설정, 삭제 메뉴를 엽니다")
+                }
             }
         }
-        .background(InteractivePopGestureEnabler())
         .sheet(item: $store.scope(state: \.editTask, action: \.editTask)) { store in
             NavigationStack {
                 TaskEditView(store: store)
             }
             .presentationDragIndicator(.visible)
+        }
+        .alert($store.scope(state: \.deleteFailureAlert, action: \.deleteFailureAlert))
+        .confirmationDialog(
+            "작심을 삭제할까요?",
+            isPresented: Binding(
+                get: { store.isDeleteConfirmationPresented },
+                set: { isPresented in
+                    if !isPresented {
+                        store.send(.deleteCancelled)
+                    }
+                }
+            ),
+            titleVisibility: .visible
+        ) {
+            Button("삭제", role: .destructive) {
+                store.send(.deleteConfirmed)
+            }
+            Button("취소", role: .cancel) {
+                store.send(.deleteCancelled)
+            }
+        } message: {
+            Text("모든 인증 기록과 사진이 함께 삭제되며 되돌릴 수 없어요.")
         }
         .overlay {
             if store.isStagePopupPresented {
@@ -192,19 +209,6 @@ public struct TaskDetailView: View {
                     onNextStage: { store.send(.nextStageButtonTapped) },
                     onRetry: { store.send(.retryStageButtonTapped) },
                     onDismiss: { store.send(.stagePopupDismissed) }
-                )
-            }
-            if store.isDeleteFlowPresented {
-                TaskDropoffGuardPopupView(
-                    step: store.deleteFlowStep,
-                    progressRate: store.stageProgress,
-                    completedDays: store.task.completedDays,
-                    countdown: store.deleteConfirmCountdown,
-                    isDeleteEnabled: store.isDeleteConfirmEnabled,
-                    onKeepGoing: { store.send(.deleteFlowKeepGoing) },
-                    onProceed: { store.send(.deleteFlowProceedToFinal) },
-                    onDelete: { store.send(.deleteFlowDeleteConfirmed) },
-                    onDismiss: { store.send(.deleteFlowDismissed) }
                 )
             }
         }
@@ -306,7 +310,7 @@ public struct TaskDetailView: View {
                         
                         Text(stageDateRange)
                             .font(.jsBodySmall)
-                            .foregroundColor(.labelAlternative)
+                            .foregroundColor(.labelNeutral)
                     }
                     
                     Spacer()
@@ -326,7 +330,7 @@ public struct TaskDetailView: View {
                         Spacer()
                         Text(store.stageProgressText)
                             .font(.jsLabelMedium)
-                            .foregroundColor(.labelAlternative)
+                            .foregroundColor(.labelNeutral)
                     }
                 }
             }
@@ -345,7 +349,7 @@ public struct TaskDetailView: View {
     }
     
     private var stageStatusChip: some View {
-        let state: JSStatusChipState
+        let state: TaskStatusChipState
         
         switch store.challengeState {
         case .stagePending:
@@ -358,7 +362,7 @@ public struct TaskDetailView: View {
             state = .completed
         }
         
-        return JSStatusChip(state: state)
+        return TaskStatusChip(state: state)
     }
     
     private var progressColor: Color {
@@ -373,20 +377,37 @@ public struct TaskDetailView: View {
     }
     
     private var todayStatusSection: some View {
-        RedesignSectionCard(title: "오늘 상태") {
-            HStack {
-                Text(store.todayStatus == .certified ? "오늘 인증을 마쳤어요" : "인증을 완료하면 연속 기록이 이어져요")
-                    .font(.jsBodySmall)
-                    .foregroundColor(.labelAlternative)
+        RedesignSectionCard(
+            title: todayStatusSectionTitle,
+            subtitle: todayStatusSectionSubtitle
+        ) {
+            VStack(alignment: .leading, spacing: .jsSM) {
+                HStack(alignment: .top, spacing: .jsSM) {
+                    VStack(alignment: .leading, spacing: .jsMicro) {
+                        Text("현재 상태")
+                            .font(.jsLabelMedium)
+                            .foregroundColor(.labelNeutral)
 
-                Spacer()
+                        Text(todayStatusHeadline)
+                            .font(.jsBodyMedium)
+                            .foregroundColor(.labelStrong)
+                    }
 
-                JSStatusChip(state: todayStatusChipState)
+                    Spacer()
+
+                    TaskStatusChip(state: todayStatusChipState)
+                }
+
+                if let followUp = todayStatusFollowUp {
+                    Text(followUp)
+                        .font(.jsLabelMedium)
+                        .foregroundColor(.labelNeutral)
+                }
             }
         }
     }
 
-    private var todayStatusChipState: JSStatusChipState {
+    private var todayStatusChipState: TaskStatusChipState {
         switch store.todayStatus {
         case .notCertified:
             return .pending
@@ -394,18 +415,48 @@ public struct TaskDetailView: View {
             return .completed
         }
     }
+
+    private var todayStatusSectionTitle: String {
+        store.todayStatus == .certified ? "오늘 상태" : "오늘의 다음 행동"
+    }
+
+    private var todayStatusSectionSubtitle: String {
+        switch store.todayStatus {
+        case .notCertified:
+            return "지금 인증하면 연속 기록이 이어져요"
+        case .certified:
+            return "오늘 인증을 마쳤어요"
+        }
+    }
+
+    private var todayStatusHeadline: String {
+        switch store.todayStatus {
+        case .notCertified:
+            return "오늘 인증을 남길 차례예요"
+        case .certified:
+            return "오늘 기록이 이미 저장됐어요"
+        }
+    }
+
+    private var todayStatusFollowUp: String? {
+        switch store.todayStatus {
+        case .notCertified:
+            return "하단 버튼에서 바로 오늘 인증을 진행할 수 있어요."
+        case .certified:
+            return "아래 인증 기록에서 오늘 사진과 메모를 다시 볼 수 있어요."
+        }
+    }
     
     private var recordListSection: some View {
-        VStack(alignment: .leading, spacing: .jsMD) {
-            Text("인증 기록")
-                .font(.jsHeadlineSmall)
-                .foregroundColor(.labelStrong)
-
+        RedesignSectionCard(
+            title: "인증 기록",
+            subtitle: recordListSubtitle
+        ) {
             if store.dayViewData.isEmpty {
                 RedesignStateBanner(
                     text: "아직 인증 기록이 없어요",
                     icon: "tray",
-                    tintColor: .labelAlternative
+                    tintColor: .labelNeutral
                 )
             } else {
                 LazyVStack(spacing: .jsSM) {
@@ -422,6 +473,12 @@ public struct TaskDetailView: View {
                 }
             }
         }
+    }
+
+    private var recordListSubtitle: String {
+        store.dayViewData.isEmpty
+        ? "기록이 쌓이면 날짜별로 바로 확인할 수 있어요"
+        : "날짜를 누르면 그날 인증 화면으로 이동해요"
     }
 
     private func formattedDateForAccessibility(_ date: Date) -> String {
@@ -490,7 +547,7 @@ public struct TaskDetailView: View {
             }
             
             JSButton(
-                title: "성공 기록 보기",
+                title: "인증 기록 보기",
                 style: .secondary,
                 size: .large
             ) {
@@ -501,9 +558,15 @@ public struct TaskDetailView: View {
     
     private var stageFailCTA: some View {
         VStack(spacing: .jsSM) {
-            Text("괜찮아요. 다시 시작할 수 있어요")
-                .font(.jsBodySmall)
-                .foregroundColor(.labelAlternative)
+            VStack(spacing: .jsMicro) {
+                Text("이번 스테이지는 여기서 멈췄어요")
+                    .font(.jsBodyMedium)
+                    .foregroundColor(.labelStrong)
+
+                Text("재도전하면 같은 목표로 다시 이어갈 수 있어요")
+                    .font(.jsLabelMedium)
+                    .foregroundColor(.labelNeutral)
+            }
                 .frame(maxWidth: .infinity, alignment: .center)
             
             JSButton(
@@ -526,9 +589,15 @@ public struct TaskDetailView: View {
     
     private var habitCompletedCTA: some View {
         VStack(spacing: .jsSM) {
-            Text("30일을 완주했어요. 이제 습관이 되었어요")
-                .font(.jsBodySmall)
-                .foregroundColor(.labelAlternative)
+            VStack(spacing: .jsMicro) {
+                Text("30일 완주를 끝냈어요")
+                    .font(.jsBodyMedium)
+                    .foregroundColor(.labelStrong)
+
+                Text("전체 기록을 돌아보며 다음 목표를 준비해 보세요")
+                    .font(.jsLabelMedium)
+                    .foregroundColor(.labelNeutral)
+            }
                 .frame(maxWidth: .infinity, alignment: .center)
             
             JSButton(
@@ -543,33 +612,6 @@ public struct TaskDetailView: View {
     
     private func loadCoverImage() -> UIImage? {
         return store.coverImage
-    }
-}
-
-private struct InteractivePopGestureEnabler: UIViewControllerRepresentable {
-    func makeUIViewController(context: Context) -> UIViewController {
-        Controller()
-    }
-
-    func updateUIViewController(_ uiViewController: UIViewController, context: Context) {
-        (uiViewController as? Controller)?.enableSwipeBack()
-    }
-
-    private final class Controller: UIViewController {
-        override func viewWillAppear(_ animated: Bool) {
-            super.viewWillAppear(animated)
-            enableSwipeBack()
-        }
-
-        override func viewDidAppear(_ animated: Bool) {
-            super.viewDidAppear(animated)
-            enableSwipeBack()
-        }
-
-        func enableSwipeBack() {
-            navigationController?.interactivePopGestureRecognizer?.isEnabled = true
-            navigationController?.interactivePopGestureRecognizer?.delegate = nil
-        }
     }
 }
 
@@ -588,7 +630,7 @@ private struct DailyRecordRow: View {
                         .fill(Color.backgroundAlternative)
                         .overlay(
                             Image(systemName: "photo")
-                                .foregroundColor(.labelAlternative)
+                                .foregroundColor(.labelNeutral)
                         )
                 }
             }
@@ -604,9 +646,9 @@ private struct DailyRecordRow: View {
                     .font(.jsBodyMedium)
                     .foregroundColor(.labelStrong)
                 
-                Text(data.memo)
+                Text(recordMemoText)
                     .font(.jsLabelMedium)
-                    .foregroundColor(.labelAlternative)
+                    .foregroundColor(recordMemoColor)
                     .lineLimit(1)
             }
             
@@ -632,6 +674,14 @@ private struct DailyRecordRow: View {
         formatter.locale = Locale(identifier: "ko_KR")
         formatter.dateFormat = "M월 d일 EEEE"
         return formatter.string(from: date)
+    }
+
+    private var recordMemoText: String {
+        data.memo.isEmpty ? "메모 없음" : data.memo
+    }
+
+    private var recordMemoColor: Color {
+        data.memo.isEmpty ? .labelAlternative : .labelNeutral
     }
 }
 
@@ -673,7 +723,7 @@ private struct TaskDropoffGuardPopupView: View {
 
                     Text(subtitle)
                         .font(.jsBodySmall)
-                        .foregroundColor(.labelAlternative)
+                        .foregroundColor(.labelNeutral)
                         .multilineTextAlignment(.center)
 
                     if step == .firstGuard {
@@ -721,7 +771,7 @@ private struct TaskDropoffGuardPopupView: View {
             if reduceMotion {
                 showPopup = true
             } else {
-                withAnimation(.easeOut(duration: 0.24)) {
+                withAnimation(JSAnimation.toast) {
                     showPopup = true
                 }
             }
@@ -731,12 +781,12 @@ private struct TaskDropoffGuardPopupView: View {
     private var subtitle: String {
         switch step {
         case .firstGuard:
-            return "지금까지 만든 기록이 사라져요.\n한 번만 더 고민해봐요."
+            return "지금까지 쌓은 기록이 함께 사라져요.\n한 번만 더 확인해 주세요."
         case .finalConfirmation:
             if isDeleteEnabled {
-                return "모든 인증 기록과 사진이 삭제되며,\n이 작업은 되돌릴 수 없어요."
+                return "모든 인증 기록과 사진이 삭제돼요.\n삭제 후에는 되돌릴 수 없어요."
             }
-            return "삭제 버튼은 \(max(0, countdown))초 후에 활성화돼요.\n정말 삭제할지 마지막으로 확인해 주세요."
+            return "삭제 버튼은 \(max(0, countdown))초 뒤에 켜져요.\n정말 끝낼지 마지막으로 확인해 주세요."
         }
     }
 
@@ -744,7 +794,7 @@ private struct TaskDropoffGuardPopupView: View {
         VStack(spacing: .jsMicro) {
             Text(title)
                 .font(.jsLabelSmall)
-                .foregroundColor(.labelAlternative)
+                .foregroundColor(.labelNeutral)
             Text(value)
                 .font(.jsHeadlineSmall)
                 .foregroundColor(.labelStrong)
@@ -777,6 +827,19 @@ private struct StageCompletionPopupView: View {
 
             JSCard(style: .elevated, padding: .jsLG) {
                 VStack(spacing: .jsMD) {
+                    HStack {
+                        Spacer()
+
+                        Button(action: onDismiss) {
+                            Image(systemName: "xmark.circle.fill")
+                                .font(.jsHeadlineMedium)
+                                .foregroundColor(.labelNeutral)
+                                .frame(width: 44.jsScaled(.touchTarget), height: 44.jsScaled(.touchTarget))
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("팝업 닫기")
+                    }
+
                     SparkleAnimationView(animate: $animate)
                         .frame(height: 120.jsScaled())
 
@@ -786,7 +849,7 @@ private struct StageCompletionPopupView: View {
 
                     Text(result == .success ? "다음 단계로 넘어가 볼까요?" : "다음 스테이지에서 다시 도전해요")
                         .font(.jsBodySmall)
-                        .foregroundColor(.labelAlternative)
+                        .foregroundColor(.labelNeutral)
 
                     if result == .fail {
                         JSButton(
@@ -812,12 +875,17 @@ private struct StageCompletionPopupView: View {
                 }
             }
             .padding(.horizontal, .jsLG)
+            .accessibilityElement(children: .contain)
+            .accessibilityHint("닫기 버튼 또는 확인 버튼으로 팝업을 닫을 수 있어요")
         }
         .onAppear {
             if reduceMotion {
                 animate = false
             } else {
-                withAnimation(.easeOut(duration: 1.2).repeatForever(autoreverses: false)) {
+                withAnimation(
+                    Animation.easeOut(duration: JSAnimation.durationSlow * 4)
+                        .repeatForever(autoreverses: false)
+                ) {
                     animate = true
                 }
             }

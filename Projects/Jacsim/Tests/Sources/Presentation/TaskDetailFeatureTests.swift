@@ -2,45 +2,15 @@ import Foundation
 import Testing
 import ComposableArchitecture
 import Domain
+import JacsimClient
 import UIKit
 
 @testable import Jacsim
 
-private actor UpdateTaskSettingsRecorder {
-    struct Call: Equatable {
-        let taskID: TaskID
-        let title: String
-        let durationDays: Int
-        let isAlarmEnabled: Bool
-        let alarmDate: Date
-        let imageByteCount: Int
-    }
-
-    private(set) var calls: [Call] = []
-
-    func record(_ input: UpdateTaskSettingsUseCase.Input) {
-        let byteCount = input.mainImageData?.count ?? 0
-        calls.append(
-            Call(
-                taskID: input.task.id,
-                title: input.title,
-                durationDays: input.durationDays,
-                isAlarmEnabled: input.isAlarmEnabled,
-                alarmDate: input.alarmDate,
-                imageByteCount: byteCount
-            )
-        )
-    }
-
-    func callCount() -> Int { calls.count }
-    func lastCall() -> Call? { calls.last }
-}
-
 @MainActor
-@Test("작심 수정 저장은 기존 스테이지 기간을 유지해 updateTaskSettingsUseCase를 호출한다")
-func taskDetailEditSaveKeepsCurrentDurationDays() async {
+@Test("작심 수정 저장 delegate는 상세 상태의 제목과 알림 값을 즉시 갱신한다")
+func taskDetailEditSaveUpdatesLocalTaskState() async {
     let task = makeTaskForDetailTests(durationDays: 7, completedRecords: 1)
-    let recorder = UpdateTaskSettingsRecorder()
     let editedAlarmDate = Calendar.current.date(from: DateComponents(hour: 6, minute: 45)) ?? Date()
 
     var initialState = TaskDetailFeature.State(task: task)
@@ -48,12 +18,7 @@ func taskDetailEditSaveKeepsCurrentDurationDays() async {
 
     let store = TestStore(initialState: initialState) {
         TaskDetailFeature()
-    } withDependencies: {
-        $0.updateTaskSettingsUseCase = UpdateTaskSettingsUseCase(
-            execute: { input in await recorder.record(input) }
-        )
     }
-    store.exhaustivity = .off
 
     await store.send(
         .editTask(
@@ -63,24 +28,16 @@ func taskDetailEditSaveKeepsCurrentDurationDays() async {
         )
     ) {
         $0.editTask = nil
+        $0.task.title = "수정 제목"
+        $0.task.isNotificationEnabled = true
+        $0.task.alarm = editedAlarmDate
     }
-    await store.finish()
-
-    #expect(await recorder.callCount() == 1)
-    let last = await recorder.lastCall()
-    #expect(last?.taskID == task.id)
-    #expect(last?.title == "수정 제목")
-    #expect(last?.durationDays == 7)
-    #expect(last?.isAlarmEnabled == true)
-    #expect(last?.alarmDate == editedAlarmDate)
-    #expect(last?.imageByteCount == 0)
 }
 
 @MainActor
-@Test("작심 수정 저장에서 이미지가 있으면 use case 입력에 JPEG 데이터가 포함된다")
-func taskDetailEditSavePassesImageDataWhenProvided() async {
+@Test("작심 수정 저장 delegate는 선택한 커버 이미지를 상세 상태에 반영한다")
+func taskDetailEditSaveUpdatesCoverImageWhenProvided() async {
     let task = makeTaskForDetailTests(durationDays: 15, completedRecords: 0)
-    let recorder = UpdateTaskSettingsRecorder()
     let image = makeSolidTestImage()
     let editedAlarmDate = Calendar.current.date(from: DateComponents(hour: 21, minute: 0)) ?? Date()
 
@@ -89,12 +46,7 @@ func taskDetailEditSavePassesImageDataWhenProvided() async {
 
     let store = TestStore(initialState: initialState) {
         TaskDetailFeature()
-    } withDependencies: {
-        $0.updateTaskSettingsUseCase = UpdateTaskSettingsUseCase(
-            execute: { input in await recorder.record(input) }
-        )
     }
-    store.exhaustivity = .off
 
     await store.send(
         .editTask(
@@ -104,56 +56,112 @@ func taskDetailEditSavePassesImageDataWhenProvided() async {
         )
     ) {
         $0.editTask = nil
+        $0.task.title = "이미지 수정"
+        $0.task.isNotificationEnabled = false
+        $0.task.alarm = nil
+        $0.coverImage = image
     }
-    await store.finish()
-
-    #expect(await recorder.callCount() == 1)
-    let last = await recorder.lastCall()
-    #expect((last?.imageByteCount ?? 0) > 0)
 }
 
 @MainActor
-@Test("오늘 인증 버튼은 오늘 인덱스로 인증 화면 이동 delegate를 보낸다")
-func taskDetailCertifyTodayRoutesToTodayUpdate() async {
-    let task = makeTaskForDetailTests(durationDays: 7, completedRecords: 0)
-    let todayIndex = task.dayArray.firstIndex {
-        Calendar.current.isDate($0, inSameDayAs: Date())
-    }!
+@Test("성공 기록 보기 액션은 기록 목록으로 스크롤하도록 상태를 갱신한다")
+func taskDetailViewSuccessRecordRequestsScrollToRecords() async {
+    let task = makeTaskForDetailTests(durationDays: 7, completedRecords: 3)
+    var initialState = TaskDetailFeature.State(task: task)
+    initialState.isStagePopupPresented = true
+    initialState.stagePopupResult = .success
 
-    let store = TestStore(initialState: TaskDetailFeature.State(task: task)) {
+    let store = TestStore(initialState: initialState) {
         TaskDetailFeature()
     }
 
-    await store.send(.certifyTodayTapped)
-    await store.receive(.delegate(.navigateToUpdate(task, todayIndex)))
+    await store.send(.viewSuccessRecordTapped) {
+        $0.isStagePopupPresented = false
+        $0.shouldScrollToRecords = true
+    }
+
+    await store.send(.scrollToRecordsCompleted) {
+        $0.shouldScrollToRecords = false
+    }
 }
 
 @MainActor
-@Test("기록 날짜 탭은 해당 날짜 인덱스로 인증 화면 이동 delegate를 보낸다")
-func taskDetailDayTappedRoutesToMatchingUpdateIndex() async {
-    let task = makeTaskForDetailTests(durationDays: 7, completedRecords: 0)
-    let targetIndex = 2
-    let targetDate = task.dayArray[targetIndex]
+@Test("onAppear는 summary usecase 결과를 상세 상태에 반영한다")
+func taskDetailOnAppearAppliesSummaryUseCaseOutput() async {
+    let task = makeTaskForDetailTests(durationDays: 7, completedRecords: 1)
 
     let store = TestStore(initialState: TaskDetailFeature.State(task: task)) {
         TaskDetailFeature()
+    } withDependencies: {
+        $0.taskDetailSummaryUseCase = TaskDetailSummaryUseCase(
+            execute: { input in
+                TaskDetailSummaryUseCase.Output(
+                    challengeState: .stageSuccess,
+                    todayStatus: .certified,
+                    currentStage: input.task.stages.last,
+                    stageProgress: 0.75,
+                    stageProgressText: "3/4",
+                    remainingSuccessCount: 1,
+                    todayMemo: "테스트 메모",
+                    dayViewData: [
+                        DayViewData(date: input.task.startDate, memo: "테스트 메모", isChecked: true)
+                    ],
+                    stageResult: .success
+                )
+            }
+        )
+        $0.loadImageUseCase = LoadImageUseCase(loadImage: { _ in nil })
     }
+    store.exhaustivity = .off
 
-    await store.send(.dayTapped(targetDate))
-    await store.receive(.delegate(.navigateToUpdate(task, targetIndex)))
+    await store.send(.onAppear) {
+        $0.challengeState = .stageSuccess
+        $0.todayStatus = .certified
+        $0.currentStage = task.stages.last
+        $0.stageProgress = 0.75
+        $0.stageProgressText = "3/4"
+        $0.remainingSuccessCount = 1
+        $0.todayMemo = "테스트 메모"
+        $0.dayViewData = [
+            TaskDetailFeature.State.DayViewData(
+                date: task.startDate,
+                memo: "테스트 메모",
+                image: nil,
+                isChecked: true
+            )
+        ]
+    }
 }
 
 @MainActor
-@Test("뒤로 가기 버튼은 이전 화면 이동 delegate를 보낸다")
-func taskDetailBackButtonRoutesBack() async {
-    let task = makeTaskForDetailTests(durationDays: 7, completedRecords: 0)
+@Test("삭제 실패 시 상세 화면은 유지되고 실패 alert만 표시한다")
+func taskDetailDeleteFailureShowsAlertWithoutNavigatingAway() async {
+    let task = makeTaskForDetailTests(durationDays: 7, completedRecords: 1)
+    var initialState = TaskDetailFeature.State(task: task)
+    initialState.isDeleteConfirmationPresented = true
 
-    let store = TestStore(initialState: TaskDetailFeature.State(task: task)) {
+    let store = TestStore(initialState: initialState) {
         TaskDetailFeature()
+    } withDependencies: {
+        $0.deleteTaskUseCase = DeleteTaskUseCase(
+            execute: { _ in throw DetailDeleteFailure.failed }
+        )
     }
 
-    await store.send(.backButtonTapped)
-    await store.receive(.delegate(.navigateBack))
+    await store.send(.deleteConfirmed) {
+        $0.isDeleteConfirmationPresented = false
+    }
+    await store.receive(\.deleteTaskFailed) {
+        $0.deleteFailureAlert = AlertState {
+            TextState("삭제하지 못했어요")
+        } actions: {
+            ButtonState(action: .dismiss) {
+                TextState("확인")
+            }
+        } message: {
+            TextState("잠시 후 다시 시도해 주세요.")
+        }
+    }
 }
 
 private func makeTaskForDetailTests(
@@ -214,4 +222,8 @@ private func makeSolidTestImage() -> UIImage {
         UIColor.systemOrange.setFill()
         context.fill(CGRect(x: 0, y: 0, width: 12, height: 12))
     }
+}
+
+private enum DetailDeleteFailure: Error {
+    case failed
 }

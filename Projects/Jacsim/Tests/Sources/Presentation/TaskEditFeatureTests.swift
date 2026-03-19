@@ -2,6 +2,7 @@ import Foundation
 import Testing
 import ComposableArchitecture
 import Domain
+import JacsimClient
 import UIKit
 
 @testable import Jacsim
@@ -20,9 +21,19 @@ func taskEditSaveSendsDelegateSaved() async {
 
     let store = TestStore(initialState: initialState) {
         TaskEditFeature()
+    } withDependencies: {
+        $0.updateTaskSettingsUseCase = UpdateTaskSettingsUseCase(
+            execute: { _ in }
+        )
     }
 
-    await store.send(.saveButtonTapped)
+    await store.send(.saveButtonTapped) {
+        $0.isSaving = true
+        $0.saveFailed = false
+    }
+    await store.receive(\.saveCompleted) {
+        $0.isSaving = false
+    }
     await store.receive(\.delegate)
 }
 

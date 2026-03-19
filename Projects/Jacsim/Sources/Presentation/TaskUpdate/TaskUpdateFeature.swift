@@ -5,6 +5,7 @@ import UIKit
 import Photos
 import PhotosUI
 import SwiftUI
+import JacsimClient
 import Shared
 
 @Reducer
@@ -126,12 +127,8 @@ public struct TaskUpdateFeature {
                 return .none
 
             case let .photoPickerItemChanged(item):
-                guard let item = item else {
-                    return .none
-                }
                 return .run { send in
-                    if let data = try? await item.loadTransferable(type: Data.self),
-                       let image = UIImage(data: data) {
+                    if let image = await PhotoPickerImageLoader.loadImage(from: item) {
                         await send(.imageSelected(image))
                     }
                 }

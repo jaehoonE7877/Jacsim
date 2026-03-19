@@ -2,6 +2,8 @@ import Foundation
 import Testing
 import ComposableArchitecture
 import Domain
+import JacsimClient
+import Ports
 
 @testable import Jacsim
 
@@ -15,6 +17,17 @@ func allTaskFeatureSendsDelegateWhenTaskTapped() async {
 
     await store.send(.taskTapped(task))
     await store.receive(.delegate(.navigateToDetail(task)))
+}
+
+@Test("AllTask 빈 상태 CTA는 새 작심 만들기 delegate를 보낸다")
+@MainActor
+func allTaskFeatureCreateTaskCTA() async {
+    let store = TestStore(initialState: AllTaskFeature.State()) {
+        AllTaskFeature()
+    }
+
+    await store.send(.createTaskButtonTapped)
+    await store.receive(.delegate(.createTaskRequested))
 }
 
 @Test("AllTask 진행 중 섹션 토글은 펼침 상태를 반전한다")
@@ -69,7 +82,40 @@ func allTaskFeatureResponseUpdatesGroups() async {
     }
 }
 
-private func makeAllTaskFeatureTestTask(title: String) -> Task {
+@Test("AllTask onAppear는 repository와 summary usecase 결과로 섹션을 구성한다")
+@MainActor
+func allTaskFeatureOnAppearBuildsSectionsFromDependencies() async {
+    let ongoing = makeAllTaskFeatureTestTask(title: "진행 중", result: .inProgress)
+    let success = makeAllTaskFeatureTestTask(title: "성공", result: .success)
+    let fail = makeAllTaskFeatureTestTask(title: "실패", result: .fail)
+
+    let store = TestStore(initialState: AllTaskFeature.State()) {
+        AllTaskFeature()
+    } withDependencies: {
+        $0.taskRepository = TaskRepositoryPort(
+            fetchActiveTasks: { [ongoing] },
+            fetchTask: { _ in nil },
+            addTask: { _ in },
+            updateTask: { _ in },
+            deleteTask: { _ in },
+            fetchTasksByStatus: { _ in [success, fail] }
+        )
+    }
+
+    await store.send(.onAppear) {
+        $0.isLoading = true
+        $0.loadFailed = false
+    }
+    await store.receive(.tasksResponse(ongoing: [ongoing], success: [success], fail: [fail])) {
+        $0.ongoingTasks = [ongoing]
+        $0.successTasks = [success]
+        $0.failTasks = [fail]
+        $0.isLoading = false
+        $0.loadFailed = false
+    }
+}
+
+private func makeAllTaskFeatureTestTask(title: String, result: StageResult = .inProgress) -> Task {
     let start = Calendar.current.startOfDay(for: Date())
     let end = Calendar.current.date(byAdding: .day, value: 6, to: start) ?? start
     let stage = StageSnapshot(
@@ -79,7 +125,7 @@ private func makeAllTaskFeatureTestTask(title: String) -> Task {
         endDate: end,
         durationDays: 7,
         successDays: 0,
-        resultRaw: StageResult.inProgress.rawValue
+        resultRaw: result.rawValue
     )
 
     return Task(

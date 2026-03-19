@@ -2,19 +2,31 @@ import Foundation
 import ComposableArchitecture
 import Domain
 import DesignSystem
+import JacsimClient
 import Shared
 
 @Reducer
 public struct HomeFeature {
     @ObservableState
     public struct State: Equatable {
+        public enum TodayFocusState: Equatable {
+            case empty
+            case pending
+            case completedStageReady
+            case allDoneToday
+        }
+
         public var selectedDate: Date = Date()
         public var calendarScope: JSCalendarScope = .month
         public var calendar = CalendarFeature.State()
         public var tasks: [Domain.Task] = []
         public var activeTasks: [Domain.Task] = []
         public var heroTask: Domain.Task? = nil
+        public var secondaryTasks: [Domain.Task] = []
         public var miniCardDisplayData: [MiniCardDisplayData] = []
+        public var todayFocusState: TodayFocusState = .empty
+        public var todayPendingCount: Int = 0
+        public var todayCompletedCount: Int = 0
         public var isLoading: Bool = false
         public var isRefreshing: Bool = false
         public var isFetching: Bool = false
@@ -145,8 +157,8 @@ public struct HomeFeature {
         }
     }
 
-    @Dependency(\.taskQueryUseCase) var taskQueryUseCase
-    @Dependency(\.activeTaskServiceUseCase) var activeTaskServiceUseCase
+    @Dependency(\.taskRepository) var taskRepository
+    @Dependency(\.homeSummaryUseCase) var homeSummaryUseCase
     @Dependency(\.loadImageUseCase) var loadImageUseCase
     @Dependency(\.externalNavigationClient) var externalNavigationClient
 
@@ -181,59 +193,11 @@ public struct HomeFeature {
                 state.loadFailed = false
                 state.loadingStartTime = Date()
                 Logger.homeFetchingTasks()
-                let fetchStartTime = Date()
-                let fetchEffect: Effect<Action> = .run { [taskQueryUseCase] send in
-                    do {
-                        let tasks = try await taskQueryUseCase.fetchActiveTasks()
-                        Logger.homeTasksFetched(
-                            count: tasks.count,
-                            duration: Date().timeIntervalSince(fetchStartTime)
-                        )
-                        if let firstTask = tasks.first {
-                            let completedCount = firstTask.records.filter { $0.check }.count
-                            Logger.homeFirstTaskDetails(
-                                title: firstTask.title,
-                                totalRecords: firstTask.records.count,
-                                completedRecords: completedCount
-                            )
-                        }
-                        if minimumLoadingDuration > 0 {
-                            // Ensure minimum startup skeleton duration for stable loading perception.
-                            let elapsed = Date().timeIntervalSince(fetchStartTime)
-                            let remaining = minimumLoadingDuration - elapsed
-                            if remaining > 0 {
-                                try await _Concurrency.Task.sleep(
-                                    nanoseconds: UInt64(remaining * 1_000_000_000)
-                                )
-                            }
-                        }
-                        await send(.tasksResponse(tasks))
-                    } catch is CancellationError {
-                        return
-                    } catch {
-                        await send(.tasksLoadFailed)
-                    }
-                }
-                let notificationEffect: Effect<Action> = shouldStartListener ? .run { send in
-                    for await notification in NotificationCenter.default.notifications(named: .jacsimLocalNotificationTapped) {
-                        if let idString = notification.userInfo?["id"] as? String,
-                           let id = UUID(uuidString: idString) {
-                            await send(.notificationTapped(id))
-                        }
-                    }
-                } : .none
-                let deepLinkEffect: Effect<Action> = shouldStartListener ? .run { send in
-                    for await notification in NotificationCenter.default.notifications(named: .jacsimDeepLinkReceived) {
-                        if let url = notification.userInfo?["url"] as? URL {
-                            await send(.deepLinkReceived(url))
-                        }
-                    }
-                } : .none
                 return .merge(
                     .cancel(id: CancelID.imageLoading),
-                    fetchEffect,
-                    notificationEffect,
-                    deepLinkEffect
+                    loadActiveTasksEffect(minimumLoadingDuration: minimumLoadingDuration),
+                    shouldStartListener ? startNotificationListenerEffect() : .none,
+                    shouldStartListener ? startDeepLinkListenerEffect() : .none
                 )
 
             case let .dateSelected(date):
@@ -245,37 +209,36 @@ public struct HomeFeature {
                 state.loadFailed = false
                 return .merge(
                     .cancel(id: CancelID.imageLoading),
-                    .run { [taskQueryUseCase] send in
-                        do {
-                            let tasks = try await taskQueryUseCase.fetchActiveTasks()
-                            await send(.tasksResponse(tasks))
-                        } catch is CancellationError {
-                            return
-                        } catch {
-                            await send(.tasksLoadFailed)
-                        }
-                    }
+                    loadActiveTasksEffect()
                 )
                 
             case let .tasksResponse(tasks):
                 let processStartTime = Date()
+                let summary = homeSummaryUseCase.execute(
+                    .init(tasks: tasks, referenceDate: Date())
+                )
                 state.tasks = tasks
-                state.activeTasks = activeTaskServiceUseCase.filterActiveTasks(tasks, Date())
-                state.heroTask = state.activeTasks.first
-                let remainingTasks = Array(state.activeTasks.dropFirst())
-                state.miniCardDisplayData = remainingTasks.map { task in
-                    let completedDays = task.records.filter { $0.check }.count
-                    let totalDays = task.dayArray.count
-                    let progress = totalDays > 0 ? Double(completedDays) / Double(totalDays) : 0
-                    let isTodayCertified = task.isCompleted(on: Date())
+                state.activeTasks = summary.visibleTasks
+                state.heroTask = summary.focusTask
+                state.secondaryTasks = summary.secondaryTasks
+                state.todayPendingCount = summary.pendingCount
+                state.todayCompletedCount = summary.completedTodayCount
+                state.todayFocusState = switch summary.todayFocusState {
+                case .empty: .empty
+                case .pending: .pending
+                case .completedStageReady: .completedStageReady
+                case .allDoneToday: .allDoneToday
+                }
+                state.heroTaskImageData = nil
+                state.miniCardDisplayData = summary.secondaryTaskSummaries.map { task in
                     return State.MiniCardDisplayData(
-                        id: task.id.rawValue,
+                        id: task.taskID.rawValue,
                         title: task.title,
-                        progress: progress,
-                        totalDays: totalDays,
-                        completedDays: completedDays,
+                        progress: task.progress,
+                        totalDays: task.totalDays,
+                        completedDays: task.completedDays,
                         imageData: nil,
-                        isTodayCertified: isTodayCertified
+                        isTodayCertified: task.isTodayCertified
                     )
                 }
                 state.isLoading = false
@@ -287,18 +250,10 @@ public struct HomeFeature {
                     activeCount: state.activeTasks.count,
                     heroTaskTitle: state.heroTask?.title
                 )
-                let loadImageUseCase = loadImageUseCase
-                return .run { [heroTask = state.heroTask, remainingTasks, loadImageUseCase] send in
-                    if let heroTask = heroTask {
-                        let heroImageData = await loadImageUseCase.loadImage(heroTask.mainImageKey)
-                        await send(.heroImageLoaded(heroImageData))
-                    }
-                    for task in remainingTasks {
-                        let imageData = await loadImageUseCase.loadImage(task.mainImageKey)
-                        await send(.miniCardImageLoaded(id: task.id.rawValue, imageData: imageData))
-                    }
-                }
-                .cancellable(id: CancelID.imageLoading, cancelInFlight: true)
+                return loadTaskImagesEffect(
+                    heroTask: state.heroTask,
+                    secondaryTasks: state.secondaryTasks
+                )
 
             case .tasksLoadFailed:
                 state.isLoading = false
@@ -324,18 +279,14 @@ public struct HomeFeature {
                 return .none
 
             case let .notificationTapped(id):
-                return .run { [taskQueryUseCase] send in
-                    do {
-                        let task = try await taskQueryUseCase.fetchTask(TaskID(id))
-                        await send(.notificationTaskLoaded(task))
-                    } catch {
-                        await send(.notificationTaskLoaded(nil))
-                    }
-                }
+                return loadTaskEffect(id: TaskID(id), successAction: Action.notificationTaskLoaded)
 
             case let .notificationTaskLoaded(task):
-                guard let task else { return .none }
-                if let index = task.dayArray.firstIndex(where: { Calendar.current.isDate($0, inSameDayAs: Date()) }) {
+                guard let task else {
+                    state.toastMessage = "작심을 찾지 못해 홈으로 이동했어요"
+                    return .none
+                }
+                if let index = todayIndex(for: task, on: Date()) {
                     let isCertifiable = task.records.indices.contains(index) ? !task.records[index].check : true
                     if isCertifiable {
                         state.path.append(.update(TaskUpdateFeature.State(task: task, index: index)))
@@ -352,17 +303,13 @@ public struct HomeFeature {
                 }
                 let idString = url.path.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
                 guard let id = UUID(uuidString: idString) else { return .none }
-                return .run { [taskQueryUseCase] send in
-                    do {
-                        let task = try await taskQueryUseCase.fetchTask(TaskID(id))
-                        await send(.deepLinkTaskLoaded(task))
-                    } catch {
-                        await send(.deepLinkTaskLoaded(nil))
-                    }
-                }
+                return loadTaskEffect(id: TaskID(id), successAction: Action.deepLinkTaskLoaded)
 
             case let .deepLinkTaskLoaded(task):
-                guard let task else { return .none }
+                guard let task else {
+                    state.toastMessage = "열 수 없는 작심이라 홈으로 이동했어요"
+                    return .none
+                }
                 state.path.append(.detail(TaskDetailFeature.State(task: task)))
                 return .none
 
@@ -413,6 +360,13 @@ public struct HomeFeature {
 
             case let .path(.element(id: _, action: .allTasks(.delegate(.navigateToDetail(task))))):
                 state.path.append(.detail(TaskDetailFeature.State(task: task)))
+                return .none
+
+            case .path(.element(id: _, action: .allTasks(.delegate(.createTaskRequested)))):
+                if !state.path.isEmpty {
+                    state.path.removeLast()
+                }
+                state.destination = .challengeCreate(ChallengeCreateFeature.State())
                 return .none
 
             case .path(.element(id: _, action: .setting(.delegate(.navigateToWalkThrough)))):
@@ -474,5 +428,96 @@ public struct HomeFeature {
         .forEach(\.path, action: \.path) {
             Path()
         }
+    }
+
+    private func loadActiveTasksEffect(minimumLoadingDuration: TimeInterval = 0) -> Effect<Action> {
+        let fetchStartTime = Date()
+        return .run { [taskRepository] send in
+            do {
+                let tasks = try await taskRepository.fetchActiveTasks()
+                Logger.homeTasksFetched(
+                    count: tasks.count,
+                    duration: Date().timeIntervalSince(fetchStartTime)
+                )
+                if let firstTask = tasks.first {
+                    let completedCount = firstTask.records.filter { $0.check }.count
+                    Logger.homeFirstTaskDetails(
+                        title: firstTask.title,
+                        totalRecords: firstTask.records.count,
+                        completedRecords: completedCount
+                    )
+                }
+                if minimumLoadingDuration > 0 {
+                    let elapsed = Date().timeIntervalSince(fetchStartTime)
+                    let remaining = minimumLoadingDuration - elapsed
+                    if remaining > 0 {
+                        try await _Concurrency.Task.sleep(nanoseconds: UInt64(remaining * 1_000_000_000))
+                    }
+                }
+                await send(.tasksResponse(tasks))
+            } catch is CancellationError {
+                return
+            } catch {
+                await send(.tasksLoadFailed)
+            }
+        }
+    }
+
+    private func startNotificationListenerEffect() -> Effect<Action> {
+        .run { send in
+            for await notification in NotificationCenter.default.notifications(named: .jacsimLocalNotificationTapped) {
+                if let idString = notification.userInfo?["id"] as? String,
+                   let id = UUID(uuidString: idString) {
+                    await send(.notificationTapped(id))
+                }
+            }
+        }
+    }
+
+    private func startDeepLinkListenerEffect() -> Effect<Action> {
+        .run { send in
+            for await notification in NotificationCenter.default.notifications(named: .jacsimDeepLinkReceived) {
+                if let url = notification.userInfo?["url"] as? URL {
+                    await send(.deepLinkReceived(url))
+                }
+            }
+        }
+    }
+
+    private func loadTaskImagesEffect(
+        heroTask: Domain.Task?,
+        secondaryTasks: [Domain.Task]
+    ) -> Effect<Action> {
+        .run { [loadImageUseCase] send in
+            if let heroTask {
+                let heroImageData = await loadImageUseCase.loadImage(heroTask.mainImageKey)
+                await send(.heroImageLoaded(heroImageData))
+            } else {
+                await send(.heroImageLoaded(nil))
+            }
+            for task in secondaryTasks {
+                let imageData = await loadImageUseCase.loadImage(task.mainImageKey)
+                await send(.miniCardImageLoaded(id: task.id.rawValue, imageData: imageData))
+            }
+        }
+        .cancellable(id: CancelID.imageLoading, cancelInFlight: true)
+    }
+
+    private func loadTaskEffect(
+        id: TaskID,
+        successAction: @escaping @Sendable (Domain.Task?) -> Action
+    ) -> Effect<Action> {
+        .run { [taskRepository] send in
+            do {
+                let task = try await taskRepository.fetchTask(id)
+                await send(successAction(task))
+            } catch {
+                await send(successAction(nil))
+            }
+        }
+    }
+
+    private func todayIndex(for task: Domain.Task, on referenceDate: Date) -> Int? {
+        task.dayArray.firstIndex(where: { Calendar.current.isDate($0, inSameDayAs: referenceDate) })
     }
 }

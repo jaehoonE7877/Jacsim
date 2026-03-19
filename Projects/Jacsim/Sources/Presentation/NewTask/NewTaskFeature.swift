@@ -3,6 +3,7 @@ import Domain
 import ComposableArchitecture
 import SwiftUI
 import PhotosUI
+import JacsimClient
 import Shared
 
 @Reducer
@@ -116,6 +117,14 @@ public struct NewTaskFeature {
         public var canSubmit: Bool {
             !trimmedTitle.isEmpty && image != nil
         }
+
+        public var hasUnsavedChanges: Bool {
+            !trimmedTitle.isEmpty
+                || image != nil
+                || stageType != .three
+                || isAlarmEnabled
+                || currentStep != .basicInfo
+        }
     }
 
     public enum Action: BindableAction {
@@ -132,11 +141,12 @@ public struct NewTaskFeature {
         case delegate(Delegate)
         
         public enum Alert: Equatable {
-            case dismiss
+            case discardChangesConfirmed
         }
         
-        public enum Delegate {
+        public enum Delegate: Equatable {
             case taskCreated
+            case cancelled
         }
     }
 
@@ -227,10 +237,8 @@ public struct NewTaskFeature {
                 return .none
 
             case let .photoPickerItemChanged(item):
-                guard let item else { return .none }
                 return .run { send in
-                    if let data = try? await item.loadTransferable(type: Data.self),
-                       let image = UIImage(data: data) {
+                    if let image = await PhotoPickerImageLoader.loadImage(from: item) {
                         await send(.imageSelected(image))
                     }
                 }
@@ -254,7 +262,33 @@ public struct NewTaskFeature {
                 }
                 return .none
 
-            case .binding, .cancelButtonTapped, .delegate, .alert:
+            case .cancelButtonTapped:
+                guard !state.isSaving else { return .none }
+                guard state.hasUnsavedChanges else {
+                    return .send(.delegate(.cancelled))
+                }
+                state.alert = AlertState {
+                    TextState("작성 중인 내용을 버릴까요?")
+                } actions: {
+                    ButtonState(role: .destructive, action: .discardChangesConfirmed) {
+                        TextState("버리기")
+                    }
+                    ButtonState(role: .cancel) {
+                        TextState("계속 작성")
+                    }
+                } message: {
+                    TextState("저장하지 않은 제목, 사진, 알림 설정이 사라집니다.")
+                }
+                return .none
+
+            case .alert(.presented(.discardChangesConfirmed)):
+                state.alert = nil
+                return .send(.delegate(.cancelled))
+
+            case .alert:
+                return .none
+
+            case .binding, .delegate:
                 return .none
             }
         }

@@ -1,6 +1,7 @@
 import Foundation
 import ComposableArchitecture
 import UIKit
+import JacsimClient
 
 public enum ThemeMode: String, Equatable, CaseIterable {
     case system = "system"
@@ -51,8 +52,8 @@ public struct SettingFeature {
         }
     }
 
-    @Dependency(\.notificationSettingQueryUseCase) var notificationSettingQueryUseCase
-    @Dependency(\.appPreferencesUseCase) var appPreferencesUseCase
+    @Dependency(\.userSettingsRepository) var userSettingsRepository
+    @Dependency(\.appPreferences) var appPreferences
     @Dependency(\.globalNotificationSettingUseCase) var globalNotificationSettingUseCase
 
     public var body: some ReducerOf<Self> {
@@ -67,15 +68,15 @@ public struct SettingFeature {
             case .licenceButtonTapped:
                 return .send(.delegate(.navigateToLicence))
             case .loadNotificationSettings:
-                if let raw = appPreferencesUseCase.getThemeModeRaw(),
+                if let raw = appPreferences.getThemeModeRaw(),
                    let mode = ThemeMode(rawValue: raw) {
                     state.theme = mode
                 }
                 state.notificationBanner = nil
 
                 state.isLoading = true
-                return .run { [notificationSettingQueryUseCase] send in
-                    let isEnabled = await notificationSettingQueryUseCase.isNotificationEnabled()
+                return .run { [userSettingsRepository] send in
+                    let isEnabled = await userSettingsRepository.isNotificationEnabled()
                     await send(.notificationSettingsResponse(isEnabled))
                 }
             case let .notificationToggleChanged(isEnabled):
@@ -126,7 +127,7 @@ public struct SettingFeature {
 
             case let .themeChanged(mode):
                 state.theme = mode
-                appPreferencesUseCase.setThemeModeRaw(mode.rawValue)
+                appPreferences.setThemeModeRaw(mode.rawValue)
                 NotificationCenter.default.post(name: .jacsimThemeChanged, object: nil)
                 return .none
 

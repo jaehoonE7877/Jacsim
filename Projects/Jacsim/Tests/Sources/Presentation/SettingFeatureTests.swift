@@ -1,6 +1,7 @@
 import Foundation
 import Testing
 import ComposableArchitecture
+import JacsimClient
 import Ports
 
 @testable import Jacsim
@@ -28,8 +29,10 @@ func settingFeatureLoadNotificationSettingsUsesGlobalToggle() async {
     let store = TestStore(initialState: SettingFeature.State()) {
         SettingFeature()
     } withDependencies: {
-        $0.notificationSettingQueryUseCase = NotificationSettingQueryUseCase(
-            isNotificationEnabled: { false }
+        $0.userSettingsRepository = UserSettingsRepositoryPort(
+            isNotificationEnabled: { false },
+            getAllReminders: { [] },
+            updateNotificationEnabled: { _ in }
         )
     }
 
@@ -157,4 +160,70 @@ func settingFeatureToggleOnPermissionErrorShowsErrorBanner() async {
 
     #expect(await recorder.callCount() == 1)
     #expect(await recorder.lastValue() == true)
+}
+
+@MainActor
+@Test("테마 변경은 설정 상태와 앱 환경설정을 함께 갱신한다")
+func settingFeatureThemeChangePersistsThemeMode() async {
+    let appPreferences = AppPreferencesPort.inMemory()
+
+    let store = TestStore(initialState: SettingFeature.State()) {
+        SettingFeature()
+    } withDependencies: {
+        $0.appPreferences = appPreferences
+    }
+
+    await store.send(.themeChanged(.dark)) {
+        $0.theme = .dark
+    }
+
+    #expect(appPreferences.getThemeModeRaw() == ThemeMode.dark.rawValue)
+}
+
+@MainActor
+@Test("사용법 액션은 온보딩 안내 delegate를 보낸다")
+func settingFeatureUseCaseActionSendsWalkthroughDelegate() async {
+    let store = TestStore(initialState: SettingFeature.State()) {
+        SettingFeature()
+    }
+
+    await store.send(.useCaseButtonTapped)
+    await store.receive(.delegate(.navigateToWalkThrough))
+}
+
+@MainActor
+@Test("문의하기 액션은 메일 작성 delegate를 보낸다")
+func settingFeatureInquiryActionSendsMailDelegate() async {
+    let store = TestStore(initialState: SettingFeature.State()) {
+        SettingFeature()
+    }
+
+    await store.send(.inquiryButtonTapped)
+    await store.receive(.delegate(.presentMailCompose))
+}
+
+@MainActor
+@Test("리뷰 액션은 리뷰 요청 delegate를 보낸다")
+func settingFeatureReviewActionSendsReviewDelegate() async {
+    let store = TestStore(initialState: SettingFeature.State()) {
+        SettingFeature()
+    }
+
+    await store.send(.reviewButtonTapped)
+    await store.receive(.delegate(.openReviewURL))
+}
+
+@MainActor
+@Test("배너 닫기 액션은 알림 배너를 제거한다")
+func settingFeatureDismissBannerClearsNotificationBanner() async {
+    var initialState = SettingFeature.State()
+    initialState.notificationBanner = .permissionDenied
+
+    let store = TestStore(initialState: initialState) {
+        SettingFeature()
+    }
+
+    await store.send(.notificationBannerDismissed) {
+        $0.notificationBanner = nil
+    }
 }
