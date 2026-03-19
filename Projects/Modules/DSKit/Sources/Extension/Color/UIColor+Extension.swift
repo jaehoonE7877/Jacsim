@@ -14,7 +14,7 @@ public extension UIColor {
     static var primaryNormal: UIColor {
         return UIColor { (traits) -> UIColor in
             if traits.userInterfaceStyle == .dark {
-                return UIColor(hexString: "#3385FF")
+                return UIColor(hexString: "#2B6BE5")
             }
             return UIColor(hexString: "#0066FF")
         }
@@ -23,7 +23,7 @@ public extension UIColor {
     static var primaryStrong: UIColor {
         return UIColor { (traits) -> UIColor in
             if traits.userInterfaceStyle == .dark {
-                return UIColor(hexString: "#1A75FF")
+                return UIColor(hexString: "#1F5FD6")
             }
             return UIColor(hexString: "#005EEB")
         }
@@ -32,9 +32,17 @@ public extension UIColor {
     static var primaryHeavy: UIColor {
         return UIColor { (traits) -> UIColor in
             if traits.userInterfaceStyle == .dark {
-                return UIColor(hexString: "#0066FF")
+                return UIColor(hexString: "#174FB9")
             }
             return UIColor(hexString: "#0054D1")
+        }
+    }
+    
+    /// Text color for use on primary colored backgrounds (always white for maximum contrast)
+    static var onPrimary: UIColor {
+        return UIColor { (traits) -> UIColor in
+            // Keep dark primary hues contrast-safe for white foreground text.
+            return UIColor(hexString: "#FFFFFF")
         }
     }
 }
@@ -72,27 +80,27 @@ public extension UIColor {
     static var labelAlternative: UIColor {
         return UIColor { (traits) -> UIColor in
             if traits.userInterfaceStyle == .dark {
-                return UIColor(hexString: "#AEB0B6", alpha: 0.61)
+                return UIColor(hexString: "#AEB0B6", alpha: 0.70)
             }
-            return UIColor(hexString: "#37383C", alpha: 0.61)
+            return UIColor(hexString: "#37383C", alpha: 0.70)
         }
     }
     
     static var labelAssistive: UIColor {
         return UIColor { (traits) -> UIColor in
             if traits.userInterfaceStyle == .dark {
-                return UIColor(hexString: "#AEB0B6", alpha: 0.28)
+                return UIColor(hexString: "#AEB0B6", alpha: 0.56)
             }
-            return UIColor(hexString: "#37383C", alpha: 0.28)
+            return UIColor(hexString: "#37383C", alpha: 0.56)
         }
     }
     
     static var labelDisable: UIColor {
         return UIColor { (traits) -> UIColor in
             if traits.userInterfaceStyle == .dark {
-                return UIColor(hexString: "#989BA2", alpha: 0.16)
+                return UIColor(hexString: "#989BA2", alpha: 0.24)
             }
-            return UIColor(hexString: "#37383C", alpha: 0.16)
+            return UIColor(hexString: "#37383C", alpha: 0.22)
         }
     }
 }

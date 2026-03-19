@@ -7,6 +7,8 @@ public struct JSInputField: View {
     let isSecure: Bool
     let isEnabled: Bool
     let errorMessage: String?
+    let accessibilityLabel: String?
+    let focus: FocusState<Bool>.Binding?
 
     public init(
         title: String,
@@ -14,7 +16,9 @@ public struct JSInputField: View {
         text: Binding<String>,
         isSecure: Bool = false,
         isEnabled: Bool = true,
-        errorMessage: String? = nil
+        errorMessage: String? = nil,
+        accessibilityLabel: String? = nil,
+        focus: FocusState<Bool>.Binding? = nil
     ) {
         self.title = title
         self.placeholder = placeholder
@@ -22,6 +26,8 @@ public struct JSInputField: View {
         self.isSecure = isSecure
         self.isEnabled = isEnabled
         self.errorMessage = errorMessage
+        self.accessibilityLabel = accessibilityLabel
+        self.focus = focus
     }
 
     public var body: some View {
@@ -29,29 +35,10 @@ public struct JSInputField: View {
             if !title.isEmpty {
                 Text(title)
                     .font(.jsLabelMedium)
-                    .foregroundColor(.labelAlternative)
+                    .foregroundColor(.labelNeutral)
             }
 
-            Group {
-                if isSecure {
-                    SecureField(placeholder, text: $text)
-                } else {
-                    TextField(placeholder, text: $text)
-                }
-            }
-            .font(.jsBodyMedium)
-            .padding(.jsMD)
-            .background(
-                RoundedRectangle(cornerRadius: .jsCornerSmall)
-                    .fill(Color.backgroundNormal)
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: .jsCornerSmall)
-                    .stroke(borderColor, lineWidth: 1)
-            )
-            .disabled(!isEnabled)
-            .opacity(isEnabled ? 1.0 : 0.5)
-            .frame(minHeight: 44.jsScaled(.touchTarget))
+            inputField
 
             if let error = errorMessage {
                 Text(error)
@@ -65,7 +52,51 @@ public struct JSInputField: View {
         if errorMessage != nil {
             return .destructive
         }
-        return .labelAlternative
+        return .labelDisable
+    }
+
+    private var accessibilityLabelText: String {
+        if let accessibilityLabel, !accessibilityLabel.isEmpty {
+            return accessibilityLabel
+        }
+        if !title.isEmpty {
+            return title
+        }
+        return placeholder
+    }
+
+    @ViewBuilder
+    private var inputField: some View {
+        if let focus {
+            baseInputField.focused(focus)
+        } else {
+            baseInputField
+        }
+    }
+
+    private var baseInputField: some View {
+        Group {
+            if isSecure {
+                SecureField(placeholder, text: $text)
+            } else {
+                TextField(placeholder, text: $text)
+            }
+        }
+        .font(.jsBodyMedium)
+        .padding(.jsMD)
+        .background(
+            RoundedRectangle(cornerRadius: .jsCornerSmall)
+                .fill(Color.backgroundStrong)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: .jsCornerSmall)
+                .stroke(borderColor, lineWidth: 1)
+        )
+        .disabled(!isEnabled)
+        .opacity(isEnabled ? 1.0 : 0.5)
+        .frame(minHeight: 44.jsScaled(.touchTarget))
+        .accessibilityLabel(accessibilityLabelText)
+        .accessibilityHint(errorMessage == nil ? "입력 필드" : errorMessage ?? "")
     }
 }
 
