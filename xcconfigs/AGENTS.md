@@ -10,6 +10,15 @@
 | Project-level settings | `Base/Projects/**` |
 | Target-type settings | `targets/**` |
 
+## Verify
+
+```bash
+tuist generate
+tuist build Jacsim
+```
+
+> 변경한 설정이 적용되는 target이 있으면 영향받는 scheme의 `tuist test <affected-scheme>`도 실행합니다.
+
 ## Rules
 
 ### ✅ Do

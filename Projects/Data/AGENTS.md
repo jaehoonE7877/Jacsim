@@ -12,13 +12,25 @@
 | SwiftData 모델 | `Sources/Models/**` |
 | 모듈 진입점 | `Sources/Data.swift` |
 
-## 테스트
+## Test
 
 ```bash
 tuist test Adapters
 ```
 
+## Verify
+
+```bash
+tuist build Jacsim
+```
+
+- `SwiftData` 모델, 매핑, 스택 변경이 있으면 `tuist build Jacsim`으로 downstream compile도 함께 확인합니다.
+
 ## 경계 규칙
+
+### ⚠️ Ask First
+
+- `Sources/Models/**`, `Sources/Mapping/**`, `Sources/SwiftDataStack.swift` 변경처럼 저장 포맷, schema, mapping contract에 영향을 주는 수정은 사전 확인합니다.
 
 ### ✅ 실행
 

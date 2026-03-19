@@ -9,6 +9,14 @@
 | Foundation `Extension` | `Sources/Extension/Foundation/**` |
 | 로깅 `Helper methods` | `Sources/Logger.swift` |
 
+## Test
+
+```bash
+tuist test Shared
+```
+
+- 공통 `Utility` 또는 `Extension` 변경이 여러 모듈에 영향을 줄 수 있으면 `tuist build Jacsim`으로 downstream compile도 확인합니다.
+
 ## Rules
 
 ### ✅ Do

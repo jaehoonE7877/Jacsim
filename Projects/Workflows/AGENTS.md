@@ -8,8 +8,8 @@
 |---|---|
 | Use case implementations | `Sources/UseCases/**` |
 | Use case tests | `Tests/Sources/Application/**` |
-| App-side `DependencyValues` registration | `Projects/JacsimClient/Sources/UseCaseClients.swift` (external module) |
-| Composition root | `Projects/JacsimClient/Sources/DependencyAssembly.swift` (external module) |
+| App-side `DependencyValues` registration | `../JacsimClient/Sources/UseCaseClients.swift` (external module) |
+| Composition root | `../JacsimClient/Sources/DependencyAssembly.swift` (external module) |
 
 ## Test
 
@@ -28,6 +28,7 @@ tuist test Workflows
 - Use `@Sendable` for all closure-based APIs to ensure thread safety
 - Keep `DependencyValues` registration in `Jacsim` or `JacsimClient`, not inside `Workflows`
 - Prefer read-only summary/query use cases over exposing Domain services directly to Presentation
+- The source of truth for the full use case list is `Sources/UseCases/**`; do not maintain a fixed catalog in this document.
 
 ### 🚫 Do Not
 
@@ -89,19 +90,3 @@ Presentation (App) ──▶ Workflows (UseCases) ──▶ Ports
 - **Workflows**: 포트와 도메인 서비스를 조합해 비즈니스 과정을 오케스트레이션
 - **Ports**: 인프라 세부사항을 추상화
 - **Domain**: 핵심 비즈니스 규칙과 엔티티를 제공합니다
-
-## Available Use Cases
-
-| Use Case | Purpose |
-|---|---|
-| `CreateNewTaskUseCase` | `Task` 생성 및 초기 설정 조정 |
-| `UpdateTaskSettingsUseCase` | 작업 설정 업데이트 처리 |
-| `CertifyTaskTodayUseCase` | 당일 작업 인증 처리 |
-| `StageProgressionUseCase` | 챌린지 단계 진행 상태 관리 |
-| `ReminderSchedulingUseCase` | 알림 스케줄 조정 |
-| `GlobalNotificationSettingUseCase` | 전역 알림 설정 관리 |
-| `TaskUpdateUseCase` | 작업 데이터 변경 처리 |
-| `CertificationUseCase` | 인증 비즈니스 로직 실행 |
-| `DeleteTaskUseCase` | 작업 삭제 처리 |
-| `LoadImageUseCase` | 이미지 로드 수행 |
-| `RequestNotificationPermissionUseCase` | 알림 권한 요청 처리 |

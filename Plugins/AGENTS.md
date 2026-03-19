@@ -10,6 +10,15 @@
 | App environment values | `EnvironmentPlugin/ProjectDescriptionHelpers/Enviroment.swift` |
 | xcconfig mapping | `ConfigurationPlugin/ProjectDescriptionHelpers/Configurations.swift` |
 
+## Verify
+
+```bash
+tuist generate
+tuist build Jacsim
+```
+
+> dependency alias, environment value, xcconfig mapping 변경 시 영향받는 scheme의 `tuist test <affected-scheme>`도 실행합니다.
+
 ## Rules
 
 ### ✅ Do

@@ -6,9 +6,18 @@
 
 | Task | Path |
 |---|---|
-| SPM package declarations | `../../Package.swift` (repo root) |
-| SPM aliases | `../../Plugins/DependencyPlugin/ProjectDescriptionHelpers/Dependency+SPM.swift` |
+| SPM package declarations | `../../../Package.swift` (repo root) |
+| SPM aliases | `../../../Plugins/DependencyPlugin/ProjectDescriptionHelpers/Dependency+SPM.swift` |
 | Module wiring | `Project.swift` |
+
+## Verify
+
+```bash
+tuist generate
+tuist build Jacsim
+```
+
+> 새 의존성 추가 또는 alias 변경 시 영향받는 scheme의 `tuist test <affected-scheme>`도 실행합니다.
 
 ## Rules
 

@@ -14,8 +14,11 @@
 ## Verify
 
 ```bash
-tuist generate   # 변경 후 오류 없이 완료되어야 함
+tuist generate
+tuist build Jacsim
 ```
+
+> 템플릿 또는 helper 변경으로 영향받는 module이 있으면 해당 scheme의 `tuist test <affected-scheme>`도 실행합니다.
 
 ## Rules
 

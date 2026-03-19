@@ -10,12 +10,24 @@
 | 공통 UI Component | `Sources/SwiftUI/Components/**` |
 | UI extensions | `Sources/Extension/**` |
 
+## Verify
+
+```bash
+tuist build Jacsim
+```
+
+- DSKit 변경 후에는 영향받는 downstream scheme 테스트도 함께 실행합니다.
+
 ## 규칙
 
 ### ✅ 수행
 
 - 재사용 가능한, 스타일 중심의 `Component` 중심으로 작성
 - `State` 변경/전환 로직은 DSKit이 아닌 Jacsim `Presentation`에 둡니다
+
+### ⚠️ 먼저 확인
+
+- 디자인 토큰, 공통 component API, resource contract 변경은 앱 전체 UI에 영향을 주므로 사전 확인합니다.
 
 ### 🚫 금지
 
