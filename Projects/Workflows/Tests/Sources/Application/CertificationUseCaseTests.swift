@@ -100,6 +100,48 @@ struct CertificationUseCaseTests {
         #expect(updatedTask?.records[0].memo == "New memo")
         #expect(updatedTask?.records[0].check == true)
     }
+
+    @Test
+    func testCertifyTodayRethrowsRepositoryUpdateFailure() async {
+        let today = Date()
+        let task = Task(
+            id: TaskID(UUID()),
+            title: "Test Task",
+            startDate: today,
+            endDate: today,
+            stages: [],
+            records: [
+                DailyRecordSnapshot(id: UUID(), memo: "", check: false, date: today, imagePath: nil)
+            ]
+        )
+        let repository = TaskRepositoryPort(
+            fetchActiveTasks: { [] },
+            fetchTask: { _ in task },
+            addTask: { _ in },
+            updateTask: { _ in throw RepositoryFailure.failed },
+            deleteTask: { _ in },
+            fetchTasksByStatus: { _ in [] }
+        )
+        let useCase = CertificationUseCase(taskRepository: repository)
+
+        do {
+            try await useCase.certifyToday(
+                taskId: task.id,
+                index: 0,
+                memo: "Completed!",
+                imagePath: "image.jpg"
+            )
+            Issue.record("Expected repository failure")
+        } catch RepositoryFailure.failed {
+            #expect(Bool(true))
+        } catch {
+            Issue.record("Unexpected error: \(error)")
+        }
+    }
+}
+
+private enum RepositoryFailure: Error {
+    case failed
 }
 
 private actor MockTaskStore {

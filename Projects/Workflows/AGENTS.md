@@ -8,7 +8,8 @@
 |---|---|
 | Use case implementations | `Sources/UseCases/**` |
 | Use case tests | `Tests/Sources/Application/**` |
-| Module entry | `Sources/Workflows.swift` |
+| App-side `DependencyValues` registration | `Projects/JacsimClient/Sources/UseCaseClients.swift` (external module) |
+| Composition root | `Projects/JacsimClient/Sources/DependencyAssembly.swift` (external module) |
 
 ## Test
 
@@ -21,15 +22,18 @@ tuist test Workflows
 ### ✅ Do
 
 - Implement use cases as pure orchestration logic (coordinate ports and domain services)
-- Use `@Dependency` to access ports from the `Ports` module
+- Compose use cases with `TaskRepositoryPort`, `ImageStorePort`, `NotificationSchedulerPort` 같은 Port 타입을 `live(...)` 또는 initializer 인자로 주입
 - Keep use cases focused on single responsibility (one workflow per use case)
 - Make use case factory methods `public` for cross-module DI access
 - Use `@Sendable` for all closure-based APIs to ensure thread safety
+- Keep `DependencyValues` registration in `Jacsim` or `JacsimClient`, not inside `Workflows`
+- Prefer read-only summary/query use cases over exposing Domain services directly to Presentation
 
 ### 🚫 Do Not
 
 - Reference Presentation layer (SwiftUI/TCA views or reducers)
 - Import concrete adapter implementations from `Data` module
+- Declare `DependencyKey` / `DependencyValues` wiring inside `Workflows`
 - Add UI code or view logic
 - Put business rules that belong in Domain
 
@@ -38,27 +42,34 @@ tuist test Workflows
 UseCase는 `execute()`를 통해 시작되며, 포트와 도메인 서비스를 조합해 여러 단계의 비즈니스 흐름을 조율하는 오케스트레이션 계층입니다.
 
 ```swift
-// ✅ Good — Use case coordinates ports and domain services
+// ✅ Good — Use case composes Ports through live(...) and exposes a callable API
 public struct CreateNewTaskUseCase: Sendable {
-    @Dependency(\.taskRepositoryClient) var taskRepository
-    @Dependency(\.notificationSchedulerClient) var notificationScheduler
-    
-    public func execute(task: Task) async throws {
-        // 1. Validate through domain service
-        try await domainValidationService.validate(task)
-        
-        // 2. Persist through port
-        try await taskRepository.addTask(task)
-        
-        // 3. Schedule notifications through port
-        try await notificationScheduler.schedule(task)
+    public var execute: @Sendable (Input) async throws -> Task
+}
+
+extension CreateNewTaskUseCase {
+    public static func live(
+        taskRepository: TaskRepositoryPort,
+        imageStore: ImageStorePort,
+        reminderSchedulingUseCase: ReminderSchedulingUseCase
+    ) -> Self {
+        Self(
+            execute: { input in
+                var task = Task(/* build domain entity from input */)
+                if let data = input.mainImageData {
+                    _ = try await imageStore.saveImage(task.mainImageKey, data)
+                }
+                try await taskRepository.addTask(task)
+                await reminderSchedulingUseCase.resyncRepresentativeReminder()
+                return task
+            }
+        )
     }
 }
 
-// ❌ Bad — Use case references concrete implementations or UI
-public struct CreateNewTaskUseCase {
-    let realm = try! Realm()  // Never do this
-    let viewModel: TaskViewModel  // Never reference UI
+// ❌ Bad — dependency registration and infrastructure belong outside Workflows
+public extension DependencyValues {
+    var createNewTaskUseCase: CreateNewTaskUseCase { ... }
 }
 ```
 
@@ -74,6 +85,7 @@ Presentation (App) ──▶ Workflows (UseCases) ──▶ Ports
 ```
 
 - **Presentation**: 의존성 주입(Dependency Injection)으로 UseCase를 트리거
+- **App / Composition**: `DependencyValues` 등록과 Port 조립은 `Jacsim` / `JacsimClient`에서 담당
 - **Workflows**: 포트와 도메인 서비스를 조합해 비즈니스 과정을 오케스트레이션
 - **Ports**: 인프라 세부사항을 추상화
 - **Domain**: 핵심 비즈니스 규칙과 엔티티를 제공합니다
@@ -93,11 +105,3 @@ Presentation (App) ──▶ Workflows (UseCases) ──▶ Ports
 | `DeleteTaskUseCase` | 작업 삭제 처리 |
 | `LoadImageUseCase` | 이미지 로드 수행 |
 | `RequestNotificationPermissionUseCase` | 알림 권한 요청 처리 |
-| `AppPreferencesUseCase` | 앱 설정 조회 및 관리 |
-| `NotificationSettingQueryUseCase` | 알림 설정 조회 전용 처리 |
-| `ActiveTaskServiceUseCase` | 활성 작업 서비스 처리 |
-| `TaskStatusServiceUseCase` | 작업 상태 처리 |
-| `CalendarEventServiceUseCase` | 캘린더 이벤트 동기화 처리 |
-| `ChallengeStateServiceUseCase` | 챌린지 상태 관리 |
-| `StageEvaluationServiceUseCase` | 단계 평가 처리 |
-| `TaskQueryUseCase` | 작업 조회 처리 |

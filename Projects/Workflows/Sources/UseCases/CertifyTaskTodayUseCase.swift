@@ -33,7 +33,8 @@ public struct CertifyTaskTodayUseCase: Sendable {
 extension CertifyTaskTodayUseCase {
     public static func live(
         taskRepository: TaskRepositoryPort,
-        imageStore: ImageStorePort
+        imageStore: ImageStorePort,
+        reminderSchedulingUseCase: ReminderSchedulingUseCase
     ) -> Self {
         let certificationUseCase = CertificationUseCase(taskRepository: taskRepository)
         return Self(
@@ -44,10 +45,17 @@ extension CertifyTaskTodayUseCase {
                     hasImage: input.imageData != nil
                 )
                 let certifyStartTime = Date()
+                let imageKey = input.task.imageKey(for: input.index)
+                let existingImageData: Data?
+                if let key = imageKey {
+                    existingImageData = await imageStore.loadImage(key)
+                } else {
+                    existingImageData = nil
+                }
 
                 let imagePath: String?
                 if let data = input.imageData,
-                   let key = input.task.imageKey(for: input.index) {
+                   let key = imageKey {
                     do {
                         _ = try await imageStore.saveImage(key, data)
                         Logger.imageSaved(key: key)
@@ -57,7 +65,9 @@ extension CertifyTaskTodayUseCase {
                         throw error
                     }
                 } else {
-                    imagePath = nil
+                    imagePath = input.task.records.indices.contains(input.index)
+                        ? input.task.records[input.index].imagePath
+                        : nil
                 }
 
                 do {
@@ -67,6 +77,7 @@ extension CertifyTaskTodayUseCase {
                         memo: input.memo,
                         imagePath: imagePath
                     )
+                    await reminderSchedulingUseCase.resyncRepresentativeReminder()
                     Logger.certificationCompleted(
                         duration: Date().timeIntervalSince(certifyStartTime),
                         index: input.index,
@@ -75,7 +86,15 @@ extension CertifyTaskTodayUseCase {
                         imagePath: imagePath
                     )
                 } catch {
+                    if let key = imageKey, input.imageData != nil {
+                        if let existingImageData {
+                            _ = try? await imageStore.saveImage(key, existingImageData)
+                        } else {
+                            await imageStore.deleteImage(key)
+                        }
+                    }
                     Logger.certificationFailed(error: error)
+                    throw error
                 }
             }
         )

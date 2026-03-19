@@ -4,9 +4,17 @@ import Ports
 
 public struct StageProgressionUseCase: Sendable {
     private let taskRepository: TaskRepositoryPort
+    private let reminderSchedulingUseCase: ReminderSchedulingUseCase?
+    private let taskLifecycleService: TaskLifecycleService
 
-    public init(taskRepository: TaskRepositoryPort) {
+    public init(
+        taskRepository: TaskRepositoryPort,
+        reminderSchedulingUseCase: ReminderSchedulingUseCase? = nil,
+        taskLifecycleService: TaskLifecycleService = TaskLifecycleService()
+    ) {
         self.taskRepository = taskRepository
+        self.reminderSchedulingUseCase = reminderSchedulingUseCase
+        self.taskLifecycleService = taskLifecycleService
     }
 
     public func createNextStage(for taskId: TaskID) async throws {
@@ -39,7 +47,11 @@ public struct StageProgressionUseCase: Sendable {
         }
         task.records.append(contentsOf: makeRecords(startDate: nextStartDate, endDate: nextEndDate, calendar: calendar))
         task.records.sort { $0.date < $1.date }
-        try await taskRepository.updateTask(task)
+        let normalizedTask = taskLifecycleService.normalize(task)
+        try await taskRepository.updateTask(normalizedTask)
+        if let reminderSchedulingUseCase {
+            await reminderSchedulingUseCase.resyncRepresentativeReminder()
+        }
     }
 
     public func resetStageRecords(for taskId: TaskID) async throws {
@@ -70,7 +82,11 @@ public struct StageProgressionUseCase: Sendable {
         task.records.append(contentsOf: makeRecords(startDate: today, endDate: newStage.endDate, calendar: calendar))
         task.records.sort { $0.date < $1.date }
 
-        try await taskRepository.updateTask(task)
+        let normalizedTask = taskLifecycleService.normalize(task)
+        try await taskRepository.updateTask(normalizedTask)
+        if let reminderSchedulingUseCase {
+            await reminderSchedulingUseCase.resyncRepresentativeReminder()
+        }
     }
 
     private func makeRecords(

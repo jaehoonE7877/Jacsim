@@ -5,238 +5,218 @@ import Ports
 
 @testable import Workflows
 
-// Protects reminder orchestration business rules: cancel/schedule branching,
-// global toggle synchronization, and error-resilient scheduling with port doubles.
-
 private actor NotificationSchedulerSpy {
     enum SpyError: Error {
         case forcedFailure
     }
 
-    private(set) var scheduledTaskIDs: [TaskID] = []
-    private(set) var scheduledTimes: [DateComponents] = []
-    private(set) var cancelledTaskIDs: [TaskID] = []
-    private var failingTaskIDs: Set<TaskID>
+    private(set) var scheduledRequests: [NotificationReminderRequest] = []
+    private(set) var cancelAllCount = 0
+    private let shouldFailOnSchedule: Bool
 
-    init(failingTaskIDs: Set<TaskID> = []) {
-        self.failingTaskIDs = failingTaskIDs
+    init(shouldFailOnSchedule: Bool = false) {
+        self.shouldFailOnSchedule = shouldFailOnSchedule
     }
 
-    func schedule(taskID: TaskID, title: String, time: DateComponents) throws {
-        _ = title
-        scheduledTaskIDs.append(taskID)
-        scheduledTimes.append(time)
-        if failingTaskIDs.contains(taskID) {
+    func schedule(_ request: NotificationReminderRequest) throws {
+        scheduledRequests.append(request)
+        if shouldFailOnSchedule {
             throw SpyError.forcedFailure
         }
     }
 
-    func cancel(taskID: TaskID) {
-        cancelledTaskIDs.append(taskID)
+    func cancelAll() {
+        cancelAllCount += 1
+    }
+
+    func firstRequest() -> NotificationReminderRequest? {
+        scheduledRequests.first
     }
 
     func scheduledCount() -> Int {
-        scheduledTaskIDs.count
-    }
-
-    func cancelledCount() -> Int {
-        cancelledTaskIDs.count
-    }
-
-    func firstScheduledTime() -> DateComponents? {
-        scheduledTimes.first
-    }
-
-    func hasCancelled(_ taskID: TaskID) -> Bool {
-        cancelledTaskIDs.contains(taskID)
+        scheduledRequests.count
     }
 }
 
 private actor UserSettingsRepositorySpy {
     private(set) var isEnabled: Bool
-    private(set) var reminders: [ReminderInfo]
 
-    init(isEnabled: Bool, reminders: [ReminderInfo] = []) {
+    init(isEnabled: Bool) {
         self.isEnabled = isEnabled
-        self.reminders = reminders
     }
 
     func isNotificationEnabled() -> Bool {
         isEnabled
     }
+}
 
-    func getAllReminders() -> [ReminderInfo] {
-        reminders
+private actor TaskRepositorySpy {
+    private let tasks: [Task]
+
+    init(tasks: [Task]) {
+        self.tasks = tasks
+    }
+
+    func fetchActiveTasks() -> [Task] {
+        tasks
     }
 }
 
-@Test("scheduleReminderIfNeeded cancels existing and schedules when all flags are ON")
-func scheduleReminderIfNeededSchedulesWithExtractedTime() async throws {
+@Test("resyncRepresentativeReminder schedules one bundled reminder for the highest-priority pending challenge")
+func resyncRepresentativeReminderSchedulesHighestPriorityPendingChallenge() async throws {
+    let now = fixedDate(year: 2026, month: 3, day: 7, hour: 7, minute: 0)
+    let soonEnd = calendar.date(byAdding: .day, value: 1, to: calendar.startOfDay(for: now))!
+    let laterEnd = calendar.date(byAdding: .day, value: 4, to: calendar.startOfDay(for: now))!
+
+    let focusTask = makeTask(
+        title: "독서",
+        startDate: calendar.date(byAdding: .day, value: -2, to: now)!,
+        endDate: soonEnd,
+        alarm: fixedDate(year: 2026, month: 3, day: 7, hour: 21, minute: 0),
+        isNotificationEnabled: true,
+        records: [],
+        stageEndDate: soonEnd
+    )
+    let bundledTask = makeTask(
+        title: "산책",
+        startDate: calendar.date(byAdding: .day, value: -2, to: now)!,
+        endDate: laterEnd,
+        alarm: fixedDate(year: 2026, month: 3, day: 7, hour: 22, minute: 0),
+        isNotificationEnabled: true,
+        records: [],
+        stageEndDate: laterEnd
+    )
+
     let scheduler = NotificationSchedulerSpy()
-    let port = makeSchedulerPort(spy: scheduler)
-    let repoSpy = UserSettingsRepositorySpy(isEnabled: true)
-    let userSettingsRepository = makeUserSettingsRepositoryPort(spy: repoSpy)
     let useCase = ReminderSchedulingUseCase(
-        notificationScheduler: port,
-        userSettingsRepository: userSettingsRepository
-    )
-    let taskID = TaskID(UUID())
-    let alarmDate = fixedDate(year: 2026, month: 5, day: 1, hour: 8, minute: 30)
-
-    await useCase.scheduleReminderIfNeeded(
-        taskID: taskID,
-        title: "Morning",
-        isAlarmEnabled: true,
-        alarmDate: alarmDate,
-        cancelExistingReminder: true
+        notificationScheduler: makeSchedulerPort(spy: scheduler),
+        userSettingsRepository: makeUserSettingsRepositoryPort(spy: UserSettingsRepositorySpy(isEnabled: true)),
+        taskRepository: makeTaskRepositoryPort(spy: TaskRepositorySpy(tasks: [bundledTask, focusTask]))
     )
 
-    #expect(await scheduler.cancelledCount() == 1)
-    #expect(await scheduler.hasCancelled(taskID))
+    await useCase.resyncRepresentativeReminder(referenceDate: now)
+
+    #expect(await scheduler.cancelAllCount == 1)
     #expect(await scheduler.scheduledCount() == 1)
-    let time = try #require(await scheduler.firstScheduledTime())
-    #expect(time.hour == 8)
-    #expect(time.minute == 30)
+
+    let request = try #require(await scheduler.firstRequest())
+    #expect(request.taskID == focusTask.id)
+    #expect(request.title == "작심 리마인더")
+    #expect(request.body.contains("독서"))
+    #expect(request.body.contains("외 1개"))
+    #expect(request.repeats == false)
+    #expect(request.dateComponents.hour == 21)
+    #expect(request.dateComponents.minute == 0)
 }
 
-@Test("scheduleReminderIfNeeded skips scheduling when alarm or global toggle is OFF")
-func scheduleReminderIfNeededSkipsScheduleWhenDisabled() async {
+@Test("resyncRepresentativeReminder cancels stale reminders and stops when global notifications are disabled")
+func resyncRepresentativeReminderCancelsAllWhenGlobalToggleIsOff() async {
+    let task = makeTask(
+        title: "독서",
+        startDate: fixedDate(year: 2026, month: 3, day: 6),
+        endDate: fixedDate(year: 2026, month: 3, day: 10),
+        alarm: fixedDate(year: 2026, month: 3, day: 7, hour: 21, minute: 0),
+        isNotificationEnabled: true,
+        records: [],
+        stageEndDate: fixedDate(year: 2026, month: 3, day: 10)
+    )
+
     let scheduler = NotificationSchedulerSpy()
-    let port = makeSchedulerPort(spy: scheduler)
-    let repoEnabledSpy = UserSettingsRepositorySpy(isEnabled: true)
-    let useCaseEnabled = ReminderSchedulingUseCase(
-        notificationScheduler: port,
-        userSettingsRepository: makeUserSettingsRepositoryPort(spy: repoEnabledSpy)
-    )
-    let taskID = TaskID(UUID())
-    let alarmDate = fixedDate(year: 2026, month: 5, day: 1, hour: 9, minute: 0)
-
-    await useCaseEnabled.scheduleReminderIfNeeded(
-        taskID: taskID,
-        title: "Disabled Alarm",
-        isAlarmEnabled: false,
-        alarmDate: alarmDate,
-        cancelExistingReminder: false
+    let useCase = ReminderSchedulingUseCase(
+        notificationScheduler: makeSchedulerPort(spy: scheduler),
+        userSettingsRepository: makeUserSettingsRepositoryPort(spy: UserSettingsRepositorySpy(isEnabled: false)),
+        taskRepository: makeTaskRepositoryPort(spy: TaskRepositorySpy(tasks: [task]))
     )
 
-    let repoDisabledSpy = UserSettingsRepositorySpy(isEnabled: false)
-    let useCaseDisabled = ReminderSchedulingUseCase(
-        notificationScheduler: port,
-        userSettingsRepository: makeUserSettingsRepositoryPort(spy: repoDisabledSpy)
-    )
+    await useCase.resyncRepresentativeReminder(referenceDate: fixedDate(year: 2026, month: 3, day: 7, hour: 9))
 
-    await useCaseDisabled.scheduleReminderIfNeeded(
-        taskID: taskID,
-        title: "Global Off",
-        isAlarmEnabled: true,
-        alarmDate: alarmDate,
-        cancelExistingReminder: false
-    )
-
-    #expect(await scheduler.cancelledCount() == 0)
+    #expect(await scheduler.cancelAllCount == 1)
     #expect(await scheduler.scheduledCount() == 0)
 }
 
-@Test("scheduleReminderIfNeeded swallows scheduling errors and stays non-throwing")
-func scheduleReminderIfNeededDoesNotFailOnScheduleError() async {
-    let taskID = TaskID(UUID())
-    let scheduler = NotificationSchedulerSpy(failingTaskIDs: [taskID])
-    let port = makeSchedulerPort(spy: scheduler)
-    let repoSpy = UserSettingsRepositorySpy(isEnabled: true)
+@Test("resyncRepresentativeReminder rolls a completed-today challenge forward to the next day")
+func resyncRepresentativeReminderSchedulesTomorrowAfterCompletion() async throws {
+    let now = fixedDate(year: 2026, month: 3, day: 7, hour: 18, minute: 0)
+    let tomorrow = calendar.date(byAdding: .day, value: 1, to: calendar.startOfDay(for: now))!
+    let task = makeTask(
+        title: "작심",
+        startDate: calendar.date(byAdding: .day, value: -2, to: now)!,
+        endDate: calendar.date(byAdding: .day, value: 2, to: now)!,
+        alarm: fixedDate(year: 2026, month: 3, day: 7, hour: 8, minute: 30),
+        isNotificationEnabled: true,
+        records: [
+            DailyRecordSnapshot(id: UUID(), memo: "", check: true, date: calendar.startOfDay(for: now), imagePath: nil)
+        ],
+        stageEndDate: calendar.date(byAdding: .day, value: 2, to: now)!
+    )
+
+    let scheduler = NotificationSchedulerSpy()
     let useCase = ReminderSchedulingUseCase(
-        notificationScheduler: port,
-        userSettingsRepository: makeUserSettingsRepositoryPort(spy: repoSpy)
+        notificationScheduler: makeSchedulerPort(spy: scheduler),
+        userSettingsRepository: makeUserSettingsRepositoryPort(spy: UserSettingsRepositorySpy(isEnabled: true)),
+        taskRepository: makeTaskRepositoryPort(spy: TaskRepositorySpy(tasks: [task]))
     )
 
-    await useCase.scheduleReminderIfNeeded(
-        taskID: taskID,
-        title: "Error Case",
-        isAlarmEnabled: true,
-        alarmDate: fixedDate(year: 2026, month: 6, day: 1, hour: 7, minute: 10),
-        cancelExistingReminder: false
+    await useCase.resyncRepresentativeReminder(referenceDate: now)
+
+    let request = try #require(await scheduler.firstRequest())
+    let scheduledDate = calendar.date(from: request.dateComponents)
+    #expect(calendar.isDate(scheduledDate ?? now, inSameDayAs: tomorrow))
+    #expect(request.dateComponents.hour == 8)
+    #expect(request.dateComponents.minute == 30)
+}
+
+@Test("resyncRepresentativeReminder swallows scheduling failures after cleanup")
+func resyncRepresentativeReminderDoesNotThrowOnScheduleFailure() async {
+    let task = makeTask(
+        title: "산책",
+        startDate: fixedDate(year: 2026, month: 3, day: 6),
+        endDate: fixedDate(year: 2026, month: 3, day: 9),
+        alarm: fixedDate(year: 2026, month: 3, day: 7, hour: 20, minute: 0),
+        isNotificationEnabled: true,
+        records: [],
+        stageEndDate: fixedDate(year: 2026, month: 3, day: 9)
     )
 
+    let scheduler = NotificationSchedulerSpy(shouldFailOnSchedule: true)
+    let useCase = ReminderSchedulingUseCase(
+        notificationScheduler: makeSchedulerPort(spy: scheduler),
+        userSettingsRepository: makeUserSettingsRepositoryPort(spy: UserSettingsRepositorySpy(isEnabled: true)),
+        taskRepository: makeTaskRepositoryPort(spy: TaskRepositorySpy(tasks: [task]))
+    )
+
+    await useCase.resyncRepresentativeReminder(referenceDate: fixedDate(year: 2026, month: 3, day: 7, hour: 9))
+
+    #expect(await scheduler.cancelAllCount == 1)
     #expect(await scheduler.scheduledCount() == 1)
 }
 
-@Test("syncGlobalReminders ON schedules each reminder")
-func syncGlobalRemindersEnabledSchedulesAll() async {
-    let first = TaskID(UUID())
-    let second = TaskID(UUID())
-    let reminders = [
-        ReminderInfo(taskId: first, title: "A", time: DateComponents(hour: 7, minute: 45)),
-        ReminderInfo(taskId: second, title: "B", time: DateComponents(hour: 20, minute: 15))
-    ]
-
+@Test("syncGlobalReminders OFF only clears pending reminders")
+func syncGlobalRemindersOffCancelsAllOnly() async {
     let scheduler = NotificationSchedulerSpy()
-    let port = makeSchedulerPort(spy: scheduler)
-    let repoSpy = UserSettingsRepositorySpy(isEnabled: true, reminders: reminders)
     let useCase = ReminderSchedulingUseCase(
-        notificationScheduler: port,
-        userSettingsRepository: makeUserSettingsRepositoryPort(spy: repoSpy)
-    )
-
-    await useCase.syncGlobalReminders(isEnabled: true)
-
-    #expect(await scheduler.scheduledCount() == 2)
-    #expect(await scheduler.cancelledCount() == 0)
-}
-
-@Test("syncGlobalReminders OFF cancels each reminder")
-func syncGlobalRemindersDisabledCancelsAll() async {
-    let first = TaskID(UUID())
-    let second = TaskID(UUID())
-    let reminders = [
-        ReminderInfo(taskId: first, title: "A", time: DateComponents(hour: 7, minute: 45)),
-        ReminderInfo(taskId: second, title: "B", time: DateComponents(hour: 20, minute: 15))
-    ]
-
-    let scheduler = NotificationSchedulerSpy()
-    let port = makeSchedulerPort(spy: scheduler)
-    let repoSpy = UserSettingsRepositorySpy(isEnabled: true, reminders: reminders)
-    let useCase = ReminderSchedulingUseCase(
-        notificationScheduler: port,
-        userSettingsRepository: makeUserSettingsRepositoryPort(spy: repoSpy)
+        notificationScheduler: makeSchedulerPort(spy: scheduler),
+        userSettingsRepository: makeUserSettingsRepositoryPort(spy: UserSettingsRepositorySpy(isEnabled: true)),
+        taskRepository: makeTaskRepositoryPort(spy: TaskRepositorySpy(tasks: []))
     )
 
     await useCase.syncGlobalReminders(isEnabled: false)
 
+    #expect(await scheduler.cancelAllCount == 1)
     #expect(await scheduler.scheduledCount() == 0)
-    #expect(await scheduler.cancelledCount() == 2)
 }
 
-@Test("syncGlobalReminders continues scheduling remaining reminders after a failure")
-func syncGlobalRemindersContinuesAfterOneScheduleFailure() async {
-    let first = TaskID(UUID())
-    let second = TaskID(UUID())
-    let reminders = [
-        ReminderInfo(taskId: first, title: "A", time: DateComponents(hour: 7, minute: 45)),
-        ReminderInfo(taskId: second, title: "B", time: DateComponents(hour: 20, minute: 15))
-    ]
-
-    let scheduler = NotificationSchedulerSpy(failingTaskIDs: [first])
-    let port = makeSchedulerPort(spy: scheduler)
-    let repoSpy = UserSettingsRepositorySpy(isEnabled: true, reminders: reminders)
-    let useCase = ReminderSchedulingUseCase(
-        notificationScheduler: port,
-        userSettingsRepository: makeUserSettingsRepositoryPort(spy: repoSpy)
-    )
-
-    await useCase.syncGlobalReminders(isEnabled: true)
-
-    #expect(await scheduler.scheduledCount() == 2)
-    #expect(await scheduler.cancelledCount() == 0)
-}
+private let calendar = Calendar.current
 
 private func makeSchedulerPort(spy: NotificationSchedulerSpy) -> NotificationSchedulerPort {
     NotificationSchedulerPort(
-        scheduleDailyReminder: { taskID, title, time in
-            try await spy.schedule(taskID: taskID, title: title, time: time)
+        scheduleReminder: { request in
+            try await spy.schedule(request)
         },
-        cancelReminder: { taskID in
-            await spy.cancel(taskID: taskID)
+        cancelReminder: { _ in },
+        cancelAllReminders: {
+            await spy.cancelAll()
         },
-        cancelAllReminders: {},
         requestAuthorization: { true }
     )
 }
@@ -244,13 +224,68 @@ private func makeSchedulerPort(spy: NotificationSchedulerSpy) -> NotificationSch
 private func makeUserSettingsRepositoryPort(spy: UserSettingsRepositorySpy) -> UserSettingsRepositoryPort {
     UserSettingsRepositoryPort(
         isNotificationEnabled: { await spy.isNotificationEnabled() },
-        getAllReminders: { await spy.getAllReminders() },
+        getAllReminders: { [] },
         updateNotificationEnabled: { _ in }
     )
 }
 
-private func fixedDate(year: Int, month: Int, day: Int, hour: Int, minute: Int) -> Date {
-    let calendar = Calendar.current
-    let components = DateComponents(year: year, month: month, day: day, hour: hour, minute: minute)
-    return calendar.date(from: components) ?? Date(timeIntervalSince1970: 0)
+private func makeTaskRepositoryPort(spy: TaskRepositorySpy) -> TaskRepositoryPort {
+    TaskRepositoryPort(
+        fetchActiveTasks: { await spy.fetchActiveTasks() },
+        fetchTask: { _ in nil },
+        addTask: { _ in },
+        updateTask: { _ in },
+        deleteTask: { _ in },
+        fetchTasksByStatus: { _ in [] }
+    )
+}
+
+private func makeTask(
+    title: String,
+    startDate: Date,
+    endDate: Date,
+    alarm: Date,
+    isNotificationEnabled: Bool,
+    records: [DailyRecordSnapshot],
+    stageEndDate: Date
+) -> Task {
+    let stage = StageSnapshot(
+        id: UUID(),
+        stageTypeRaw: StageType.seven.rawValue,
+        startDate: startDate,
+        endDate: stageEndDate,
+        durationDays: 7,
+        successDays: records.filter(\.check).count,
+        resultRaw: StageResult.inProgress.rawValue
+    )
+
+    return Task(
+        id: TaskID(UUID()),
+        title: title,
+        startDate: startDate,
+        endDate: endDate,
+        alarm: alarm,
+        isNotificationEnabled: isNotificationEnabled,
+        stages: [stage],
+        records: records
+    )
+}
+
+private func fixedDate(
+    year: Int,
+    month: Int,
+    day: Int,
+    hour: Int = 0,
+    minute: Int = 0
+) -> Date {
+    let components = DateComponents(
+        calendar: calendar,
+        timeZone: .current,
+        year: year,
+        month: month,
+        day: day,
+        hour: hour,
+        minute: minute
+    )
+    return calendar.date(from: components)!
 }

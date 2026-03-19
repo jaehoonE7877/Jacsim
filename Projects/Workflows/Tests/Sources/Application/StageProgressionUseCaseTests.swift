@@ -14,7 +14,7 @@ struct StageProgressionUseCaseTests {
         let repository = makeRepositoryPort(store: store)
         let useCase = StageProgressionUseCase(taskRepository: repository)
 
-        let baseStart = calendar.startOfDay(for: Date(timeIntervalSince1970: 1_700_000_000))
+        let baseStart = calendar.startOfDay(for: .now)
         let baseEnd = calendar.date(byAdding: .day, value: 2, to: baseStart)!
         let currentStage = StageSnapshot(
             id: UUID(),
@@ -41,6 +41,8 @@ struct StageProgressionUseCaseTests {
         #expect(updatedTask != nil)
         #expect(updatedTask?.stages.count == 2)
         #expect(updatedTask?.stages.last?.stageType == .seven)
+        #expect(updatedTask?.stages.last?.successDays == 0)
+        #expect(updatedTask?.stages.last?.result == .inProgress)
         #expect(updatedTask?.endDate == updatedTask?.stages.last?.endDate)
         #expect(updatedTask?.records.count == 10)
     }
@@ -128,6 +130,8 @@ struct StageProgressionUseCaseTests {
         #expect(updatedTask?.stages.count == 1)
         #expect(updatedTask?.stages.last?.startDate == today)
         #expect(updatedTask?.stages.last?.endDate == calendar.date(byAdding: .day, value: 6, to: today))
+        #expect(updatedTask?.stages.last?.successDays == 0)
+        #expect(updatedTask?.stages.last?.result == .inProgress)
         #expect(updatedTask?.endDate == updatedTask?.stages.last?.endDate)
         #expect(updatedTask?.records.count == 8)
         #expect(updatedTask?.records.first?.memo == "old")

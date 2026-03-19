@@ -12,12 +12,12 @@ public struct DeleteTaskUseCase: Sendable {
 extension DeleteTaskUseCase {
     public static func live(
         taskRepository: TaskRepositoryPort,
-        notificationScheduler: NotificationSchedulerPort
+        reminderSchedulingUseCase: ReminderSchedulingUseCase
     ) -> Self {
         Self(
             execute: { taskID in
-                await notificationScheduler.cancelReminder(taskID)
                 try await taskRepository.deleteTask(taskID)
+                await reminderSchedulingUseCase.resyncRepresentativeReminder()
             }
         )
     }

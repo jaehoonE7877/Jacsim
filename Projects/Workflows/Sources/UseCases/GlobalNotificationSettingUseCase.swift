@@ -25,8 +25,8 @@ extension GlobalNotificationSettingUseCase {
         Self(
             setEnabled: { isEnabled in
                 if !isEnabled {
-                    await reminderSchedulingUseCase.syncGlobalReminders(isEnabled: false)
                     await userSettingsRepository.updateNotificationEnabled(false)
+                    await reminderSchedulingUseCase.syncGlobalReminders(isEnabled: false)
                     return .disabled
                 }
 
@@ -39,8 +39,8 @@ extension GlobalNotificationSettingUseCase {
                     return .permissionError
                 }
 
-                await reminderSchedulingUseCase.syncGlobalReminders(isEnabled: true)
                 await userSettingsRepository.updateNotificationEnabled(true)
+                await reminderSchedulingUseCase.syncGlobalReminders(isEnabled: true)
                 return .enabled
             }
         )

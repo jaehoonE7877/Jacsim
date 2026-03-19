@@ -37,12 +37,14 @@ extension CreateNewTaskUseCase {
         taskRepository: TaskRepositoryPort,
         imageStore: ImageStorePort,
         reminderSchedulingUseCase: ReminderSchedulingUseCase,
+        taskLifecycleService: TaskLifecycleService = TaskLifecycleService(),
         now: @escaping @Sendable () -> Date = { .now }
     ) -> Self {
         Self(
             execute: { input in
                 let calendar = Calendar.current
-                let startDate = calendar.startOfDay(for: now())
+                let createdAt = now()
+                let startDate = calendar.startOfDay(for: createdAt)
                 let endDate = calendar.date(
                     byAdding: .day,
                     value: input.stageType.durationDays - 1,
@@ -72,12 +74,13 @@ extension CreateNewTaskUseCase {
                     stages: [stage],
                     records: records,
                     isDeleted: false,
-                    createdAt: .now,
-                    updatedAt: .now
+                    createdAt: createdAt,
+                    updatedAt: createdAt
                 )
 
                 task.isNotificationEnabled = input.isAlarmEnabled
                 task.alarm = input.isAlarmEnabled ? input.alarmDate : nil
+                task = taskLifecycleService.normalize(task, now: createdAt)
 
                 if let data = input.mainImageData {
                     _ = try await imageStore.saveImage(task.mainImageKey, data)
@@ -85,13 +88,7 @@ extension CreateNewTaskUseCase {
 
                 try await taskRepository.addTask(task)
 
-                await reminderSchedulingUseCase.scheduleReminderIfNeeded(
-                    taskID: task.id,
-                    title: task.title,
-                    isAlarmEnabled: input.isAlarmEnabled,
-                    alarmDate: input.alarmDate,
-                    cancelExistingReminder: false
-                )
+                await reminderSchedulingUseCase.resyncRepresentativeReminder()
 
                 return task
             }

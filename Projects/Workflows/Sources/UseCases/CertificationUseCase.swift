@@ -4,9 +4,14 @@ import Ports
 
 public struct CertificationUseCase: Sendable {
     private let taskRepository: TaskRepositoryPort
+    private let taskLifecycleService: TaskLifecycleService
 
-    public init(taskRepository: TaskRepositoryPort) {
+    public init(
+        taskRepository: TaskRepositoryPort,
+        taskLifecycleService: TaskLifecycleService = TaskLifecycleService()
+    ) {
         self.taskRepository = taskRepository
+        self.taskLifecycleService = taskLifecycleService
     }
 
     public func certifyToday(
@@ -26,7 +31,8 @@ public struct CertificationUseCase: Sendable {
         task.records[index].memo = memo
         task.records[index].imagePath = imagePath
 
-        try await taskRepository.updateTask(task)
+        let normalizedTask = taskLifecycleService.normalize(task)
+        try await taskRepository.updateTask(normalizedTask)
     }
 
     public func updateMemo(
@@ -42,7 +48,8 @@ public struct CertificationUseCase: Sendable {
         }
 
         task.records[index].memo = memo
-        try await taskRepository.updateTask(task)
+        let normalizedTask = taskLifecycleService.normalize(task)
+        try await taskRepository.updateTask(normalizedTask)
     }
 }
 

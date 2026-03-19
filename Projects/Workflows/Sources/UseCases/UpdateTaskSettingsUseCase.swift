@@ -44,25 +44,36 @@ extension UpdateTaskSettingsUseCase {
         let taskUpdateUseCase = TaskUpdateUseCase(taskRepository: taskRepository)
         return Self(
             execute: { input in
-                let updatedTask = try await taskUpdateUseCase.updateTaskInfo(
+                let updatedTask = taskUpdateUseCase.preparedTask(
                     task: input.task,
                     title: input.title,
                     durationDays: input.durationDays,
                     isNotificationEnabled: input.isAlarmEnabled,
                     alarmDate: input.alarmDate
                 )
+                let imageKey = updatedTask.mainImageKey
+                let previousImageData = input.mainImageData != nil
+                    ? await imageStore.loadImage(imageKey)
+                    : nil
 
                 if let data = input.mainImageData {
                     _ = try await imageStore.saveImage(updatedTask.mainImageKey, data)
                 }
 
-                await reminderSchedulingUseCase.scheduleReminderIfNeeded(
-                    taskID: updatedTask.id,
-                    title: updatedTask.title,
-                    isAlarmEnabled: input.isAlarmEnabled,
-                    alarmDate: input.alarmDate,
-                    cancelExistingReminder: true
-                )
+                do {
+                    try await taskRepository.updateTask(updatedTask)
+                } catch {
+                    if input.mainImageData != nil {
+                        if let previousImageData {
+                            _ = try? await imageStore.saveImage(imageKey, previousImageData)
+                        } else {
+                            await imageStore.deleteImage(imageKey)
+                        }
+                    }
+                    throw error
+                }
+
+                await reminderSchedulingUseCase.resyncRepresentativeReminder()
             }
         )
     }
