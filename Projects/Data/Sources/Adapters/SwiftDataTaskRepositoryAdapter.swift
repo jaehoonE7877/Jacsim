@@ -3,6 +3,12 @@ import SwiftData
 import Domain
 import Ports
 
+public enum TaskRepositoryAdapterError: Error {
+    case taskNotFound(TaskID)
+    case fetchFailed(String)
+    case saveFailed(String)
+}
+
 public actor SwiftDataTaskRepositoryAdapter {
     private let container: ModelContainer
     
@@ -10,57 +16,97 @@ public actor SwiftDataTaskRepositoryAdapter {
         self.container = container
     }
     
-    public func fetchActiveTasks() async -> [Domain.Task] {
+    public func fetchActiveTasks() async throws -> [Domain.Task] {
         let context = ModelContext(container)
         let descriptor = FetchDescriptor<UserJacsimModel>()
-        let results = (try? context.fetch(descriptor)) ?? []
+        let results: [UserJacsimModel]
+        do {
+            results = try context.fetch(descriptor)
+        } catch {
+            throw TaskRepositoryAdapterError.fetchFailed(error.localizedDescription)
+        }
         return results
             .filter { !$0.isDone }
             .sorted { $0.startDate < $1.startDate }
             .map(mapToDomainModel)
     }
     
-    public func fetchTask(id: TaskID) async -> Domain.Task? {
+    public func fetchTask(id: TaskID) async throws -> Domain.Task? {
         let context = ModelContext(container)
         let descriptor = FetchDescriptor<UserJacsimModel>()
-        return (try? context.fetch(descriptor))?
+        do {
+            return try context.fetch(descriptor)
             .first(where: { $0.id == id.rawValue })
             .map(mapToDomainModel)
+        } catch {
+            throw TaskRepositoryAdapterError.fetchFailed(error.localizedDescription)
+        }
     }
     
     public func addTask(_ task: Domain.Task) async throws {
         let context = ModelContext(container)
         let model = mapToSwiftDataModel(task)
         context.insert(model)
-        try context.save()
+        do {
+            try context.save()
+        } catch {
+            throw TaskRepositoryAdapterError.saveFailed(error.localizedDescription)
+        }
     }
     
     public func updateTask(_ task: Domain.Task) async throws {
         let context = ModelContext(container)
         let descriptor = FetchDescriptor<UserJacsimModel>()
-        guard let existing = (try? context.fetch(descriptor))?
-            .first(where: { $0.id == task.id.rawValue }) else { return }
+        let fetched: [UserJacsimModel]
+        do {
+            fetched = try context.fetch(descriptor)
+        } catch {
+            throw TaskRepositoryAdapterError.fetchFailed(error.localizedDescription)
+        }
+        guard let existing = fetched.first(where: { $0.id == task.id.rawValue }) else {
+            throw TaskRepositoryAdapterError.taskNotFound(task.id)
+        }
         let _ = mapToSwiftDataModel(task, existing: existing)
-        try context.save()
+        do {
+            try context.save()
+        } catch {
+            throw TaskRepositoryAdapterError.saveFailed(error.localizedDescription)
+        }
     }
     
     public func deleteTask(id: TaskID) async throws {
         let context = ModelContext(container)
         let descriptor = FetchDescriptor<UserJacsimModel>()
-        guard let model = (try? context.fetch(descriptor))?
-            .first(where: { $0.id == id.rawValue }) else { return }
+        let fetched: [UserJacsimModel]
+        do {
+            fetched = try context.fetch(descriptor)
+        } catch {
+            throw TaskRepositoryAdapterError.fetchFailed(error.localizedDescription)
+        }
+        guard let model = fetched.first(where: { $0.id == id.rawValue }) else {
+            throw TaskRepositoryAdapterError.taskNotFound(id)
+        }
         context.delete(model)
-        try context.save()
+        do {
+            try context.save()
+        } catch {
+            throw TaskRepositoryAdapterError.saveFailed(error.localizedDescription)
+        }
     }
     
-    public func fetchTasksByStatus(_ status: ChallengeStatus) async -> [Domain.Task] {
+    public func fetchTasksByStatus(_ status: ChallengeStatus) async throws -> [Domain.Task] {
         let context = ModelContext(container)
         switch status {
         case .inProgress:
-            return await fetchActiveTasks()
+            return try await fetchActiveTasks()
         case .done:
             let descriptor = FetchDescriptor<UserJacsimModel>()
-            let results = (try? context.fetch(descriptor)) ?? []
+            let results: [UserJacsimModel]
+            do {
+                results = try context.fetch(descriptor)
+            } catch {
+                throw TaskRepositoryAdapterError.fetchFailed(error.localizedDescription)
+            }
             let successes = results.filter { $0.isDone && $0.isSuccess }
             let failures = results.filter { $0.isDone && !$0.isSuccess }
             return (successes + failures)

@@ -10,17 +10,20 @@ public actor LocalNotificationSchedulerAdapter {
         self.notificationCenter = notificationCenter
     }
     
-    public func scheduleReminder(taskId: TaskID, title: String, time: DateComponents) async throws {
-        let identifier = "jacsim-\(taskId.rawValue.uuidString)"
+    public func scheduleReminder(request: NotificationReminderRequest) async throws {
+        let identifier = "jacsim-\(request.taskID.rawValue.uuidString)"
         
         notificationCenter.removePendingNotificationRequests(withIdentifiers: [identifier])
         
         let content = UNMutableNotificationContent()
-        content.title = "작심 인증"
-        content.body = "\(title) 인증할 시간이에요"
+        content.title = request.title
+        content.body = request.body
         content.sound = .default
         
-        let trigger = UNCalendarNotificationTrigger(dateMatching: time, repeats: true)
+        let trigger = UNCalendarNotificationTrigger(
+            dateMatching: request.dateComponents,
+            repeats: request.repeats
+        )
         let request = UNNotificationRequest(identifier: identifier, content: content, trigger: trigger)
         
         try await addNotificationRequest(request)

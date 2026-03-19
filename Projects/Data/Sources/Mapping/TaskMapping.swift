@@ -3,6 +3,15 @@ import Domain
 
 func mapToSwiftDataModel(_ task: Domain.Task, existing: UserJacsimModel? = nil) -> UserJacsimModel {
     let success = task.records.filter { $0.check }.count
+    let lastStage = task.stages.last
+    let isDone = lastStage?.result != .inProgress && lastStage != nil
+    let isSuccess = lastStage?.result == .success
+    let statusRaw = isDone ? ChallengeStatus.done.rawValue : ChallengeStatus.inProgress.rawValue
+    let resultRaw: String = {
+        guard isDone else { return ChallengeResult.none.rawValue }
+        return isSuccess ? ChallengeResult.success.rawValue : ChallengeResult.fail.rawValue
+    }()
+    let currentStageTypeRaw = lastStage?.stageTypeRaw ?? StageType.three.rawValue
     
     let userJacsim: UserJacsimModel = {
         if let existing {
@@ -24,6 +33,11 @@ func mapToSwiftDataModel(_ task: Domain.Task, existing: UserJacsimModel? = nil) 
     userJacsim.alarm = task.alarm
     userJacsim.isNotificationEnabled = task.isNotificationEnabled
     userJacsim.success = success
+    userJacsim.isDone = isDone
+    userJacsim.isSuccess = isSuccess
+    userJacsim.statusRaw = statusRaw
+    userJacsim.resultRaw = resultRaw
+    userJacsim.currentStageTypeRaw = currentStageTypeRaw
     
     let existingStagesByID: [UUID: StageModel] = Dictionary(
         uniqueKeysWithValues: userJacsim.stages.map { ($0.id, $0) }
