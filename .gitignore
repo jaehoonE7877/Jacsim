@@ -67,5 +67,7 @@ graph.dot
 ## Misc
 /*.gcno
 ### Docs ###
-Docs/
+Docs/*
+!Docs/**/
+!Docs/**/*.md
 .sisyphus/

@@ -18,14 +18,15 @@ tuist build Jacsim
 
 # Test (per-module)
 tuist test Jacsim
+tuist test JacsimClient
 tuist test Domain
 tuist test Workflows
 tuist test Ports
 tuist test Adapters
 tuist test Shared
-tuist test DesignSystem
 ```
 
+> `DesignSystem`은 현재 전용 unit test target이 없습니다. DSKit 변경은 `tuist build Jacsim`과 영향받는 downstream scheme 테스트로 검증합니다.
 > No lint/format tool이 아직 구성되어 있지 않습니다. 승인 없이 새로 도입하지 마세요.
 
 ---
@@ -47,6 +48,7 @@ tuist test DesignSystem
 ./
 ├── Projects/
 │   ├── Jacsim/             # App target (Presentation)
+│   ├── JacsimClient/       # App composition / DI bridge
 │   ├── Workflows/          # Application UseCases (Orchestration)
 │   ├── Domain/             # Business rules / entities
 │   ├── ExternalInterface/  # Port contracts (Ports)
@@ -86,14 +88,15 @@ tuist test DesignSystem
 - **UI**: SwiftUI + TCA만 사용. 새 UIKit 화면을 추가하지 않는다.
 - **Architecture**: Port & Adapter — Presentation → Workflows → Ports ← Adapters.
 - **Screen pattern**: `*Feature.swift` (TCA Reducer) + `*View.swift` (SwiftUI View) pair.
-- **Dependency access**: `taskQueryClient`, `taskCommandClient` 등의 port client를 사용하고, Presentation에서 concrete adapter를 직접 쓰지 않는다.
+- **Scaffolding**: 새 화면 템플릿은 `Projects/Jacsim/Sources/Presentation/<Name>`와 `Projects/Jacsim/Tests/Sources/Presentation`에 직접 생성한다. `Projects/Features`를 다시 만들지 않는다.
+- **Dependency access**: `taskRepository`, `userSettingsRepository`, `appPreferences` 같은 client dependency를 사용하고, Presentation에서 concrete adapter를 직접 쓰지 않는다.
 - **Third-party deps**: raw SPM URL 대신 plugin alias(`Plugins/DependencyPlugin`)를 사용한다.
 
 ```swift
 // ✅ Good — Feature + View pair, port client dependency
 @Reducer
 struct HomeFeature {
-    @Dependency(\.taskQueryClient) var taskQueryClient
+    @Dependency(\.taskRepository) var taskRepository
 }
 
 // ❌ Bad — direct adapter / infrastructure in Presentation
@@ -131,7 +134,7 @@ struct HomeView: View {
 
 ## 6. Git & PR Workflow
 
-- **Branch**: `develop`에서 `feature/*`, `fix/*`, `refactor/*` 브랜치 사용
+- **Branch**: 현재 default branch에서 `feature/*`, `fix/*`, `refactor/*` 브랜치 사용
 - **Commit prefix**: `Feat:`, `Fix:`, `Refactor:`, `Chore:`, `Docs:` (본문은 한국어 가능)
 - **PR**: `.github/PULL_REQUEST_TEMPLATE.md`를 작성하고 테스트 명령 출력 결과를 포함한다
 - **CI gate**: 병합 전 `ios-ci.yml`을 통해 `tuist test <scheme>` 통과 필요
@@ -154,11 +157,14 @@ struct HomeView: View {
 | 모듈 | 가이드 | 읽을 대상 |
 |---|---|---|
 | App (Jacsim) | `Projects/Jacsim/AGENTS.md` | 화면 추가/수정, Use case 작업, 앱 라이프사이클 변경 |
+| JacsimClient | `Projects/JacsimClient/AGENTS.md` | 앱 의존성 조립, Ports/Adapters bridge, composition root 변경 |
 | Workflows | `Projects/Workflows/AGENTS.md` | Use case 추가/수정, 애플리케이션 오케스트레이션 |
+| Domain | `Projects/Domain/AGENTS.md` | 엔티티, 정책, 순수 도메인 서비스 변경 |
+| Ports (ExternalInterface) | `Projects/ExternalInterface/AGENTS.md` | Port 계약, closure contract, dependency boundary 변경 |
+| Adapters (Data) | `Projects/Data/AGENTS.md` | 인프라 adapter, 매핑, SwiftData 구현 변경 |
 | DSKit | `Projects/Modules/DSKit/AGENTS.md` | Design token 또는 공통 UI 컴포넌트 변경 |
 | Core | `Projects/Modules/Core/AGENTS.md` | 공통 유틸리티 또는 extension 추가 |
 | ThirdPartyLibs | `Projects/Modules/ThirdPartyLibs/AGENTS.md` | 외부 dependency 관리 |
-| Features (legacy) | `Projects/Features/AGENTS.md` | 오래된 실험 코드 참조 |
 | Tuist | `Tuist/AGENTS.md` | 프로젝트 생성 또는 템플릿 수정 |
 | Plugins | `Plugins/AGENTS.md` | dependency alias 또는 환경 설정 변경 |
 | xcconfigs | `xcconfigs/AGENTS.md` | Build settings 수정 |

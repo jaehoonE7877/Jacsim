@@ -8,20 +8,20 @@
 import ProjectDescription
 
 public extension ProjectDescription.Path {
-    static func relativeToFeature(_ path: String) -> Self {
-        return .relativeToRoot("Projects/Features/\(path)")
-    }
-    
     static func relativeToModules(_ path: String) -> Self {
         return .relativeToRoot("Projects/Modules/\(path)")
     }
     
     static var app: Self {
-        return .relativeToRoot("Projects/App")
+        return .relativeToRoot("Projects/Jacsim")
     }
     
     static var adapters: Self {
         return .relativeToRoot("Projects/Data")
+    }
+
+    static var jacsimClient: Self {
+        return .relativeToRoot("Projects/JacsimClient")
     }
     
     static var domain: Self {
