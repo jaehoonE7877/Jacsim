@@ -14,141 +14,141 @@ public struct SettingView: View {
             title: "설정",
             subtitle: "루틴에 집중할 수 있도록 앱 환경을 정리해요"
         ) {
-            RedesignSectionCard(
-                title: "테마",
-                subtitle: "집중이 오래 이어지는 화면 분위기로 맞춰요"
-            ) {
-                summaryRow(
-                    title: currentThemeTitle,
-                    subtitle: currentThemeDescription,
-                    systemImage: currentThemeIcon,
-                    accentColor: .primaryNormal
-                )
-
-                Picker("테마", selection: Binding(
-                    get: { store.theme },
-                    set: { store.send(.themeChanged($0)) }
-                )) {
-                    Text("시스템").tag(ThemeMode.system)
-                    Text("라이트").tag(ThemeMode.light)
-                    Text("다크").tag(ThemeMode.dark)
-                }
-                .pickerStyle(.segmented)
-            }
-
-            RedesignSectionCard(
-                title: "알림",
-                subtitle: "하루에 꼭 필요한 작심 리마인더만 보내드려요"
-            ) {
-                summaryRow(
-                    title: notificationSummaryTitle,
-                    subtitle: notificationSummaryDescription,
-                    systemImage: notificationSummaryIcon,
-                    accentColor: store.isNotificationEnabled ? .primaryNormal : .labelNeutral
-                )
-
-                Toggle(
-                    "알림 설정",
-                    isOn: Binding(
-                        get: { store.isNotificationEnabled },
-                        set: { store.send(.notificationToggleChanged($0)) }
-                    )
-                )
-                .font(.jsBodyMedium)
-                .foregroundColor(.labelNormal)
-                .disabled(store.isLoading)
-
-                if store.isLoading {
-                    RedesignStateBanner(
-                        text: "알림 설정을 반영하는 중이에요",
-                        icon: "clock.arrow.circlepath",
-                        tintColor: .primaryNormal
-                    )
-                }
-
-                if let banner = store.notificationBanner {
-                    notificationBanner(banner)
-                }
-            }
-
-            RedesignSectionCard(title: "도움말") {
-                VStack(spacing: .jsXS) {
-                    actionRow(
-                        title: "사용법",
-                        subtitle: "챌린지 생성부터 인증 흐름까지 빠르게 훑어봐요",
-                        systemImage: "book.pages",
-                        accessibilityHint: "작심 사용법 안내 화면으로 이동합니다"
-                    ) {
-                        store.send(.useCaseButtonTapped)
-                    }
-
-                    rowDivider
-
-                    actionRow(
-                        title: "문의하기",
-                        subtitle: "문제가 있거나 제안이 있다면 메일로 바로 남겨요",
-                        systemImage: "envelope",
-                        accessorySystemImage: "arrow.up.right",
-                        accessibilityHint: "메일 앱으로 문의 작성을 시작합니다"
-                    ) {
-                        store.send(.inquiryButtonTapped)
-                    }
-
-                    rowDivider
-
-                    actionRow(
-                        title: "리뷰",
-                        subtitle: "App Store에서 작심 경험을 평가해 주세요",
-                        systemImage: "star.bubble",
-                        accessorySystemImage: "arrow.up.right",
-                        accessibilityHint: "앱스토어 리뷰 작성 화면을 엽니다"
-                    ) {
-                        store.send(.reviewButtonTapped)
-                    }
-                }
-            }
-
-            RedesignSectionCard(title: "앱 정보") {
-                HStack(alignment: .center, spacing: .jsSM) {
-                    VStack(alignment: .leading, spacing: .jsMicro) {
-                        Text("버전 정보")
-                            .font(.jsBodyMedium)
-                            .foregroundColor(.labelStrong)
-
-                        Text("현재 설치된 앱 버전")
-                            .font(.jsLabelMedium)
-                            .foregroundColor(.labelNeutral)
-                    }
-
-                    Spacer(minLength: .jsSM)
-
-                    Text(store.version)
-                        .font(.jsButtonSmall)
-                        .foregroundColor(.primaryStrong)
-                        .padding(.horizontal, .jsSM)
-                        .padding(.vertical, CGFloat.jsMicro)
-                        .background(
-                            Capsule()
-                                .fill(Color.primaryNormal.opacity(0.1))
-                        )
-                }
-
-                rowDivider
-
-                actionRow(
-                    title: "오픈소스 라이선스",
-                    subtitle: "앱에 포함된 오픈소스 구성요소와 라이선스를 확인해요",
-                    systemImage: "doc.text",
-                    accessibilityHint: "오픈소스 라이선스 화면으로 이동합니다"
-                ) {
-                    store.send(.licenceButtonTapped)
-                }
-            }
+            themeSection
+            notificationSection
+            helpSection
+            appInfoSection
         }
         .navigationTitle("설정")
         .navigationBarTitleDisplayMode(.inline)
         .task {
             store.send(.loadNotificationSettings)
+        }
+    }
+
+    private var themeSection: some View {
+        RedesignSectionCard(
+            title: "테마",
+            subtitle: "집중이 오래 이어지는 화면 분위기로 맞춰요"
+        ) {
+            summaryRow(
+                title: currentThemeTitle,
+                subtitle: currentThemeDescription,
+                systemImage: currentThemeIcon,
+                accentColor: .primaryNormal
+            )
+
+            Picker("테마", selection: themeBinding) {
+                Text("시스템").tag(ThemeMode.system)
+                Text("라이트").tag(ThemeMode.light)
+                Text("다크").tag(ThemeMode.dark)
+            }
+            .pickerStyle(.segmented)
+        }
+    }
+
+    private var notificationSection: some View {
+        RedesignSectionCard(
+            title: "알림",
+            subtitle: "하루에 꼭 필요한 작심 리마인더만 보내드려요"
+        ) {
+            summaryRow(
+                title: notificationSummaryTitle,
+                subtitle: notificationSummaryDescription,
+                systemImage: notificationSummaryIcon,
+                accentColor: store.isNotificationEnabled ? .primaryNormal : .labelNeutral
+            )
+
+            Toggle("알림 설정", isOn: notificationBinding)
+                .font(.jsBodyMedium)
+                .foregroundColor(.labelNormal)
+                .disabled(store.isLoading)
+
+            if store.isLoading {
+                RedesignStateBanner(
+                    text: "알림 설정을 반영하는 중이에요",
+                    icon: "clock.arrow.circlepath",
+                    tintColor: .primaryNormal
+                )
+            }
+
+            if let banner = store.notificationBanner {
+                notificationBanner(banner)
+            }
+        }
+    }
+
+    private var helpSection: some View {
+        RedesignSectionCard(title: "도움말") {
+            VStack(spacing: .jsXS) {
+                actionRow(
+                    title: "사용법",
+                    subtitle: "챌린지 생성부터 인증 흐름까지 빠르게 훑어봐요",
+                    systemImage: "book.pages",
+                    accessibilityHint: "작심 사용법 안내 화면으로 이동합니다",
+                    action: openUseCase
+                )
+
+                rowDivider
+
+                actionRow(
+                    title: "문의하기",
+                    subtitle: "문제가 있거나 제안이 있다면 메일로 바로 남겨요",
+                    systemImage: "envelope",
+                    accessorySystemImage: "arrow.up.right",
+                    accessibilityHint: "메일 앱으로 문의 작성을 시작합니다",
+                    action: openInquiry
+                )
+
+                rowDivider
+
+                actionRow(
+                    title: "리뷰",
+                    subtitle: "App Store에서 작심 경험을 평가해 주세요",
+                    systemImage: "star.bubble",
+                    accessorySystemImage: "arrow.up.right",
+                    accessibilityHint: "앱스토어 리뷰 작성 화면을 엽니다",
+                    action: openReview
+                )
+            }
+        }
+    }
+
+    private var appInfoSection: some View {
+        RedesignSectionCard(title: "앱 정보") {
+            HStack(alignment: .center, spacing: .jsSM) {
+                VStack(alignment: .leading, spacing: .jsMicro) {
+                    Text("버전 정보")
+                        .font(.jsBodyMedium)
+                        .foregroundColor(.labelStrong)
+
+                    Text("현재 설치된 앱 버전")
+                        .font(.jsLabelMedium)
+                        .foregroundColor(.labelNeutral)
+                }
+
+                Spacer(minLength: .jsSM)
+
+                Text(store.version)
+                    .font(.jsButtonSmall)
+                    .foregroundColor(.primaryStrong)
+                    .padding(.horizontal, .jsSM)
+                    .padding(.vertical, CGFloat.jsMicro)
+                    .background(
+                        Capsule()
+                            .fill(Color.primaryNormal.opacity(0.1))
+                    )
+            }
+
+            rowDivider
+
+            actionRow(
+                title: "오픈소스 라이선스",
+                subtitle: "앱에 포함된 오픈소스 구성요소와 라이선스를 확인해요",
+                systemImage: "doc.text",
+                accessibilityHint: "오픈소스 라이선스 화면으로 이동합니다",
+                action: openLicense
+            )
         }
     }
 
@@ -163,12 +163,8 @@ public struct SettingView: View {
             )
 
             HStack(spacing: .jsSM) {
-                JSButton(title: "설정 열기", style: .secondary, size: .medium) {
-                    store.send(.openSystemSettingsTapped)
-                }
-                JSButton(title: "나중에", style: .secondary, size: .medium) {
-                    store.send(.notificationBannerDismissed)
-                }
+                JSButton(title: "설정 열기", style: .secondary, size: .medium, action: openSystemSettings)
+                JSButton(title: "나중에", style: .secondary, size: .medium, action: dismissNotificationBanner)
             }
 
         case .permissionError:
@@ -179,12 +175,8 @@ public struct SettingView: View {
             )
 
             HStack(spacing: .jsSM) {
-                JSButton(title: "설정 열기", style: .secondary, size: .medium) {
-                    store.send(.openSystemSettingsTapped)
-                }
-                JSButton(title: "나중에", style: .secondary, size: .medium) {
-                    store.send(.notificationBannerDismissed)
-                }
+                JSButton(title: "설정 열기", style: .secondary, size: .medium, action: openSystemSettings)
+                JSButton(title: "나중에", style: .secondary, size: .medium, action: dismissNotificationBanner)
             }
         }
     }
@@ -229,6 +221,44 @@ public struct SettingView: View {
         .buttonStyle(.plain)
         .accessibilityLabel(title)
         .accessibilityHint(accessibilityHint)
+    }
+
+    private var themeBinding: Binding<ThemeMode> {
+        Binding(
+            get: { store.theme },
+            set: { store.send(.themeChanged($0)) }
+        )
+    }
+
+    private var notificationBinding: Binding<Bool> {
+        Binding(
+            get: { store.isNotificationEnabled },
+            set: { store.send(.notificationToggleChanged($0)) }
+        )
+    }
+
+    private func openUseCase() {
+        store.send(.useCaseButtonTapped)
+    }
+
+    private func openInquiry() {
+        store.send(.inquiryButtonTapped)
+    }
+
+    private func openReview() {
+        store.send(.reviewButtonTapped)
+    }
+
+    private func openLicense() {
+        store.send(.licenceButtonTapped)
+    }
+
+    private func openSystemSettings() {
+        store.send(.openSystemSettingsTapped)
+    }
+
+    private func dismissNotificationBanner() {
+        store.send(.notificationBannerDismissed)
     }
 
     private func summaryRow(
