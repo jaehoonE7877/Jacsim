@@ -4,6 +4,7 @@ import DSKit
 import PhotosUI
 import _Concurrency
 
+@MainActor
 public struct TaskEditView: View {
     @Bindable var store: StoreOf<TaskEditFeature>
     @Environment(\.accessibilityReduceMotion) private var reduceMotion

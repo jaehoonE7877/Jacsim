@@ -7,6 +7,7 @@ import _Concurrency
 import Combine
 import UIKit
 
+@MainActor
 public struct NewTaskView: View {
     @Bindable var store: StoreOf<NewTaskFeature>
     @Environment(\.accessibilityReduceMotion) private var reduceMotion

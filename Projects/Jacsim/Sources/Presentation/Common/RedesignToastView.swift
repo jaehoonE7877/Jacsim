@@ -46,6 +46,7 @@ struct RedesignToastPayload: Equatable {
     }
 }
 
+@MainActor
 struct RedesignToastView: View {
     static let defaultDismissNanoseconds: UInt64 = 3_000_000_000
 
