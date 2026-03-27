@@ -132,44 +132,19 @@ public struct TaskDetailView: View {
         .toolbar {
             if !store.isStagePopupPresented {
                 ToolbarItem(placement: .principal) {
-                    VStack(spacing: .jsMicro) {
-                        Text(store.task.title)
-                            .font(.jsHeadlineSmall)
-                            .foregroundColor(.labelStrong)
-                            .lineLimit(1)
-
-                        Text(navigationStageSubtitle)
-                            .font(.jsLabelMedium)
-                            .foregroundColor(.labelNeutral)
-                            .lineLimit(1)
-                    }
-                    .opacity(isHeaderMinimized ? 1 : 0)
-                    .animation(JSAnimation.toast, value: isHeaderMinimized)
+                    TaskDetailToolbarTitle(
+                        title: store.task.title,
+                        subtitle: navigationStageSubtitle,
+                        isVisible: isHeaderMinimized
+                    )
                 }
 
                 ToolbarItem(placement: .topBarTrailing) {
-                    Menu {
-                        Button(action: { store.send(.changePhotoButtonTapped) }) {
-                            Label("대표 사진 변경", systemImage: "photo")
-                        }
-
-                        Button(action: { store.send(.notificationSettingsButtonTapped) }) {
-                            Label("알림 설정", systemImage: "bell")
-                        }
-
-                        Divider()
-
-                        Button(role: .destructive, action: { store.send(.deleteButtonTapped) }) {
-                            Label("삭제", systemImage: "trash")
-                        }
-                    } label: {
-                        Image(systemName: "ellipsis")
-                            .font(.jsHeadlineMedium)
-                            .foregroundColor(.labelStrong)
-                            .frame(width: 44.jsScaled(.touchTarget), height: 44.jsScaled(.touchTarget))
-                    }
-                    .accessibilityLabel("작심 옵션")
-                    .accessibilityHint("대표 사진 변경, 알림 설정, 삭제 메뉴를 엽니다")
+                    TaskDetailToolbarMenu(
+                        onChangePhoto: { store.send(.changePhotoButtonTapped) },
+                        onNotificationSettings: { store.send(.notificationSettingsButtonTapped) },
+                        onDelete: { store.send(.deleteButtonTapped) }
+                    )
                 }
             }
         }
@@ -216,7 +191,7 @@ public struct TaskDetailView: View {
 
     private var coverImageBackground: some View {
         ZStack(alignment: .bottomLeading) {
-            if let image = loadCoverImage() {
+            if let image = store.coverImage {
                 Image(uiImage: image)
                     .interpolation(.high)
                     .resizable()
@@ -257,249 +232,42 @@ public struct TaskDetailView: View {
         }
     }
 
-    private var coverImageSection: some View {
-        ZStack(alignment: .bottomLeading) {
-            if let image = loadCoverImage() {
-                Image(uiImage: image)
-                    .resizable()
-                    .scaledToFill()
-                    .frame(height: 280.jsScaled())
-                    .clipped()
-            } else {
-                Rectangle()
-                    .fill(
-                        LinearGradient(
-                            colors: [Color.primaryNormal, Color.primaryStrong],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-                    .frame(height: 280.jsScaled())
-            }
-
-            LinearGradient(
-                colors: [
-                    Color.surfaceOverlay.opacity(0),
-                    Color.surfaceOverlay.opacity(0.4)
-                ],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-            .frame(height: 280.jsScaled())
-
-            VStack(alignment: .leading, spacing: .jsXS) {
-                Text(store.task.title)
-                    .font(.jsDisplaySmall)
-                    .foregroundColor(.white)
-                    .lineLimit(2)
-            }
-            .padding(.jsMD)
-            .padding(.bottom, .jsSM)
-        }
-        .frame(height: 280.jsScaled())
-    }
-    
     private var stageInfoSection: some View {
-        JSCard(style: .elevated) {
-            VStack(alignment: .leading, spacing: .jsMD) {
-                HStack {
-                    VStack(alignment: .leading, spacing: .jsMicro) {
-                        Text("\(store.currentStage?.stageType.durationDays ?? 7)일 스테이지")
-                            .font(.jsHeadlineSmall)
-                            .foregroundColor(.labelStrong)
-                        
-                        Text(stageDateRange)
-                            .font(.jsBodySmall)
-                            .foregroundColor(.labelNeutral)
-                    }
-                    
-                    Spacer()
-                    
-                    stageStatusChip
-                }
-                
-                VStack(alignment: .leading, spacing: .jsXS) {
-                    JSProgress(
-                        progress: store.stageProgress,
-                        style: .linear,
-                        size: .medium,
-                        tintColor: progressColor
-                    )
-                    
-                    HStack {
-                        Spacer()
-                        Text(store.stageProgressText)
-                            .font(.jsLabelMedium)
-                            .foregroundColor(.labelNeutral)
-                    }
-                }
-            }
-        }
-    }
-
-    private var stageDateRange: String {
-        guard let stage = store.currentStage else { return "" }
-        let formatter = DateFormatter()
-        formatter.dateFormat = "M/d"
-        return "\(formatter.string(from: stage.startDate)) ~ \(formatter.string(from: stage.endDate))"
+        TaskDetailStageInfoSection(
+            currentStage: store.currentStage,
+            challengeState: store.challengeState,
+            stageProgress: store.stageProgress,
+            stageProgressText: store.stageProgressText
+        )
     }
 
     private var navigationStageSubtitle: String {
         "\(store.currentStage?.stageType.durationDays ?? 7)일 스테이지"
     }
-    
-    private var stageStatusChip: some View {
-        let state: TaskStatusChipState
-        
-        switch store.challengeState {
-        case .stagePending:
-            state = .pending
-        case .stageSuccess:
-            state = .completed
-        case .stageFail:
-            state = .failed
-        case .habitCompleted:
-            state = .completed
-        }
-        
-        return TaskStatusChip(state: state)
-    }
-    
-    private var progressColor: Color {
-        switch store.challengeState {
-        case .stagePending:
-            return .primaryNormal
-        case .stageSuccess, .habitCompleted:
-            return .positive
-        case .stageFail:
-            return .destructive
-        }
-    }
-    
+
     private var todayStatusSection: some View {
-        RedesignSectionCard(
-            title: todayStatusSectionTitle,
-            subtitle: todayStatusSectionSubtitle
-        ) {
-            VStack(alignment: .leading, spacing: .jsSM) {
-                HStack(alignment: .top, spacing: .jsSM) {
-                    VStack(alignment: .leading, spacing: .jsMicro) {
-                        Text("현재 상태")
-                            .font(.jsLabelMedium)
-                            .foregroundColor(.labelNeutral)
-
-                        Text(todayStatusHeadline)
-                            .font(.jsBodyMedium)
-                            .foregroundColor(.labelStrong)
-                    }
-
-                    Spacer()
-
-                    TaskStatusChip(state: todayStatusChipState)
-                }
-
-                if let followUp = todayStatusFollowUp {
-                    Text(followUp)
-                        .font(.jsLabelMedium)
-                        .foregroundColor(.labelNeutral)
-                }
-            }
-        }
+        TaskDetailTodayStatusSection(todayStatus: store.todayStatus)
     }
 
-    private var todayStatusChipState: TaskStatusChipState {
-        switch store.todayStatus {
-        case .notCertified:
-            return .pending
-        case .certified:
-            return .completed
-        }
-    }
-
-    private var todayStatusSectionTitle: String {
-        store.todayStatus == .certified ? "오늘 상태" : "오늘의 다음 행동"
-    }
-
-    private var todayStatusSectionSubtitle: String {
-        switch store.todayStatus {
-        case .notCertified:
-            return "지금 인증하면 연속 기록이 이어져요"
-        case .certified:
-            return "오늘 인증을 마쳤어요"
-        }
-    }
-
-    private var todayStatusHeadline: String {
-        switch store.todayStatus {
-        case .notCertified:
-            return "오늘 인증을 남길 차례예요"
-        case .certified:
-            return "오늘 기록이 이미 저장됐어요"
-        }
-    }
-
-    private var todayStatusFollowUp: String? {
-        switch store.todayStatus {
-        case .notCertified:
-            return "하단 버튼에서 바로 오늘 인증을 진행할 수 있어요."
-        case .certified:
-            return "아래 인증 기록에서 오늘 사진과 메모를 다시 볼 수 있어요."
-        }
-    }
-    
     private var recordListSection: some View {
-        RedesignSectionCard(
-            title: "인증 기록",
-            subtitle: recordListSubtitle
-        ) {
-            if store.dayViewData.isEmpty {
-                RedesignStateBanner(
-                    text: "아직 인증 기록이 없어요",
-                    icon: "tray",
-                    tintColor: .labelNeutral
-                )
-            } else {
-                LazyVStack(spacing: .jsSM) {
-                    ForEach(store.dayViewData) { data in
-                        Button(action: {
-                            store.send(.dayTapped(data.date))
-                        }) {
-                            DailyRecordRow(data: data)
-                        }
-                        .buttonStyle(.plain)
-                        .accessibilityLabel("\(formattedDateForAccessibility(data.date)), \(data.isChecked ? "인증 완료" : "미인증")")
-                        .accessibilityHint("해당 날짜 인증 화면으로 이동합니다")
-                    }
-                }
-            }
-        }
+        TaskDetailRecordListSection(
+            dayViewData: store.dayViewData,
+            onTapDay: { store.send(.dayTapped($0)) }
+        )
     }
 
-    private var recordListSubtitle: String {
-        store.dayViewData.isEmpty
-        ? "기록이 쌓이면 날짜별로 바로 확인할 수 있어요"
-        : "날짜를 누르면 그날 인증 화면으로 이동해요"
-    }
-
-    private func formattedDateForAccessibility(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "ko_KR")
-        formatter.dateFormat = "M월 d일 EEEE"
-        return formatter.string(from: date)
-    }
-
-    @ViewBuilder
     private var bottomCTASection: some View {
-        switch store.challengeState {
-        case .stagePending:
-            stagePendingCTA
-        case .stageSuccess:
-            stageSuccessCTA
-        case .stageFail:
-            stageFailCTA
-        case .habitCompleted:
-            habitCompletedCTA
-        }
+        TaskDetailBottomCTASection(
+            challengeState: store.challengeState,
+            isTodayInChallengeRange: isTodayInChallengeRange,
+            todayStatus: store.todayStatus,
+            onCertifyToday: { store.send(.certifyTodayTapped) },
+            onNextStage: { store.send(.nextStageButtonTapped) },
+            onViewSuccessRecord: { store.send(.viewSuccessRecordTapped) },
+            onRetryStage: { store.send(.retryStageButtonTapped) },
+            onKeepAsIs: { store.send(.keepAsIsButtonTapped) },
+            onViewHistory: { store.send(.viewHistoryButtonTapped) }
+        )
     }
 
     private var shouldShowBottomCTA: Bool {
@@ -520,103 +288,362 @@ public struct TaskDetailView: View {
         return today >= Calendar.current.startOfDay(for: store.task.startDate)
             && today <= Calendar.current.startOfDay(for: store.task.endDate)
     }
-    
-    @ViewBuilder
-    private var stagePendingCTA: some View {
-        if isTodayInChallengeRange && store.todayStatus == .notCertified {
-            JSButton(
-                title: "오늘 작심 인증하러 가기",
-                style: .primary,
-                size: .large
-            ) {
-                store.send(.certifyTodayTapped)
-            }
-        } else {
-            EmptyView()
-        }
-    }
-    
-    private var stageSuccessCTA: some View {
-        VStack(spacing: .jsSM) {
-            JSButton(
-                title: "다음 스테이지로 넘어가기",
-                style: .primary,
-                size: .large
-            ) {
-                store.send(.nextStageButtonTapped)
-            }
-            
-            JSButton(
-                title: "인증 기록 보기",
-                style: .secondary,
-                size: .large
-            ) {
-                store.send(.viewSuccessRecordTapped)
-            }
-        }
-    }
-    
-    private var stageFailCTA: some View {
-        VStack(spacing: .jsSM) {
-            VStack(spacing: .jsMicro) {
-                Text("이번 스테이지는 여기서 멈췄어요")
-                    .font(.jsBodyMedium)
-                    .foregroundColor(.labelStrong)
+}
 
-                Text("재도전하면 같은 목표로 다시 이어갈 수 있어요")
-                    .font(.jsLabelMedium)
-                    .foregroundColor(.labelNeutral)
-            }
-                .frame(maxWidth: .infinity, alignment: .center)
-            
-            JSButton(
-                title: "스테이지 재도전",
-                style: .primary,
-                size: .large
-            ) {
-                store.send(.retryStageButtonTapped)
-            }
-            
-            JSButton(
-                title: "그대로 두기",
-                style: .secondary,
-                size: .large
-            ) {
-                store.send(.keepAsIsButtonTapped)
-            }
-        }
-    }
-    
-    private var habitCompletedCTA: some View {
-        VStack(spacing: .jsSM) {
-            VStack(spacing: .jsMicro) {
-                Text("30일 완주를 끝냈어요")
-                    .font(.jsBodyMedium)
-                    .foregroundColor(.labelStrong)
+private struct TaskDetailToolbarTitle: View {
+    let title: String
+    let subtitle: String
+    let isVisible: Bool
 
-                Text("전체 기록을 돌아보며 다음 목표를 준비해 보세요")
-                    .font(.jsLabelMedium)
-                    .foregroundColor(.labelNeutral)
+    var body: some View {
+        VStack(spacing: .jsMicro) {
+            Text(title)
+                .font(.jsHeadlineSmall)
+                .foregroundColor(.labelStrong)
+                .lineLimit(1)
+
+            Text(subtitle)
+                .font(.jsLabelMedium)
+                .foregroundColor(.labelNeutral)
+                .lineLimit(1)
+        }
+        .opacity(isVisible ? 1 : 0)
+        .animation(JSAnimation.toast, value: isVisible)
+    }
+}
+
+private struct TaskDetailToolbarMenu: View {
+    let onChangePhoto: () -> Void
+    let onNotificationSettings: () -> Void
+    let onDelete: () -> Void
+
+    var body: some View {
+        Menu {
+            Button(action: onChangePhoto) {
+                Label("대표 사진 변경", systemImage: "photo")
             }
-                .frame(maxWidth: .infinity, alignment: .center)
-            
-            JSButton(
-                title: "기록 돌아보기",
-                style: .secondary,
-                size: .large
-            ) {
-                store.send(.viewHistoryButtonTapped)
+
+            Button(action: onNotificationSettings) {
+                Label("알림 설정", systemImage: "bell")
+            }
+
+            Divider()
+
+            Button(role: .destructive, action: onDelete) {
+                Label("삭제", systemImage: "trash")
+            }
+        } label: {
+            Image(systemName: "ellipsis")
+                .font(.jsHeadlineMedium)
+                .foregroundColor(.labelStrong)
+                .frame(width: 44.jsScaled(.touchTarget), height: 44.jsScaled(.touchTarget))
+        }
+        .accessibilityLabel("작심 옵션")
+        .accessibilityHint("대표 사진 변경, 알림 설정, 삭제 메뉴를 엽니다")
+    }
+}
+
+private struct TaskDetailStageInfoSection: View {
+    let currentStage: StageSnapshot?
+    let challengeState: ChallengeDetailState
+    let stageProgress: Double
+    let stageProgressText: String
+
+    private static let stageDateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "M/d"
+        return formatter
+    }()
+
+    var body: some View {
+        JSCard(style: .elevated) {
+            VStack(alignment: .leading, spacing: .jsMD) {
+                HStack {
+                    VStack(alignment: .leading, spacing: .jsMicro) {
+                        Text("\(currentStage?.stageType.durationDays ?? 7)일 스테이지")
+                            .font(.jsHeadlineSmall)
+                            .foregroundColor(.labelStrong)
+
+                        Text(stageDateRange)
+                            .font(.jsBodySmall)
+                            .foregroundColor(.labelNeutral)
+                    }
+
+                    Spacer()
+
+                    TaskStatusChip(state: statusChipState)
+                }
+
+                VStack(alignment: .leading, spacing: .jsXS) {
+                    JSProgress(
+                        progress: stageProgress,
+                        style: .linear,
+                        size: .medium,
+                        tintColor: progressColor
+                    )
+
+                    HStack {
+                        Spacer()
+                        Text(stageProgressText)
+                            .font(.jsLabelMedium)
+                            .foregroundColor(.labelNeutral)
+                    }
+                }
             }
         }
     }
-    
-    private func loadCoverImage() -> UIImage? {
-        return store.coverImage
+
+    private var stageDateRange: String {
+        guard let currentStage else { return "" }
+        return "\(Self.stageDateFormatter.string(from: currentStage.startDate)) ~ \(Self.stageDateFormatter.string(from: currentStage.endDate))"
+    }
+
+    private var statusChipState: TaskStatusChipState {
+        switch challengeState {
+        case .stagePending:
+            return .pending
+        case .stageSuccess, .habitCompleted:
+            return .completed
+        case .stageFail:
+            return .failed
+        }
+    }
+
+    private var progressColor: Color {
+        switch challengeState {
+        case .stagePending:
+            return .primaryNormal
+        case .stageSuccess, .habitCompleted:
+            return .positive
+        case .stageFail:
+            return .destructive
+        }
+    }
+}
+
+private struct TaskDetailTodayStatusSection: View {
+    let todayStatus: TodayStatus
+
+    var body: some View {
+        RedesignSectionCard(
+            title: sectionTitle,
+            subtitle: sectionSubtitle
+        ) {
+            VStack(alignment: .leading, spacing: .jsSM) {
+                HStack(alignment: .top, spacing: .jsSM) {
+                    VStack(alignment: .leading, spacing: .jsMicro) {
+                        Text("현재 상태")
+                            .font(.jsLabelMedium)
+                            .foregroundColor(.labelNeutral)
+
+                        Text(headline)
+                            .font(.jsBodyMedium)
+                            .foregroundColor(.labelStrong)
+                    }
+
+                    Spacer()
+
+                    TaskStatusChip(state: chipState)
+                }
+
+                if let followUp {
+                    Text(followUp)
+                        .font(.jsLabelMedium)
+                        .foregroundColor(.labelNeutral)
+                }
+            }
+        }
+    }
+
+    private var chipState: TaskStatusChipState {
+        switch todayStatus {
+        case .notCertified:
+            return .pending
+        case .certified:
+            return .completed
+        }
+    }
+
+    private var sectionTitle: String {
+        todayStatus == .certified ? "오늘 상태" : "오늘의 다음 행동"
+    }
+
+    private var sectionSubtitle: String {
+        switch todayStatus {
+        case .notCertified:
+            return "지금 인증하면 연속 기록이 이어져요"
+        case .certified:
+            return "오늘 인증을 마쳤어요"
+        }
+    }
+
+    private var headline: String {
+        switch todayStatus {
+        case .notCertified:
+            return "오늘 인증을 남길 차례예요"
+        case .certified:
+            return "오늘 기록이 이미 저장됐어요"
+        }
+    }
+
+    private var followUp: String? {
+        switch todayStatus {
+        case .notCertified:
+            return "하단 버튼에서 바로 오늘 인증을 진행할 수 있어요."
+        case .certified:
+            return "아래 인증 기록에서 오늘 사진과 메모를 다시 볼 수 있어요."
+        }
+    }
+}
+
+private struct TaskDetailRecordListSection: View {
+    let dayViewData: [TaskDetailFeature.State.DayViewData]
+    let onTapDay: (Date) -> Void
+
+    private static let accessibilityFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "ko_KR")
+        formatter.dateFormat = "M월 d일 EEEE"
+        return formatter
+    }()
+
+    var body: some View {
+        RedesignSectionCard(
+            title: "인증 기록",
+            subtitle: recordListSubtitle
+        ) {
+            if dayViewData.isEmpty {
+                RedesignStateBanner(
+                    text: "아직 인증 기록이 없어요",
+                    icon: "tray",
+                    tintColor: .labelNeutral
+                )
+            } else {
+                LazyVStack(spacing: .jsSM) {
+                    ForEach(dayViewData) { data in
+                        Button(action: { onTapDay(data.date) }) {
+                            DailyRecordRow(data: data)
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("\(Self.accessibilityFormatter.string(from: data.date)), \(data.isChecked ? "인증 완료" : "미인증")")
+                        .accessibilityHint("해당 날짜 인증 화면으로 이동합니다")
+                    }
+                }
+            }
+        }
+    }
+
+    private var recordListSubtitle: String {
+        dayViewData.isEmpty
+        ? "기록이 쌓이면 날짜별로 바로 확인할 수 있어요"
+        : "날짜를 누르면 그날 인증 화면으로 이동해요"
+    }
+}
+
+private struct TaskDetailBottomCTASection: View {
+    let challengeState: ChallengeDetailState
+    let isTodayInChallengeRange: Bool
+    let todayStatus: TodayStatus
+    let onCertifyToday: () -> Void
+    let onNextStage: () -> Void
+    let onViewSuccessRecord: () -> Void
+    let onRetryStage: () -> Void
+    let onKeepAsIs: () -> Void
+    let onViewHistory: () -> Void
+
+    var body: some View {
+        switch challengeState {
+        case .stagePending:
+            if isTodayInChallengeRange && todayStatus == .notCertified {
+                JSButton(
+                    title: "오늘 작심 인증하러 가기",
+                    style: .primary,
+                    size: .large
+                ) {
+                    onCertifyToday()
+                }
+            }
+        case .stageSuccess:
+            VStack(spacing: .jsSM) {
+                JSButton(
+                    title: "다음 스테이지로 넘어가기",
+                    style: .primary,
+                    size: .large
+                ) {
+                    onNextStage()
+                }
+
+                JSButton(
+                    title: "인증 기록 보기",
+                    style: .secondary,
+                    size: .large
+                ) {
+                    onViewSuccessRecord()
+                }
+            }
+        case .stageFail:
+            VStack(spacing: .jsSM) {
+                VStack(spacing: .jsMicro) {
+                    Text("이번 스테이지는 여기서 멈췄어요")
+                        .font(.jsBodyMedium)
+                        .foregroundColor(.labelStrong)
+
+                    Text("재도전하면 같은 목표로 다시 이어갈 수 있어요")
+                        .font(.jsLabelMedium)
+                        .foregroundColor(.labelNeutral)
+                }
+                .frame(maxWidth: .infinity, alignment: .center)
+
+                JSButton(
+                    title: "스테이지 재도전",
+                    style: .primary,
+                    size: .large
+                ) {
+                    onRetryStage()
+                }
+
+                JSButton(
+                    title: "그대로 두기",
+                    style: .secondary,
+                    size: .large
+                ) {
+                    onKeepAsIs()
+                }
+            }
+        case .habitCompleted:
+            VStack(spacing: .jsSM) {
+                VStack(spacing: .jsMicro) {
+                    Text("30일 완주를 끝냈어요")
+                        .font(.jsBodyMedium)
+                        .foregroundColor(.labelStrong)
+
+                    Text("전체 기록을 돌아보며 다음 목표를 준비해 보세요")
+                        .font(.jsLabelMedium)
+                        .foregroundColor(.labelNeutral)
+                }
+                .frame(maxWidth: .infinity, alignment: .center)
+
+                JSButton(
+                    title: "기록 돌아보기",
+                    style: .secondary,
+                    size: .large
+                ) {
+                    onViewHistory()
+                }
+            }
+        }
     }
 }
 
 private struct DailyRecordRow: View {
     let data: TaskDetailFeature.State.DayViewData
+
+    private static let dateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "ko_KR")
+        formatter.dateFormat = "M월 d일 EEEE"
+        return formatter
+    }()
     
     var body: some View {
         HStack(spacing: .jsSM) {
@@ -670,10 +697,7 @@ private struct DailyRecordRow: View {
     }
     
     private func formattedDate(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "ko_KR")
-        formatter.dateFormat = "M월 d일 EEEE"
-        return formatter.string(from: date)
+        Self.dateFormatter.string(from: date)
     }
 
     private var recordMemoText: String {
@@ -682,128 +706,6 @@ private struct DailyRecordRow: View {
 
     private var recordMemoColor: Color {
         data.memo.isEmpty ? .labelAlternative : .labelNeutral
-    }
-}
-
-private struct TaskDropoffGuardPopupView: View {
-    let step: TaskDetailFeature.DeleteFlowStep
-    let progressRate: Double
-    let completedDays: Int
-    let countdown: Int
-    let isDeleteEnabled: Bool
-    let onKeepGoing: () -> Void
-    let onProceed: () -> Void
-    let onDelete: () -> Void
-    let onDismiss: () -> Void
-
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @State private var showPopup = false
-
-    var body: some View {
-        ZStack {
-            Color.surfaceOverlay.opacity(0.5)
-                .ignoresSafeArea()
-                .onTapGesture { onDismiss() }
-
-            JSCard(style: .elevated, padding: .jsLG) {
-                VStack(spacing: .jsMD) {
-                    Image(systemName: step == .firstGuard ? "flame.fill" : "exclamationmark.triangle.fill")
-                        .font(.jsDisplayMedium)
-                        .foregroundColor(step == .firstGuard ? .cautionary : .destructive)
-                        .frame(width: 56.jsScaled(), height: 56.jsScaled())
-                        .background(
-                            Circle()
-                                .fill((step == .firstGuard ? Color.cautionary : Color.destructive).opacity(0.16))
-                        )
-
-                    Text(step == .firstGuard ? "여기서 멈추기엔 아까워요" : "정말 끝낼까요?")
-                        .font(.jsHeadlineSmall)
-                        .foregroundColor(.labelStrong)
-                        .multilineTextAlignment(.center)
-
-                    Text(subtitle)
-                        .font(.jsBodySmall)
-                        .foregroundColor(.labelNeutral)
-                        .multilineTextAlignment(.center)
-
-                    if step == .firstGuard {
-                        HStack(spacing: .jsSM) {
-                            metricPill(title: "진행률", value: "\(Int(progressRate * 100))%")
-                            metricPill(title: "완료 일수", value: "\(completedDays)일")
-                        }
-                    }
-
-                    VStack(spacing: .jsSM) {
-                        JSButton(
-                            title: "계속 도전하기",
-                            style: .primary,
-                            size: .large
-                        ) {
-                            onKeepGoing()
-                        }
-
-                        if step == .firstGuard {
-                            JSButton(
-                                title: "그래도 그만둘래요",
-                                style: .secondary,
-                                size: .large
-                            ) {
-                                onProceed()
-                            }
-                        } else {
-                            JSButton(
-                                title: isDeleteEnabled ? "삭제" : "삭제 (\(max(0, countdown)))",
-                                style: .destructive,
-                                size: .large,
-                                isEnabled: isDeleteEnabled
-                            ) {
-                                onDelete()
-                            }
-                        }
-                    }
-                }
-            }
-            .padding(.horizontal, .jsLG)
-            .scaleEffect(reduceMotion ? 1 : (showPopup ? 1 : 0.96))
-            .opacity(showPopup ? 1 : 0)
-        }
-        .onAppear {
-            if reduceMotion {
-                showPopup = true
-            } else {
-                withAnimation(JSAnimation.toast) {
-                    showPopup = true
-                }
-            }
-        }
-    }
-
-    private var subtitle: String {
-        switch step {
-        case .firstGuard:
-            return "지금까지 쌓은 기록이 함께 사라져요.\n한 번만 더 확인해 주세요."
-        case .finalConfirmation:
-            if isDeleteEnabled {
-                return "모든 인증 기록과 사진이 삭제돼요.\n삭제 후에는 되돌릴 수 없어요."
-            }
-            return "삭제 버튼은 \(max(0, countdown))초 뒤에 켜져요.\n정말 끝낼지 마지막으로 확인해 주세요."
-        }
-    }
-
-    private func metricPill(title: String, value: String) -> some View {
-        VStack(spacing: .jsMicro) {
-            Text(title)
-                .font(.jsLabelSmall)
-                .foregroundColor(.labelNeutral)
-            Text(value)
-                .font(.jsHeadlineSmall)
-                .foregroundColor(.labelStrong)
-        }
-        .frame(maxWidth: .infinity, minHeight: 68.jsScaled())
-        .background(
-            RoundedRectangle(cornerRadius: .jsRadiusMD)
-                .fill(Color.backgroundStrong)
-        )
     }
 }
 
