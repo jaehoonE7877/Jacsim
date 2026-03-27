@@ -23,15 +23,6 @@ public struct NewTaskView: View {
         static let compactContentBottomInset: CGFloat = 84.jsScaled()
         static let expandedToastBottomPadding: CGFloat = 120.jsScaled()
         static let compactToastBottomPadding: CGFloat = 84.jsScaled()
-        static let primarySecondarySpacing: CGFloat = 8.jsScaled()
-        static let secondarySpacing: CGFloat = 8.jsScaled()
-        static let horizontalPadding: CGFloat = .jsMD
-        static let expandedTopPadding: CGFloat = .jsXS
-        static let compactTopPadding: CGFloat = .jsMicro
-        static let expandedBottomPadding: CGFloat = .jsSM
-        static let compactBottomPadding: CGFloat = .jsXS
-        static let expandedTopFadeHeight: CGFloat = 20.jsScaled()
-        static let compactTopFadeHeight: CGFloat = 12.jsScaled()
     }
 
     public init(store: StoreOf<NewTaskFeature>) {
@@ -83,22 +74,20 @@ public struct NewTaskView: View {
                     message: message,
                     style: .error,
                     bottomPadding: toastBottomPadding,
-                    dismissAction: { store.send(.toastDismissed) }
+                    dismissAction: toastDismissed
                 )
-                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                .transition(.move(edge: .bottom).combined(with: .opacity))
                     .task(id: message) {
                         try? await _Concurrency.Task.sleep(
                             nanoseconds: RedesignToastView.defaultDismissNanoseconds
                         )
-                        store.send(.toastDismissed)
+                        toastDismissed()
                     }
             }
         }
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
-                Button("취소") {
-                    store.send(.cancelButtonTapped)
-                }
+                Button("취소", action: cancelButtonTapped)
                 .font(.jsButtonMedium)
                 .foregroundColor(.labelNeutral)
                 .disabled(store.isSaving)
@@ -106,9 +95,7 @@ public struct NewTaskView: View {
 
             if isFooterCompacted, store.currentStep.previous != nil {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("이전") {
-                        store.send(.previousStepTapped)
-                    }
+                    Button("이전", action: previousButtonTapped)
                     .font(.jsButtonMedium)
                     .foregroundColor(.labelNeutral)
                     .disabled(store.isSaving)
@@ -216,13 +203,7 @@ public struct NewTaskView: View {
                 selectedStage: stageDayBinding,
                 stages: [3, 7, 15, 30]
             ) { selected in
-                if !reduceMotion {
-                    withAnimation(JSAnimation.navigation) {
-                        store.stageType = stageType(for: selected)
-                    }
-                } else {
-                    store.stageType = stageType(for: selected)
-                }
+                handleStageSelection(selected)
             }
 
             Text("총 \(store.stageType.durationDays)일 동안 진행")
@@ -233,104 +214,11 @@ public struct NewTaskView: View {
     }
 
     private var photoSection: some View {
-        let photoHeight: CGFloat = 232.jsScaled()
-        let cardShape = RoundedRectangle(cornerRadius: .jsRadiusLG, style: .continuous)
-
-        return RedesignSectionCard(
-            title: "대표 사진",
-            subtitle: "카드에 보일 사진 한 장"
-        ) {
-            VStack(spacing: .jsSM) {
-                ZStack {
-                    if let image = store.image {
-                        Image(uiImage: image)
-                            .resizable()
-                            .aspectRatio(contentMode: .fill)
-                            .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    } else {
-                        VStack(spacing: .jsXS) {
-                            Image(systemName: "photo.on.rectangle.angled")
-                                .font(.jsDisplayMedium)
-                                .foregroundColor(.labelAlternative)
-
-                            Text("대표 사진을 추가해 주세요")
-                                .font(.jsBodyMedium)
-                                .foregroundColor(.labelStrong)
-
-                            Text("비율은 자동으로 조정돼요")
-                                .font(.jsLabelMedium)
-                                .foregroundColor(.labelNeutral)
-                        }
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .background(Color.backgroundStrong)
-                    }
-                }
-                .frame(maxWidth: .infinity, minHeight: photoHeight, maxHeight: photoHeight)
-                .clipShape(cardShape)
-                .overlay {
-                    cardShape
-                        .stroke(
-                            store.image == nil ? Color.primaryNormal.opacity(0.35) : Color.labelDisable.opacity(0.24),
-                            style: StrokeStyle(
-                                lineWidth: 1,
-                                dash: store.image == nil ? [8, 6] : []
-                            )
-                        )
-                }
-                .overlay(alignment: .topTrailing) {
-                    if store.image != nil {
-                        HStack(spacing: .jsMicro) {
-                            Image(systemName: "checkmark.circle.fill")
-                                .foregroundColor(.positive)
-
-                            Text("선택 완료")
-                                .font(.jsLabelMedium)
-                                .foregroundColor(.labelStrong)
-                        }
-                        .padding(.horizontal, .jsXS)
-                        .padding(.vertical, .jsMicro)
-                        .background(Color.backgroundNormal.opacity(0.92))
-                        .clipShape(Capsule())
-                        .padding(.jsSM)
-                    }
-                }
-
-                let hasImage = store.image != nil
-                PhotosPicker(selection: $store.photoPickerItem, matching: .images) {
-                    HStack(spacing: .jsXS) {
-                        Image(systemName: hasImage ? "arrow.triangle.2.circlepath" : "photo.badge.plus")
-                            .font(.jsHeadlineSmall)
-                            .foregroundColor(.primaryNormal)
-
-                        Text(hasImage ? "대표 사진 변경" : "대표 사진 선택")
-                            .font(.jsButtonMedium)
-                            .foregroundColor(.labelStrong)
-
-                        Spacer(minLength: .jsXS)
-
-                        Image(systemName: "chevron.right")
-                            .font(.jsButtonSmall)
-                            .foregroundColor(.labelNeutral)
-                    }
-                    .padding(.horizontal, .jsMD)
-                    .padding(.vertical, .jsSM)
-                    .background(
-                        RoundedRectangle(cornerRadius: .jsRadiusMD, style: .continuous)
-                            .fill(Color.backgroundStrong)
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: .jsRadiusMD, style: .continuous)
-                            .stroke(Color.labelDisable.opacity(0.24), lineWidth: 1)
-                    )
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel(hasImage ? "대표 사진 변경" : "대표 사진 선택")
-                .accessibilityHint("사진 보관함에서 작심 대표 사진을 고릅니다")
-                .onChange(of: store.photoPickerItem) { _, newItem in
-                    store.send(.photoPickerItemChanged(newItem))
-                }
-            }
-        }
+        NewTaskPhotoSection(
+            image: store.image,
+            photoPickerItem: $store.photoPickerItem,
+            onPhotoPickerItemChanged: photoPickerItemChanged
+        )
     }
 
     private var challengeSummarySection: some View {
@@ -399,65 +287,17 @@ public struct NewTaskView: View {
     }
 
     private var buttonSection: some View {
-        VStack(spacing: FooterLayout.primarySecondarySpacing) {
-            if let disabledReason = primaryButtonDisabledReason {
-                disabledReasonBanner(text: disabledReason)
-                    .transition(.move(edge: .bottom).combined(with: .opacity))
-            }
-
-            ZStack {
-                JSButton(
-                    title: primaryButtonTitle,
-                    style: .primary,
-                    size: .large,
-                    isEnabled: isPrimaryButtonEnabled
-                ) {
-                    primaryButtonTapped()
-                }
-
-                if store.isSaving && store.currentStep == .alarmConfirm {
-                    JSProgressIndicator(size: .small, tintColor: .white)
-                }
-            }
-
-            if !isFooterCompacted {
-                HStack(spacing: FooterLayout.secondarySpacing) {
-                    if store.currentStep.previous != nil {
-                        JSButton(
-                            title: "이전",
-                            style: .secondary,
-                            size: .medium,
-                            isEnabled: !store.isSaving
-                        ) {
-                            store.send(.previousStepTapped)
-                        }
-                    }
-                }
-                .transition(.move(edge: .bottom).combined(with: .opacity))
-            }
-        }
-        .padding(.horizontal, FooterLayout.horizontalPadding)
-        .padding(.top, isFooterCompacted ? FooterLayout.compactTopPadding : FooterLayout.expandedTopPadding)
-        .padding(.bottom, isFooterCompacted ? FooterLayout.compactBottomPadding : FooterLayout.expandedBottomPadding)
-        .background(Color.backgroundNormal)
-        .background(alignment: .top) {
-            LinearGradient(
-                colors: [
-                    Color.backgroundNormal.opacity(0),
-                    Color.backgroundNormal.opacity(0.9),
-                    Color.backgroundNormal
-                ],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-            .frame(height: isFooterCompacted ? FooterLayout.compactTopFadeHeight : FooterLayout.expandedTopFadeHeight)
-            .offset(y: -(isFooterCompacted ? FooterLayout.compactTopFadeHeight : FooterLayout.expandedTopFadeHeight))
-        }
-        .overlay(alignment: .top) {
-            Rectangle()
-                .fill(Color.labelAssistive.opacity(0.2))
-                .frame(height: 1)
-        }
+        NewTaskFooterSection(
+            isFooterCompacted: isFooterCompacted,
+            disabledReason: primaryButtonDisabledReason,
+            primaryButtonTitle: primaryButtonTitle,
+            isPrimaryButtonEnabled: isPrimaryButtonEnabled,
+            isSaving: store.isSaving,
+            isCurrentStepAlarmConfirm: store.currentStep == .alarmConfirm,
+            hasPreviousStep: store.currentStep.previous != nil,
+            onPrimaryButtonTap: primaryButtonTapped,
+            onPreviousButtonTap: previousButtonTapped
+        )
     }
 
     private var isFooterCompacted: Bool {
@@ -514,21 +354,24 @@ public struct NewTaskView: View {
         }
     }
 
+    private func cancelButtonTapped() {
+        store.send(.cancelButtonTapped)
+    }
+
+    private func previousButtonTapped() {
+        store.send(.previousStepTapped)
+    }
+
+    private func toastDismissed() {
+        store.send(.toastDismissed)
+    }
+
     private var saveFailedBanner: some View {
         RedesignInlineErrorView(
             model: InlineErrorModel(
                 message: "저장에 실패했어요. 네트워크 상태를 확인해 주세요."
             )
         )
-    }
-
-    private func disabledReasonBanner(text: String) -> some View {
-        RedesignStateBanner(
-            text: text,
-            icon: "info.circle.fill",
-            tintColor: .primaryNormal
-        )
-        .accessibilityLabel(text)
     }
 
     private var stageDayBinding: Binding<Int> {
@@ -563,6 +406,20 @@ public struct NewTaskView: View {
 
     private func clearInputScrollRequest() {
         scrollTargetID = nil
+    }
+
+    private func photoPickerItemChanged(_ newItem: PhotosPickerItem?) {
+        store.send(.photoPickerItemChanged(newItem))
+    }
+
+    private func handleStageSelection(_ selected: Int) {
+        if !reduceMotion {
+            withAnimation(JSAnimation.navigation) {
+                store.stageType = stageType(for: selected)
+            }
+        } else {
+            store.stageType = stageType(for: selected)
+        }
     }
 
     private var screenSubtitle: String {
@@ -609,5 +466,215 @@ public struct NewTaskView: View {
             Capsule()
                 .fill(isCurrent ? Color.primaryNormal.opacity(0.14) : Color.backgroundStrong)
         )
+    }
+}
+
+private struct NewTaskPhotoSection: View {
+    let image: UIImage?
+    @Binding var photoPickerItem: PhotosPickerItem?
+    let onPhotoPickerItemChanged: (PhotosPickerItem?) -> Void
+
+    private let photoHeight: CGFloat = 232.jsScaled()
+    private let cardShape = RoundedRectangle(cornerRadius: .jsRadiusLG, style: .continuous)
+
+    var body: some View {
+        RedesignSectionCard(
+            title: "대표 사진",
+            subtitle: "카드에 보일 사진 한 장"
+        ) {
+            VStack(spacing: .jsSM) {
+                photoPreview
+                photoPicker
+            }
+        }
+    }
+
+    private var hasImage: Bool {
+        image != nil
+    }
+
+    private var photoPreview: some View {
+        ZStack {
+            if let image {
+                Image(uiImage: image)
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else {
+                VStack(spacing: .jsXS) {
+                    Image(systemName: "photo.on.rectangle.angled")
+                        .font(.jsDisplayMedium)
+                        .foregroundColor(.labelAlternative)
+
+                    Text("대표 사진을 추가해 주세요")
+                        .font(.jsBodyMedium)
+                        .foregroundColor(.labelStrong)
+
+                    Text("비율은 자동으로 조정돼요")
+                        .font(.jsLabelMedium)
+                        .foregroundColor(.labelNeutral)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(Color.backgroundStrong)
+            }
+        }
+        .frame(maxWidth: .infinity, minHeight: photoHeight, maxHeight: photoHeight)
+        .clipShape(cardShape)
+        .overlay {
+            cardShape
+                .stroke(
+                    hasImage ? Color.labelDisable.opacity(0.24) : Color.primaryNormal.opacity(0.35),
+                    style: StrokeStyle(
+                        lineWidth: 1,
+                        dash: hasImage ? [] : [8, 6]
+                    )
+                )
+        }
+        .overlay(alignment: .topTrailing) {
+            if hasImage {
+                HStack(spacing: .jsMicro) {
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundColor(.positive)
+
+                    Text("선택 완료")
+                        .font(.jsLabelMedium)
+                        .foregroundColor(.labelStrong)
+                }
+                .padding(.horizontal, .jsXS)
+                .padding(.vertical, .jsMicro)
+                .background(Color.backgroundNormal.opacity(0.92))
+                .clipShape(Capsule())
+                .padding(.jsSM)
+            }
+        }
+    }
+
+    private var photoPicker: some View {
+        let hasImage = image != nil
+
+        return PhotosPicker(selection: $photoPickerItem, matching: .images) {
+            HStack(spacing: .jsXS) {
+                Image(systemName: hasImage ? "arrow.triangle.2.circlepath" : "photo.badge.plus")
+                    .font(.jsHeadlineSmall)
+                    .foregroundColor(.primaryNormal)
+
+                Text(hasImage ? "대표 사진 변경" : "대표 사진 선택")
+                    .font(.jsButtonMedium)
+                    .foregroundColor(.labelStrong)
+
+                Spacer(minLength: .jsXS)
+
+                Image(systemName: "chevron.right")
+                    .font(.jsButtonSmall)
+                    .foregroundColor(.labelNeutral)
+            }
+            .padding(.horizontal, .jsMD)
+            .padding(.vertical, .jsSM)
+            .background(
+                RoundedRectangle(cornerRadius: .jsRadiusMD, style: .continuous)
+                    .fill(Color.backgroundStrong)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: .jsRadiusMD, style: .continuous)
+                    .stroke(Color.labelDisable.opacity(0.24), lineWidth: 1)
+            )
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(hasImage ? "대표 사진 변경" : "대표 사진 선택")
+        .accessibilityHint("사진 보관함에서 작심 대표 사진을 고릅니다")
+        .onChange(of: photoPickerItem) { _, newItem in
+            onPhotoPickerItemChanged(newItem)
+        }
+    }
+}
+
+private struct NewTaskFooterSection: View {
+    let isFooterCompacted: Bool
+    let disabledReason: String?
+    let primaryButtonTitle: String
+    let isPrimaryButtonEnabled: Bool
+    let isSaving: Bool
+    let isCurrentStepAlarmConfirm: Bool
+    let hasPreviousStep: Bool
+    let onPrimaryButtonTap: () -> Void
+    let onPreviousButtonTap: () -> Void
+
+    private enum FooterLayout {
+        static let primarySecondarySpacing: CGFloat = 8.jsScaled()
+        static let secondarySpacing: CGFloat = 8.jsScaled()
+        static let horizontalPadding: CGFloat = .jsMD
+        static let expandedTopPadding: CGFloat = .jsXS
+        static let compactTopPadding: CGFloat = .jsMicro
+        static let expandedBottomPadding: CGFloat = .jsSM
+        static let compactBottomPadding: CGFloat = .jsXS
+        static let expandedTopFadeHeight: CGFloat = 20.jsScaled()
+        static let compactTopFadeHeight: CGFloat = 12.jsScaled()
+    }
+
+    var body: some View {
+        VStack(spacing: FooterLayout.primarySecondarySpacing) {
+            if let disabledReason {
+                RedesignStateBanner(
+                    text: disabledReason,
+                    icon: "info.circle.fill",
+                    tintColor: .primaryNormal
+                )
+                .accessibilityLabel(disabledReason)
+                .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
+
+            ZStack {
+                JSButton(
+                    title: primaryButtonTitle,
+                    style: .primary,
+                    size: .large,
+                    isEnabled: isPrimaryButtonEnabled
+                ) {
+                    onPrimaryButtonTap()
+                }
+
+                if isSaving && isCurrentStepAlarmConfirm {
+                    JSProgressIndicator(size: .small, tintColor: .white)
+                }
+            }
+
+            if !isFooterCompacted {
+                HStack(spacing: FooterLayout.secondarySpacing) {
+                    if hasPreviousStep {
+                        JSButton(
+                            title: "이전",
+                            style: .secondary,
+                            size: .medium,
+                            isEnabled: !isSaving
+                        ) {
+                            onPreviousButtonTap()
+                        }
+                    }
+                }
+                .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
+        }
+        .padding(.horizontal, FooterLayout.horizontalPadding)
+        .padding(.top, isFooterCompacted ? FooterLayout.compactTopPadding : FooterLayout.expandedTopPadding)
+        .padding(.bottom, isFooterCompacted ? FooterLayout.compactBottomPadding : FooterLayout.expandedBottomPadding)
+        .background(Color.backgroundNormal)
+        .background(alignment: .top) {
+            LinearGradient(
+                colors: [
+                    Color.backgroundNormal.opacity(0),
+                    Color.backgroundNormal.opacity(0.9),
+                    Color.backgroundNormal
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .frame(height: isFooterCompacted ? FooterLayout.compactTopFadeHeight : FooterLayout.expandedTopFadeHeight)
+            .offset(y: -(isFooterCompacted ? FooterLayout.compactTopFadeHeight : FooterLayout.expandedTopFadeHeight))
+        }
+        .overlay(alignment: .top) {
+            Rectangle()
+                .fill(Color.labelAssistive.opacity(0.2))
+                .frame(height: 1)
+        }
     }
 }

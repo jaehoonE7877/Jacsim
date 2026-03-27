@@ -10,10 +10,12 @@ public struct ChallengeCreateView: View {
     }
 
     public var body: some View {
+        let newTaskStore = store.scope(state: \.newTask, action: \.newTask)
+
         NavigationStack {
-            NewTaskView(store: store.scope(state: \.newTask, action: \.newTask))
+            NewTaskView(store: newTaskStore)
         }
-        .interactiveDismissDisabled(store.newTask.hasUnsavedChanges || store.newTask.isSaving)
+        .interactiveDismissDisabled(newTaskStore.hasUnsavedChanges || newTaskStore.isSaving)
         .presentationBackground(Color.backgroundNormal)
         .presentationBackgroundInteraction(.disabled)
         .presentationCornerRadius(32)
