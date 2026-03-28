@@ -5,6 +5,7 @@ import Domain
 import PhotosUI
 import _Concurrency
 
+@MainActor
 public struct NewTaskView: View {
     private enum ScrollTarget: Hashable {
         case titleSection

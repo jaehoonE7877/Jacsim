@@ -4,6 +4,7 @@ import DesignSystem
 import PhotosUI
 import _Concurrency
 
+@MainActor
 public struct TaskUpdateView: View {
     private enum ScrollTarget: Hashable {
         case memoSection
