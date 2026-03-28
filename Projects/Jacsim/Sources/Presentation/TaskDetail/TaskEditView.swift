@@ -4,6 +4,7 @@ import DesignSystem
 import PhotosUI
 import _Concurrency
 
+@MainActor
 public struct TaskEditView: View {
     private enum ScrollTarget: Hashable {
         case titleSection
