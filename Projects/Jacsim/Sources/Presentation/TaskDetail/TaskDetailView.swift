@@ -5,6 +5,7 @@ import Domain
 import Darwin
 import UIKit
 
+@MainActor
 public struct TaskDetailView: View {
     @Bindable var store: StoreOf<TaskDetailFeature>
     @Environment(\.accessibilityReduceMotion) private var reduceMotion

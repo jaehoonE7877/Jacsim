@@ -4,6 +4,7 @@ import DSKit
 import PhotosUI
 import _Concurrency
 
+@MainActor
 public struct TaskUpdateView: View {
     @Bindable var store: StoreOf<TaskUpdateFeature>
     @Environment(\.accessibilityReduceMotion) private var reduceMotion

@@ -72,6 +72,7 @@ struct RedesignErrorStateModel {
     }
 }
 
+@MainActor
 struct RedesignScreenScaffold<Content: View>: View {
     let title: String
     let subtitle: String?
@@ -187,6 +188,7 @@ struct RedesignScreenScaffold<Content: View>: View {
     }
 }
 
+@MainActor
 struct RedesignSectionCard<Content: View>: View {
     let title: String
     let subtitle: String?
@@ -223,6 +225,7 @@ struct RedesignSectionCard<Content: View>: View {
     }
 }
 
+@MainActor
 struct RedesignStateBanner: View {
     let text: String
     let icon: String
@@ -246,6 +249,7 @@ struct RedesignStateBanner: View {
     }
 }
 
+@MainActor
 struct RedesignInlineErrorView: View {
     let model: InlineErrorModel
 
@@ -264,6 +268,7 @@ struct RedesignInlineErrorView: View {
     }
 }
 
+@MainActor
 struct RedesignRetryActionBar: View {
     let model: RetryActionModel
 
@@ -277,6 +282,7 @@ struct RedesignRetryActionBar: View {
     }
 }
 
+@MainActor
 private struct RedesignEmptyStateView: View {
     let model: RedesignEmptyStateModel
 
@@ -298,6 +304,7 @@ private struct RedesignEmptyStateView: View {
     }
 }
 
+@MainActor
 private struct RedesignErrorStateView: View {
     let model: RedesignErrorStateModel
 

@@ -31,7 +31,7 @@ else
 fi
 
 selected_schemes_csv=","
-ordered_schemes=("Domain" "Ports" "Adapters" "Shared" "Jacsim")
+ordered_schemes=("Domain" "ExternalInterface" "Data" "Core" "Jacsim")
 
 add_scheme() {
   local candidate="$1"
@@ -42,9 +42,9 @@ add_scheme() {
 
 set_full_suite() {
   add_scheme "Domain"
-  add_scheme "Ports"
-  add_scheme "Adapters"
-  add_scheme "Shared"
+  add_scheme "ExternalInterface"
+  add_scheme "Data"
+  add_scheme "Core"
   add_scheme "Jacsim"
 }
 
@@ -82,24 +82,27 @@ else
     case "${file}" in
       Projects/Domain/*)
         add_scheme "Domain"
-        add_scheme "Ports"
-        add_scheme "Adapters"
+        add_scheme "ExternalInterface"
+        add_scheme "Data"
+        add_scheme "Core"
         add_scheme "Jacsim"
         ;;
       Projects/ExternalInterface/*)
-        add_scheme "Ports"
-        add_scheme "Adapters"
+        add_scheme "ExternalInterface"
+        add_scheme "Data"
+        add_scheme "Core"
         add_scheme "Jacsim"
         ;;
       Projects/Data/*)
-        add_scheme "Adapters"
+        add_scheme "Data"
+        add_scheme "Core"
         add_scheme "Jacsim"
         ;;
       Projects/Jacsim/*)
         add_scheme "Jacsim"
         ;;
       Projects/Modules/Core/*)
-        add_scheme "Shared"
+        add_scheme "Core"
         add_scheme "Jacsim"
         ;;
       Projects/Modules/DSKit/*)
