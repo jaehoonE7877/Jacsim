@@ -90,7 +90,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate{
 private extension AppDelegate {
     func requestNotificationAuthorization() async -> Bool {
         do {
-            return try await UseCaseAssembly.requestNotificationPermissionUseCase.requestAuthorization()
+            return try await DependencyAssembly.notificationScheduler.requestAuthorization()
         } catch {
             print("Notification authorization error: \(error)")
             return false

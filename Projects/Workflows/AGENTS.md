@@ -7,8 +7,10 @@
 | Task | Path |
 |---|---|
 | Use case implementations | `Sources/UseCases/**` |
+| Read-only query surface | `Sources/UseCases/TaskReadModelQueries.swift` |
 | Use case tests | `Tests/Sources/Application/**` |
-| App-side `DependencyValues` registration | `../JacsimClient/Sources/UseCaseClients.swift` (external module) |
+| Read-only query registration | `../JacsimClient/Sources/TaskReadModelQueriesClient.swift` (external module) |
+| Command use case registration | `../JacsimClient/Sources/UseCaseClients.swift` (external module) |
 | Composition root | `../JacsimClient/Sources/DependencyAssembly.swift` (external module) |
 
 ## Test
@@ -27,8 +29,8 @@ tuist test Workflows
 - Make use case factory methods `public` for cross-module DI access
 - Use `@Sendable` for all closure-based APIs to ensure thread safety
 - Keep `DependencyValues` registration in `Jacsim` or `JacsimClient`, not inside `Workflows`
-- Prefer read-only summary/query use cases over exposing Domain services directly to Presentation
-- The source of truth for the full use case list is `Sources/UseCases/**`; do not maintain a fixed catalog in this document.
+- Keep command/orchestration flows as dedicated use cases, and centralize read-only projection in `TaskReadModelQueries`
+- The source of truth for the public workflow surface is `Sources/UseCases/**`; do not maintain a fixed catalog in this document.
 
 ### 🚫 Do Not
 
@@ -37,10 +39,12 @@ tuist test Workflows
 - Declare `DependencyKey` / `DependencyValues` wiring inside `Workflows`
 - Add UI code or view logic
 - Put business rules that belong in Domain
+- Add separate read-only wrapper types when the logic belongs inside `TaskReadModelQueries`
+- Add zero-logic pass-through wrappers for image loading or notification authorization
 
 ## UseCase 패턴
 
-UseCase는 `execute()`를 통해 시작되며, 포트와 도메인 서비스를 조합해 여러 단계의 비즈니스 흐름을 조율하는 오케스트레이션 계층입니다.
+Command use case는 `execute()`를 통해 시작되며, 포트와 도메인 서비스를 조합해 여러 단계의 비즈니스 흐름을 조율하는 오케스트레이션 계층입니다. read-only 화면 조립은 개별 wrapper를 늘리지 않고 `TaskReadModelQueries`의 direct function으로 제공합니다.
 
 ```swift
 // ✅ Good — Use case composes Ports through live(...) and exposes a callable API
@@ -87,6 +91,6 @@ Presentation (App) ──▶ Workflows (UseCases) ──▶ Ports
 
 - **Presentation**: 의존성 주입(Dependency Injection)으로 UseCase를 트리거
 - **App / Composition**: `DependencyValues` 등록과 Port 조립은 `Jacsim` / `JacsimClient`에서 담당
-- **Workflows**: 포트와 도메인 서비스를 조합해 비즈니스 과정을 오케스트레이션
+- **Workflows**: command use case 오케스트레이션과 read-only query surface를 제공
 - **Ports**: 인프라 세부사항을 추상화
 - **Domain**: 핵심 비즈니스 규칙과 엔티티를 제공합니다

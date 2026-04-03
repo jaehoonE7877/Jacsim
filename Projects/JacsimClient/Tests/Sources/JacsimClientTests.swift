@@ -27,7 +27,7 @@ func dependencyAssemblyExposesAllPorts() {
     #expect(true)
 }
 
-@Test("DependencyValues가 포트와 workflow usecase를 노출한다")
+@Test("DependencyValues가 포트와 query surface를 노출한다")
 func dependencyValuesExposePortsAndUseCases() {
     var values = DependencyValues()
     values.taskRepository = TaskRepositoryPort(
@@ -56,6 +56,7 @@ func dependencyValuesExposePortsAndUseCases() {
         deleteImage: { _ in },
         imageExists: { _ in false }
     )
+    values.taskReadModelQueries = TaskReadModelQueries.live()
     values.createNewTaskUseCase = CreateNewTaskUseCase(execute: { _ in
         Task(
             id: TaskID(UUID()),
@@ -66,34 +67,68 @@ func dependencyValuesExposePortsAndUseCases() {
             records: []
         )
     })
-    values.requestNotificationPermissionUseCase = RequestNotificationPermissionUseCase(
-        requestAuthorization: { false }
+    values.updateTaskSettingsUseCase = UpdateTaskSettingsUseCase(execute: { _ in })
+    values.globalNotificationSettingUseCase = GlobalNotificationSettingUseCase(
+        setEnabled: { _ in .disabled }
     )
-    values.homeSummaryUseCase = HomeSummaryUseCase.live()
-    values.allTaskSummaryUseCase = AllTaskSummaryUseCase.live()
-    values.calendarSummaryUseCase = CalendarSummaryUseCase.live()
-    values.taskDetailSummaryUseCase = TaskDetailSummaryUseCase.live()
+    values.certifyTaskTodayUseCase = CertifyTaskTodayUseCase(execute: { _ in })
+    values.stageProgressionUseCase = StageProgressionUseCase(
+        taskRepository: .init(
+            fetchActiveTasks: { [] },
+            fetchTask: { _ in nil },
+            addTask: { _ in },
+            updateTask: { _ in },
+            deleteTask: { _ in },
+            fetchTasksByStatus: { _ in [] }
+        )
+    )
+    values.deleteTaskUseCase = DeleteTaskUseCase(execute: { _ in })
+    values.reminderSchedulingUseCase = ReminderSchedulingUseCase(
+        notificationScheduler: .init(
+            scheduleReminder: { _ in },
+            cancelReminder: { _ in },
+            cancelAllReminders: { },
+            requestAuthorization: { false }
+        ),
+        userSettingsRepository: .init(
+            isNotificationEnabled: { false },
+            getAllReminders: { [] },
+            updateNotificationEnabled: { _ in }
+        ),
+        taskRepository: .init(
+            fetchActiveTasks: { [] },
+            fetchTask: { _ in nil },
+            addTask: { _ in },
+            updateTask: { _ in },
+            deleteTask: { _ in },
+            fetchTasksByStatus: { _ in [] }
+        )
+    )
 
     _ = values.taskRepository
     _ = values.userSettingsRepository
     _ = values.appPreferences
     _ = values.notificationScheduler
     _ = values.imageStore
+    _ = values.taskReadModelQueries
     _ = values.createNewTaskUseCase
-    _ = values.requestNotificationPermissionUseCase
-    _ = values.homeSummaryUseCase
-    _ = values.allTaskSummaryUseCase
-    _ = values.calendarSummaryUseCase
-    _ = values.taskDetailSummaryUseCase
+    _ = values.updateTaskSettingsUseCase
+    _ = values.globalNotificationSettingUseCase
+    _ = values.certifyTaskTodayUseCase
+    _ = values.stageProgressionUseCase
+    _ = values.deleteTaskUseCase
+    _ = values.reminderSchedulingUseCase
     #expect(true)
 }
 
-@Test("UseCaseAssembly가 앱 외부에서 필요한 workflow usecase를 노출한다")
+@Test("UseCaseAssembly가 command usecase를 노출한다")
 func useCaseAssemblyExposesWorkflowUseCases() {
-    _ = UseCaseAssembly.requestNotificationPermissionUseCase
-    _ = UseCaseAssembly.homeSummaryUseCase
-    _ = UseCaseAssembly.allTaskSummaryUseCase
-    _ = UseCaseAssembly.calendarSummaryUseCase
-    _ = UseCaseAssembly.taskDetailSummaryUseCase
+    _ = UseCaseAssembly.createNewTaskUseCase
+    _ = UseCaseAssembly.updateTaskSettingsUseCase
+    _ = UseCaseAssembly.globalNotificationSettingUseCase
+    _ = UseCaseAssembly.certifyTaskTodayUseCase
+    _ = UseCaseAssembly.stageProgressionUseCase
+    _ = UseCaseAssembly.deleteTaskUseCase
+    _ = UseCaseAssembly.reminderSchedulingUseCase
     #expect(true)
 }

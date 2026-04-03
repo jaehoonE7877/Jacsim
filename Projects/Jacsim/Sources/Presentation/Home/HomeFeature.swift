@@ -158,8 +158,8 @@ public struct HomeFeature {
     }
 
     @Dependency(\.taskRepository) var taskRepository
-    @Dependency(\.homeSummaryUseCase) var homeSummaryUseCase
-    @Dependency(\.loadImageUseCase) var loadImageUseCase
+    @Dependency(\.taskReadModelQueries) var taskReadModelQueries
+    @Dependency(\.imageStore) var imageStore
     @Dependency(\.externalNavigationClient) var externalNavigationClient
 
     private enum LoadingPolicy {
@@ -214,8 +214,10 @@ public struct HomeFeature {
                 
             case let .tasksResponse(tasks):
                 let processStartTime = Date()
-                let summary = homeSummaryUseCase.execute(
-                    .init(tasks: tasks, referenceDate: Date())
+                let referenceDate = Date()
+                let summary = taskReadModelQueries.home(
+                    tasks: tasks,
+                    referenceDate: referenceDate
                 )
                 state.tasks = tasks
                 state.activeTasks = summary.visibleTasks
@@ -223,22 +225,22 @@ public struct HomeFeature {
                 state.secondaryTasks = summary.secondaryTasks
                 state.todayPendingCount = summary.pendingCount
                 state.todayCompletedCount = summary.completedTodayCount
-                state.todayFocusState = switch summary.todayFocusState {
+                state.todayFocusState = switch summary.state {
                 case .empty: .empty
                 case .pending: .pending
                 case .completedStageReady: .completedStageReady
                 case .allDoneToday: .allDoneToday
                 }
                 state.heroTaskImageData = nil
-                state.miniCardDisplayData = summary.secondaryTaskSummaries.map { task in
+                state.miniCardDisplayData = summary.secondaryTasks.map { task in
                     return State.MiniCardDisplayData(
-                        id: task.taskID.rawValue,
+                        id: task.id.rawValue,
                         title: task.title,
                         progress: task.progress,
-                        totalDays: task.totalDays,
+                        totalDays: task.dayArray.count,
                         completedDays: task.completedDays,
                         imageData: nil,
-                        isTodayCertified: task.isTodayCertified
+                        isTodayCertified: task.isCompleted(on: referenceDate)
                     )
                 }
                 state.isLoading = false
@@ -488,15 +490,15 @@ public struct HomeFeature {
         heroTask: Domain.Task?,
         secondaryTasks: [Domain.Task]
     ) -> Effect<Action> {
-        .run { [loadImageUseCase] send in
+        .run { [imageStore] send in
             if let heroTask {
-                let heroImageData = await loadImageUseCase.loadImage(heroTask.mainImageKey)
+                let heroImageData = await imageStore.loadImage(heroTask.mainImageKey)
                 await send(.heroImageLoaded(heroImageData))
             } else {
                 await send(.heroImageLoaded(nil))
             }
             for task in secondaryTasks {
-                let imageData = await loadImageUseCase.loadImage(task.mainImageKey)
+                let imageData = await imageStore.loadImage(task.mainImageKey)
                 await send(.miniCardImageLoaded(id: task.id.rawValue, imageData: imageData))
             }
         }

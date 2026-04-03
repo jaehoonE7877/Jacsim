@@ -9,13 +9,7 @@ public typealias GlobalNotificationSettingUseCase = Workflows.GlobalNotification
 public typealias CertifyTaskTodayUseCase = Workflows.CertifyTaskTodayUseCase
 public typealias StageProgressionUseCase = Workflows.StageProgressionUseCase
 public typealias DeleteTaskUseCase = Workflows.DeleteTaskUseCase
-public typealias LoadImageUseCase = Workflows.LoadImageUseCase
 public typealias ReminderSchedulingUseCase = Workflows.ReminderSchedulingUseCase
-public typealias RequestNotificationPermissionUseCase = Workflows.RequestNotificationPermissionUseCase
-public typealias HomeSummaryUseCase = Workflows.HomeSummaryUseCase
-public typealias AllTaskSummaryUseCase = Workflows.AllTaskSummaryUseCase
-public typealias CalendarSummaryUseCase = Workflows.CalendarSummaryUseCase
-public typealias TaskDetailSummaryUseCase = Workflows.TaskDetailSummaryUseCase
 
 private enum CreateNewTaskUseCaseKey: DependencyKey {
     static let liveValue = UseCaseAssembly.createNewTaskUseCase
@@ -82,14 +76,6 @@ private enum DeleteTaskUseCaseKey: DependencyKey {
     )
 }
 
-private enum LoadImageUseCaseKey: DependencyKey {
-    static let liveValue = UseCaseAssembly.loadImageUseCase
-
-    static let testValue = LoadImageUseCase(
-        loadImage: { _ in nil }
-    )
-}
-
 private enum ReminderSchedulingUseCaseKey: DependencyKey {
     static let liveValue = UseCaseAssembly.reminderSchedulingUseCase
 
@@ -114,34 +100,6 @@ private enum ReminderSchedulingUseCaseKey: DependencyKey {
             fetchTasksByStatus: { _ in [] }
         )
     )
-}
-
-private enum RequestNotificationPermissionUseCaseKey: DependencyKey {
-    static let liveValue = UseCaseAssembly.requestNotificationPermissionUseCase
-
-    static let testValue = RequestNotificationPermissionUseCase(
-        requestAuthorization: { false }
-    )
-}
-
-private enum HomeSummaryUseCaseKey: DependencyKey {
-    static let liveValue = UseCaseAssembly.homeSummaryUseCase
-    static let testValue = HomeSummaryUseCase.live()
-}
-
-private enum AllTaskSummaryUseCaseKey: DependencyKey {
-    static let liveValue = UseCaseAssembly.allTaskSummaryUseCase
-    static let testValue = AllTaskSummaryUseCase.live()
-}
-
-private enum CalendarSummaryUseCaseKey: DependencyKey {
-    static let liveValue = UseCaseAssembly.calendarSummaryUseCase
-    static let testValue = CalendarSummaryUseCase.live()
-}
-
-private enum TaskDetailSummaryUseCaseKey: DependencyKey {
-    static let liveValue = UseCaseAssembly.taskDetailSummaryUseCase
-    static let testValue = TaskDetailSummaryUseCase.live()
 }
 
 public extension DependencyValues {
@@ -175,38 +133,8 @@ public extension DependencyValues {
         set { self[DeleteTaskUseCaseKey.self] = newValue }
     }
 
-    var loadImageUseCase: LoadImageUseCase {
-        get { self[LoadImageUseCaseKey.self] }
-        set { self[LoadImageUseCaseKey.self] = newValue }
-    }
-
     var reminderSchedulingUseCase: ReminderSchedulingUseCase {
         get { self[ReminderSchedulingUseCaseKey.self] }
         set { self[ReminderSchedulingUseCaseKey.self] = newValue }
-    }
-
-    var requestNotificationPermissionUseCase: RequestNotificationPermissionUseCase {
-        get { self[RequestNotificationPermissionUseCaseKey.self] }
-        set { self[RequestNotificationPermissionUseCaseKey.self] = newValue }
-    }
-
-    var homeSummaryUseCase: HomeSummaryUseCase {
-        get { self[HomeSummaryUseCaseKey.self] }
-        set { self[HomeSummaryUseCaseKey.self] = newValue }
-    }
-
-    var allTaskSummaryUseCase: AllTaskSummaryUseCase {
-        get { self[AllTaskSummaryUseCaseKey.self] }
-        set { self[AllTaskSummaryUseCaseKey.self] = newValue }
-    }
-
-    var calendarSummaryUseCase: CalendarSummaryUseCase {
-        get { self[CalendarSummaryUseCaseKey.self] }
-        set { self[CalendarSummaryUseCaseKey.self] = newValue }
-    }
-
-    var taskDetailSummaryUseCase: TaskDetailSummaryUseCase {
-        get { self[TaskDetailSummaryUseCaseKey.self] }
-        set { self[TaskDetailSummaryUseCaseKey.self] = newValue }
     }
 }

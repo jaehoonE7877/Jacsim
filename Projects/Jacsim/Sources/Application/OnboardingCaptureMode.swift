@@ -67,6 +67,7 @@ private struct StaticCaptureReducer<State, Action>: Reducer {
 private enum OnboardingCaptureFixture {
     private static let calendar = Calendar(identifier: .gregorian)
     private static let today = calendar.startOfDay(for: Date())
+    private static let readModelQueries = TaskReadModelQueries.live()
 
     static func homeState() -> HomeFeature.State {
         let heroTask = makeTask(
@@ -93,8 +94,9 @@ private enum OnboardingCaptureFixture {
         )
 
         let tasks = [heroTask, waterTask, englishTask]
-        let summary = UseCaseAssembly.homeSummaryUseCase.execute(
-            .init(tasks: tasks, referenceDate: today)
+        let summary = readModelQueries.home(
+            tasks: tasks,
+            referenceDate: today
         )
 
         var state = HomeFeature.State()
@@ -102,7 +104,7 @@ private enum OnboardingCaptureFixture {
         state.activeTasks = summary.visibleTasks
         state.heroTask = summary.focusTask
         state.secondaryTasks = summary.secondaryTasks
-        state.todayFocusState = switch summary.todayFocusState {
+        state.todayFocusState = switch summary.state {
         case .empty: .empty
         case .pending: .pending
         case .completedStageReady: .completedStageReady
@@ -111,21 +113,21 @@ private enum OnboardingCaptureFixture {
         state.todayPendingCount = summary.pendingCount
         state.todayCompletedCount = summary.completedTodayCount
         state.heroTaskImageData = OnboardingCaptureFixtureImage.readingWide.jpegData
-        state.miniCardDisplayData = summary.secondaryTaskSummaries.map { task in
-            let imageData: Data? = switch task.taskID {
+        state.miniCardDisplayData = summary.secondaryTasks.map { task in
+            let imageData: Data? = switch task.id {
             case waterTask.id: OnboardingCaptureFixtureImage.waterPortrait.jpegData
             case englishTask.id: OnboardingCaptureFixtureImage.studyPortrait.jpegData
             default: nil
             }
 
             return .init(
-                id: task.taskID.rawValue,
+                id: task.id.rawValue,
                 title: task.title,
                 progress: task.progress,
-                totalDays: task.totalDays,
+                totalDays: task.dayArray.count,
                 completedDays: task.completedDays,
                 imageData: imageData,
-                isTodayCertified: task.isTodayCertified
+                isTodayCertified: task.isCompleted(on: today)
             )
         }
         return state
@@ -159,7 +161,7 @@ private enum OnboardingCaptureFixture {
         )
 
         let tasks = [readingTask, waterTask]
-        let summary = UseCaseAssembly.calendarSummaryUseCase.execute(.init(tasks: tasks))
+        let summary = readModelQueries.calendar(tasks: tasks)
 
         var state = CalendarFeature.State()
         state.selectedDate = today
@@ -194,8 +196,9 @@ private enum OnboardingCaptureFixture {
             result: .fail
         )
 
-        let summary = UseCaseAssembly.allTaskSummaryUseCase.execute(
-            .init(ongoingTasks: [ongoing], doneTasks: [success, fail])
+        let summary = readModelQueries.allTasks(
+            ongoingTasks: [ongoing],
+            doneTasks: [success, fail]
         )
 
         var state = AllTaskFeature.State()

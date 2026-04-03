@@ -28,7 +28,7 @@ public struct CalendarFeature {
     }
 
     @Dependency(\.taskRepository) var taskRepository
-    @Dependency(\.calendarSummaryUseCase) var calendarSummaryUseCase
+    @Dependency(\.taskReadModelQueries) var taskReadModelQueries
 
     public var body: some ReducerOf<Self> {
         BindingReducer()
@@ -51,7 +51,7 @@ public struct CalendarFeature {
                 return .none
 
             case let .tasksResponse(tasks):
-                let summary = calendarSummaryUseCase.execute(.init(tasks: tasks))
+                let summary = taskReadModelQueries.calendar(tasks: tasks)
                 state.tasks = tasks
                 state.eventDates = summary.eventDates
                 state.dateColors = summary.dateColors

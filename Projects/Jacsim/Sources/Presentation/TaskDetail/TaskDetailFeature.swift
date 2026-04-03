@@ -106,8 +106,8 @@ public struct TaskDetailFeature {
     }
 
     @Dependency(\.deleteTaskUseCase) var deleteTaskUseCase
-    @Dependency(\.loadImageUseCase) var loadImageUseCase
-    @Dependency(\.taskDetailSummaryUseCase) var taskDetailSummaryUseCase
+    @Dependency(\.imageStore) var imageStore
+    @Dependency(\.taskReadModelQueries) var taskReadModelQueries
     @Dependency(\.stageProgressionUseCase) var stageProgressionUseCase
 
     private enum DeleteFlowPolicy {
@@ -123,17 +123,18 @@ public struct TaskDetailFeature {
         Reduce { state, action in
             switch action {
             case .onAppear:
-                let summary = taskDetailSummaryUseCase.execute(
-                    .init(task: state.task, referenceDate: Date())
+                let summary = taskReadModelQueries.taskDetail(
+                    task: state.task,
+                    referenceDate: Date()
                 )
-                state.challengeState = summary.challengeState
-                state.todayStatus = summary.todayStatus
-                state.currentStage = summary.currentStage
-                state.stageProgress = summary.stageProgress
-                state.stageProgressText = summary.stageProgressText
-                state.remainingSuccessCount = summary.remainingSuccessCount
-                state.todayMemo = summary.todayMemo
-                state.dayViewData = summary.dayViewData.map {
+                state.challengeState = summary.evaluation.challengeState
+                state.todayStatus = summary.evaluation.todayStatus
+                state.currentStage = summary.evaluation.currentStage
+                state.stageProgress = summary.evaluation.stageProgress
+                state.stageProgressText = summary.evaluation.stageProgressText
+                state.remainingSuccessCount = summary.evaluation.remainingSuccessCount
+                state.todayMemo = summary.evaluation.todayMemo
+                state.dayViewData = summary.evaluation.dayViewData.map {
                     State.DayViewData(date: $0.date, memo: $0.memo, image: nil, isChecked: $0.isChecked)
                 }
                 return .merge(
@@ -142,14 +143,14 @@ public struct TaskDetailFeature {
                 )
                 
             case .loadImages:
-                return .run { [task = state.task, dayDates = state.dayViewData.map(\.date), loadImageUseCase] send in
-                    let coverImageData = await loadImageUseCase.loadImage(task.mainImageKey)
+                return .run { [task = state.task, dayDates = state.dayViewData.map(\.date), imageStore] send in
+                    let coverImageData = await imageStore.loadImage(task.mainImageKey)
                     let coverImage = coverImageData.flatMap { UIImage(data: $0) }
                     await send(.coverImageLoaded(coverImage))
 
                     for date in dayDates {
                         guard let key = task.imageKey(for: task.dayArray.firstIndex(where: { $0 == date }) ?? 0) else { continue }
-                        let imageData = await loadImageUseCase.loadImage(key)
+                        let imageData = await imageStore.loadImage(key)
                         let image = imageData.flatMap { UIImage(data: $0) }
                         await send(.imageLoaded(date, image))
                     }

@@ -3,6 +3,7 @@ import Testing
 import ComposableArchitecture
 import Domain
 import JacsimClient
+import Ports
 import UIKit
 
 @testable import Jacsim
@@ -89,47 +90,36 @@ func taskDetailViewSuccessRecordRequestsScrollToRecords() async {
 @Test("onAppear는 summary usecase 결과를 상세 상태에 반영한다")
 func taskDetailOnAppearAppliesSummaryUseCaseOutput() async {
     let task = makeTaskForDetailTests(durationDays: 7, completedRecords: 1)
+    let summary = TaskReadModelQueries.live().taskDetail(task: task, referenceDate: Date())
 
     let store = TestStore(initialState: TaskDetailFeature.State(task: task)) {
         TaskDetailFeature()
     } withDependencies: {
-        $0.taskDetailSummaryUseCase = TaskDetailSummaryUseCase(
-            execute: { input in
-                TaskDetailSummaryUseCase.Output(
-                    challengeState: .stageSuccess,
-                    todayStatus: .certified,
-                    currentStage: input.task.stages.last,
-                    stageProgress: 0.75,
-                    stageProgressText: "3/4",
-                    remainingSuccessCount: 1,
-                    todayMemo: "테스트 메모",
-                    dayViewData: [
-                        DayViewData(date: input.task.startDate, memo: "테스트 메모", isChecked: true)
-                    ],
-                    stageResult: .success
-                )
-            }
+        $0.imageStore = ImageStorePort(
+            saveImage: { _, _ in "" },
+            loadImage: { _ in nil },
+            deleteImage: { _ in },
+            imageExists: { _ in false }
         )
-        $0.loadImageUseCase = LoadImageUseCase(loadImage: { _ in nil })
     }
     store.exhaustivity = .off
 
     await store.send(.onAppear) {
-        $0.challengeState = .stageSuccess
-        $0.todayStatus = .certified
-        $0.currentStage = task.stages.last
-        $0.stageProgress = 0.75
-        $0.stageProgressText = "3/4"
-        $0.remainingSuccessCount = 1
-        $0.todayMemo = "테스트 메모"
-        $0.dayViewData = [
+        $0.challengeState = summary.evaluation.challengeState
+        $0.todayStatus = summary.evaluation.todayStatus
+        $0.currentStage = summary.evaluation.currentStage
+        $0.stageProgress = summary.evaluation.stageProgress
+        $0.stageProgressText = summary.evaluation.stageProgressText
+        $0.remainingSuccessCount = summary.evaluation.remainingSuccessCount
+        $0.todayMemo = summary.evaluation.todayMemo
+        $0.dayViewData = summary.evaluation.dayViewData.map {
             TaskDetailFeature.State.DayViewData(
-                date: task.startDate,
-                memo: "테스트 메모",
+                date: $0.date,
+                memo: $0.memo,
                 image: nil,
-                isChecked: true
+                isChecked: $0.isChecked
             )
-        ]
+        }
     }
 }
 
