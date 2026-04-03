@@ -35,9 +35,11 @@ tuist build Jacsim
 ### ✅ 실행
 
 - `Ports`(ExternalInterface)에 정의된 Port를 구현한다 (예: `TaskRepositoryPort`, `AppPreferencesPort`)
+- Adapter는 `makePort()`를 통해 Port factory 책임도 함께 가진다
 - 매핑 로직은 전용 `*Mapping.swift` 파일에 분리한다
 - 스레드 안전성을 위해 모든 Port closure에 `@Sendable`을 사용한다
 - 에러는 무조건 처리하고, 도메인에서 사용하기 좋은 형태로 변환한다
+- 파생 상태(`isDone`, `isSuccess` 등)는 저장하지 않고 `Task`/`StageResult`에서 계산한다
 
 ### 🚫 금지
 
@@ -45,15 +47,14 @@ tuist build Jacsim
 - SwiftData/Realm 모델을 Data 모듈 바깥으로 노출하지 않는다
 - 비즈니스 로직을 추가하지 않고 인프라 관심사만 처리한다
 - `@MainActor`는 꼭 필요하지 않다면 Adapter에서 사용하지 않는다
+- task-owned record를 stage-owned copy로 중복 저장하지 않는다
 
 ## Adapter Pattern
 
 ```swift
-// ✅ Good — Adapter가 ExternalInterface Port를 구현
-public struct SwiftDataTaskRepositoryAdapter: Sendable {
-    private let context: ModelContext
-    
-    public func asPort() -> TaskRepositoryPort {
+// ✅ Good — Adapter가 Port 구현과 factory 책임을 함께 가진다
+public actor SwiftDataTaskRepositoryAdapter {
+    public nonisolated func makePort() -> TaskRepositoryPort {
         TaskRepositoryPort(
             fetchActiveTasks: { /* implementation */ },
             fetchTask: { /* implementation */ },
@@ -74,3 +75,5 @@ public struct TaskRepositoryAdapter {
 - Data는 `TaskRepositoryPort`처럼 도메인 요구를 충족하는 Repository 형태의 Adapter를 제공한다
 - Repository는 영속성 접근을 캡슐화해 Presentation/Workflows가 `SwiftData` 상세 구조를 알지 못하게 한다
 - Repository 구현은 `Entity-DTO` 매핑과 트랜잭션 경계를 명확히 분리해 일관된 `Contract` 동작을 유지한다
+- task 상태 분류는 저장된 flag가 아니라 mapped `Task`의 최종 `StageResult`에서 계산한다
+- `DailyRecordSnapshot` 계열 record는 task 기준 단일 source of truth로 유지하고 stage-owned copy를 두지 않는다

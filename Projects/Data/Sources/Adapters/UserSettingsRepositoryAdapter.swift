@@ -13,6 +13,16 @@ public actor UserSettingsRepositoryAdapter {
     public init(context: ModelContext = SwiftDataStack.shared.makeContext()) {
         self.context = context
     }
+
+    public nonisolated func makePort() -> UserSettingsRepositoryPort {
+        let adapter = self
+
+        return UserSettingsRepositoryPort(
+            isNotificationEnabled: { await adapter.isNotificationEnabled() },
+            getAllReminders: { await adapter.getAllReminders() },
+            updateNotificationEnabled: { await adapter.updateNotificationEnabled($0) }
+        )
+    }
     
     public func isNotificationEnabled() async -> Bool {
         fetchOrCreateGlobalSettings().isNotificationEnabled
