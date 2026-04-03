@@ -25,6 +25,7 @@ tuist build Jacsim
 
 - build setting 변경은 Xcode GUI 대신 xcconfig 파일에서 수행
 - 변경 시 ConfigurationPlugin mapping을 즉시 동기화
+- app/framework unit test는 `targets/iOS-Tests.xcconfig` 하나를 공통 사용한다
 
 ### ⚠️ Ask First
 
@@ -33,3 +34,4 @@ tuist build Jacsim
 ### 🚫 Do Not
 
 - Xcode GUI에서 build settings를 바꾼 뒤 여기에 반영하지 않기
+- 별도 framework-only test xcconfig를 다시 만들지 않는다. 설정 차이가 실제로 필요해질 때만 도입한다

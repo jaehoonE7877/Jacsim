@@ -2,10 +2,9 @@ import ProjectDescription
 import ProjectDescriptionHelpers
 import DependencyPlugin
 
-let project = Project.makeModule(
+let project = Project.makeFrameworkProject(
     name: "Ports",
     swiftLanguageVersion: .v6,
-    targets: [.unitTest, .staticFramework],
     internalDependencies: [
         .domain
     ],

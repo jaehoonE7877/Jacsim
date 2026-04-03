@@ -3,10 +3,9 @@ import ProjectDescriptionHelpers
 import DependencyPlugin
 import EnvironmentPlugin
 
-let project = Project.makeModule(
+let project = Project.makeAppProject(
     name: Environment.workspaceName,
     swiftLanguageVersion: .v6,
-    targets: [.app, .unitTest],
     internalDependencies: [
         .Modules.thirdPartyLibs,
         .Modules.designSystem,

@@ -2,10 +2,9 @@ import ProjectDescription
 import ProjectDescriptionHelpers
 import DependencyPlugin
 
-let project = Project.makeModule(
+let project = Project.makeFrameworkProject(
     name: "ThirdPartyLibs",
     swiftLanguageVersion: .v6,
-    targets: [.staticFramework],
     externalDependencies: [
         //MARK: - Firebase
         .SPM.FirebaseAnalytics,
@@ -19,5 +18,6 @@ let project = Project.makeModule(
         .SPM.CropViewController,
         .SPM.ComposableArchitecture,
     ],
+    includeTests: false,
     tags: ["module", "third-party"]
 )
