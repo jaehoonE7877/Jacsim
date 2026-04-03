@@ -19,25 +19,34 @@ public struct AllTaskView: View {
         ) {
             summaryCard
 
-            sectionView(
+            AllTaskSectionCard(
                 kind: .ongoing,
                 tasks: store.ongoingTasks,
                 isExpanded: store.isOngoingExpanded,
-                toggleAction: { store.send(.toggleOngoing) }
+                reduceMotion: reduceMotion,
+                animation: foldAnimation,
+                onToggle: toggleOngoing,
+                onTaskTapped: taskTapped
             )
 
-            sectionView(
+            AllTaskSectionCard(
                 kind: .success,
                 tasks: store.successTasks,
                 isExpanded: store.isSuccessExpanded,
-                toggleAction: { store.send(.toggleSuccess) }
+                reduceMotion: reduceMotion,
+                animation: foldAnimation,
+                onToggle: toggleSuccess,
+                onTaskTapped: taskTapped
             )
 
-            sectionView(
+            AllTaskSectionCard(
                 kind: .fail,
                 tasks: store.failTasks,
                 isExpanded: store.isFailExpanded,
-                toggleAction: { store.send(.toggleFail) }
+                reduceMotion: reduceMotion,
+                animation: foldAnimation,
+                onToggle: toggleFail,
+                onTaskTapped: taskTapped
             )
         }
         .navigationTitle("작심 모아보기")
@@ -103,116 +112,18 @@ public struct AllTaskView: View {
         }
     }
 
-    private func sectionView(
-        kind: AllTaskSectionKind,
-        tasks: [Domain.Task],
-        isExpanded: Bool,
-        toggleAction: @escaping () -> Void
-    ) -> some View {
-        JSCard(style: .elevated, padding: .jsMD) {
-            VStack(alignment: .leading, spacing: .jsSM) {
-                Button {
-                    withAnimation(foldAnimation) {
-                        toggleAction()
-                    }
-                } label: {
-                    HStack(spacing: .jsSM) {
-                        Image(systemName: kind.icon)
-                            .foregroundColor(kind.iconColor)
-                            .font(.jsBodySmall)
-                            .frame(width: 32.jsScaled(), height: 32.jsScaled())
-                            .background(kind.iconColor.opacity(0.12))
-                            .clipShape(RoundedRectangle(cornerRadius: .jsRadiusSM))
-
-                        VStack(alignment: .leading, spacing: .jsMicro) {
-                            Text(kind.title)
-                                .font(.jsHeadlineSmall)
-                                .foregroundColor(.labelStrong)
-
-                            Text(kind.subtitle)
-                                .font(.jsLabelMedium)
-                                .foregroundColor(.labelNeutral)
-                        }
-
-                        Spacer(minLength: .jsSM)
-
-                        Text("\(tasks.count)")
-                            .font(.jsButtonSmall)
-                            .foregroundColor(.labelStrong)
-                            .padding(.horizontal, .jsSM)
-                            .padding(.vertical, .jsMicro)
-                            .background(
-                                Capsule()
-                                    .fill(Color.backgroundAlternative)
-                            )
-
-                        Image(systemName: "chevron.down")
-                            .font(.jsButtonSmall)
-                            .foregroundColor(.labelNeutral)
-                            .rotationEffect(.degrees(isExpanded ? 180 : 0))
-                            .animation(foldAnimation, value: isExpanded)
-                    }
-                    .padding(.vertical, .jsMicro)
-                    .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                .accessibilityAddTraits(.isButton)
-                .accessibilityLabel("\(kind.title) 작심 \(tasks.count)개")
-                .accessibilityValue(isExpanded ? "펼쳐짐" : "접힘")
-                .accessibilityHint(isExpanded ? "두 번 탭해 접습니다" : "두 번 탭해 펼칩니다")
-
-                if isExpanded {
-                    VStack(spacing: .jsSM) {
-                        if tasks.isEmpty {
-                            emptyRow(text: kind.emptyMessage)
-                        } else {
-                            ForEach(tasks, id: \.id) { task in
-                                taskRow(task: task)
-                            }
-                        }
-                    }
-                    .padding(.top, .jsXS)
-                    .clipped()
-                    .transition(foldTransition)
-                }
-            }
-        }
-    }
-
     private var foldAnimation: Animation {
         reduceMotion ? .linear(duration: 0.12) : JSAnimation.navigation
     }
 
-    private var foldTransition: AnyTransition {
-        if reduceMotion {
-            return .opacity
-        }
-
-        return .asymmetric(
-            insertion: .modifier(
-                active: FoldTransitionModifier(opacity: 0.0, scaleY: 0.96, yOffset: -8),
-                identity: FoldTransitionModifier(opacity: 1.0, scaleY: 1.0, yOffset: 0)
-            ),
-            removal: .modifier(
-                active: FoldTransitionModifier(opacity: 0.0, scaleY: 0.96, yOffset: -8),
-                identity: FoldTransitionModifier(opacity: 1.0, scaleY: 1.0, yOffset: 0)
-            )
-        )
-    }
-
-    private func taskRow(task: Domain.Task) -> some View {
-        JSListItem(
-            title: task.title,
+    private func taskRow(task: Domain.Task, tint: Color) -> some View {
+        AllTaskTaskRow(
+            task: task,
             subtitle: taskSummary(task),
-            icon: "flag.fill",
-            iconColor: statusColor(task),
-            accessory: .disclosure
-        ) {
-            store.send(.taskTapped(task))
-        }
-        .background(
-            RoundedRectangle(cornerRadius: .jsRadiusMD)
-                .fill(Color.backgroundAlternative)
+            tint: tint,
+            onTap: {
+                store.send(.taskTapped(task))
+            }
         )
     }
 
@@ -253,26 +164,191 @@ public struct AllTaskView: View {
         store.ongoingTasks.count + store.successTasks.count + store.failTasks.count
     }
 
-    private func statusColor(_ task: Domain.Task) -> Color {
-        if store.successTasks.contains(where: { $0.id == task.id }) {
-            return .positive
-        }
-        if store.failTasks.contains(where: { $0.id == task.id }) {
-            return .destructive
-        }
-        return .primaryNormal
-    }
-
     private func taskDateRange(_ task: Domain.Task) -> String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "MM.dd"
-        let start = formatter.string(from: task.startDate)
-        let end = formatter.string(from: task.endDate)
+        let start = AllTaskDateFormatter.shared.string(from: task.startDate)
+        let end = AllTaskDateFormatter.shared.string(from: task.endDate)
         return "\(start) - \(end)"
     }
 
     private func taskSummary(_ task: Domain.Task) -> String {
         "\(taskDateRange(task)) · \(task.completedDays)/\(max(task.dayArray.count, 1))일 완료"
+    }
+
+    private func toggleOngoing() {
+        _ = withAnimation(foldAnimation) {
+            store.send(.toggleOngoing)
+        }
+    }
+
+    private func toggleSuccess() {
+        _ = withAnimation(foldAnimation) {
+            store.send(.toggleSuccess)
+        }
+    }
+
+    private func toggleFail() {
+        _ = withAnimation(foldAnimation) {
+            store.send(.toggleFail)
+        }
+    }
+
+    private func taskTapped(_ task: Domain.Task) {
+        store.send(.taskTapped(task))
+    }
+
+}
+
+private struct AllTaskSectionCard: View {
+    let kind: AllTaskSectionKind
+    let tasks: [Domain.Task]
+    let isExpanded: Bool
+    let reduceMotion: Bool
+    let animation: Animation
+    let onToggle: () -> Void
+    let onTaskTapped: (Domain.Task) -> Void
+
+    var body: some View {
+        JSCard(style: .elevated, padding: .jsMD) {
+            VStack(alignment: .leading, spacing: .jsSM) {
+                Button(action: onToggle) {
+                    HStack(spacing: .jsSM) {
+                        Image(systemName: kind.icon)
+                            .foregroundColor(kind.iconColor)
+                            .font(.jsBodySmall)
+                            .frame(width: 32.jsScaled(), height: 32.jsScaled())
+                            .background(kind.iconColor.opacity(0.12))
+                            .clipShape(RoundedRectangle(cornerRadius: .jsRadiusSM))
+
+                        VStack(alignment: .leading, spacing: .jsMicro) {
+                            Text(kind.title)
+                                .font(.jsHeadlineSmall)
+                                .foregroundColor(.labelStrong)
+
+                            Text(kind.subtitle)
+                                .font(.jsLabelMedium)
+                                .foregroundColor(.labelNeutral)
+                        }
+
+                        Spacer(minLength: .jsSM)
+
+                        Text("\(tasks.count)")
+                            .font(.jsButtonSmall)
+                            .foregroundColor(.labelStrong)
+                            .padding(.horizontal, .jsSM)
+                            .padding(.vertical, .jsMicro)
+                            .background(
+                                Capsule()
+                                    .fill(Color.backgroundAlternative)
+                            )
+
+                        Image(systemName: "chevron.down")
+                            .font(.jsButtonSmall)
+                            .foregroundColor(.labelNeutral)
+                            .rotationEffect(.degrees(isExpanded ? 180 : 0))
+                            .animation(animation, value: isExpanded)
+                    }
+                    .padding(.vertical, .jsMicro)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityAddTraits(.isButton)
+                .accessibilityLabel("\(kind.title) 작심 \(tasks.count)개")
+                .accessibilityValue(isExpanded ? "펼쳐짐" : "접힘")
+                .accessibilityHint(isExpanded ? "두 번 탭해 접습니다" : "두 번 탭해 펼칩니다")
+
+                if isExpanded {
+                    VStack(spacing: .jsSM) {
+                        if tasks.isEmpty {
+                            emptyRow(text: kind.emptyMessage)
+                        } else {
+                            ForEach(tasks, id: \.id) { task in
+                                AllTaskTaskRow(
+                                    task: task,
+                                    subtitle: Self.subtitle(for: task),
+                                    tint: kind.iconColor,
+                                    onTap: {
+                                        onTaskTapped(task)
+                                    }
+                                )
+                            }
+                        }
+                    }
+                    .padding(.top, .jsXS)
+                    .clipped()
+                    .transition(foldTransition)
+                }
+            }
+        }
+    }
+
+    private static func subtitle(for task: Domain.Task) -> String {
+        let formatter = AllTaskDateFormatter.shared
+        let start = formatter.string(from: task.startDate)
+        let end = formatter.string(from: task.endDate)
+        return "\(start) - \(end) · \(task.completedDays)/\(max(task.dayArray.count, 1))일 완료"
+    }
+
+    private var foldTransition: AnyTransition {
+        if reduceMotion {
+            return .opacity
+        }
+
+        return .asymmetric(
+            insertion: .modifier(
+                active: FoldTransitionModifier(opacity: 0.0, scaleY: 0.96, yOffset: -8),
+                identity: FoldTransitionModifier(opacity: 1.0, scaleY: 1.0, yOffset: 0)
+            ),
+            removal: .modifier(
+                active: FoldTransitionModifier(opacity: 0.0, scaleY: 0.96, yOffset: -8),
+                identity: FoldTransitionModifier(opacity: 1.0, scaleY: 1.0, yOffset: 0)
+            )
+        )
+    }
+
+    private func emptyRow(text: String) -> some View {
+        HStack(spacing: .jsXS) {
+            Image(systemName: "tray")
+                .foregroundColor(.labelAlternative)
+            Text(text)
+                .font(.jsBodySmall)
+                .foregroundColor(.labelNeutral)
+            Spacer()
+        }
+        .padding(.jsSM)
+        .background(
+            RoundedRectangle(cornerRadius: .jsRadiusSM)
+                .fill(Color.backgroundAlternative)
+        )
+    }
+}
+
+private enum AllTaskDateFormatter {
+    static let shared: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MM.dd"
+        return formatter
+    }()
+}
+
+private struct AllTaskTaskRow: View {
+    let task: Domain.Task
+    let subtitle: String
+    let tint: Color
+    let onTap: () -> Void
+
+    var body: some View {
+        JSListItem(
+            title: task.title,
+            subtitle: subtitle,
+            icon: "flag.fill",
+            iconColor: tint,
+            accessory: .disclosure,
+            action: onTap
+        )
+        .background(
+            RoundedRectangle(cornerRadius: .jsRadiusMD)
+                .fill(Color.backgroundAlternative)
+        )
     }
 }
 
