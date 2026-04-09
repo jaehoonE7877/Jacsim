@@ -205,8 +205,30 @@ jobs:
           GOOGLE_SERVICE_INFO_PLIST_BASE64: ${{ secrets.GOOGLE_SERVICE_INFO_PLIST_BASE64 }}
         run: bash scripts/ci/prepare-google-service-info.sh
 
+      - name: Restore Tuist dependency cache
+        id: tuist-deps-cache-restore
+        uses: ./.github/actions/cache/restore
+        with:
+          path: |
+            .build
+            Tuist/.build
+            Tuist/Dependencies
+          key: ${{ runner.os }}-tuist-deps-${{ env.TUIST_COMPATIBLE_XCODE_VERSION }}-${{ hashFiles('Package.resolved', 'Package.swift', 'Tuist.swift', '.mise.toml', '.tool-versions') }}
+          restore-keys: |
+            ${{ runner.os }}-tuist-deps-${{ env.TUIST_COMPATIBLE_XCODE_VERSION }}-
+
       - name: Install dependencies
         run: mise exec -- tuist install
+
+      - name: Save Tuist dependency cache
+        if: ${{ steps.tuist-deps-cache-restore.outputs.cache-hit != 'true' }}
+        uses: ./.github/actions/cache/save
+        with:
+          path: |
+            .build
+            Tuist/.build
+            Tuist/Dependencies
+          key: ${{ steps.tuist-deps-cache-restore.outputs.cache-primary-key }}
 
       - name: Setup Tuist cache
         if: ${{ env.TUIST_CONFIG_TOKEN != '' || env.TUIST_FULL_HANDLE != '' }}
