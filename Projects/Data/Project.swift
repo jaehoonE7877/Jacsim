@@ -2,13 +2,12 @@ import ProjectDescription
 import ProjectDescriptionHelpers
 import DependencyPlugin
 
-let project = Project.makeModule(
-    name: "Data",
+let project = Project.makeFrameworkProject(
+    name: "Adapters",
     swiftLanguageVersion: .v6,
-    targets: [.unitTest, .staticFramework],
     internalDependencies: [
         .domain,
-        .externalInterface
+        .ports
     ],
-    tags: ["module", "data"]
+    tags: ["module", "adapters"]
 )

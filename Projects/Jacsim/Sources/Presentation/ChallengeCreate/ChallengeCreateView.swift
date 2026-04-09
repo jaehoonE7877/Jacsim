@@ -1,5 +1,5 @@
 import ComposableArchitecture
-import DSKit
+import DesignSystem
 import SwiftUI
 
 public struct ChallengeCreateView: View {
@@ -10,8 +10,16 @@ public struct ChallengeCreateView: View {
     }
 
     public var body: some View {
-        NewTaskView(store: store.scope(state: \.newTask, action: \.newTask))
-            .presentationDetents([.large])
-            .presentationDragIndicator(.visible)
+        let newTaskStore = store.scope(state: \.newTask, action: \.newTask)
+
+        NavigationStack {
+            NewTaskView(store: newTaskStore)
+        }
+        .interactiveDismissDisabled(newTaskStore.hasUnsavedChanges || newTaskStore.isSaving)
+        .presentationBackground(Color.backgroundNormal)
+        .presentationBackgroundInteraction(.disabled)
+        .presentationCornerRadius(32)
+        .presentationDetents([.large])
+        .presentationDragIndicator(.visible)
     }
 }

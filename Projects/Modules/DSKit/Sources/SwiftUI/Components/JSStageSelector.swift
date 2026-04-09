@@ -22,7 +22,7 @@ public struct JSStageSelector: View {
                     stage: stage,
                     isSelected: selectedStage == stage,
                     onTap: {
-                        withAnimation(.easeInOut(duration: 0.2)) {
+                        withAnimation(JSAnimation.navigation) {
                             selectedStage = stage
                         }
                         onStageSelected?(stage)

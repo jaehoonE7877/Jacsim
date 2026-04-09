@@ -51,7 +51,7 @@ public struct JSProgress: View {
                 RoundedRectangle(cornerRadius: trackHeight / 2)
                     .fill(tintColor)
                     .frame(width: geometry.size.width * progress, height: trackHeight)
-                    .animation(.easeInOut(duration: 0.3), value: progress)
+                    .animation(JSAnimation.reward, value: progress)
             }
         }
         .frame(height: trackHeight)
@@ -66,7 +66,7 @@ public struct JSProgress: View {
                 .trim(from: 0, to: progress)
                 .stroke(tintColor, style: StrokeStyle(lineWidth: strokeWidth, lineCap: .round))
                 .rotationEffect(.degrees(-90))
-                .animation(.easeInOut(duration: 0.3), value: progress)
+                .animation(JSAnimation.reward, value: progress)
 
             if showPercentage {
                 Text("\(Int(progress * 100))%")
@@ -113,11 +113,11 @@ public struct JSProgress: View {
     private var percentageFont: Font {
         switch size {
         case .small:
-            return .jsLabel10Regular
+            return .jsLabelSmall
         case .medium:
-            return .jsLabel12Medium
+            return .jsLabelMedium
         case .large:
-            return .jsBody14Regular
+            return .jsBodySmall
         }
     }
 }
@@ -143,7 +143,7 @@ public struct JSProgressIndicator: View {
             .frame(width: indicatorSize, height: indicatorSize)
             .rotationEffect(Angle(degrees: isAnimating ? 360 : 0))
             .animation(
-                Animation.linear(duration: 1)
+                Animation.linear(duration: JSAnimation.durationSlow)
                     .repeatForever(autoreverses: false),
                 value: isAnimating
             )

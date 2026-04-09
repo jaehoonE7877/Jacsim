@@ -1,5 +1,5 @@
 import Foundation
-import ExternalInterface
+import Ports
 
 public actor DocumentImageStoreAdapter {
     private let fileManager: FileManager
@@ -11,6 +11,17 @@ public actor DocumentImageStoreAdapter {
             .urls(for: .documentDirectory, in: .userDomainMask)
             .first?
             .appendingPathComponent("Image")
+    }
+
+    public nonisolated func makePort() -> ImageStorePort {
+        let adapter = self
+
+        return ImageStorePort(
+            saveImage: { try await adapter.saveImage(key: $0, data: $1) },
+            loadImage: { await adapter.loadImage(key: $0) },
+            deleteImage: { await adapter.deleteImage(key: $0) },
+            imageExists: { await adapter.imageExists(key: $0) }
+        )
     }
     
     public func saveImage(key: String, data: Data) async throws -> String {

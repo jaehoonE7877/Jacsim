@@ -1,7 +1,8 @@
 import Foundation
 import ComposableArchitecture
 import Domain
-import DSKit
+import DesignSystem
+import JacsimClient
 
 @Reducer
 public struct CalendarFeature {
@@ -26,8 +27,8 @@ public struct CalendarFeature {
         case tasksLoadFailed
     }
 
-    @Dependency(\.taskQueryClient) var taskQueryClient
-    @Dependency(\.calendarEventService) var calendarEventService
+    @Dependency(\.taskRepository) var taskRepository
+    @Dependency(\.taskReadModelQueries) var taskReadModelQueries
 
     public var body: some ReducerOf<Self> {
         BindingReducer()
@@ -36,9 +37,9 @@ public struct CalendarFeature {
             case .onAppear:
                 state.isLoading = true
                 state.loadFailed = false
-                return .run { [taskQueryClient] send in
+                return .run { [taskRepository] send in
                     do {
-                        let tasks = try await taskQueryClient.fetchActiveTasks()
+                        let tasks = try await taskRepository.fetchActiveTasks()
                         await send(.tasksResponse(tasks))
                     } catch {
                         await send(.tasksLoadFailed)
@@ -50,9 +51,10 @@ public struct CalendarFeature {
                 return .none
 
             case let .tasksResponse(tasks):
+                let summary = taskReadModelQueries.calendar(tasks: tasks)
                 state.tasks = tasks
-                state.eventDates = calendarEventService.calculateEventDates(from: tasks)
-                state.dateColors = calendarEventService.calculateDateColors(from: tasks)
+                state.eventDates = summary.eventDates
+                state.dateColors = summary.dateColors
                 state.isLoading = false
                 state.loadFailed = false
                 return .none

@@ -1,5 +1,24 @@
-import Foundation
+import ComposableArchitecture
 
-public struct {{ name }}Feature {
-    public init() {}
+@Reducer
+struct {{ name }}Feature {
+    @ObservableState
+    struct State: Equatable {
+        init() {}
+    }
+
+    enum Action: Equatable {
+        case onAppear
+    }
+
+    init() {}
+
+    var body: some ReducerOf<Self> {
+        Reduce { _, action in
+            switch action {
+            case .onAppear:
+                return .none
+            }
+        }
+    }
 }

@@ -1,5 +1,5 @@
 import SwiftUI
-import DSKit
+import DesignSystem
 
 enum RedesignScreenState {
     case content
@@ -79,8 +79,11 @@ struct RedesignScreenScaffold<Content: View>: View {
     let contentBottomInset: CGFloat
     let scrollToID: AnyHashable?
     let scrollAnchor: UnitPoint
+    let scrollRequestToken: Int
+    let scrollAnimation: Animation?
     let content: Content
     private let stickyFooter: AnyView?
+    @State private var stickyFooterHeight: CGFloat = 0
 
     init(
         title: String,
@@ -89,6 +92,8 @@ struct RedesignScreenScaffold<Content: View>: View {
         contentBottomInset: CGFloat = .jsXXL,
         scrollToID: AnyHashable? = nil,
         scrollAnchor: UnitPoint = .top,
+        scrollRequestToken: Int = 0,
+        scrollAnimation: Animation? = JSAnimation.navigation,
         @ViewBuilder content: () -> Content
     ) {
         self.title = title
@@ -97,6 +102,8 @@ struct RedesignScreenScaffold<Content: View>: View {
         self.contentBottomInset = contentBottomInset
         self.scrollToID = scrollToID
         self.scrollAnchor = scrollAnchor
+        self.scrollRequestToken = scrollRequestToken
+        self.scrollAnimation = scrollAnimation
         self.content = content()
         self.stickyFooter = nil
     }
@@ -108,6 +115,8 @@ struct RedesignScreenScaffold<Content: View>: View {
         contentBottomInset: CGFloat = 132.jsScaled(),
         scrollToID: AnyHashable? = nil,
         scrollAnchor: UnitPoint = .top,
+        scrollRequestToken: Int = 0,
+        scrollAnimation: Animation? = JSAnimation.navigation,
         @ViewBuilder stickyFooter: () -> StickyFooter,
         @ViewBuilder content: () -> Content
     ) {
@@ -117,36 +126,49 @@ struct RedesignScreenScaffold<Content: View>: View {
         self.contentBottomInset = contentBottomInset
         self.scrollToID = scrollToID
         self.scrollAnchor = scrollAnchor
+        self.scrollRequestToken = scrollRequestToken
+        self.scrollAnimation = scrollAnimation
         self.content = content()
         self.stickyFooter = AnyView(stickyFooter())
     }
 
     var body: some View {
-        ZStack(alignment: .bottom) {
-            ScrollViewReader { proxy in
-                ScrollView(showsIndicators: false) {
-                    VStack(alignment: .leading, spacing: .jsLG) {
-                        header
-                        stateContent
-                    }
-                    .padding(.horizontal, .jsMD)
-                    .padding(.top, .jsLG)
-                    .padding(.bottom, contentBottomInset)
+        ScrollViewReader { proxy in
+            ScrollView(showsIndicators: false) {
+                VStack(alignment: .leading, spacing: .jsXL) {
+                    header
+                    stateContent
                 }
-                .background(Color.backgroundNormal)
-                .onChange(of: scrollToID) { _, newValue in
-                    guard let newValue else { return }
-                    withAnimation(.easeInOut(duration: 0.24)) {
-                        proxy.scrollTo(newValue, anchor: scrollAnchor)
-                    }
-                }
+                .padding(.horizontal, .jsMD)
+                .padding(.top, .jsLG)
+                .padding(.bottom, contentBottomInset + stickyFooterHeight)
             }
-
+            .background(Color.backgroundNormal)
+            .scrollDismissesKeyboard(.interactively)
+            .onChange(of: scrollToID) { _, newValue in
+                guard scrollRequestToken == 0 else { return }
+                scroll(proxy: proxy, target: newValue)
+            }
+            .onChange(of: scrollRequestToken) { _, _ in
+                scroll(proxy: proxy, target: scrollToID)
+            }
+        }
+        .safeAreaInset(edge: .bottom, spacing: 0) {
             if let stickyFooter {
                 stickyFooter
+                    .background(
+                        GeometryReader { proxy in
+                            Color.clear
+                                .preference(
+                                    key: StickyFooterHeightPreferenceKey.self,
+                                    value: proxy.size.height
+                                )
+                        }
+                    )
                     .frame(maxWidth: .infinity, alignment: .bottom)
             }
         }
+        .onPreferenceChange(StickyFooterHeightPreferenceKey.self) { stickyFooterHeight = $0 }
     }
 
     @ViewBuilder
@@ -161,7 +183,7 @@ struct RedesignScreenScaffold<Content: View>: View {
                         .tint(.primaryNormal)
                     Text(message)
                         .font(.jsBodyMedium)
-                        .foregroundColor(.labelAlternative)
+                        .foregroundColor(.labelNormal)
                     Spacer(minLength: .jsXS)
                 }
             }
@@ -181,9 +203,29 @@ struct RedesignScreenScaffold<Content: View>: View {
             if let subtitle, !subtitle.isEmpty {
                 Text(subtitle)
                     .font(.jsBodySmall)
-                    .foregroundColor(.labelAlternative)
+                    .foregroundColor(.labelNeutral)
             }
         }
+    }
+
+    private func scroll(proxy: ScrollViewProxy, target: AnyHashable?) {
+        guard let target else { return }
+
+        if let scrollAnimation {
+            withAnimation(scrollAnimation) {
+                proxy.scrollTo(target, anchor: scrollAnchor)
+            }
+        } else {
+            proxy.scrollTo(target, anchor: scrollAnchor)
+        }
+    }
+}
+
+private struct StickyFooterHeightPreferenceKey: PreferenceKey {
+    static let defaultValue: CGFloat = 0
+
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = nextValue()
     }
 }
 
@@ -213,7 +255,7 @@ struct RedesignSectionCard<Content: View>: View {
                     if let subtitle, !subtitle.isEmpty {
                         Text(subtitle)
                             .font(.jsLabelMedium)
-                            .foregroundColor(.labelAlternative)
+                            .foregroundColor(.labelNeutral)
                     }
                 }
 
@@ -243,6 +285,10 @@ struct RedesignStateBanner: View {
         .padding(.vertical, .jsXS)
         .background(tintColor.opacity(0.12))
         .clipShape(RoundedRectangle(cornerRadius: .jsRadiusSM))
+        .overlay(
+            RoundedRectangle(cornerRadius: .jsRadiusSM)
+                .stroke(tintColor.opacity(0.18), lineWidth: 1)
+        )
     }
 }
 
@@ -285,7 +331,7 @@ private struct RedesignEmptyStateView: View {
             VStack(spacing: .jsMD) {
                 Image(systemName: model.icon)
                     .font(.jsDisplaySmall)
-                    .foregroundColor(.labelAssistive)
+                    .foregroundColor(.labelAlternative)
 
                 if let action = model.action {
                     RedesignRetryActionBar(model: action)

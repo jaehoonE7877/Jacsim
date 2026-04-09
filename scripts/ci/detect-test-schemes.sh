@@ -31,7 +31,7 @@ else
 fi
 
 selected_schemes_csv=","
-ordered_schemes=("Domain" "ExternalInterface" "Data" "Jacsim")
+ordered_schemes=("Domain" "Ports" "Adapters" "Shared" "Jacsim")
 
 add_scheme() {
   local candidate="$1"
@@ -42,8 +42,9 @@ add_scheme() {
 
 set_full_suite() {
   add_scheme "Domain"
-  add_scheme "ExternalInterface"
-  add_scheme "Data"
+  add_scheme "Ports"
+  add_scheme "Adapters"
+  add_scheme "Shared"
   add_scheme "Jacsim"
 }
 
@@ -81,24 +82,31 @@ else
     case "${file}" in
       Projects/Domain/*)
         add_scheme "Domain"
-        add_scheme "ExternalInterface"
-        add_scheme "Data"
+        add_scheme "Ports"
+        add_scheme "Adapters"
         add_scheme "Jacsim"
         ;;
       Projects/ExternalInterface/*)
-        add_scheme "ExternalInterface"
-        add_scheme "Data"
+        add_scheme "Ports"
+        add_scheme "Adapters"
         add_scheme "Jacsim"
         ;;
       Projects/Data/*)
-        add_scheme "Data"
+        add_scheme "Adapters"
         add_scheme "Jacsim"
         ;;
       Projects/Jacsim/*)
         add_scheme "Jacsim"
         ;;
-      Projects/Modules/*)
+      Projects/Modules/Core/*)
+        add_scheme "Shared"
         add_scheme "Jacsim"
+        ;;
+      Projects/Modules/DSKit/*)
+        add_scheme "Jacsim"
+        ;;
+      Projects/Modules/*)
+        fallback_full_suite="true"
         ;;
       Tuist/*|Plugins/*|xcconfigs/*|Workspace.swift|Package.swift|Tuist.swift|.github/workflows/*|scripts/ci/*|scripts/tuist/*)
         fallback_full_suite="true"
