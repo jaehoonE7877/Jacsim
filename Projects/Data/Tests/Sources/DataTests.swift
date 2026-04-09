@@ -1,6 +1,6 @@
 import Testing
 import Foundation
-@testable import Data
+@testable import Adapters
 
 @Test("UserDefaultsAppPreferencesAdapter는 온보딩/테마 값을 읽고 쓴다")
 func userDefaultsAdapterStoresOnboardingAndTheme() {

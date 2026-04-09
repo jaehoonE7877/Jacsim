@@ -1,22 +1,30 @@
-# Projects/Modules/Core
+# Projects/Modules/Core (Shared)
 
-**Purpose**: Shared utilities, extensions, and logging — no business logic or UI.
+**목적**: `Shared` 모듈의 공통 `Utility`와 `Extension`, 로깅 기능 모음입니다. `Business` `Logic`이나 UI는 포함하지 않습니다.
 
 ## Key Paths
 
-| Task | Path |
+| 작업 | 경로 |
 |---|---|
-| Foundation extensions | `Sources/Extension/Foundation/**` |
-| Logging helper | `Sources/Logger.swift` |
+| Foundation `Extension` | `Sources/Extension/Foundation/**` |
+| 로깅 `Helper methods` | `Sources/Logger.swift` |
+
+## Test
+
+```bash
+tuist test Shared
+```
+
+- 공통 `Utility` 또는 `Extension` 변경이 여러 모듈에 영향을 줄 수 있으면 `tuist build Jacsim`으로 downstream compile도 확인합니다.
 
 ## Rules
 
 ### ✅ Do
 
-- Keep functions pure and side-effect-free where possible
-- Place only reusable, domain-agnostic utilities here
+- 가능한 범위에서 `Common functions`를 순수하게 유지하고 side-effect를 최소화합니다.
+- 재사용 가능하고 `domain-agnostic`인 `Utility`만 이 모듈에 둡니다.
 
 ### 🚫 Do Not
 
-- Add SwiftUI views or UI code
-- Place app-specific business rules in Core
+- SwiftUI 뷰 또는 UI 코드를 추가하지 않습니다.
+- 앱 특화 `Business Logic`을 Core에 배치하지 않습니다.

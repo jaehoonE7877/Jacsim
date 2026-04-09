@@ -1,6 +1,7 @@
 import Foundation
 import Domain
 import ComposableArchitecture
+import JacsimClient
 
 @Reducer
 public struct AllTaskFeature {
@@ -26,15 +27,18 @@ public struct AllTaskFeature {
         case toggleOngoing
         case toggleSuccess
         case toggleFail
+        case createTaskButtonTapped
         case taskTapped(Domain.Task)
         case delegate(Delegate)
 
         public enum Delegate: Equatable {
             case navigateToDetail(Domain.Task)
+            case createTaskRequested
         }
     }
 
-    @Dependency(\.taskQueryClient) var taskQueryClient
+    @Dependency(\.taskRepository) var taskRepository
+    @Dependency(\.taskReadModelQueries) var taskReadModelQueries
 
     public var body: some ReducerOf<Self> {
         Reduce { state, action in
@@ -42,12 +46,21 @@ public struct AllTaskFeature {
             case .onAppear:
                 state.isLoading = true
                 state.loadFailed = false
-                return .run { [taskQueryClient] send in
+                return .run { [taskRepository, taskReadModelQueries] send in
                     do {
-                        let ongoing = try await taskQueryClient.fetchActiveTasks()
-                        let success = try await taskQueryClient.fetchIsSuccess()
-                        let fail = try await taskQueryClient.fetchIsFail()
-                        await send(.tasksResponse(ongoing: ongoing, success: success, fail: fail))
+                        let ongoing = try await taskRepository.fetchActiveTasks()
+                        let done = try await taskRepository.fetchTasksByStatus(.done)
+                        let summary = taskReadModelQueries.allTasks(
+                            ongoingTasks: ongoing,
+                            doneTasks: done
+                        )
+                        await send(
+                            .tasksResponse(
+                                ongoing: summary.ongoingTasks,
+                                success: summary.successTasks,
+                                fail: summary.failTasks
+                            )
+                        )
                     } catch {
                         await send(.tasksLoadFailed)
                     }
@@ -72,6 +85,8 @@ public struct AllTaskFeature {
             case .toggleFail:
                 state.isFailExpanded.toggle()
                 return .none
+            case .createTaskButtonTapped:
+                return .send(.delegate(.createTaskRequested))
             case let .taskTapped(task):
                 return .send(.delegate(.navigateToDetail(task)))
             case .delegate:

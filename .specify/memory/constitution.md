@@ -9,7 +9,7 @@
 - 갱신해야 할 템플릿/문서:
   - templates/commands/constitution.md: ✅ 완료
   - .specify/templates/plan-template.md(Constitution Check 반영): ✅ 참고
-  - README.md / Docs(요약 반영): ⚠ 보류
+  - README.md / 문서(요약 반영): ⚠ 보류
 - TODO(마이그레이션 마감일/브릿지 삭제 일정):
   - iOS 최소 타깃 18+로 상향(빌드 설정/InfoPlist/xcconfig): 2025-11-30
   - SwiftData 모델 정의/스키마 확정: 2025-12-15
@@ -117,7 +117,7 @@
 - 주간 단위로 Crash/ANR/메모리 지표를 확인한다
 
 개발 흐름 & 체크리스트(짧고 명확)
-- 구현 전 체크(Pre-Implementation)
+- 구현 전 체크(사전 구현)
   - [ ] 새 의존성 0~1개인지, 꼭 필요한지 근거가 있는지
   - [ ] UIKit/Rx/Realm 미사용(예외는 기존 코드 한정)
   - [ ] SwiftData 모델/저장 구조 확정(마이그레이션 계획 포함)
@@ -131,13 +131,13 @@
   - [ ] 커밋 규칙/리뷰 체크리스트 충족
 
 거버넌스(바꾸는 법)
-- 본 헌장은 설계/구현/리뷰의 “최상위 기준”이다
-- 바꿀 때는 “왜/영향/필요 조치”를 명시하고 Maintainer 승인을 받는다
+- 본 헌장은 설계/구현/리뷰의 “최상위 기준”입니다
+- 바꿀 때는 “왜/영향/필요 조치”를 명시하고 유지자 승인(Approver 승인)을 받는다
 - 버전 규칙
   - MAJOR: iOS/기술 스택/아키텍처처럼 큰 방향 변경
   - MINOR: 원칙/섹션 추가 또는 의미 있는 확장
   - PATCH: 오탈자/표현 다듬기(의미 불변)
-- 템플릿/문서 동기화: plan/spec/tasks 템플릿과 README/docs의 관련 부분을 함께 갱신
+- 템플릿/문서 동기화: plan/spec/tasks 템플릿과 README.md/문서의 관련 부분을 함께 갱신
 
 마지막 확인(필수)
 - [ ] 남은 빈칸 없음, 모든 날짜는 YYYY-MM-DD

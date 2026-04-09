@@ -4,6 +4,7 @@ public extension Color {
     static var primaryNormal: Color { Color(uiColor: .primaryNormal) }
     static var primaryStrong: Color { Color(uiColor: .primaryStrong) }
     static var primaryHeavy: Color { Color(uiColor: .primaryHeavy) }
+    static var onPrimary: Color { Color(uiColor: .onPrimary) }
 
     static var labelNormal: Color { Color(uiColor: .labelNormal) }
     static var labelStrong: Color { Color(uiColor: .labelStrong) }

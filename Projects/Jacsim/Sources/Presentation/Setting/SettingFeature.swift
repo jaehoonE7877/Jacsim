@@ -1,6 +1,7 @@
 import Foundation
 import ComposableArchitecture
 import UIKit
+import JacsimClient
 
 public enum ThemeMode: String, Equatable, CaseIterable {
     case system = "system"
@@ -51,9 +52,9 @@ public struct SettingFeature {
         }
     }
 
-    @Dependency(\.notificationScheduler) var notificationScheduler
     @Dependency(\.userSettingsRepository) var userSettingsRepository
     @Dependency(\.appPreferences) var appPreferences
+    @Dependency(\.globalNotificationSettingUseCase) var globalNotificationSettingUseCase
 
     public var body: some ReducerOf<Self> {
         Reduce { state, action in
@@ -83,39 +84,17 @@ public struct SettingFeature {
                 state.isLoading = true
                 state.notificationBanner = nil
 
-                guard isEnabled else {
-                    return .run { [notificationScheduler, userSettingsRepository] send in
-                        let reminderUseCase = ReminderSchedulingUseCase()
-                        let reminders = await userSettingsRepository.getAllReminders()
-                        await reminderUseCase.syncGlobalReminders(
-                            isEnabled: false,
-                            reminders: reminders,
-                            notificationScheduler: notificationScheduler
-                        )
-                        await userSettingsRepository.updateNotificationEnabled(false)
-                        await send(.notificationSettingsResponse(false))
-                    }
-                }
-
-                return .run { [notificationScheduler, userSettingsRepository] send in
-                    do {
-                        let granted = try await notificationScheduler.requestAuthorization()
-                        guard granted else {
-                            await send(.notificationSettingsResponse(false))
-                            await send(.notificationPermissionDenied)
-                            return
-                        }
-
-                        let reminderUseCase = ReminderSchedulingUseCase()
-                        let reminders = await userSettingsRepository.getAllReminders()
-                        await reminderUseCase.syncGlobalReminders(
-                            isEnabled: true,
-                            reminders: reminders,
-                            notificationScheduler: notificationScheduler
-                        )
-                        await userSettingsRepository.updateNotificationEnabled(true)
+                return .run { [globalNotificationSettingUseCase] send in
+                    let outcome = await globalNotificationSettingUseCase.setEnabled(isEnabled)
+                    switch outcome {
+                    case .enabled:
                         await send(.notificationSettingsResponse(true))
-                    } catch {
+                    case .disabled:
+                        await send(.notificationSettingsResponse(false))
+                    case .permissionDenied:
+                        await send(.notificationSettingsResponse(false))
+                        await send(.notificationPermissionDenied)
+                    case .permissionError:
                         await send(.notificationSettingsResponse(false))
                         await send(.notificationPermissionError)
                     }

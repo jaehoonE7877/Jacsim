@@ -1,7 +1,7 @@
 import SwiftUI
 import ComposableArchitecture
 import Domain
-import DSKit
+import DesignSystem
 import _Concurrency
 
 @MainActor
@@ -23,6 +23,8 @@ public struct HomeView: View {
     private var fabHiddenThreshold: CGFloat { -148.jsScaled() }
     private var fabExpandThreshold: CGFloat { -20.jsScaled() }
     private var scrollDeltaDeadZone: CGFloat { 3.jsScaled() }
+    private var sectionHorizontalPadding: CGFloat { .jsXL }
+    private var sectionSpacing: CGFloat { .jsXL }
 
     public init(store: StoreOf<HomeFeature>) {
         self.store = store
@@ -73,19 +75,20 @@ public struct HomeView: View {
 
             contentVStack
         }
-        .onAppear { store.send(.onAppear) }
+        .onAppear(perform: handleAppear)
         .overlay(alignment: .bottom) {
             if let message = store.toastMessage {
                 RedesignToastView(
                     payload: .success(message),
-                    bottomPadding: toastBottomPadding
+                    bottomPadding: toastBottomPadding,
+                    dismissAction: handleToastDismissed
                 )
                     .transition(.move(edge: .bottom).combined(with: .opacity))
                     .task {
                         try? await _Concurrency.Task.sleep(
                             nanoseconds: RedesignToastView.defaultDismissNanoseconds
                         )
-                        store.send(.toastDismissed)
+                        handleToastDismissed()
                 }
             }
         }
@@ -98,7 +101,7 @@ public struct HomeView: View {
             .padding(.trailing, .jsMD)
             .padding(.bottom, .jsSM)
         }
-        .animation(reduceMotion ? .none : .easeInOut(duration: 0.25), value: store.toastMessage)
+        .animation(reduceMotion ? .none : JSAnimation.toast, value: store.toastMessage)
         .sheet(item: $store.scope(state: \.destination?.challengeCreate, action: \.destination.challengeCreate)) { store in
             ChallengeCreateView(store: store)
                 .presentationDragIndicator(.visible)
@@ -108,48 +111,14 @@ public struct HomeView: View {
     }
 
     private var addButton: some View {
-        Button(action: {
-            store.send(.addButtonTapped)
-            triggerTapFeedback()
-        }) {
-            HStack(spacing: .jsXS) {
-                Image(systemName: "plus")
-                    .font(.jsHeadlineSmall)
-                    .foregroundColor(.white)
-
-                if fabState == .expanded {
-                    Text("새 TODO")
-                        .font(.jsButtonMedium)
-                        .foregroundColor(.white)
-                        .lineLimit(1)
-                        .transition(.opacity.combined(with: .move(edge: .trailing)))
-                }
-            }
-            .frame(height: fabHeight)
-            .padding(.horizontal, fabState == .expanded ? .jsLG : .jsMD)
-            .background(
-                Capsule()
-                    .fill(Color.primaryNormal)
-            )
-            .overlay(
-                Capsule()
-                    .stroke(Color.white.opacity(0.16), lineWidth: 1)
-            )
-            .shadow(color: .primaryNormal.opacity(0.26), radius: 14.jsScaled(), x: 0, y: 8.jsScaled())
-            .contentShape(Capsule())
-        }
-        .pressEffect()
-        .opacity(fabState == .hidden ? 0 : 1)
-        .scaleEffect(fabState == .hidden ? 0.92 : 1)
-        .offset(y: fabState == .hidden ? 24.jsScaled() : 0)
-        .allowsHitTesting(fabState != .hidden)
-        .accessibilityHidden(fabState == .hidden)
-        .animation(
-            reduceMotion ? .none : .spring(response: 0.28, dampingFraction: 0.88),
-            value: fabState
+        HomeAddButton(
+            stateIndex: fabStateStateIndex,
+            isExpanded: fabState == .expanded,
+            isHidden: fabState == .hidden,
+            reduceMotion: reduceMotion,
+            fabHeight: fabHeight,
+            onTap: handleAddButtonTapped
         )
-        .accessibilityLabel("새 TODO 만들기")
-        .accessibilityHint("새 할 일 추가 화면을 엽니다")
     }
 
     private func triggerTapFeedback() {
@@ -158,116 +127,31 @@ public struct HomeView: View {
 
     private var contentVStack: some View {
         ScrollView(showsIndicators: false) {
-            VStack(alignment: .leading, spacing: .jsXXL) {
-                HStack {
-                    Text("작심")
-                        .font(.jsDisplayMedium)
-                        .foregroundColor(.labelStrong)
-
-                    Spacer(minLength: .jsXS)
-
-                    Text(todayLabel)
-                        .font(.jsLabelMedium)
-                        .foregroundColor(.labelAlternative)
-                        .padding(.horizontal, .jsSM)
-                        .padding(.vertical, .jsMicro)
-                        .background(
-                            Capsule()
-                                .fill(Color.backgroundAlternative)
-                        )
-
-                    Spacer()
-                    
-                    Button(action: {
-                        store.send(.settingButtonTapped)
-                        triggerTapFeedback()
-                    }) {
-                        Image(systemName: "gearshape.fill")
-                            .font(.jsHeadlineLarge)
-                            .foregroundColor(.labelAlternative)
-                            .frame(width: 44.jsScaled(.touchTarget), height: 44.jsScaled(.touchTarget))
-                    }
-                    .buttonStyle(PlainButtonStyle())
-                    .zIndex(10)
-                    .accessibilityLabel("설정")
-                    .accessibilityHint("설정 화면으로 이동합니다")
-                }
-                .padding(.horizontal, .jsXL)
-                .padding(.top, .jsXS)
+            VStack(alignment: .leading, spacing: sectionSpacing) {
+                headerView
 
                 if store.isLoading && store.tasks.isEmpty {
                     skeletonContent
                         .transition(.opacity)
-                } else if let heroTask = store.heroTask {
-                    let remainingTasks = Array(store.activeTasks.dropFirst())
-                    homeSummaryCard
-                        .transition(.opacity)
-                    VStack(alignment: .leading, spacing: .jsMD) {
-                        let heroImage = store.heroTaskImageData.flatMap { UIImage(data: $0) }.map { Image(uiImage: $0) }
-                        JSUnifiedHeroCard(
-                            title: heroTask.title,
-                            subtitle: "\(heroTask.startDate.formatted(.dateTime.month().day())) ~ \(heroTask.endDate.formatted(.dateTime.month().day()))",
-                            progress: heroTask.progress,
-                            totalDays: heroTask.dayArray.count,
-                            completedDays: heroTask.completedDays,
-                            image: heroImage,
-                            isTodayCertified: heroTask.isCompleted(on: Date()),
-                            accessibilityLabel: "\(heroTask.title), 진행률 \(Int(heroTask.progress * 100))퍼센트, \(heroTask.completedDays)일 완료",
-                            accessibilityHint: "작심 상세 화면으로 이동합니다",
-                            onTap: {
-                                store.send(.taskTapped(heroTask))
-                                triggerTapFeedback()
-                            }
-                        )
-                        .frame(maxWidth: .infinity)
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding(.horizontal, .jsXL)
-                    
-                    if !remainingTasks.isEmpty {
-                        VStack(alignment: .leading, spacing: .jsMD) {
-                            HStack {
-                                Text("진행 중인 작심들")
-                                    .font(.jsHeadlineMedium)
-                                    .foregroundColor(.labelStrong)
-                                
-                                Spacer()
-                                
-                                Button(action: {
-                                    store.send(.allTasksButtonTapped)
-                                    triggerTapFeedback()
-                                }) {
-                                    Text("전체보기")
-                                        .font(.jsButtonSmall)
-                                        .foregroundColor(.labelAlternative)
-                                }
-                                .accessibilityLabel("전체보기")
-                                .accessibilityHint("모든 작심 목록 화면으로 이동합니다")
-                            }
-                            .padding(.horizontal, .jsXL)
-                            
-                            JSMiniHeroCardCarousel(
-                                cards: makeMiniHeroCardData(from: store.miniCardDisplayData),
-                                onCardTap: { cardID in
-                                    guard let task = remainingTasks.first(where: { $0.id.rawValue == cardID }) else { return }
-                                    store.send(.taskTapped(task))
-                                    triggerTapFeedback()
-                                }
-                            )
-                            .padding(.horizontal, 0)
-                        }
-                    }
-                } else {
-                    emptyStateView
+                } else if store.loadFailed && store.tasks.isEmpty {
+                    loadFailedView
                         .padding(.top, 40.jsScaled())
-                        .padding(.horizontal, .jsXL)
+                        .padding(.horizontal, sectionHorizontalPadding)
+                } else {
+                    primaryContentSection
+                    .frame(maxWidth: .infinity)
+                    .padding(.horizontal, sectionHorizontalPadding)
+
+                    if !store.secondaryTasks.isEmpty {
+                        secondaryTasksSection
+                    }
                 }
                 
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.bottom, contentBottomPadding)
             .animation(
-                reduceMotion ? .none : .easeInOut(duration: 0.22),
+                reduceMotion ? .none : JSAnimation.navigation,
                 value: store.isLoading
             )
             .background(
@@ -285,39 +169,37 @@ public struct HomeView: View {
         }
     }
 
+    private var headerView: some View {
+        HomeHeaderSection(todayLabel: todayLabel, onSettingsTapped: handleSettingButtonTapped)
+            .padding(.horizontal, sectionHorizontalPadding)
+            .padding(.top, .jsXS)
+    }
+
 
 
     private var emptyStateView: some View {
         VStack(spacing: .jsXL) {
             Image(systemName: "square.text.square.fill")
                 .font(.jsDisplayScaledBold(size: 64))
-                .foregroundColor(Color.labelAssistive)
+                .foregroundColor(Color.labelAlternative)
 
             VStack(spacing: .jsXS) {
-                Text("진행 중인 작심이 없어요")
+                Text("오늘 이어가는 작심이 없어요")
                     .font(.jsHeadlineMedium)
                     .foregroundColor(.labelStrong)
 
-                Text("새로운 작심을 시작해보세요!")
+                Text("새 작심을 만들면 오늘 할 일이 바로 보이기 시작해요")
                     .font(.jsBodySmall)
-                    .foregroundColor(.labelAlternative)
+                    .foregroundColor(.labelNeutral)
+                    .multilineTextAlignment(.center)
             }
 
-            Button(action: {
-                store.send(.addButtonTapped)
-                triggerTapFeedback()
-            }) {
-                Text("작심 시작하기")
-                    .font(.jsButtonMedium)
-                    .foregroundColor(.white)
-                    .frame(height: 50.jsScaled())
-                    .frame(maxWidth: .infinity)
-                    .background(Color.primaryNormal)
-                    .cornerRadius(.jsRadiusMD)
+            JSButton(title: "작심 시작하기", style: .primary, size: .large) {
+                handleAddButtonTapped()
             }
             .padding(.horizontal, .jsXL)
             .accessibilityLabel("작심 시작하기")
-            .accessibilityHint("새 할 일 추가 화면을 엽니다")
+            .accessibilityHint("새 작심 생성 화면을 엽니다")
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 40.jsScaled())
@@ -328,54 +210,87 @@ public struct HomeView: View {
         )
     }
 
-    private var homeSummaryCard: some View {
-        RedesignSectionCard(
-            title: "오늘 할 일",
-            subtitle: "인증 가능한 작심 \(store.activeTasks.count)개"
-        ) {
-            HStack(spacing: .jsSM) {
-                summaryMetric(
-                    title: "전체 진행",
-                    value: "\(Int(overallProgress * 100))%",
-                    color: .primaryNormal
-                )
-                summaryMetric(
-                    title: "오늘 완료",
-                    value: "\(todayCompletedCount)개",
-                    color: .positive
-                )
-                summaryMetric(
-                    title: "남은 항목",
-                    value: "\(max(0, store.activeTasks.count - todayCompletedCount))개",
-                    color: .cautionary
-                )
+    private var loadFailedView: some View {
+        VStack(spacing: .jsXL) {
+            Image(systemName: "wifi.exclamationmark")
+                .font(.jsDisplayScaledBold(size: 64))
+                .foregroundColor(.destructive)
+
+            VStack(spacing: .jsXS) {
+                Text("홈을 불러오지 못했어요")
+                    .font(.jsHeadlineMedium)
+                    .foregroundColor(.labelStrong)
+
+                Text("연결 상태를 확인한 뒤 다시 시도해 주세요")
+                    .font(.jsBodySmall)
+                    .foregroundColor(.labelNeutral)
+                    .multilineTextAlignment(.center)
             }
+
+            JSButton(title: "다시 시도", style: .secondary, size: .medium) {
+                handleAppear()
+            }
+            .accessibilityHint("홈 화면 정보를 다시 불러옵니다")
         }
-        .padding(.horizontal, .jsXL)
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 40.jsScaled())
+        .background(
+            RoundedRectangle(cornerRadius: 24.jsScaled())
+                .fill(Color.backgroundStrong)
+                .shadow(color: Color.labelStrong.opacity(0.05), radius: 10.jsScaled(), x: 0, y: 4.jsScaled())
+        )
+        .jsAccessibility("홈을 불러오지 못했어요. 연결 상태를 확인한 뒤 다시 시도해 주세요")
     }
 
-    private func summaryMetric(title: String, value: String, color: Color) -> some View {
-        VStack(spacing: .jsMicro) {
-            Text(title)
-                .font(.jsLabelSmall)
-                .foregroundColor(.labelAlternative)
-            Text(value)
-                .font(.jsHeadlineSmall)
-                .foregroundColor(color)
+    private var staleContentErrorBanner: some View {
+        HStack(alignment: .center, spacing: .jsSM) {
+            Image(systemName: "wifi.exclamationmark")
+                .font(.jsLabelMedium)
+                .foregroundColor(.cautionary)
+
+            Text("최신 상태를 확인하지 못했어요. 연결이 안정되면 새로고침으로 다시 가져올 수 있어요.")
+                .font(.jsBodySmall)
+                .foregroundColor(.labelStrong)
+                .multilineTextAlignment(.leading)
+
+            Spacer(minLength: .jsSM)
+
+            Button(action: handleRefreshTriggered) {
+                Text("새로고침")
+                    .font(.jsButtonSmall)
+                    .foregroundColor(.cautionary)
+                    .padding(.horizontal, .jsSM)
+                    .padding(.vertical, .jsXS)
+                    .background(
+                        Capsule()
+                            .fill(Color.backgroundNormal.opacity(0.82))
+                    )
+            }
+            .buttonStyle(.plain)
+            .accessibilityHint("진행 중인 작심 목록을 다시 불러옵니다")
         }
-        .frame(maxWidth: .infinity, minHeight: 72.jsScaled())
+        .padding(.horizontal, .jsSM)
+        .padding(.vertical, .jsSM)
         .background(
             RoundedRectangle(cornerRadius: .jsRadiusMD)
-                .fill(color.opacity(0.08))
+                .fill(Color.cautionary.opacity(0.12))
         )
+        .overlay(
+            RoundedRectangle(cornerRadius: .jsRadiusMD)
+                .stroke(Color.cautionary.opacity(0.18), lineWidth: 1)
+        )
+    }
+
+    private var homeSummaryCard: some View {
+        HomeSummaryDashboardCard(presentation: summaryPresentation)
     }
 
     private func makeMiniHeroCardData(
         from displayData: [HomeFeature.State.MiniCardDisplayData]
-    ) -> [JSMiniHeroCardData] {
+    ) -> [HomeMiniHeroCardData] {
         displayData.map { data in
             let image = data.imageData.flatMap { UIImage(data: $0) }.map { Image(uiImage: $0) }
-            return JSMiniHeroCardData(
+            return HomeMiniHeroCardData(
                 id: data.id,
                 title: data.title,
                 progress: data.progress,
@@ -393,7 +308,9 @@ public struct HomeView: View {
         VStack(alignment: .leading, spacing: 24.jsScaled()) {
             homeSummarySkeleton
 
-            JSHeroCardSkeleton()
+            RoundedRectangle(cornerRadius: 20.jsScaled())
+                .frame(height: 320.jsScaled())
+                .skeleton(shape: RoundedRectangle(cornerRadius: 20.jsScaled()))
                 .padding(.horizontal, 24.jsScaled())
 
             VStack(alignment: .leading, spacing: 16.jsScaled()) {
@@ -412,9 +329,11 @@ public struct HomeView: View {
 
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 12.jsScaled()) {
-                        JSMiniCardSkeleton()
-                        JSMiniCardSkeleton()
-                        JSMiniCardSkeleton()
+                        ForEach(0..<3, id: \.self) { _ in
+                            RoundedRectangle(cornerRadius: 20.jsScaled())
+                                .frame(width: 160.jsScaled(), height: 200.jsScaled())
+                                .skeleton(shape: RoundedRectangle(cornerRadius: 20.jsScaled()))
+                        }
                     }
                     .padding(.horizontal, 20.jsScaled())
                     .padding(.vertical, 4.jsScaled())
@@ -426,53 +345,55 @@ public struct HomeView: View {
     }
 
     private var homeSummarySkeleton: some View {
-        VStack(alignment: .leading, spacing: .jsSM) {
-            RoundedRectangle(cornerRadius: 8)
-                .frame(width: 72.jsScaled(), height: 20.jsScaled())
-                .skeleton(shape: RoundedRectangle(cornerRadius: 8))
-
-            RoundedRectangle(cornerRadius: 6)
-                .frame(width: 160.jsScaled(), height: 14.jsScaled())
-                .skeleton(shape: RoundedRectangle(cornerRadius: 6))
-
-            HStack(spacing: .jsSM) {
-                summaryMetricSkeleton
-                summaryMetricSkeleton
-                summaryMetricSkeleton
-            }
-            .padding(.top, .jsXS)
-        }
-        .padding(.jsMD)
-        .background(
-            RoundedRectangle(cornerRadius: .jsRadiusMD)
-                .fill(Color.skeletonContainer)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: .jsRadiusMD)
-                .stroke(Color.skeletonHighlight.opacity(0.16), lineWidth: 1)
-        )
-        .padding(.horizontal, .jsXL)
+        HomeSummaryDashboardSkeleton()
+            .padding(.horizontal, sectionHorizontalPadding)
     }
 
-    private var summaryMetricSkeleton: some View {
-        VStack(spacing: .jsMicro) {
-            RoundedRectangle(cornerRadius: 4)
-                .frame(width: 44.jsScaled(), height: 12.jsScaled())
-                .skeleton(shape: RoundedRectangle(cornerRadius: 4))
+    private var primaryContentSection: some View {
+        VStack(alignment: .leading, spacing: .jsLG) {
+            homeSummaryCard
+                .transition(.opacity)
 
-            RoundedRectangle(cornerRadius: 6)
-                .frame(width: 52.jsScaled(), height: 20.jsScaled())
-                .skeleton(shape: RoundedRectangle(cornerRadius: 6))
+            if store.loadFailed {
+                staleContentErrorBanner
+                    .transition(.opacity)
+            }
+
+            if let heroTask = store.heroTask {
+                let heroImage = store.heroTaskImageData.flatMap { UIImage(data: $0) }.map { Image(uiImage: $0) }
+                HomeHeroCard(
+                    title: heroTask.title,
+                    subtitle: heroSubtitle(for: heroTask),
+                    progress: heroTask.progress,
+                    totalDays: heroTask.dayArray.count,
+                    completedDays: heroTask.completedDays,
+                    image: heroImage,
+                    isTodayCertified: heroTask.isCompleted(on: Date()),
+                    accessibilityLabel: heroAccessibilityLabel(for: heroTask),
+                    accessibilityHint: heroAccessibilityHint,
+                    onTap: {
+                        handleTaskTapped(heroTask)
+                    }
+                )
+                .frame(maxWidth: .infinity)
+            } else {
+                emptyStateView
+            }
         }
-        .frame(maxWidth: .infinity, minHeight: 72.jsScaled())
-        .background(
-            RoundedRectangle(cornerRadius: .jsRadiusMD)
-                .fill(Color.skeletonBase.opacity(0.52))
+    }
+
+    private var secondaryTasksSection: some View {
+        let cards = makeMiniHeroCardData(from: store.miniCardDisplayData)
+
+        return HomeSecondaryTasksSection(
+            title: secondarySectionTitle,
+            subtitle: secondarySectionSubtitle,
+            count: store.secondaryTasks.count,
+            cards: cards,
+            onCardTap: handleMiniHeroCardTapped,
+            onAllTasksTapped: handleAllTasksButtonTapped
         )
-        .overlay(
-            RoundedRectangle(cornerRadius: .jsRadiusMD)
-                .stroke(Color.skeletonHighlight.opacity(0.2), lineWidth: 1)
-        )
+        .padding(.horizontal, 0)
     }
 
     private func updateFabState(for offset: CGFloat) {
@@ -517,6 +438,17 @@ public struct HomeView: View {
         }
     }
 
+    private var fabStateStateIndex: Int {
+        switch fabState {
+        case .expanded:
+            return 0
+        case .collapsed:
+            return 1
+        case .hidden:
+            return 2
+        }
+    }
+
     private var toastBottomPadding: CGFloat {
         switch fabState {
         case .expanded:
@@ -528,20 +460,94 @@ public struct HomeView: View {
         }
     }
 
-    private var overallProgress: Double {
-        guard !store.activeTasks.isEmpty else { return 0 }
-        let total = store.activeTasks.reduce(0.0) { partial, task in
-            partial + task.progress
-        }
-        return total / Double(store.activeTasks.count)
-    }
-
-    private var todayCompletedCount: Int {
-        store.activeTasks.filter { $0.isCompleted(on: Date()) }.count
-    }
-
     private var todayLabel: String {
         DateFormatType.toString(Date(), to: .fullWithoutYear)
+    }
+
+    private var summaryPresentation: HomeSummaryCardPresentation {
+        HomeSummaryCardPresentation(
+            todayFocusState: store.todayFocusState,
+            pendingCount: store.todayPendingCount,
+            completedCount: store.todayCompletedCount,
+            overallProgressText: overallProgressText,
+            isStale: store.loadFailed && !store.tasks.isEmpty
+        )
+    }
+
+    private var secondarySectionTitle: String {
+        "이어가는 작심들"
+    }
+
+    private var secondarySectionSubtitle: String {
+        "오늘 포커스 외에 \(store.secondaryTasks.count)개를 더 이어갈 수 있어요"
+    }
+
+    private var heroAccessibilityHint: String {
+        "작심 상세 화면으로 이동합니다"
+    }
+
+    private func heroSubtitle(for task: Domain.Task) -> String {
+        "\(task.startDate.formatted(.dateTime.month().day())) ~ \(task.endDate.formatted(.dateTime.month().day()))"
+    }
+
+    private func heroAccessibilityLabel(for task: Domain.Task) -> String {
+        switch store.todayFocusState {
+        case .completedStageReady:
+            return "\(task.title), 오늘 단계를 완료한 작심, 다음 단계 준비됨, 진행률 \(Int(task.progress * 100))퍼센트"
+        case .allDoneToday:
+            return "\(task.title), 오늘 완료한 작심, 진행률 \(Int(task.progress * 100))퍼센트"
+        case .empty, .pending:
+            return "\(task.title), 오늘 포커스 작심, 진행률 \(Int(task.progress * 100))퍼센트, \(task.completedDays)일 완료"
+        }
+    }
+
+    private var overallProgressText: String {
+        let totalDays = store.activeTasks.reduce(0) { partialResult, task in
+            partialResult + task.dayArray.count
+        }
+        let completedDays = store.activeTasks.reduce(0) { partialResult, task in
+            partialResult + task.completedDays
+        }
+        guard totalDays > 0 else { return "0%" }
+        let progress = (Double(completedDays) / Double(totalDays)) * 100
+        return "\(Int(progress.rounded()))%"
+    }
+
+    private func handleAppear() {
+        store.send(.onAppear)
+    }
+
+    private func handleToastDismissed() {
+        store.send(.toastDismissed)
+    }
+
+    private func handleAddButtonTapped() {
+        store.send(.addButtonTapped)
+        triggerTapFeedback()
+    }
+
+    private func handleSettingButtonTapped() {
+        store.send(.settingButtonTapped)
+        triggerTapFeedback()
+    }
+
+    private func handleAllTasksButtonTapped() {
+        store.send(.allTasksButtonTapped)
+        triggerTapFeedback()
+    }
+
+    private func handleMiniHeroCardTapped(_ cardID: UUID) {
+        guard let task = store.secondaryTasks.first(where: { $0.id.rawValue == cardID }) else { return }
+        handleTaskTapped(task)
+    }
+
+    private func handleTaskTapped(_ task: Domain.Task) {
+        store.send(.taskTapped(task))
+        triggerTapFeedback()
+    }
+
+    private func handleRefreshTriggered() {
+        store.send(.refreshTriggered)
     }
 }
 
@@ -550,6 +556,156 @@ private struct HomeScrollOffsetPreferenceKey: PreferenceKey {
 
     static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
         value = nextValue()
+    }
+}
+
+private struct HomeHeaderSection: View {
+    let todayLabel: String
+    let onSettingsTapped: () -> Void
+
+    var body: some View {
+        HStack(alignment: .top, spacing: .jsMD) {
+            VStack(alignment: .leading, spacing: .jsXS) {
+                Text("작심")
+                    .font(.jsDisplayMedium)
+                    .foregroundColor(.labelStrong)
+
+                Text(todayLabel)
+                    .font(.jsLabelMedium)
+                    .foregroundColor(.primaryStrong)
+                    .padding(.horizontal, .jsSM)
+                    .padding(.vertical, .jsMicro)
+                    .background(
+                        Capsule()
+                            .fill(Color.primaryNormal.opacity(0.08))
+                    )
+            }
+
+            Spacer(minLength: .jsSM)
+
+            Button(action: onSettingsTapped) {
+                Image(systemName: "gearshape.fill")
+                    .font(.jsHeadlineSmall)
+                    .foregroundColor(.labelNeutral)
+                    .frame(width: 44.jsScaled(.touchTarget), height: 44.jsScaled(.touchTarget))
+                    .background(
+                        Circle()
+                            .fill(Color.backgroundAlternative)
+                    )
+            }
+            .buttonStyle(.plain)
+            .zIndex(10)
+            .accessibilityLabel("설정")
+            .accessibilityHint("설정 화면으로 이동합니다")
+        }
+    }
+}
+
+private struct HomeSecondaryTasksSection: View {
+    let title: String
+    let subtitle: String
+    let count: Int
+    let cards: [HomeMiniHeroCardData]
+    let onCardTap: (UUID) -> Void
+    let onAllTasksTapped: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: .jsSM) {
+            HStack {
+                VStack(alignment: .leading, spacing: .jsMicro) {
+                    Text(title)
+                        .font(.jsHeadlineMedium)
+                        .foregroundColor(.labelStrong)
+
+                    Text(subtitle)
+                        .font(.jsLabelMedium)
+                        .foregroundColor(.labelNeutral)
+                }
+
+                Spacer(minLength: .jsSM)
+
+                Text("\(count)")
+                    .font(.jsButtonSmall)
+                    .foregroundColor(.labelStrong)
+                    .padding(.horizontal, .jsSM)
+                    .padding(.vertical, .jsMicro)
+                    .background(
+                        Capsule()
+                            .fill(Color.backgroundAlternative)
+                    )
+
+                Button(action: onAllTasksTapped) {
+                    Text("전체 보기")
+                        .font(.jsButtonSmall)
+                        .foregroundColor(.labelStrong)
+                        .padding(.horizontal, .jsSM)
+                        .padding(.vertical, .jsXS)
+                        .background(
+                            Capsule()
+                                .fill(Color.backgroundAlternative)
+                        )
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("전체 보기")
+                .accessibilityHint("모든 작심 목록 화면으로 이동합니다")
+            }
+
+            HomeMiniHeroCardCarousel(
+                cards: cards,
+                onCardTap: onCardTap
+            )
+        }
+    }
+}
+
+private struct HomeAddButton: View {
+    let stateIndex: Int
+    let isExpanded: Bool
+    let isHidden: Bool
+    let reduceMotion: Bool
+    let fabHeight: CGFloat
+    let onTap: () -> Void
+
+    var body: some View {
+        Button(action: onTap) {
+            HStack(spacing: .jsXS) {
+                Image(systemName: "plus")
+                    .font(.jsHeadlineSmall)
+                    .foregroundColor(.onPrimary)
+
+                if isExpanded {
+                    Text("새 작심")
+                        .font(.jsButtonMedium)
+                        .foregroundColor(.onPrimary)
+                        .lineLimit(1)
+                        .transition(.opacity.combined(with: .move(edge: .trailing)))
+                }
+            }
+            .frame(height: fabHeight)
+            .padding(.horizontal, isExpanded ? .jsLG : .jsMD)
+            .background(
+                Capsule()
+                    .fill(Color.primaryNormal)
+            )
+            .overlay(
+                Capsule()
+                    .stroke(Color.white.opacity(0.16), lineWidth: 1)
+            )
+            .shadow(color: .primaryNormal.opacity(0.26), radius: 14.jsScaled(), x: 0, y: 8.jsScaled())
+            .contentShape(Capsule())
+        }
+        .buttonStyle(.plain)
+        .opacity(isHidden ? 0 : 1)
+        .scaleEffect(isHidden ? 0.92 : 1)
+        .offset(y: isHidden ? 24.jsScaled() : 0)
+        .allowsHitTesting(!isHidden)
+        .accessibilityHidden(isHidden)
+        .animation(
+            reduceMotion ? .none : JSAnimation.emphasisSpring,
+            value: stateIndex
+        )
+        .accessibilityLabel("새 작심 만들기")
+        .accessibilityHint("새 작심 생성 화면을 엽니다")
     }
 }
 

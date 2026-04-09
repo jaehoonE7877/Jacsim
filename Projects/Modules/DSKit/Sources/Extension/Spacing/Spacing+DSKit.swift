@@ -1,28 +1,28 @@
 import SwiftUI
 
 public enum JSSpacing {
-    /// 4pt - Micro spacing (icon gaps, tight padding)
+    /// 4pt - 미세 간격 (아이콘 간격, 촘촘한 패딩)
     public static var micro: CGFloat { 4.jsScaled() }
     
-    /// 8pt - Extra small (tight component padding)
+    /// 8pt - 극소 간격 (조밀한 컴포넌트 패딩)
     public static var xs: CGFloat { 8.jsScaled() }
     
-    /// 12pt - Small (compact component padding)
+    /// 12pt - 소형 (컴팩트한 컴포넌트 패딩)
     public static var sm: CGFloat { 12.jsScaled() }
     
-    /// 16pt - Medium (standard component padding)
+    /// 16pt - 중형 (기본 컴포넌트 패딩)
     public static var md: CGFloat { 16.jsScaled() }
     
-    /// 20pt - Large (section padding)
+    /// 20pt - 대형 (섹션 패딩)
     public static var lg: CGFloat { 20.jsScaled() }
     
-    /// 24pt - Extra large (screen padding)
+    /// 24pt - 특대형 (화면 패딩)
     public static var xl: CGFloat { 24.jsScaled() }
     
-    /// 32pt - 2x Large (major section spacing)
+    /// 32pt - 2배 대형 (주요 섹션 간격)
     public static var xxl: CGFloat { 32.jsScaled() }
     
-    /// 44pt - Minimum touch target size
+    /// 44pt - 최소 터치 타겟 크기
     public static var touchTarget: CGFloat { 44.jsScaled(.touchTarget) }
 }
 

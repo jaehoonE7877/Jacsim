@@ -1,11 +1,14 @@
-import Foundation
 import Testing
+import ComposableArchitecture
 
-@testable import {{ name }}Feature
+@testable import Jacsim
 
-@Test("샘플: 수학 검증")
-func {{ name|lower }}_sample_math_test() {
-    #expect(1 + 1 == 2)
-    #expect(abs(1.2 - 1.1) <= 0.1)
-    #expect(3 > 2)
+@MainActor
+@Test("{{ name }} 기본 액션이 전송된다")
+func {{ name|lower }}Feature_onAppear() async {
+    let store = TestStore(initialState: {{ name }}Feature.State()) {
+        {{ name }}Feature()
+    }
+
+    await store.send(.onAppear)
 }

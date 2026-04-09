@@ -3,7 +3,8 @@ import Domain
 import ComposableArchitecture
 import SwiftUI
 import PhotosUI
-import Core
+import JacsimClient
+import Shared
 
 @Reducer
 public struct NewTaskFeature {
@@ -116,6 +117,14 @@ public struct NewTaskFeature {
         public var canSubmit: Bool {
             !trimmedTitle.isEmpty && image != nil
         }
+
+        public var hasUnsavedChanges: Bool {
+            !trimmedTitle.isEmpty
+                || image != nil
+                || stageType != .three
+                || isAlarmEnabled
+                || currentStep != .basicInfo
+        }
     }
 
     public enum Action: BindableAction {
@@ -132,18 +141,16 @@ public struct NewTaskFeature {
         case delegate(Delegate)
         
         public enum Alert: Equatable {
-            case dismiss
+            case discardChangesConfirmed
         }
         
-        public enum Delegate {
+        public enum Delegate: Equatable {
             case taskCreated
+            case cancelled
         }
     }
 
-    @Dependency(\.taskCommandClient) var taskCommandClient
-    @Dependency(\.notificationScheduler) var notificationScheduler
-    @Dependency(\.imageStore) var imageStore
-    @Dependency(\.userSettingsRepository) var userSettingsRepository
+    @Dependency(\.createNewTaskUseCase) var createNewTaskUseCase
 
     public var body: some ReducerOf<Self> {
         BindingReducer()
@@ -184,51 +191,27 @@ public struct NewTaskFeature {
                 state.saveFailed = false
                 state.stepValidationError = nil
                 let stageType = state.stageType
-                let startDate = Calendar.current.startOfDay(for: Date())
-                let endDate = Calendar.current.date(
-                    byAdding: .day,
-                    value: stageType.durationDays - 1,
-                    to: startDate
-                ) ?? startDate
-                
                 let isAlarmEnabled = state.isAlarmEnabled
                 let alarmDate = state.alarmDate
-                let createTaskUseCase = CreateTaskUseCase()
-                var task = createTaskUseCase.createTask(
+
+                let mainImageData = image.jpegData(compressionQuality: 0.4)
+                let input = CreateNewTaskUseCase.Input(
                     title: trimmedTitle,
-                    startDate: startDate,
-                    endDate: endDate,
-                    stageType: stageType
+                    stageType: stageType,
+                    isAlarmEnabled: isAlarmEnabled,
+                    alarmDate: alarmDate,
+                    mainImageData: mainImageData
                 )
-                task.isNotificationEnabled = isAlarmEnabled
-                task.alarm = isAlarmEnabled ? alarmDate : nil
-                let taskToSave = task
-                
-                Logger.taskCreated(
-                    title: taskToSave.title,
-                    taskId: taskToSave.id.rawValue.uuidString,
-                    startDate: taskToSave.startDate,
-                    endDate: taskToSave.endDate
-                )
-                return .run { [taskCommandClient, notificationScheduler, imageStore, userSettingsRepository] send in
+
+                return .run { [createNewTaskUseCase] send in
                     do {
-                        if let data = image.jpegData(compressionQuality: 0.4) {
-                            _ = try await imageStore.saveImage(taskToSave.mainImageKey, data)
-                        }
-                        try await taskCommandClient.addTask(taskToSave)
-                        if isAlarmEnabled {
-                            let reminderUseCase = ReminderSchedulingUseCase()
-                            let isNotificationEnabled = await userSettingsRepository.isNotificationEnabled()
-                            await reminderUseCase.scheduleReminderIfNeeded(
-                                taskID: taskToSave.id,
-                                title: taskToSave.title,
-                                isAlarmEnabled: isAlarmEnabled,
-                                alarmDate: alarmDate,
-                                isGlobalNotificationEnabled: isNotificationEnabled,
-                                cancelExistingReminder: false,
-                                notificationScheduler: notificationScheduler
-                            )
-                        }
+                        let task = try await createNewTaskUseCase.execute(input)
+                        Logger.taskCreated(
+                            title: task.title,
+                            taskId: task.id.rawValue.uuidString,
+                            startDate: task.startDate,
+                            endDate: task.endDate
+                        )
                         await send(.saveCompleted(.success(())))
                     } catch {
                         await send(.saveCompleted(.failure(error)))
@@ -254,10 +237,8 @@ public struct NewTaskFeature {
                 return .none
 
             case let .photoPickerItemChanged(item):
-                guard let item else { return .none }
                 return .run { send in
-                    if let data = try? await item.loadTransferable(type: Data.self),
-                       let image = UIImage(data: data) {
+                    if let image = await PhotoPickerImageLoader.loadImage(from: item) {
                         await send(.imageSelected(image))
                     }
                 }
@@ -281,7 +262,33 @@ public struct NewTaskFeature {
                 }
                 return .none
 
-            case .binding, .cancelButtonTapped, .delegate, .alert:
+            case .cancelButtonTapped:
+                guard !state.isSaving else { return .none }
+                guard state.hasUnsavedChanges else {
+                    return .send(.delegate(.cancelled))
+                }
+                state.alert = AlertState {
+                    TextState("작성 중인 내용을 버릴까요?")
+                } actions: {
+                    ButtonState(role: .destructive, action: .discardChangesConfirmed) {
+                        TextState("버리기")
+                    }
+                    ButtonState(role: .cancel) {
+                        TextState("계속 작성")
+                    }
+                } message: {
+                    TextState("저장하지 않은 제목, 사진, 알림 설정이 사라집니다.")
+                }
+                return .none
+
+            case .alert(.presented(.discardChangesConfirmed)):
+                state.alert = nil
+                return .send(.delegate(.cancelled))
+
+            case .alert:
+                return .none
+
+            case .binding, .delegate:
                 return .none
             }
         }

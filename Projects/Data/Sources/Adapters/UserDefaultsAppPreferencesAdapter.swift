@@ -1,5 +1,5 @@
 import Foundation
-import ExternalInterface
+import Ports
 
 public final class UserDefaultsAppPreferencesAdapter: @unchecked Sendable {
     private enum Keys {

@@ -2,8 +2,6 @@ import Foundation
 import Domain
 
 func mapToSwiftDataModel(_ task: Domain.Task, existing: UserJacsimModel? = nil) -> UserJacsimModel {
-    let success = task.records.filter { $0.check }.count
-    
     let userJacsim: UserJacsimModel = {
         if let existing {
             return existing
@@ -13,7 +11,8 @@ func mapToSwiftDataModel(_ task: Domain.Task, existing: UserJacsimModel? = nil) 
             title: task.title,
             startDate: task.startDate,
             endDate: task.endDate,
-            success: success
+            alarm: task.alarm,
+            isNotificationEnabled: task.isNotificationEnabled
         )
     }()
     
@@ -23,7 +22,6 @@ func mapToSwiftDataModel(_ task: Domain.Task, existing: UserJacsimModel? = nil) 
     userJacsim.endDate = task.endDate
     userJacsim.alarm = task.alarm
     userJacsim.isNotificationEnabled = task.isNotificationEnabled
-    userJacsim.success = success
     
     let existingStagesByID: [UUID: StageModel] = Dictionary(
         uniqueKeysWithValues: userJacsim.stages.map { ($0.id, $0) }
@@ -62,7 +60,6 @@ func mapToSwiftDataModel(_ task: Domain.Task, existing: UserJacsimModel? = nil) 
             certified.date = snapshot.date
             certified.imagePath = snapshot.imagePath
             certified.userJacsim = userJacsim
-            certified.stage = nil
             return certified
         }
         
@@ -72,15 +69,10 @@ func mapToSwiftDataModel(_ task: Domain.Task, existing: UserJacsimModel? = nil) 
             check: snapshot.check,
             date: snapshot.date,
             imagePath: snapshot.imagePath,
-            userJacsim: userJacsim,
-            stage: nil
+            userJacsim: userJacsim
         )
     }
-    
-    for stage in userJacsim.stages {
-        stage.dailyRecords = []
-    }
-    
+
     return userJacsim
 }
 
@@ -96,15 +88,8 @@ func mapToDomainModel(_ userJacsim: UserJacsimModel) -> Domain.Task {
             resultRaw: $0.resultRaw
         )
     }
-    
-    var uniqueCertifiedByID: [UUID: CertifiedModel] = [:]
-    for certified in userJacsim.memoList + userJacsim.stages.flatMap(\.dailyRecords) {
-        if uniqueCertifiedByID[certified.id] == nil {
-            uniqueCertifiedByID[certified.id] = certified
-        }
-    }
-    
-    let records: [Domain.DailyRecordSnapshot] = uniqueCertifiedByID.values
+
+    let records: [Domain.DailyRecordSnapshot] = userJacsim.memoList
         .sorted { $0.date < $1.date }
         .map {
             Domain.DailyRecordSnapshot(
