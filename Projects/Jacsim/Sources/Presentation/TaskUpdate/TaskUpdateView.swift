@@ -180,7 +180,6 @@ public struct TaskUpdateView: View {
     }
 }
 
-@MainActor
 private struct TaskUpdatePhotoPickerSection: View {
     let image: UIImage?
     @Binding var photoPickerItem: PhotosPickerItem?
@@ -262,7 +261,9 @@ private struct TaskUpdatePhotoPickerSection: View {
     }
 
     private var photoPicker: some View {
-        PhotosPicker(selection: $photoPickerItem, matching: .images) {
+        let hasImage = image != nil
+
+        return PhotosPicker(selection: $photoPickerItem, matching: .images) {
             HStack(spacing: .jsXS) {
                 Image(systemName: hasImage ? "arrow.triangle.2.circlepath" : "photo.badge.plus")
                     .font(.jsHeadlineSmall)
@@ -298,7 +299,6 @@ private struct TaskUpdatePhotoPickerSection: View {
     }
 }
 
-@MainActor
 private struct TaskUpdateMemoSection: View {
     @Binding var memo: String
     @FocusState.Binding var isFocused: Bool
@@ -340,7 +340,6 @@ private struct TaskUpdateMemoSection: View {
     }
 }
 
-@MainActor
 private struct TaskUpdateFooterSection: View {
     let footerBanner: (text: String, icon: String, tintColor: Color)?
     let isButtonEnabled: Bool
@@ -390,7 +389,6 @@ private struct TaskUpdateFooterSection: View {
     }
 }
 
-@MainActor
 private struct TaskUpdateLoadingOverlay: View {
     var body: some View {
         ZStack {
