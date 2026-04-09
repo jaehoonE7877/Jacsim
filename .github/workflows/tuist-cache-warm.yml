@@ -50,8 +50,30 @@ jobs:
         if: ${{ env.TUIST_FULL_HANDLE != '' && env.TUIST_CONFIG_TOKEN == '' }}
         run: mise exec -- tuist auth login
 
+      - name: Restore Tuist dependency cache
+        id: tuist-deps-cache-restore
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            .build
+            Tuist/.build
+            Tuist/Dependencies
+          key: ${{ runner.os }}-tuist-deps-${{ env.TUIST_COMPATIBLE_XCODE_VERSION }}-${{ hashFiles('Package.resolved', 'Package.swift', 'Tuist.swift', '.mise.toml', '.tool-versions') }}
+          restore-keys: |
+            ${{ runner.os }}-tuist-deps-${{ env.TUIST_COMPATIBLE_XCODE_VERSION }}-
+
       - name: Install dependencies
         run: mise exec -- tuist install
+
+      - name: Save Tuist dependency cache
+        if: ${{ steps.tuist-deps-cache-restore.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            .build
+            Tuist/.build
+            Tuist/Dependencies
+          key: ${{ steps.tuist-deps-cache-restore.outputs.cache-primary-key }}
 
       - name: Warm module cache (external-only)
         run: mise exec -- bash scripts/tuist/cache-warm.sh Debug
