@@ -4,6 +4,7 @@ import Domain
 import DesignSystem
 import _Concurrency
 
+@MainActor
 public struct HomeView: View {
     private enum FabState {
         case expanded
