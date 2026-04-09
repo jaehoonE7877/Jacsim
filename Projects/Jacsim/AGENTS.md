@@ -13,7 +13,8 @@
 | 루트 Reducer | `Sources/Presentation/App/AppFeature.swift` |
 | 홈 흐름 화면 | `Sources/Presentation/Home/**` |
 | Use case 진입 지점 | `../Workflows/Sources/UseCases/**` (external module) |
-| Workflow DI bridge | `../JacsimClient/Sources/UseCaseClients.swift` (external module) |
+| Read-model query bridge | `../JacsimClient/Sources/TaskReadModelQueriesClient.swift` (external module) |
+| Command workflow bridge | `../JacsimClient/Sources/UseCaseClients.swift` (external module) |
 | Port dependency keys | `../JacsimClient/Sources/*Client.swift` (external module) |
 
 ## Test
@@ -26,10 +27,13 @@ tuist test Jacsim
 
 ### ✅ Do
 
-- `taskRepository`, `userSettingsRepository`, `appPreferences` 같은 현재 client dependency를 통해서만 데이터/설정 접근
-- Workflow use case dependency 연결은 `../JacsimClient/Sources/UseCaseClients.swift`에서 관리
+- `taskRepository`, `userSettingsRepository`, `appPreferences`, `imageStore`, `notificationScheduler` 같은 현재 client dependency를 통해서만 데이터/설정 접근
+- read-only 화면 조립은 `taskReadModelQueries` 같은 query dependency를 사용한다
+- 다단계 화면 흐름은 `Workflows`의 command use case를 `Dependency`(예: `createNewTaskUseCase`, `updateTaskSettingsUseCase`)로 호출한다
+- 이미지/권한 같은 단순 I/O는 기존 port dependency를 직접 사용한다
+- query dependency 연결은 `../JacsimClient/Sources/TaskReadModelQueriesClient.swift`에서 관리한다
+- command use case dependency 연결은 `../JacsimClient/Sources/UseCaseClients.swift`에서 관리한다
 - 실제 인프라(`Data` 접근) 의존과 port dependency key 정의는 `../JacsimClient/Sources/*Client.swift` 계층에서만 구체화
-- 다단계 화면 흐름은 `Workflows`의 use case를 `Dependency`(예: `createNewTaskUseCase`, `updateTaskSettingsUseCase`)로 호출
 - 각 화면은 반드시 `*Feature.swift` + `*View.swift` 쌍으로 구성
 
 ### 🚫 Do Not

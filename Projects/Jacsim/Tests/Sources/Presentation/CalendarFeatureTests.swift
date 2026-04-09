@@ -31,10 +31,11 @@ func calendarFeatureOnAppearBuildsCalendarState() async {
         $0.isLoading = true
         $0.loadFailed = false
     }
+    let summary = TaskReadModelQueries.live().calendar(tasks: [task])
     await store.receive(\.tasksResponse) {
         $0.tasks = [task]
-        $0.eventDates = UseCaseAssembly.calendarSummaryUseCase.execute(.init(tasks: [task])).eventDates
-        $0.dateColors = UseCaseAssembly.calendarSummaryUseCase.execute(.init(tasks: [task])).dateColors
+        $0.eventDates = summary.eventDates
+        $0.dateColors = summary.dateColors
         $0.isLoading = false
         $0.loadFailed = false
     }

@@ -1,11 +1,6 @@
 import Workflows
 
 public enum UseCaseAssembly {
-    public static let homeSummaryUseCase = HomeSummaryUseCase.live()
-    public static let allTaskSummaryUseCase = AllTaskSummaryUseCase.live()
-    public static let calendarSummaryUseCase = CalendarSummaryUseCase.live()
-    public static let taskDetailSummaryUseCase = TaskDetailSummaryUseCase.live()
-
     public static let createNewTaskUseCase: CreateNewTaskUseCase = {
         CreateNewTaskUseCase.live(
             taskRepository: DependencyAssembly.taskRepository,
@@ -52,19 +47,9 @@ public enum UseCaseAssembly {
         )
     }()
 
-    public static let loadImageUseCase: LoadImageUseCase = {
-        LoadImageUseCase.live(imageStore: DependencyAssembly.imageStore)
-    }()
-
     public static let reminderSchedulingUseCase = ReminderSchedulingUseCase(
         notificationScheduler: DependencyAssembly.notificationScheduler,
         userSettingsRepository: DependencyAssembly.userSettingsRepository,
         taskRepository: DependencyAssembly.taskRepository
     )
-
-    public static let requestNotificationPermissionUseCase: RequestNotificationPermissionUseCase = {
-        RequestNotificationPermissionUseCase.live(
-            notificationScheduler: DependencyAssembly.notificationScheduler
-        )
-    }()
 }

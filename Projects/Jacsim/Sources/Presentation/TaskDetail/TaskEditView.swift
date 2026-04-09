@@ -31,44 +31,11 @@ public struct TaskEditView: View {
             scrollRequestToken: scrollRequestToken,
             scrollAnimation: scrollAnimation,
             stickyFooter: {
-                HStack(spacing: .jsSM) {
-                    JSButton(
-                        title: "취소",
-                        style: .secondary,
-                        size: .large,
-                        isEnabled: !store.isSaving
-                    ) {
-                        store.send(.cancelButtonTapped)
-                    }
-
-                    ZStack {
-                        JSButton(
-                            title: "저장",
-                            style: .primary,
-                            size: .large,
-                            isEnabled: isSaveEnabled && !store.isSaving
-                        ) {
-                            store.send(.saveButtonTapped)
-                        }
-
-                        if store.isSaving {
-                            JSProgressIndicator(size: .small, tintColor: .white)
-                        }
-                    }
-                }
-                .padding(.horizontal, .jsMD)
-                .padding(.vertical, .jsMD)
-                .background(
-                    LinearGradient(
-                        colors: [
-                            Color.backgroundNormal.opacity(0),
-                            Color.backgroundNormal,
-                            Color.backgroundNormal
-                        ],
-                        startPoint: .top,
-                        endPoint: .bottom
-                    )
-                    .ignoresSafeArea()
+                TaskEditStickyFooter(
+                    isSaving: store.isSaving,
+                    isSaveEnabled: isSaveEnabled,
+                    onCancel: { store.send(.cancelButtonTapped) },
+                    onSave: { store.send(.saveButtonTapped) }
                 )
             }
         ) {
@@ -80,7 +47,11 @@ public struct TaskEditView: View {
                 )
             }
 
-            photoSection
+            TaskEditPhotoSection(
+                image: store.image,
+                photoPickerItem: $store.photoPickerItem,
+                onPhotoPickerItemChanged: { store.send(.photoPickerItemChanged($0)) }
+            )
             basicInfoSection
             alarmSection
         }
@@ -121,107 +92,6 @@ public struct TaskEditView: View {
             reduceMotion ? .none : .easeInOut(duration: keyboardObserver.context.animationDuration),
             value: keyboardObserver.context.isVisible
         )
-    }
-
-    private var photoSection: some View {
-        let photoHeight: CGFloat = 232.jsScaled()
-        let cardShape = RoundedRectangle(cornerRadius: .jsRadiusLG, style: .continuous)
-
-        return RedesignSectionCard(
-            title: "대표 사진",
-            subtitle: "카드에 노출될 대표 이미지를 설정해요"
-        ) {
-            VStack(spacing: .jsSM) {
-                ZStack {
-                    if let image = store.image {
-                        Image(uiImage: image)
-                            .resizable()
-                            .aspectRatio(contentMode: .fill)
-                            .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    } else {
-                        VStack(spacing: .jsXS) {
-                            Image(systemName: "photo.on.rectangle.angled")
-                                .font(.jsDisplayMedium)
-                                .foregroundColor(.labelAlternative)
-
-                            Text("대표 사진을 추가해 주세요")
-                                .font(.jsBodyMedium)
-                                .foregroundColor(.labelStrong)
-
-                            Text("가로·세로 비율은 자동으로 맞춰져요")
-                                .font(.jsLabelMedium)
-                                .foregroundColor(.labelAlternative)
-                        }
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .background(Color.backgroundStrong)
-                    }
-                }
-                .frame(maxWidth: .infinity, minHeight: photoHeight, maxHeight: photoHeight)
-                .clipShape(cardShape)
-                .overlay {
-                    cardShape
-                        .stroke(
-                            store.image == nil ? Color.primaryNormal.opacity(0.35) : Color.labelDisable.opacity(0.24),
-                            style: StrokeStyle(
-                                lineWidth: 1,
-                                dash: store.image == nil ? [8, 6] : []
-                            )
-                        )
-                }
-                .overlay(alignment: .topTrailing) {
-                    if store.image != nil {
-                        HStack(spacing: .jsMicro) {
-                            Image(systemName: "checkmark.circle.fill")
-                                .foregroundColor(.positive)
-
-                            Text("선택됨")
-                                .font(.jsLabelMedium)
-                                .foregroundColor(.labelStrong)
-                        }
-                        .padding(.horizontal, .jsXS)
-                        .padding(.vertical, .jsMicro)
-                        .background(Color.backgroundNormal.opacity(0.92))
-                        .clipShape(Capsule())
-                        .padding(.jsSM)
-                    }
-                }
-
-                let hasImage = store.image != nil
-                PhotosPicker(selection: $store.photoPickerItem, matching: .images) {
-                    HStack(spacing: .jsXS) {
-                        Image(systemName: hasImage ? "arrow.triangle.2.circlepath" : "photo.badge.plus")
-                            .font(.jsHeadlineSmall)
-                            .foregroundColor(.primaryNormal)
-
-                        Text(hasImage ? "대표 사진 변경" : "대표 사진 선택")
-                            .font(.jsButtonMedium)
-                            .foregroundColor(.labelStrong)
-
-                        Spacer(minLength: .jsXS)
-
-                        Image(systemName: "chevron.right")
-                            .font(.jsButtonSmall)
-                            .foregroundColor(.labelAlternative)
-                    }
-                    .padding(.horizontal, .jsMD)
-                    .padding(.vertical, .jsSM)
-                    .background(
-                        RoundedRectangle(cornerRadius: .jsRadiusMD, style: .continuous)
-                            .fill(Color.backgroundStrong)
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: .jsRadiusMD, style: .continuous)
-                            .stroke(Color.labelDisable.opacity(0.24), lineWidth: 1)
-                    )
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel(hasImage ? "대표 사진 변경" : "대표 사진 선택")
-                .accessibilityHint("사진 보관함에서 새 대표 사진을 고릅니다")
-                .onChange(of: store.photoPickerItem) { _, newItem in
-                    store.send(.photoPickerItemChanged(newItem))
-                }
-            }
-        }
     }
 
     private var basicInfoSection: some View {
@@ -289,5 +159,170 @@ public struct TaskEditView: View {
 
     private func clearInputScrollRequest() {
         scrollTargetID = nil
+    }
+}
+
+private struct TaskEditStickyFooter: View {
+    let isSaving: Bool
+    let isSaveEnabled: Bool
+    let onCancel: () -> Void
+    let onSave: () -> Void
+
+    var body: some View {
+        HStack(spacing: .jsSM) {
+            JSButton(
+                title: "취소",
+                style: .secondary,
+                size: .large,
+                isEnabled: !isSaving
+            ) {
+                onCancel()
+            }
+
+            ZStack {
+                JSButton(
+                    title: "저장",
+                    style: .primary,
+                    size: .large,
+                    isEnabled: isSaveEnabled && !isSaving
+                ) {
+                    onSave()
+                }
+
+                if isSaving {
+                    JSProgressIndicator(size: .small, tintColor: .white)
+                }
+            }
+        }
+        .padding(.horizontal, .jsMD)
+        .padding(.vertical, .jsMD)
+        .background(
+            LinearGradient(
+                colors: [
+                    Color.backgroundNormal.opacity(0),
+                    Color.backgroundNormal,
+                    Color.backgroundNormal
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .ignoresSafeArea()
+        )
+    }
+}
+
+private struct TaskEditPhotoSection: View {
+    let image: UIImage?
+    @Binding var photoPickerItem: PhotosPickerItem?
+    let onPhotoPickerItemChanged: (PhotosPickerItem?) -> Void
+
+    private let photoHeight: CGFloat = 232.jsScaled()
+    private let cardShape = RoundedRectangle(cornerRadius: .jsRadiusLG, style: .continuous)
+
+    var body: some View {
+        RedesignSectionCard(
+            title: "대표 사진",
+            subtitle: "카드에 노출될 대표 이미지를 설정해요"
+        ) {
+            VStack(spacing: .jsSM) {
+                photoPreview
+                photoPicker
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var photoPreview: some View {
+        ZStack {
+            if let image {
+                Image(uiImage: image)
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else {
+                VStack(spacing: .jsXS) {
+                    Image(systemName: "photo.on.rectangle.angled")
+                        .font(.jsDisplayMedium)
+                        .foregroundColor(.labelAlternative)
+
+                    Text("대표 사진을 추가해 주세요")
+                        .font(.jsBodyMedium)
+                        .foregroundColor(.labelStrong)
+
+                    Text("가로·세로 비율은 자동으로 맞춰져요")
+                        .font(.jsLabelMedium)
+                        .foregroundColor(.labelAlternative)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(Color.backgroundStrong)
+            }
+        }
+        .frame(maxWidth: .infinity, minHeight: photoHeight, maxHeight: photoHeight)
+        .clipShape(cardShape)
+        .overlay {
+            cardShape
+                .stroke(
+                    image == nil ? Color.primaryNormal.opacity(0.35) : Color.labelDisable.opacity(0.24),
+                    style: StrokeStyle(
+                        lineWidth: 1,
+                        dash: image == nil ? [8, 6] : []
+                    )
+                )
+        }
+        .overlay(alignment: .topTrailing) {
+            if image != nil {
+                HStack(spacing: .jsMicro) {
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundColor(.positive)
+
+                    Text("선택됨")
+                        .font(.jsLabelMedium)
+                        .foregroundColor(.labelStrong)
+                }
+                .padding(.horizontal, .jsXS)
+                .padding(.vertical, .jsMicro)
+                .background(Color.backgroundNormal.opacity(0.92))
+                .clipShape(Capsule())
+                .padding(.jsSM)
+            }
+        }
+    }
+
+    private var photoPicker: some View {
+        let hasImage = image != nil
+
+        return PhotosPicker(selection: $photoPickerItem, matching: .images) {
+            HStack(spacing: .jsXS) {
+                Image(systemName: hasImage ? "arrow.triangle.2.circlepath" : "photo.badge.plus")
+                    .font(.jsHeadlineSmall)
+                    .foregroundColor(.primaryNormal)
+
+                Text(hasImage ? "대표 사진 변경" : "대표 사진 선택")
+                    .font(.jsButtonMedium)
+                    .foregroundColor(.labelStrong)
+
+                Spacer(minLength: .jsXS)
+
+                Image(systemName: "chevron.right")
+                    .font(.jsButtonSmall)
+                    .foregroundColor(.labelAlternative)
+            }
+            .padding(.horizontal, .jsMD)
+            .padding(.vertical, .jsSM)
+            .background(
+                RoundedRectangle(cornerRadius: .jsRadiusMD, style: .continuous)
+                    .fill(Color.backgroundStrong)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: .jsRadiusMD, style: .continuous)
+                    .stroke(Color.labelDisable.opacity(0.24), lineWidth: 1)
+            )
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(hasImage ? "대표 사진 변경" : "대표 사진 선택")
+        .accessibilityHint("사진 보관함에서 새 대표 사진을 고릅니다")
+        .onChange(of: photoPickerItem) { _, newItem in
+            onPhotoPickerItemChanged(newItem)
+        }
     }
 }

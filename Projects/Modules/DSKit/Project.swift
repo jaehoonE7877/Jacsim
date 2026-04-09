@@ -2,13 +2,13 @@ import ProjectDescription
 import ProjectDescriptionHelpers
 import DependencyPlugin
 
-let project = Project.makeModule(
+let project = Project.makeFrameworkProject(
     name: "DesignSystem",
     swiftLanguageVersion: .v6,
-    targets: [.staticFramework],
     internalDependencies: [
         .Modules.shared
     ],
     hasResources: true,
+    includeTests: false,
     tags: ["module", "design-system"]
 )

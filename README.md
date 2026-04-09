@@ -47,8 +47,8 @@ Presentation(App) ──▶ Workflows(Orchestration) ──▶ Ports
 | 모듈 | 책임 |
 |---|---|
 | `Projects/Jacsim` | 앱 진입점과 Presentation(TCA) 화면 |
-| `Projects/JacsimClient` | 앱 의존성 조립과 Ports/Adapters bridge |
-| `Projects/Workflows` | 애플리케이션 유스케이스 오케스트레이션 |
+| `Projects/JacsimClient` | 앱 의존성 조립과 port/query/use case bridge |
+| `Projects/Workflows` | command 오케스트레이션과 read-only query surface |
 | `Projects/Domain` | 비즈니스 규칙, 엔티티, 도메인 서비스 |
 | `Projects/ExternalInterface` | `Ports`: 계약과 경계 인터페이스 |
 | `Projects/Data` | `Adapters`: SwiftData, UserDefaults, 알림 등 외부 I/O 구현 |
@@ -82,13 +82,16 @@ tuist test Workflows
 tuist test Ports
 tuist test Adapters
 tuist test Shared
-tuist test DesignSystem
 ```
+
+> `DesignSystem`에는 전용 unit test target이 없습니다. DSKit 변경은 `tuist build Jacsim`과 영향받는 downstream scheme 테스트로 검증합니다.
 
 ## Development Guide
 
 - 새 화면은 `*Feature.swift` + `*View.swift` 쌍으로 구성합니다.
-- Presentation은 `JacsimClient`가 노출하는 dependency를 사용하고 concrete adapter를 직접 참조하지 않습니다.
+- Presentation은 `JacsimClient`가 노출하는 port, query, use case dependency를 사용하고 concrete adapter를 직접 참조하지 않습니다.
+- read-only 화면 조립은 query surface를 우선 사용하고, multi-step 비즈니스 흐름은 use case로 호출합니다.
+- trivial wrapper use case를 늘리지 않고, 단순 I/O는 기존 port dependency를 우선 사용합니다.
 - 상세 규칙, 작업 경계, 테스트 기준은 [AGENTS.md](AGENTS.md)를 기준으로 따릅니다.
 
 ## Documentation Map

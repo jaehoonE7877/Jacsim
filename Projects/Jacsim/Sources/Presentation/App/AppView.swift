@@ -46,6 +46,34 @@ public struct AppView: View {
     }
 
     public var body: some View {
+        rootContent
+        .allowsHitTesting(!isSplashVisible)
+        .accessibilityHidden(isSplashVisible)
+        .overlay(alignment: .center) {
+            splashOverlay
+        }
+        .onAppear {
+            handleAppear()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .jacsimThemeChanged)) { notification in
+            handleThemePreferenceRefresh(notification)
+        }
+        .onChange(of: scenePhase) { _, newPhase in
+            handleScenePhaseChange(newPhase)
+        }
+        .onChange(of: store.state) { _, newState in
+            handleStateChange(newState)
+        }
+        .onChange(of: minDurationPassed) { _, _ in
+            handleSplashEligibilityChange()
+        }
+        .onChange(of: canDismissFromLoad) { _, _ in
+            handleSplashEligibilityChange()
+        }
+        .preferredColorScheme(colorScheme)
+    }
+
+    private var rootContent: some View {
         Group {
             if let onboardingStore = store.scope(state: \.onboarding, action: \.onboarding) {
                 WalkThroughView(store: onboardingStore)
@@ -53,9 +81,10 @@ public struct AppView: View {
                 HomeView(store: homeStore)
             }
         }
-        .allowsHitTesting(!isSplashVisible)
-        .accessibilityHidden(isSplashVisible)
-        .overlay {
+    }
+
+    private var splashOverlay: some View {
+        Group {
             if isSplashVisible {
                 AppStartupSplashView(
                     reduceMotion: reduceMotion,
@@ -65,28 +94,29 @@ public struct AppView: View {
                 .zIndex(1000)
             }
         }
-        .onAppear {
-            store.send(.onAppear)
-            startSplashIfNeeded(for: store.state)
-            updateSplashEligibility(for: store.state)
-        }
-        .onReceive(NotificationCenter.default.publisher(for: .jacsimThemeChanged)) { _ in
-            store.send(.themePreferenceRefreshRequested)
-        }
-        .onChange(of: scenePhase) { _, newPhase in
-            store.send(.scenePhaseChanged(newPhase))
-        }
-        .onChange(of: store.state) { _, newState in
-            startSplashIfNeeded(for: newState)
-            updateSplashEligibility(for: newState)
-        }
-        .onChange(of: minDurationPassed) { _, _ in
-            dismissSplashIfPossible()
-        }
-        .onChange(of: canDismissFromLoad) { _, _ in
-            dismissSplashIfPossible()
-        }
-        .preferredColorScheme(colorScheme)
+    }
+
+    private func handleAppear() {
+        store.send(.onAppear)
+        startSplashIfNeeded(for: store.state)
+        updateSplashEligibility(for: store.state)
+    }
+
+    private func handleThemePreferenceRefresh(_: Notification) {
+        store.send(.themePreferenceRefreshRequested)
+    }
+
+    private func handleScenePhaseChange(_ newPhase: ScenePhase) {
+        store.send(.scenePhaseChanged(newPhase))
+    }
+
+    private func handleStateChange(_ newState: AppFeature.State) {
+        startSplashIfNeeded(for: newState)
+        updateSplashEligibility(for: newState)
+    }
+
+    private func handleSplashEligibilityChange() {
+        dismissSplashIfPossible()
     }
 
     private func startSplashIfNeeded(for state: AppFeature.State) {

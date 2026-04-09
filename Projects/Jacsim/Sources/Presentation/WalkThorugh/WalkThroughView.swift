@@ -16,47 +16,60 @@ public struct WalkThroughView: View {
         var id: String { title }
     }
 
-    private let images = [
-        DesignSystemAsset.Assets.onboardingImg1.image,
-        DesignSystemAsset.Assets.onboardingImg2.image,
-        DesignSystemAsset.Assets.onboardingImg3.image,
-        DesignSystemAsset.Assets.onboardingImg4.image
-    ]
-    private let titles = [
-        "오늘의 작심이 한눈에 보여요",
-        "새 작심은 단계별로 가볍게 만들어요",
-        "기록이 쌓일수록 변화가 보여요",
-        "모든 작심의 흐름을 모아봐요"
-    ]
-    private let subtitles = [
-        "가장 중요한 작심과 남은 할 일을 홈에서 바로 확인해요",
-        "제목, 기간, 사진, 알림까지 흐름대로 정하면 바로 시작할 수 있어요",
-        "캘린더에서 날짜별 인증 상태와 오늘의 기록을 한눈에 살펴봐요",
-        "진행, 성공, 실패를 한 번에 정리하고 다음 행동을 이어가요"
-    ]
-    private let stageLabels = [
-        "홈",
-        "생성",
-        "기록",
-        "회고"
-    ]
-    private let highlights: [[Highlight]] = [
-        [
-            Highlight(icon: "target", title: "핵심 작심", subtitle: "가장 중요한 목표를 바로 확인"),
-            Highlight(icon: "checklist", title: "남은 할 일", subtitle: "오늘 해야 할 인증을 빠르게 파악")
-        ],
-        [
-            Highlight(icon: "text.cursor", title: "짧은 입력", subtitle: "제목과 기간부터 먼저 정리"),
-            Highlight(icon: "photo", title: "대표 사진", subtitle: "카드에 보일 사진 한 장 선택")
-        ],
-        [
-            Highlight(icon: "calendar", title: "날짜별 상태", subtitle: "캘린더에서 인증 흐름을 확인"),
-            Highlight(icon: "camera", title: "오늘의 기록", subtitle: "그날 남긴 인증을 이어서 검토")
-        ],
-        [
-            Highlight(icon: "square.stack.3d.up", title: "전체 흐름", subtitle: "진행, 성공, 실패를 한 번에 정리"),
-            Highlight(icon: "arrow.trianglehead.clockwise", title: "다음 행동", subtitle: "다음에 이어갈 작심을 다시 선택")
-        ]
+    private struct Page: Identifiable {
+        let id: Int
+        let stageLabel: String
+        let title: String
+        let subtitle: String
+        let image: UIImage
+        let highlights: [Highlight]
+    }
+
+    private let pages: [Page] = [
+        Page(
+            id: 0,
+            stageLabel: "홈",
+            title: "오늘의 작심이 한눈에 보여요",
+            subtitle: "가장 중요한 작심과 남은 할 일을 홈에서 바로 확인해요",
+            image: DesignSystemAsset.Assets.onboardingImg1.image,
+            highlights: [
+                Highlight(icon: "target", title: "핵심 작심", subtitle: "가장 중요한 목표를 바로 확인"),
+                Highlight(icon: "checklist", title: "남은 할 일", subtitle: "오늘 해야 할 인증을 빠르게 파악")
+            ]
+        ),
+        Page(
+            id: 1,
+            stageLabel: "생성",
+            title: "새 작심은 단계별로 가볍게 만들어요",
+            subtitle: "제목, 기간, 사진, 알림까지 흐름대로 정하면 바로 시작할 수 있어요",
+            image: DesignSystemAsset.Assets.onboardingImg2.image,
+            highlights: [
+                Highlight(icon: "text.cursor", title: "짧은 입력", subtitle: "제목과 기간부터 먼저 정리"),
+                Highlight(icon: "photo", title: "대표 사진", subtitle: "카드에 보일 사진 한 장 선택")
+            ]
+        ),
+        Page(
+            id: 2,
+            stageLabel: "기록",
+            title: "기록이 쌓일수록 변화가 보여요",
+            subtitle: "캘린더에서 날짜별 인증 상태와 오늘의 기록을 한눈에 살펴봐요",
+            image: DesignSystemAsset.Assets.onboardingImg3.image,
+            highlights: [
+                Highlight(icon: "calendar", title: "날짜별 상태", subtitle: "캘린더에서 인증 흐름을 확인"),
+                Highlight(icon: "camera", title: "오늘의 기록", subtitle: "그날 남긴 인증을 이어서 검토")
+            ]
+        ),
+        Page(
+            id: 3,
+            stageLabel: "회고",
+            title: "모든 작심의 흐름을 모아봐요",
+            subtitle: "진행, 성공, 실패를 한 번에 정리하고 다음 행동을 이어가요",
+            image: DesignSystemAsset.Assets.onboardingImg4.image,
+            highlights: [
+                Highlight(icon: "square.stack.3d.up", title: "전체 흐름", subtitle: "진행, 성공, 실패를 한 번에 정리"),
+                Highlight(icon: "arrow.trianglehead.clockwise", title: "다음 행동", subtitle: "다음에 이어갈 작심을 다시 선택")
+            ]
+        )
     ]
 
     public init(store: StoreOf<WalkThroughFeature>) {
@@ -72,9 +85,9 @@ public struct WalkThroughView: View {
                     topBar
 
                     TabView(selection: $store.currentPage) {
-                        ForEach(0..<images.count, id: \.self) { index in
-                            pageContent(at: index, availableSize: proxy.size)
-                                .tag(index)
+                        ForEach(pages) { page in
+                            pageContent(page, availableSize: proxy.size)
+                                .tag(page.id)
                         }
                     }
                     .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
@@ -83,17 +96,7 @@ public struct WalkThroughView: View {
                         .padding(.top, .jsMD)
                         .padding(.bottom, .jsLG)
 
-                    JSButton(
-                        title: primaryButtonTitle,
-                        style: .primary,
-                        size: .large
-                    ) {
-                        primaryButtonTapped()
-                    }
-                    .padding(.horizontal, .jsXL)
-                    .padding(.bottom, 24.jsScaled())
-                    .accessibilityLabel(primaryButtonAccessibilityLabel)
-                    .accessibilityHint(primaryButtonAccessibilityHint)
+                    primaryAction
                 }
             }
         }
@@ -117,7 +120,7 @@ public struct WalkThroughView: View {
 
             Spacer()
 
-            if !store.fromSetting && store.currentPage < store.totalPages - 1 {
+            if !store.fromSetting && store.currentPage < pages.count - 1 {
                 Button("건너뛰기") {
                     store.send(.skipButtonTapped)
                 }
@@ -132,12 +135,12 @@ public struct WalkThroughView: View {
         .padding(.bottom, .jsXS)
     }
 
-    private func pageContent(at index: Int, availableSize: CGSize) -> some View {
+    private func pageContent(_ page: Page, availableSize: CGSize) -> some View {
         ScrollView(showsIndicators: false) {
             VStack(spacing: .jsLG) {
-                stageOverviewCard(at: index)
+                stageOverviewCard(page)
 
-                Image(uiImage: images[index])
+                Image(uiImage: page.image)
                     .resizable()
                     .scaledToFit()
                     .frame(maxWidth: .infinity, maxHeight: imageHeight(for: availableSize))
@@ -145,13 +148,13 @@ public struct WalkThroughView: View {
                     .accessibilityHidden(true)
 
                 VStack(spacing: .jsXS) {
-                    Text(titles[index])
+                    Text(page.title)
                         .font(.jsHeadlineLarge)
                         .foregroundColor(.labelStrong)
                         .multilineTextAlignment(.center)
                         .fixedSize(horizontal: false, vertical: true)
 
-                    Text(subtitles[index])
+                    Text(page.subtitle)
                         .font(.jsBodySmall)
                         .foregroundColor(.labelNeutral)
                         .multilineTextAlignment(.center)
@@ -159,7 +162,7 @@ public struct WalkThroughView: View {
                 }
                 .padding(.horizontal, .jsXL)
 
-                highlightSection(for: index)
+                highlightSection(page.highlights)
             }
             .frame(maxWidth: .infinity)
             .frame(minHeight: availableSize.height * (store.fromSetting ? 0.58 : 0.54), alignment: .center)
@@ -183,16 +186,16 @@ public struct WalkThroughView: View {
 
                 Spacer()
 
-                Text("\(store.currentPage + 1) / \(store.totalPages)")
+                Text("\(store.currentPage + 1) / \(pages.count)")
                     .font(.jsLabelMedium)
                     .foregroundColor(.labelNeutral)
             }
 
             HStack(alignment: .top, spacing: .jsXS) {
-                ForEach(0..<store.totalPages, id: \.self) { index in
+                ForEach(pages.indices, id: \.self) { index in
                     stageNode(for: index)
 
-                    if index < store.totalPages - 1 {
+                    if index < pages.count - 1 {
                         Capsule()
                             .fill(index < store.currentPage ? Color.primaryNormal : Color.labelNeutral.opacity(0.3))
                             .frame(maxWidth: .infinity)
@@ -216,22 +219,26 @@ public struct WalkThroughView: View {
         .animation(reduceMotion ? .none : JSAnimation.navigation, value: store.currentPage)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("온보딩 진행 상태")
-        .accessibilityValue("\(store.currentPage + 1) / \(store.totalPages)")
+        .accessibilityValue("\(store.currentPage + 1) / \(pages.count)")
     }
 
     private var isLastPage: Bool {
-        store.currentPage == store.totalPages - 1
+        store.currentPage == pages.count - 1
+    }
+
+    private var currentPageData: Page {
+        pages[store.currentPage]
     }
 
     private var currentStageLabel: String {
-        stageLabels[store.currentPage]
+        currentPageData.stageLabel
     }
 
     private var nextStageCaption: String {
         if isLastPage {
             return store.fromSetting ? "마지막 단계예요. 확인을 누르면 이전 화면으로 돌아가요." : "마지막 단계예요. 시작하기를 누르면 홈으로 이동해요."
         }
-        return "다음은 \(stageLabels[store.currentPage + 1]) 흐름으로 이어져요."
+        return "다음은 \(pages[store.currentPage + 1].stageLabel) 흐름으로 이어져요."
     }
 
     private var primaryButtonTitle: String {
@@ -264,6 +271,19 @@ public struct WalkThroughView: View {
         return "온보딩 \(store.currentPage + 2)단계로 이동합니다"
     }
 
+    private var primaryAction: some View {
+        JSButton(
+            title: primaryButtonTitle,
+            style: .primary,
+            size: .large,
+            action: primaryButtonTapped
+        )
+        .padding(.horizontal, .jsXL)
+        .padding(.bottom, 24.jsScaled())
+        .accessibilityLabel(primaryButtonAccessibilityLabel)
+        .accessibilityHint(primaryButtonAccessibilityHint)
+    }
+
     private func primaryButtonTapped() {
         if store.fromSetting {
             if isLastPage {
@@ -277,21 +297,21 @@ public struct WalkThroughView: View {
         store.send(.continueButtonTapped)
     }
 
-    private func stageOverviewCard(at index: Int) -> some View {
+    private func stageOverviewCard(_ page: Page) -> some View {
         HStack(spacing: .jsSM) {
             VStack(alignment: .leading, spacing: .jsMicro) {
-                Text("STEP \(index + 1)")
+                Text("STEP \(page.id + 1)")
                     .font(.jsLabelMedium)
                     .foregroundColor(.primaryNormal)
 
-                Text(stageLabels[index])
+                Text(page.stageLabel)
                     .font(.jsHeadlineSmall)
                     .foregroundColor(.labelStrong)
             }
 
             Spacer()
 
-            if index < stageLabels.count - 1 {
+            if page.id < pages.count - 1 {
                 HStack(spacing: .jsMicro) {
                     Text("다음")
                         .font(.jsLabelMedium)
@@ -299,7 +319,7 @@ public struct WalkThroughView: View {
                     Image(systemName: "arrow.right")
                         .font(.jsLabelMedium)
                         .foregroundColor(.labelNeutral)
-                    Text(stageLabels[index + 1])
+                    Text(pages[page.id + 1].stageLabel)
                         .font(.jsLabelMedium)
                         .foregroundColor(.labelStrong)
                 }
@@ -323,9 +343,9 @@ public struct WalkThroughView: View {
         .padding(.horizontal, .jsXL)
     }
 
-    private func highlightSection(for index: Int) -> some View {
+    private func highlightSection(_ highlights: [Highlight]) -> some View {
         VStack(spacing: .jsXS) {
-            ForEach(highlights[index]) { highlight in
+            ForEach(highlights) { highlight in
                 HStack(alignment: .top, spacing: .jsSM) {
                     Image(systemName: highlight.icon)
                         .font(.jsHeadlineSmall)
@@ -372,7 +392,7 @@ public struct WalkThroughView: View {
                     }
                 }
 
-            Text(stageLabels[index])
+            Text(pages[index].stageLabel)
                 .font(.jsLabelMedium)
                 .foregroundColor(isCurrent ? .labelStrong : .labelNeutral)
                 .frame(maxWidth: .infinity)

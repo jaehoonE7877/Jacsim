@@ -38,7 +38,7 @@ public struct AllTaskFeature {
     }
 
     @Dependency(\.taskRepository) var taskRepository
-    @Dependency(\.allTaskSummaryUseCase) var allTaskSummaryUseCase
+    @Dependency(\.taskReadModelQueries) var taskReadModelQueries
 
     public var body: some ReducerOf<Self> {
         Reduce { state, action in
@@ -46,12 +46,13 @@ public struct AllTaskFeature {
             case .onAppear:
                 state.isLoading = true
                 state.loadFailed = false
-                return .run { [taskRepository, allTaskSummaryUseCase] send in
+                return .run { [taskRepository, taskReadModelQueries] send in
                     do {
                         let ongoing = try await taskRepository.fetchActiveTasks()
                         let done = try await taskRepository.fetchTasksByStatus(.done)
-                        let summary = allTaskSummaryUseCase.execute(
-                            .init(ongoingTasks: ongoing, doneTasks: done)
+                        let summary = taskReadModelQueries.allTasks(
+                            ongoingTasks: ongoing,
+                            doneTasks: done
                         )
                         await send(
                             .tasksResponse(

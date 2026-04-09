@@ -4,8 +4,8 @@ import Domain
 
 @testable import Workflows
 
-@Test("HomeSummaryUseCase는 오늘 미완료 task를 hero로 선택한다")
-func homeSummaryUseCaseBuildsPendingFocus() {
+@Test("TaskReadModelQueries는 오늘 미완료 task를 hero로 선택한다")
+func taskReadModelQueriesBuildsPendingFocus() {
     let today = Calendar.current.startOfDay(for: Date())
     let completed = makeTask(
         title: "완료됨",
@@ -19,26 +19,27 @@ func homeSummaryUseCaseBuildsPendingFocus() {
         endDate: Calendar.current.date(byAdding: .day, value: 1, to: today) ?? today
     )
 
-    let summary = HomeSummaryUseCase.live().execute(
-        .init(tasks: [completed, pending], referenceDate: today)
+    let summary = TaskReadModelQueries.live().home(
+        tasks: [completed, pending],
+        referenceDate: today
     )
 
     #expect(summary.visibleTasks == [pending, completed])
     #expect(summary.focusTask?.id == pending.id)
-    #expect(summary.todayFocusState == .pending)
+    #expect(summary.state == .pending)
     #expect(summary.pendingCount == 1)
     #expect(summary.completedTodayCount == 1)
-    #expect(summary.secondaryTaskSummaries.map(\.taskID) == [completed.id])
 }
 
-@Test("AllTaskSummaryUseCase는 완료 task를 성공과 실패로 분류한다")
-func allTaskSummaryUseCaseSplitsCompletedTasks() {
+@Test("TaskReadModelQueries는 완료 task를 성공과 실패로 분류한다")
+func taskReadModelQueriesSplitsCompletedTasks() {
     let ongoing = makeTask(title: "진행 중", stageResult: .inProgress)
     let success = makeTask(title: "성공", stageResult: .success)
     let fail = makeTask(title: "실패", stageResult: .fail)
 
-    let summary = AllTaskSummaryUseCase.live().execute(
-        .init(ongoingTasks: [ongoing], doneTasks: [success, fail])
+    let summary = TaskReadModelQueries.live().allTasks(
+        ongoingTasks: [ongoing],
+        doneTasks: [success, fail]
     )
 
     #expect(summary.ongoingTasks == [ongoing])
@@ -46,8 +47,8 @@ func allTaskSummaryUseCaseSplitsCompletedTasks() {
     #expect(summary.failTasks == [fail])
 }
 
-@Test("CalendarSummaryUseCase는 날짜와 성공률 색상을 계산한다")
-func calendarSummaryUseCaseBuildsDatesAndColors() {
+@Test("TaskReadModelQueries는 날짜와 성공률 색상을 계산한다")
+func taskReadModelQueriesBuildsDatesAndColors() {
     let start = Calendar.current.startOfDay(for: Date())
     let end = Calendar.current.date(byAdding: .day, value: 2, to: start) ?? start
     let task = makeTask(
@@ -57,15 +58,15 @@ func calendarSummaryUseCaseBuildsDatesAndColors() {
         completedOffsets: [0]
     )
 
-    let summary = CalendarSummaryUseCase.live().execute(.init(tasks: [task]))
+    let summary = TaskReadModelQueries.live().calendar(tasks: [task])
 
     #expect(summary.eventDates.count == 3)
     #expect(summary.eventDates.first == start)
     #expect(summary.dateColors[start] == .medium)
 }
 
-@Test("TaskDetailSummaryUseCase는 상세 표시 상태와 stage 결과를 함께 계산한다")
-func taskDetailSummaryUseCaseBuildsDetailPresentationSummary() {
+@Test("TaskReadModelQueries는 상세 상태와 stage 결과를 함께 계산한다")
+func taskReadModelQueriesBuildsDetailPresentationSummary() {
     let today = Calendar.current.startOfDay(for: Date())
     let endedYesterday = Calendar.current.date(byAdding: .day, value: -1, to: today) ?? today
     let task = makeTask(
@@ -77,13 +78,14 @@ func taskDetailSummaryUseCaseBuildsDetailPresentationSummary() {
         stageResult: .inProgress
     )
 
-    let summary = TaskDetailSummaryUseCase.live().execute(
-        .init(task: task, referenceDate: today)
+    let summary = TaskReadModelQueries.live().taskDetail(
+        task: task,
+        referenceDate: today
     )
 
-    #expect(summary.challengeState == .stagePending)
-    #expect(summary.currentStage?.id == task.stages.last?.id)
-    #expect(summary.dayViewData.count == task.dayArray.count)
+    #expect(summary.evaluation.challengeState == .stagePending)
+    #expect(summary.evaluation.currentStage?.id == task.stages.last?.id)
+    #expect(summary.evaluation.dayViewData.count == task.dayArray.count)
     #expect(summary.stageResult == .fail)
 }
 

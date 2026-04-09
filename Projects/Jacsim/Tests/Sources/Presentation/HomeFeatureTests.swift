@@ -269,7 +269,12 @@ func homeRetryClearsLoadFailedAndLoadsTasks() async {
             deleteTask: { _ in },
             fetchTasksByStatus: { _ in [] }
         )
-        $0.loadImageUseCase = LoadImageUseCase(loadImage: { _ in nil })
+        $0.imageStore = ImageStorePort(
+            saveImage: { _, _ in "" },
+            loadImage: { _ in nil },
+            deleteImage: { _ in },
+            imageExists: { _ in false }
+        )
     }
     store.exhaustivity = .off
 
@@ -315,7 +320,12 @@ func homeSelectsPendingFocusTask() async {
     let store = TestStore(initialState: HomeFeature.State()) {
         HomeFeature()
     } withDependencies: {
-        $0.loadImageUseCase = LoadImageUseCase(loadImage: { _ in nil })
+        $0.imageStore = ImageStorePort(
+            saveImage: { _, _ in "" },
+            loadImage: { _ in nil },
+            deleteImage: { _ in },
+            imageExists: { _ in false }
+        )
     }
     store.exhaustivity = .off
 
@@ -360,7 +370,12 @@ func homeBuildsAllDoneTodayState() async {
     let store = TestStore(initialState: HomeFeature.State()) {
         HomeFeature()
     } withDependencies: {
-        $0.loadImageUseCase = LoadImageUseCase(loadImage: { _ in nil })
+        $0.imageStore = ImageStorePort(
+            saveImage: { _, _ in "" },
+            loadImage: { _ in nil },
+            deleteImage: { _ in },
+            imageExists: { _ in false }
+        )
     }
     store.exhaustivity = .off
 
@@ -403,7 +418,12 @@ func homeBuildsCompletedStageReadyState() async {
     let store = TestStore(initialState: HomeFeature.State()) {
         HomeFeature()
     } withDependencies: {
-        $0.loadImageUseCase = LoadImageUseCase(loadImage: { _ in nil })
+        $0.imageStore = ImageStorePort(
+            saveImage: { _, _ in "" },
+            loadImage: { _ in nil },
+            deleteImage: { _ in },
+            imageExists: { _ in false }
+        )
     }
     store.exhaustivity = .off
 
@@ -447,7 +467,12 @@ func homeBuildsEmptyStateWhenOnlyFutureTasksExist() async {
     let store = TestStore(initialState: HomeFeature.State()) {
         HomeFeature()
     } withDependencies: {
-        $0.loadImageUseCase = LoadImageUseCase(loadImage: { _ in nil })
+        $0.imageStore = ImageStorePort(
+            saveImage: { _, _ in "" },
+            loadImage: { _ in nil },
+            deleteImage: { _ in },
+            imageExists: { _ in false }
+        )
     }
     store.exhaustivity = .off
 
