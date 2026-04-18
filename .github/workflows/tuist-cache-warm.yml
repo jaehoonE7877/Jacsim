@@ -33,6 +33,9 @@ jobs:
           git remote set-url origin "https://github.com/${GITHUB_REPOSITORY}.git"
 
       - name: Setup mise (policy-compliant)
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          MISE_GITHUB_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           curl -fsSL https://mise.run | sh
@@ -47,8 +50,206 @@ jobs:
         if: ${{ env.TUIST_FULL_HANDLE != '' && env.TUIST_CONFIG_TOKEN == '' }}
         run: mise exec -- tuist auth login
 
+      - name: Start Tuist dependency restore timer
+        id: tuist-deps-cache-timer
+        run: echo "started_at=$(date +%s)" >> "${GITHUB_OUTPUT}"
+
+      - name: Restore Tuist dependency cache
+        id: tuist-deps-cache-restore
+        uses: ./.github/actions/cache/restore
+        with:
+          path: |
+            .build
+            Tuist/.build
+            Tuist/Dependencies
+          key: ${{ runner.os }}-tuist-deps-${{ env.TUIST_COMPATIBLE_XCODE_VERSION }}-${{ hashFiles('Package.resolved', 'Package.swift', 'Tuist.swift', '.mise.toml', '.tool-versions') }}
+          restore-keys: |
+            ${{ runner.os }}-tuist-deps-${{ env.TUIST_COMPATIBLE_XCODE_VERSION }}-
+
+      - name: Record Tuist dependency cache result
+        id: tuist-deps-cache-report
+        if: ${{ always() }}
+        env:
+          CACHE_HIT: ${{ steps.tuist-deps-cache-restore.outputs.cache-hit }}
+          CACHE_PRIMARY_KEY: ${{ steps.tuist-deps-cache-restore.outputs.cache-primary-key }}
+          CACHE_MATCHED_KEY: ${{ steps.tuist-deps-cache-restore.outputs.cache-matched-key }}
+          CACHE_RESTORE_STARTED_AT: ${{ steps.tuist-deps-cache-timer.outputs.started_at }}
+        run: |
+          set -euo pipefail
+
+          restore_finished_at="$(date +%s)"
+          restore_duration_seconds="$((restore_finished_at - CACHE_RESTORE_STARTED_AT))"
+
+          if [[ "${CACHE_HIT}" == "true" ]]; then
+            cache_status="exact-hit"
+            invalidation_reason="none"
+          elif [[ -n "${CACHE_MATCHED_KEY}" ]]; then
+            cache_status="partial-hit"
+            invalidation_reason="primary key changed or an exact cache has not been saved yet"
+          else
+            cache_status="miss"
+            invalidation_reason="no cache found for this prefix; first run, eviction, or save never completed"
+          fi
+
+          {
+            echo "cache_status=${cache_status}"
+            echo "restore_duration_seconds=${restore_duration_seconds}"
+            echo "invalidation_reason=${invalidation_reason}"
+          } >> "${GITHUB_OUTPUT}"
+
+          echo "Tuist dependency cache status: ${cache_status}"
+          echo "Tuist dependency cache restore time: ${restore_duration_seconds}s"
+          echo "Primary key: ${CACHE_PRIMARY_KEY:-<none>}"
+          echo "Matched key: ${CACHE_MATCHED_KEY:-<none>}"
+          echo "Cache invalidates when runner OS, TUIST_COMPATIBLE_XCODE_VERSION, Package.resolved, Package.swift, Tuist.swift, .mise.toml, or .tool-versions changes."
+
+      - name: Decide whether to install dependencies
+        id: tuist-install-plan
+        env:
+          CACHE_HIT: ${{ steps.tuist-deps-cache-restore.outputs.cache-hit }}
+          CACHE_STATUS: ${{ steps.tuist-deps-cache-report.outputs.cache_status }}
+        run: |
+          set -euo pipefail
+
+          missing_paths=()
+          [[ -d ".build/checkouts" ]] || missing_paths+=(".build/checkouts")
+          [[ -f ".build/workspace-state.json" ]] || missing_paths+=(".build/workspace-state.json")
+          [[ -f ".build/Derived/Package.resolved" ]] || missing_paths+=(".build/Derived/Package.resolved")
+
+          if [[ "${#missing_paths[@]}" -eq 0 ]]; then
+            required_state="present"
+          else
+            required_state="missing"
+          fi
+
+          if [[ "${CACHE_HIT}" == "true" && "${required_state}" == "present" ]]; then
+            should_install="false"
+            install_reason="reused exact dependency cache"
+          elif [[ "${CACHE_HIT}" == "true" ]]; then
+            should_install="true"
+            install_reason="exact cache hit but required dependency artifacts are missing"
+          elif [[ "${CACHE_STATUS}" == "partial-hit" ]]; then
+            should_install="true"
+            install_reason="partial cache hit; reconcile dependencies before warming cache"
+          else
+            should_install="true"
+            install_reason="cache miss; install dependencies before warming cache"
+          fi
+
+          {
+            echo "should_install=${should_install}"
+            echo "required_state=${required_state}"
+            echo "install_reason=${install_reason}"
+          } >> "${GITHUB_OUTPUT}"
+
+          echo "Dependency reuse decision: ${install_reason}"
+          if [[ "${required_state}" != "present" ]]; then
+            printf 'Missing dependency artifacts: %s\n' "${missing_paths[*]}"
+          fi
+
       - name: Install dependencies
-        run: mise exec -- tuist install
+        id: tuist-install
+        if: ${{ steps.tuist-install-plan.outputs.should_install == 'true' }}
+        run: |
+          set -euo pipefail
+
+          install_started_at="$(date +%s)"
+          install_status="success"
+
+          if mise exec -- tuist install; then
+            install_status="success"
+          else
+            install_status="failure"
+            install_exit_code=$?
+          fi
+
+          install_finished_at="$(date +%s)"
+          install_duration_seconds="$((install_finished_at - install_started_at))"
+
+          {
+            echo "status=${install_status}"
+            echo "duration_seconds=${install_duration_seconds}"
+          } >> "${GITHUB_OUTPUT}"
+
+          echo "tuist install status: ${install_status}"
+          echo "tuist install duration: ${install_duration_seconds}s"
+
+          if [[ "${install_status}" != "success" ]]; then
+            exit "${install_exit_code}"
+          fi
+
+      - name: Save Tuist dependency cache
+        id: tuist-deps-cache-save
+        if: ${{ steps.tuist-install-plan.outputs.should_install == 'true' && steps.tuist-deps-cache-restore.outputs.cache-hit != 'true' }}
+        uses: ./.github/actions/cache/save
+        with:
+          path: |
+            .build
+            Tuist/.build
+            Tuist/Dependencies
+          key: ${{ steps.tuist-deps-cache-restore.outputs.cache-primary-key }}
+
+      - name: Summarize Tuist dependency cache
+        if: ${{ always() }}
+        env:
+          CACHE_STATUS: ${{ steps.tuist-deps-cache-report.outputs.cache_status }}
+          CACHE_PRIMARY_KEY: ${{ steps.tuist-deps-cache-restore.outputs.cache-primary-key }}
+          CACHE_MATCHED_KEY: ${{ steps.tuist-deps-cache-restore.outputs.cache-matched-key }}
+          CACHE_RESTORE_DURATION_SECONDS: ${{ steps.tuist-deps-cache-report.outputs.restore_duration_seconds }}
+          CACHE_INVALIDATION_REASON: ${{ steps.tuist-deps-cache-report.outputs.invalidation_reason }}
+          CACHE_SAVE_OUTCOME: ${{ steps.tuist-deps-cache-save.outcome }}
+          TUIST_INSTALL_STATUS: ${{ steps.tuist-install.outputs.status }}
+          TUIST_INSTALL_DURATION_SECONDS: ${{ steps.tuist-install.outputs.duration_seconds }}
+          INSTALL_REASON: ${{ steps.tuist-install-plan.outputs.install_reason }}
+          SHOULD_INSTALL: ${{ steps.tuist-install-plan.outputs.should_install }}
+        run: |
+          set -euo pipefail
+
+          hash_file() {
+            local file="$1"
+            if [[ -f "${file}" ]]; then
+              shasum -a 256 "${file}" | awk '{print $1}'
+            else
+              echo "missing"
+            fi
+          }
+
+          {
+            echo "### Tuist dependency cache"
+            echo ""
+            echo "| Metric | Value |"
+            echo "| --- | --- |"
+            echo "| Cache status | \`${CACHE_STATUS:-unknown}\` |"
+            echo "| Restore time | \`${CACHE_RESTORE_DURATION_SECONDS:-n/a}s\` |"
+            echo "| Install decision | \`${SHOULD_INSTALL:-unknown}\` |"
+            echo "| Install reason | \`${INSTALL_REASON:-unknown}\` |"
+            echo "| tuist install status | \`${TUIST_INSTALL_STATUS:-skipped}\` |"
+            echo "| tuist install duration | \`${TUIST_INSTALL_DURATION_SECONDS:-n/a}s\` |"
+            echo "| Saved refreshed cache | \`${CACHE_SAVE_OUTCOME:-skipped}\` |"
+            echo "| Primary key | \`${CACHE_PRIMARY_KEY:-none}\` |"
+            echo "| Matched key | \`${CACHE_MATCHED_KEY:-none}\` |"
+            echo ""
+            echo "Cache invalidation signals:"
+            echo "- `runner.os`"
+            echo "- `TUIST_COMPATIBLE_XCODE_VERSION`"
+            echo "- `Package.resolved`"
+            echo "- `Package.swift`"
+            echo "- `Tuist.swift`"
+            echo "- `.mise.toml`"
+            echo "- `.tool-versions`"
+            echo ""
+            echo "Current cache input hashes:"
+            echo ""
+            echo "| Input | SHA-256 |"
+            echo "| --- | --- |"
+            echo "| \`Package.resolved\` | \`$(hash_file Package.resolved)\` |"
+            echo "| \`Package.swift\` | \`$(hash_file Package.swift)\` |"
+            echo "| \`Tuist.swift\` | \`$(hash_file Tuist.swift)\` |"
+            echo "| \`.mise.toml\` | \`$(hash_file .mise.toml)\` |"
+            echo "| \`.tool-versions\` | \`$(hash_file .tool-versions)\` |"
+            echo ""
+            echo "Invalidation note: ${CACHE_INVALIDATION_REASON:-unknown}"
+          } >> "${GITHUB_STEP_SUMMARY}"
 
       - name: Warm module cache (external-only)
         run: mise exec -- bash scripts/tuist/cache-warm.sh Debug
