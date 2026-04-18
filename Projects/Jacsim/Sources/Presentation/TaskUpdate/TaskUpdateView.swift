@@ -180,6 +180,7 @@ public struct TaskUpdateView: View {
     }
 }
 
+@MainActor
 private struct TaskUpdatePhotoPickerSection: View {
     let image: UIImage?
     @Binding var photoPickerItem: PhotosPickerItem?
@@ -261,9 +262,7 @@ private struct TaskUpdatePhotoPickerSection: View {
     }
 
     private var photoPicker: some View {
-        let hasImage = image != nil
-
-        return PhotosPicker(selection: $photoPickerItem, matching: .images) {
+        PhotosPicker(selection: $photoPickerItem, matching: .images) {
             HStack(spacing: .jsXS) {
                 Image(systemName: hasImage ? "arrow.triangle.2.circlepath" : "photo.badge.plus")
                     .font(.jsHeadlineSmall)

@@ -211,6 +211,7 @@ private struct TaskEditStickyFooter: View {
     }
 }
 
+@MainActor
 private struct TaskEditPhotoSection: View {
     let image: UIImage?
     @Binding var photoPickerItem: PhotosPickerItem?
@@ -288,10 +289,12 @@ private struct TaskEditPhotoSection: View {
         }
     }
 
-    private var photoPicker: some View {
-        let hasImage = image != nil
+    private var hasImage: Bool {
+        image != nil
+    }
 
-        return PhotosPicker(selection: $photoPickerItem, matching: .images) {
+    private var photoPicker: some View {
+        PhotosPicker(selection: $photoPickerItem, matching: .images) {
             HStack(spacing: .jsXS) {
                 Image(systemName: hasImage ? "arrow.triangle.2.circlepath" : "photo.badge.plus")
                     .font(.jsHeadlineSmall)
