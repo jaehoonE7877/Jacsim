@@ -15,11 +15,14 @@ public struct AppFeature {
 
     public enum Action {
         case onAppear
+        case appBecameActive
         case onboarding(WalkThroughFeature.Action)
         case main(MainFeature.Action)
     }
 
     @Dependency(\.appPreferences) var appPreferences
+    @Dependency(\.notificationScheduler) var notificationScheduler
+    @Dependency(\.userSettingsRepository) var userSettingsRepository
 
     public var body: some ReducerOf<Self> {
         Reduce { state, action in
@@ -27,10 +30,10 @@ public struct AppFeature {
             case .onAppear:
                 let isOnboardingCompleted = appPreferences.isOnboardingCompleted()
                 if isOnboardingCompleted, case .main = state {
-                    return .none
+                    return .send(.appBecameActive)
                 }
                 if !isOnboardingCompleted, case .onboarding = state {
-                    return .none
+                    return .send(.appBecameActive)
                 }
 
                 if isOnboardingCompleted {
@@ -38,7 +41,19 @@ public struct AppFeature {
                 } else {
                     state = .onboarding(WalkThroughFeature.State(fromSetting: false))
                 }
-                return .none
+                return .send(.appBecameActive)
+
+            case .appBecameActive:
+                return .run { [notificationScheduler, userSettingsRepository] _ in
+                    let isNotificationEnabled = await userSettingsRepository.isNotificationEnabled()
+                    let reminders = await userSettingsRepository.getAllReminders()
+                    let reminderUseCase = ReminderSchedulingUseCase()
+                    await reminderUseCase.syncGlobalReminders(
+                        isEnabled: isNotificationEnabled,
+                        reminders: reminders,
+                        notificationScheduler: notificationScheduler
+                    )
+                }
 
             case .onboarding(.delegate(.completeOnboarding)):
                 appPreferences.setOnboardingCompleted(true)

@@ -47,6 +47,7 @@ public struct CertificationUseCase: CertificationUseCaseProtocol {
         task.records[index].memo = memo
         task.records[index].imagePath = imagePath
 
+        task = task.refreshingStageProgress()
         try await updateTask(task)
     }
 

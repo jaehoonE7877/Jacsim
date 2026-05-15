@@ -29,6 +29,31 @@ public struct ReminderSchedulingUseCase: Sendable {
         }
     }
 
+    public func scheduleNextReminderIfNeeded(
+        task: Domain.Task,
+        isGlobalNotificationEnabled: Bool,
+        now: Date = Date(),
+        cancelExistingReminder: Bool = true,
+        notificationScheduler: NotificationSchedulerPort
+    ) async {
+        if cancelExistingReminder {
+            await notificationScheduler.cancelReminder(task.id)
+        }
+
+        guard task.isNotificationEnabled,
+              isGlobalNotificationEnabled,
+              let alarm = task.alarm,
+              let components = nextReminderComponents(for: task, alarm: alarm, now: now) else {
+            return
+        }
+
+        do {
+            try await notificationScheduler.scheduleDailyReminder(task.id, task.title, components)
+        } catch {
+            Logger.certificationFailed(error: error)
+        }
+    }
+
     public func syncGlobalReminders(
         isEnabled: Bool,
         reminders: [ReminderInfo],
@@ -36,6 +61,11 @@ public struct ReminderSchedulingUseCase: Sendable {
     ) async {
         if isEnabled {
             for reminder in reminders {
+                guard reminder.shouldSchedule else {
+                    await notificationScheduler.cancelReminder(reminder.taskId)
+                    continue
+                }
+
                 do {
                     try await notificationScheduler.scheduleDailyReminder(
                         reminder.taskId,

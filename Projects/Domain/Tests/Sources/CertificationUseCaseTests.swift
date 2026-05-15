@@ -42,6 +42,52 @@ struct CertificationUseCaseTests {
     }
 
     @Test
+    func certifyTodayRefreshesCurrentStageSuccessDays() async throws {
+        let store = MockTaskStore()
+        let useCase = CertificationUseCase(
+            fetchTask: { try await store.fetchTask(id: $0) },
+            updateTask: { try await store.updateTask($0) }
+        )
+
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: Date())
+        let tomorrow = calendar.date(byAdding: .day, value: 1, to: today)!
+        let stage = StageSnapshot(
+            id: UUID(),
+            stageTypeRaw: StageType.three.rawValue,
+            startDate: today,
+            endDate: tomorrow,
+            durationDays: 3,
+            successDays: 0,
+            resultRaw: StageResult.inProgress.rawValue
+        )
+        let task = Task(
+            id: TaskID(UUID()),
+            title: "Stage Count",
+            startDate: today,
+            endDate: tomorrow,
+            stages: [stage],
+            records: [
+                DailyRecordSnapshot(id: UUID(), memo: "", check: false, date: today, imagePath: nil),
+                DailyRecordSnapshot(id: UUID(), memo: "", check: false, date: tomorrow, imagePath: nil)
+            ]
+        )
+
+        await store.setTask(task)
+
+        try await useCase.certifyToday(
+            taskId: task.id,
+            index: 0,
+            memo: "Done",
+            imagePath: nil
+        )
+
+        let updatedTask = try await store.fetchTask(id: task.id)
+        #expect(updatedTask?.stages.last?.successDays == 1)
+        #expect(updatedTask?.stages.last?.result == .inProgress)
+    }
+
+    @Test
     func testCertifyTodayThrowsForInvalidIndex() async {
         let store = MockTaskStore()
         let useCase = CertificationUseCase(

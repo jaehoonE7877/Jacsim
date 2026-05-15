@@ -30,7 +30,7 @@ struct StageProgressionUseCaseTests {
             startDate: baseStart,
             endDate: baseEnd,
             stages: [currentStage],
-            records: makeRecords(startDate: baseStart, endDate: baseEnd)
+            records: makeRecords(startDate: baseStart, endDate: baseEnd, checkedOffsets: [0, 1])
         )
 
         await store.setTask(task)
@@ -136,22 +136,28 @@ struct StageProgressionUseCaseTests {
         #expect(updatedTask?.records.first?.memo == "old")
     }
 
-    private func makeRecords(startDate: Date, endDate: Date) -> [DailyRecordSnapshot] {
+    private func makeRecords(
+        startDate: Date,
+        endDate: Date,
+        checkedOffsets: Set<Int> = []
+    ) -> [DailyRecordSnapshot] {
         var records: [DailyRecordSnapshot] = []
         var currentDate = calendar.startOfDay(for: startDate)
         let stageEndDate = calendar.startOfDay(for: endDate)
+        var offset = 0
 
         while currentDate <= stageEndDate {
             records.append(
                 DailyRecordSnapshot(
                     id: UUID(),
                     memo: "",
-                    check: false,
+                    check: checkedOffsets.contains(offset),
                     date: currentDate,
                     imagePath: nil
                 )
             )
             currentDate = calendar.date(byAdding: .day, value: 1, to: currentDate)!
+            offset += 1
         }
 
         return records

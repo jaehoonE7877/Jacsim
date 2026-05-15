@@ -87,10 +87,14 @@ public struct ChallengeStateService: Sendable {
     public func evaluateChallengeState(for task: Task, today: Date) -> ChallengeStateEvaluation {
         let calendar = Calendar.current
         let todayStart = calendar.startOfDay(for: today)
+        let task = task.refreshingStageProgress(now: today, calendar: calendar)
         
         let currentStage = task.stages.last
-        
-        let remainingSuccessCount = max(0, (currentStage?.durationDays ?? 0) - task.records.filter(\.check).count)
+        let stageSuccessCount = currentStage.map { task.successCount(in: $0, calendar: calendar) } ?? 0
+        let minimumSuccessCount = currentStage.map {
+            minimumSuccessDays(durationDays: $0.durationDays)
+        } ?? 0
+        let remainingSuccessCount = max(0, minimumSuccessCount - stageSuccessCount)
         
         let isTodayInRange = todayStart >= calendar.startOfDay(for: task.startDate)
             && todayStart <= calendar.startOfDay(for: task.endDate)
@@ -123,15 +127,8 @@ public struct ChallengeStateService: Sendable {
                 challengeState = .stageFail
             }
             
-            let stageStart = stage.startDate
-            let stageEnd = stage.endDate
             let totalStageDays = stage.durationDays
-            
-            let stageRecords = task.records.filter { record in
-                let recordDate = calendar.startOfDay(for: record.date)
-                return recordDate >= calendar.startOfDay(for: stageStart)
-                    && recordDate <= calendar.startOfDay(for: stageEnd)
-            }
+            let stageRecords = task.records(in: stage, calendar: calendar)
             let successCount = stageRecords.filter(\.check).count
             
             stageProgress = totalStageDays > 0 ? Double(successCount) / Double(totalStageDays) : 0
@@ -142,11 +139,15 @@ public struct ChallengeStateService: Sendable {
             stageProgressText = "0/7"
         }
         
+        var recordsByDay: [Date: DailyRecordSnapshot] = [:]
+        for record in task.records {
+            recordsByDay[calendar.startOfDay(for: record.date)] = record
+        }
         let dates = task.dayArray.reversed()
-        let dayViewData: [DayViewData] = dates.enumerated().map { index, date in
-            let originalIndex = task.dayArray.count - 1 - index
-            let memo = task.records.indices.contains(originalIndex) ? task.records[originalIndex].memo : "인증해주세요"
-            let isChecked = task.records.indices.contains(originalIndex) ? task.records[originalIndex].check : false
+        let dayViewData: [DayViewData] = dates.map { date in
+            let record = recordsByDay[calendar.startOfDay(for: date)]
+            let memo = record?.memo.isEmpty == false ? record?.memo ?? "" : "인증해주세요"
+            let isChecked = record?.check ?? false
             return DayViewData(date: date, memo: memo, isChecked: isChecked)
         }
         

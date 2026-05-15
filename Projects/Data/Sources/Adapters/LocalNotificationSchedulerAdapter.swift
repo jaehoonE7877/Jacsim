@@ -20,7 +20,8 @@ public actor LocalNotificationSchedulerAdapter {
         content.body = "\(title) 인증할 시간이에요"
         content.sound = .default
         
-        let trigger = UNCalendarNotificationTrigger(dateMatching: time, repeats: true)
+        let repeats = time.year == nil && time.month == nil && time.day == nil
+        let trigger = UNCalendarNotificationTrigger(dateMatching: time, repeats: repeats)
         let request = UNNotificationRequest(identifier: identifier, content: content, trigger: trigger)
         
         try await addNotificationRequest(request)

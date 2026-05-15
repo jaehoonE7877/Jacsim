@@ -76,7 +76,7 @@ public struct Task: Sendable, Codable, Hashable, Identifiable {
     }
 
     public var currentStage: StageSnapshot? {
-        stages.first { $0.result == .inProgress }
+        stages.last { $0.result == .inProgress }
     }
 
     public var successCount: Int {

@@ -22,7 +22,9 @@ public struct StageProgressionUseCase: StageProgressionUseCaseProtocol {
     
     public func createNextStage(for taskId: TaskID) async throws {
         guard var task = await fetchTask(taskId) else { return }
+        task = task.refreshingStageProgress()
         guard let lastStage = task.stages.last else { return }
+        guard lastStage.result == .success else { return }
         guard let nextStageType = lastStage.stageType.next else { return }
         
         let calendar = Calendar.current
@@ -55,6 +57,7 @@ public struct StageProgressionUseCase: StageProgressionUseCaseProtocol {
     
     public func resetStageRecords(for taskId: TaskID) async throws {
         guard var task = await fetchTask(taskId) else { return }
+        task = task.refreshingStageProgress()
         guard let lastStage = task.stages.last else { return }
         
         let calendar = Calendar.current

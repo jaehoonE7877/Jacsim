@@ -13,6 +13,7 @@ private enum StartupTransitionPolicy {
 public struct AppView: View {
     let store: StoreOf<AppFeature>
     @Dependency(\.appPreferences) private var appPreferences
+    @Environment(\.scenePhase) private var scenePhase
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     @State private var themeRaw: String = ThemeMode.system.rawValue
@@ -74,6 +75,11 @@ public struct AppView: View {
         }
         .onReceive(NotificationCenter.default.publisher(for: .jacsimThemeChanged)) { _ in
             refreshThemeFromPreferences()
+        }
+        .onChange(of: scenePhase) { _, newPhase in
+            if newPhase == .active {
+                store.send(.appBecameActive)
+            }
         }
         .onChange(of: store.state) { _, newState in
             updateSplashEligibility(for: newState)
@@ -222,7 +228,7 @@ private struct AppStartupSplashView: View {
                         .frame(width: 128.jsScaled(), height: 128.jsScaled())
                 } else {
                     Image(systemName: "checklist")
-                        .font(.system(size: 64.jsScaled(.displayTypography), weight: .semibold))
+                        .font(.largeTitle.weight(.semibold))
                         .foregroundColor(.primaryNormal)
                 }
             }

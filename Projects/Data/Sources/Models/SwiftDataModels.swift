@@ -13,7 +13,7 @@ public final class UserJacsimModel {
     public var alarm: Date?
     public var statusRaw: String
     public var resultRaw: String
-    public var currentStageTypeRaw: Int
+    public var currentStageTypeRaw: Int?
     public var isNotificationEnabled: Bool
 
     @Relationship(deleteRule: .cascade)
@@ -33,7 +33,7 @@ public final class UserJacsimModel {
         alarm: Date? = nil,
         statusRaw: String = "inProgress",
         resultRaw: String = "none",
-        currentStageTypeRaw: Int = 3,
+        currentStageTypeRaw: Int? = 3,
         isNotificationEnabled: Bool = false,
         memoList: [CertifiedModel] = [],
         stages: [StageModel] = []
