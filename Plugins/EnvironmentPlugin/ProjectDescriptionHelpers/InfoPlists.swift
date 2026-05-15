@@ -38,7 +38,11 @@ public extension Project {
             "Item 2": "Pretendard-Medium.ttf",
             "Item 3": "Pretendard-Regular.ttf",
         ],
-        "UIBackgroundModes": ["remote-notification"],
+        "UISupportedInterfaceOrientations": [
+            "UIInterfaceOrientationPortrait",
+            "UIInterfaceOrientationLandscapeLeft",
+            "UIInterfaceOrientationLandscapeRight"
+        ],
         "NSCameraUsageDescription": "작심 하기, 작심 인증을 위해 카메라 접근 권한이 필요합니다.",
         "NSPhotoLibraryUsageDescription": "작심 하기, 작심 인증을 위해 앨범 접근 권한이 필요합니다."
     ]
@@ -66,6 +70,11 @@ public extension Project {
             "Item 1": "Pretendard-SemiBold.ttf",
             "Item 2": "Pretendard-Medium.ttf",
             "Item 3": "Pretendard-Regular.ttf",
+        ],
+        "UISupportedInterfaceOrientations": [
+            "UIInterfaceOrientationPortrait",
+            "UIInterfaceOrientationLandscapeLeft",
+            "UIInterfaceOrientationLandscapeRight"
         ],
         "NSCameraUsageDescription": "작심 인증을 위해 카메라 접근 권한이 필요합니다.",
         "NSPhotoLibraryUsageDescription": "작심 하기, 작심 인증을 위해 앨범 접근 권한이 필요합니다."

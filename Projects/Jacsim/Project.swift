@@ -8,6 +8,7 @@ let project = Project.makeModule(
     swiftLanguageVersion: .v6,
     targets: [.app, .unitTest],
     internalDependencies: [
+        .Modules.core,
         .Modules.thirdPartyLibs,
         .Modules.dsKit,
         .domain,
@@ -15,9 +16,7 @@ let project = Project.makeModule(
         .data
     ],
     externalDependencies: [
-        .SPM.FirebaseAnalytics,
         .SPM.FirebaseCrashlytics,
-        .SPM.FirebaseMessaging,
         .SPM.Promises,
         .SPM.IQKeyboardManagerSwift,
         .SPM.Kingfisher,

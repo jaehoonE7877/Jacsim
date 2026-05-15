@@ -6,8 +6,5 @@ let project = Project.makeModule(
     name: "Core",
     swiftLanguageVersion: .v6,
     targets: [.unitTest, .staticFramework],
-    internalDependencies: [
-        .Modules.thirdPartyLibs
-    ],
     tags: ["module", "core"]
 )

@@ -8,42 +8,19 @@
 import UIKit
 import UserNotifications
 
-import Firebase
 import FirebaseCore
 import FirebaseCrashlytics
-import FirebaseMessaging
 import IQKeyboardManagerSwift
 
 class AppDelegate: UIResponder, UIApplicationDelegate{
     private let notificationDelegate = AppNotificationDelegate()
 
-    private enum FCMTokenError: LocalizedError {
-        case tokenNotFound
-
-        var errorDescription: String? {
-            switch self {
-            case .tokenNotFound:
-                return "FCM token is missing in Firebase callback."
-            }
-        }
-    }
-
-
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         
         FirebaseApp.configure()
         Crashlytics.crashlytics().setCrashlyticsCollectionEnabled(true)
-        Messaging.messaging().delegate = notificationDelegate
 
         UNUserNotificationCenter.current().delegate = notificationDelegate
-        Task { @MainActor in
-            let granted = await requestNotificationAuthorization()
-            guard granted else {
-                print("Notification authorization denied")
-                return
-            }
-            UIApplication.shared.registerForRemoteNotifications()
-        }
 
         IQKeyboardManager.shared.enable = true
         IQKeyboardManager.shared.enableAutoToolbar = false
@@ -83,54 +60,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate{
 
 }
 
-private extension AppDelegate {
-    func requestNotificationAuthorization() async -> Bool {
-        do {
-            let authOptions: UNAuthorizationOptions = [.alert, .badge, .sound]
-            return try await UNUserNotificationCenter.current().requestAuthorization(options: authOptions)
-        } catch {
-            print("Notification authorization error: \(error)")
-            return false
-        }
-    }
-
-    static func fetchFCMToken() async throws -> String {
-        try await withCheckedThrowingContinuation { continuation in
-            Messaging.messaging().token { token, error in
-                if let error = error {
-                    continuation.resume(throwing: error)
-                    return
-                }
-                guard let token else {
-                    continuation.resume(throwing: FCMTokenError.tokenNotFound)
-                    return
-                }
-                continuation.resume(returning: token)
-            }
-        }
-    }
-}
-
-extension AppDelegate {
-    func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
-        Messaging.messaging().apnsToken = deviceToken
-
-        Task {
-            do {
-                let token = try await Self.fetchFCMToken()
-                print("FCM registration token: \(token)")
-            } catch {
-                print("Error fetching FCM registration token: \(error)")
-            }
-        }
-    }
-
-    func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {
-        print("Failed to register for remote notifications: \(error)")
-    }
-}
-
-private final class AppNotificationDelegate: NSObject, UNUserNotificationCenterDelegate, MessagingDelegate {
+private final class AppNotificationDelegate: NSObject, UNUserNotificationCenterDelegate {
     func userNotificationCenter(
         _ center: UNUserNotificationCenter,
         willPresent notification: UNNotification,
@@ -156,13 +86,4 @@ private final class AppNotificationDelegate: NSObject, UNUserNotificationCenterD
         completionHandler()
     }
 
-    func messaging(_ messaging: Messaging, didReceiveRegistrationToken fcmToken: String?) {
-        print("Firebase registration token: \(String(describing: fcmToken))")
-        let dataDict: [String: String] = ["token": fcmToken ?? ""]
-        NotificationCenter.default.post(
-            name: Notification.Name("FCMToken"),
-            object: nil,
-            userInfo: dataDict
-        )
-    }
 }

@@ -13,8 +13,6 @@ public extension TargetDependency {
 
 public extension TargetDependency.SPM {
     //MARK: - Firebase
-    static let FirebaseMessaging = TargetDependency.external(name: "FirebaseMessaging", condition: .none)
-    static let FirebaseAnalytics = TargetDependency.external(name: "FirebaseAnalytics", condition: .none)
     static let FirebaseCrashlytics = TargetDependency.external(name: "FirebaseCrashlytics", condition: .none)
     static let Promises = TargetDependency.external(name: "Promises", condition: .none)
     //MARK: - UI

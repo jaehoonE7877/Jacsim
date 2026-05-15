@@ -13,23 +13,6 @@
 			<string>NSPrivacyAccessedAPICategoryUserDefaults</string>
 		</dict>
 	</array>
-	<key>NSPrivacyCollectedDataTypes</key>
-	<array>
-		<dict>
-			<key>NSPrivacyCollectedDataType</key>
-			<string>NSPrivacyCollectedDataTypePerformanceData</string>
-			<key>NSPrivacyCollectedDataTypeLinked</key>
-			<true/>
-			<key>NSPrivacyCollectedDataTypeTracking</key>
-			<false/>
-			<key>NSPrivacyCollectedDataTypePurposes</key>
-			<array>
-				<string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
-			</array>
-		</dict>
-	</array>
-	<key>NSPrivacyTrackingDomains</key>
-	<array/>
 	<key>NSPrivacyTracking</key>
 	<false/>
 </dict>

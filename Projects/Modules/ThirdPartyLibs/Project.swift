@@ -8,9 +8,7 @@ let project = Project.makeModule(
     targets: [.staticFramework],
     externalDependencies: [
         //MARK: - Firebase
-        .SPM.FirebaseAnalytics,
         .SPM.FirebaseCrashlytics,
-        .SPM.FirebaseMessaging,
         .SPM.Promises,
         //MARK: - UI
         .SPM.IQKeyboardManagerSwift,

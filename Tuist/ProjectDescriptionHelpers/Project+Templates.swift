@@ -170,7 +170,7 @@ public extension Project {
                 bundleId: "\(Environment.bundlePrefix).\(name)Tests",
                 deploymentTargets: deploymentTarget,
                 infoPlist: .default,
-                buildableFolders: ["Tests/Sources"],
+                sources: ["Tests/Sources/**"],
                 dependencies: deps,
                 settings: .settings(base: baseSettings.setCodeSignAutomatic(),
                                     configurations: testConfigurations),
@@ -190,7 +190,7 @@ public extension Project {
         schemes += additionalSchemes
         
         var scheme = hasApp
-        ? appSchemes
+        ? makeAppSchemes(name: name)
         : schemes
         
         if name.contains("Demo") {
@@ -215,10 +215,12 @@ public extension Project {
 
 extension Scheme {
     static func makeScheme(target: ConfigurationName, name: String) -> Scheme {
+        let buildTarget: TargetReference = .target(name)
+
         return Scheme.scheme(
             name: name,
             shared: true,
-            buildAction: .buildAction(targets: ["\(name)"]),
+            buildAction: .buildAction(targets: [buildTarget]),
             testAction: .targets(
                 ["\(name)Tests"],
                 configuration: target,
@@ -231,10 +233,12 @@ extension Scheme {
         )
     }
     static func makeDemoScheme(target: ConfigurationName, name: String) -> Scheme {
+        let buildTarget: TargetReference = .target("\(name)Demo")
+
         return Scheme.scheme(
             name: name,
             shared: true,
-            buildAction: .buildAction(targets: ["\(name)Demo"]),
+            buildAction: .buildAction(targets: [buildTarget]),
             testAction: .targets(
                 ["\(name)Tests"],
                 configuration: target,
@@ -249,18 +253,41 @@ extension Scheme {
 }
 
 extension Project {
-    static let appSchemes: [Scheme] = [
-        .scheme(
-            name: "\(Environment.workspaceName)",
+    static func makeAppSchemes(name: String) -> [Scheme] {
+        [
+            makeAppScheme(
+                schemeName: name,
+                targetName: name,
+                testTargetName: "\(name)Tests",
+                coverage: true
+            ),
+            makeAppScheme(
+                schemeName: "\(name)Local",
+                targetName: name,
+                testTargetName: "\(name)Tests",
+                coverage: false
+            ),
+        ]
+    }
+
+    private static func makeAppScheme(
+        schemeName: String,
+        targetName: String,
+        testTargetName: String,
+        coverage: Bool
+    ) -> Scheme {
+        let appTarget: TargetReference = .target(targetName)
+
+        return .scheme(
+            name: schemeName,
             shared: true,
-            buildAction: .buildAction(targets: ["\(Environment.workspaceName)"],
-                                      postActions: [ ]),
+            buildAction: .buildAction(targets: [appTarget], postActions: []),
             testAction: .targets(
-                ["\(Environment.workspaceName)Tests"],
+                [TestableTarget(stringLiteral: testTargetName)],
                 configuration: "Debug",
                 options: .options(
-                    coverage: true,
-                    codeCoverageTargets: ["\(Environment.workspaceName)"]
+                    coverage: coverage,
+                    codeCoverageTargets: coverage ? [appTarget] : []
                 )
             ),
             runAction: .runAction(
@@ -274,7 +301,7 @@ extension Project {
             profileAction: .profileAction(configuration: "Release"),
             analyzeAction: .analyzeAction(configuration: "Debug")
         )
-    ]
+    }
 }
 
 public extension TargetScript {

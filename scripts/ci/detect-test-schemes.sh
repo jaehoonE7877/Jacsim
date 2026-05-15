@@ -100,7 +100,7 @@ else
       Projects/Modules/*)
         add_scheme "Jacsim"
         ;;
-      Tuist/*|Plugins/*|xcconfigs/*|Workspace.swift|Package.swift|Tuist.swift|.github/workflows/*|scripts/ci/*|scripts/tuist/*)
+      Tuist/*|Plugins/*|xcconfigs/*|Workspace.swift|Package.swift|Tuist.swift|.github/workflows/*|.github/actions/*|scripts/ci/*|scripts/tuist/*)
         fallback_full_suite="true"
         ;;
       *)
