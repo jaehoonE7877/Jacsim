@@ -1,90 +1,75 @@
-import Foundation
-import ComposableArchitecture
 import Domain
 import DSKit
+import Foundation
+import Observation
 
-@Reducer
-public struct CalendarFeature {
-    @ObservableState
-    public struct State: Equatable {
-        public var selectedDate: Date = Date()
-        public var datePickerDate: Date = Date()
-        public var isDatePickerPresented: Bool = false
-        public var calendarScope: JSCalendarScope = .month
-        public var tasks: [Domain.Task] = []
-        public var eventDates: [Date] = []
-        public var dateColors: [Date: TaskSuccessRate] = [:]
-        public var isLoading: Bool = false
-        public var loadFailed: Bool = false
+@MainActor
+@Observable
+public final class CalendarModel {
+    public var selectedDate: Date = Date()
+    public var datePickerDate: Date = Date()
+    public var isDatePickerPresented: Bool = false
+    public var calendarScope: JSCalendarScope = .month
+    public var tasks: [Domain.Task] = []
+    public var eventDates: [Date] = []
+    public var dateColors: [Date: TaskSuccessRate] = [:]
+    public var isLoading: Bool = false
+    public var loadFailed: Bool = false
 
-        public init() {}
+    @ObservationIgnored private let dependencies: JacsimDependencies
+    @ObservationIgnored private var loadTask: _Concurrency.Task<Void, Never>?
+
+    public init(dependencies: JacsimDependencies) {
+        self.dependencies = dependencies
     }
 
-    public enum Action: BindableAction {
-        case onAppear
-        case binding(BindingAction<State>)
-        case dateSelected(Date)
-        case datePickerButtonTapped
-        case datePickerConfirmed
-        case datePickerDismissed
-        case tasksResponse([Domain.Task])
-        case tasksLoadFailed
+    deinit {
+        loadTask?.cancel()
     }
 
-    @Dependency(\.taskQueryClient) var taskQueryClient
-    @Dependency(\.calendarEventService) var calendarEventService
-
-    public var body: some ReducerOf<Self> {
-        BindingReducer()
-        Reduce { state, action in
-            switch action {
-            case .onAppear:
-                state.isLoading = true
-                state.loadFailed = false
-                return .run { [taskQueryClient] send in
-                    do {
-                        let tasks = try await taskQueryClient.fetchActiveTasks()
-                        await send(.tasksResponse(tasks))
-                    } catch {
-                        await send(.tasksLoadFailed)
-                    }
-                }
-
-            case let .dateSelected(date):
-                state.selectedDate = date
-                return .none
-
-            case .datePickerButtonTapped:
-                state.datePickerDate = state.selectedDate
-                state.isDatePickerPresented = true
-                return .none
-
-            case .datePickerConfirmed:
-                state.selectedDate = state.datePickerDate
-                state.isDatePickerPresented = false
-                return .none
-
-            case .datePickerDismissed:
-                state.datePickerDate = state.selectedDate
-                state.isDatePickerPresented = false
-                return .none
-
-            case let .tasksResponse(tasks):
-                state.tasks = tasks
-                state.eventDates = calendarEventService.calculateEventDates(from: tasks)
-                state.dateColors = calendarEventService.calculateDateColors(from: tasks)
-                state.isLoading = false
-                state.loadFailed = false
-                return .none
-
-            case .tasksLoadFailed:
-                state.isLoading = false
-                state.loadFailed = true
-                return .none
-
-            case .binding:
-                return .none
+    public func loadTasks() {
+        isLoading = true
+        loadFailed = false
+        loadTask?.cancel()
+        loadTask = _Concurrency.Task { [dependencies] in
+            do {
+                let tasks = try await dependencies.taskQueryClient.fetchActiveTasks()
+                tasksResponse(tasks)
+            } catch {
+                tasksLoadFailed()
             }
         }
+    }
+
+    public func dateSelected(_ date: Date) {
+        selectedDate = date
+    }
+
+    public func datePickerButtonTapped() {
+        datePickerDate = selectedDate
+        isDatePickerPresented = true
+    }
+
+    public func datePickerConfirmed() {
+        selectedDate = datePickerDate
+        isDatePickerPresented = false
+    }
+
+    public func datePickerDismissed() {
+        datePickerDate = selectedDate
+        isDatePickerPresented = false
+    }
+
+    private func tasksResponse(_ tasks: [Domain.Task]) {
+        self.tasks = tasks
+        eventDates = dependencies.calendarEventService.calculateEventDates(from: tasks)
+        dateColors = dependencies.calendarEventService.calculateDateColors(from: tasks)
+        isLoading = false
+        loadFailed = false
+    }
+
+    private func tasksLoadFailed() {
+        isLoading = false
+        loadFailed = true
     }
 }

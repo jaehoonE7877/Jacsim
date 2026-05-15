@@ -1,8 +1,7 @@
-import Foundation
-import Testing
-import ComposableArchitecture
 import Domain
 import ExternalInterface
+import Foundation
+import Testing
 
 @testable import Jacsim
 
@@ -28,42 +27,51 @@ func appFeatureActiveSyncSchedulesOnlyRepresentativeReminder() async {
     let focusTaskID = TaskID(UUID())
     let staleTaskID = TaskID(UUID())
     let recorder = AppNotificationSchedulerRecorder()
+    var dependencies = JacsimDependencies.test
+    dependencies.appPreferences = .inMemory()
+    dependencies.userSettingsRepository = UserSettingsRepositoryPort(
+        isNotificationEnabled: { true },
+        getAllReminders: {
+            [
+                ReminderInfo(
+                    taskId: focusTaskID,
+                    title: "대표 작심",
+                    time: DateComponents(year: 2026, month: 5, day: 2, hour: 21, minute: 0)
+                ),
+                ReminderInfo(
+                    taskId: staleTaskID,
+                    title: "비대표 작심",
+                    time: DateComponents(hour: 22, minute: 0),
+                    shouldSchedule: false
+                )
+            ]
+        },
+        updateNotificationEnabled: { _ in }
+    )
+    dependencies.notificationScheduler = NotificationSchedulerPort(
+        scheduleDailyReminder: { taskID, _, _ in await recorder.recordScheduled(taskID) },
+        cancelReminder: { taskID in await recorder.recordCancelled(taskID) },
+        cancelAllReminders: {},
+        requestAuthorization: { true }
+    )
+    let model = AppModel(dependencies: dependencies)
 
-    let store = TestStore(initialState: AppFeature.State()) {
-        AppFeature()
-    } withDependencies: {
-        $0.appPreferences = .inMemory()
-        $0.userSettingsRepository = UserSettingsRepositoryPort(
-            isNotificationEnabled: { true },
-            getAllReminders: {
-                [
-                    ReminderInfo(
-                        taskId: focusTaskID,
-                        title: "대표 작심",
-                        time: DateComponents(year: 2026, month: 5, day: 2, hour: 21, minute: 0)
-                    ),
-                    ReminderInfo(
-                        taskId: staleTaskID,
-                        title: "비대표 작심",
-                        time: DateComponents(hour: 22, minute: 0),
-                        shouldSchedule: false
-                    )
-                ]
-            },
-            updateNotificationEnabled: { _ in }
-        )
-        $0.notificationScheduler = NotificationSchedulerPort(
-            scheduleDailyReminder: { taskID, _, _ in await recorder.recordScheduled(taskID) },
-            cancelReminder: { taskID in await recorder.recordCancelled(taskID) },
-            cancelAllReminders: {},
-            requestAuthorization: { true }
-        )
+    model.appBecameActive()
+
+    await waitUntil {
+        await recorder.scheduledIDs() == [focusTaskID]
     }
-    store.exhaustivity = .off
-
-    await store.send(.appBecameActive)
-    await store.finish()
-
     #expect(await recorder.scheduledIDs() == [focusTaskID])
     #expect(await recorder.cancelledIDs() == [staleTaskID])
+}
+
+@MainActor
+private func waitUntil(
+    timeoutIterations: Int = 50,
+    condition: @escaping @MainActor () async -> Bool
+) async {
+    for _ in 0..<timeoutIterations {
+        if await condition() { return }
+        try? await _Concurrency.Task.sleep(nanoseconds: 20_000_000)
+    }
 }

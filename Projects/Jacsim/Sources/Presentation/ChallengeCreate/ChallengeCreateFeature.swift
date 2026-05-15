@@ -1,42 +1,30 @@
-import ComposableArchitecture
+import Foundation
+import Observation
 
-@Reducer
-public struct ChallengeCreateFeature {
-    @ObservableState
-    public struct State: Equatable {
-        public var newTask: NewTaskFeature.State
+@MainActor
+@Observable
+public final class ChallengeCreateModel: Identifiable {
+    public let id = UUID()
+    public let newTask: NewTaskModel
 
-        public init() {
-            self.newTask = NewTaskFeature.State()
-        }
+    @ObservationIgnored private let onChallengeCreated: () -> Void
+    @ObservationIgnored private let onCancelled: () -> Void
+
+    public init(
+        dependencies: JacsimDependencies,
+        onChallengeCreated: @escaping () -> Void = {},
+        onCancelled: @escaping () -> Void = {}
+    ) {
+        self.onChallengeCreated = onChallengeCreated
+        self.onCancelled = onCancelled
+        self.newTask = NewTaskModel(
+            dependencies: dependencies,
+            onTaskCreated: onChallengeCreated,
+            onCancelled: onCancelled
+        )
     }
 
-    public enum Action {
-        case newTask(NewTaskFeature.Action)
-        case cancelButtonTapped
-        case delegate(Delegate)
-
-        public enum Delegate {
-            case challengeCreated
-            case cancelled
-        }
-    }
-
-    public var body: some ReducerOf<Self> {
-        Scope(state: \.newTask, action: \.newTask) {
-            NewTaskFeature()
-        }
-        Reduce { state, action in
-            switch action {
-            case .newTask(.delegate(.taskCreated)):
-                return .send(.delegate(.challengeCreated))
-
-            case .cancelButtonTapped, .newTask(.delegate(.cancelled)):
-                return .send(.delegate(.cancelled))
-
-            case .newTask, .delegate:
-                return .none
-            }
-        }
+    public func cancelButtonTapped() {
+        onCancelled()
     }
 }

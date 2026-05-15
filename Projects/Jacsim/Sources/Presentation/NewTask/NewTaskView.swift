@@ -1,5 +1,4 @@
 import SwiftUI
-import ComposableArchitecture
 import DSKit
 import Domain
 import _Concurrency
@@ -7,7 +6,7 @@ import Combine
 import UIKit
 
 public struct NewTaskView: View {
-    @Bindable var store: StoreOf<NewTaskFeature>
+    @Bindable var model: NewTaskModel
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var isKeyboardVisible = false
     @State private var scrollTargetID: AnyHashable?
@@ -38,14 +37,14 @@ public struct NewTaskView: View {
         static let settleDelayNanoseconds: UInt64 = 120_000_000
     }
 
-    public init(store: StoreOf<NewTaskFeature>) {
-        self.store = store
+    public init(model: NewTaskModel) {
+        self.model = model
     }
 
     public var body: some View {
         RedesignScreenScaffold(
             title: "새 작심 만들기",
-            subtitle: store.currentStep.description,
+            subtitle: model.currentStep.description,
             contentBottomInset: contentBottomInset,
             scrollToID: scrollTargetID,
             scrollAnchor: .center,
@@ -55,17 +54,17 @@ public struct NewTaskView: View {
         ) {
             stepProgressSection
 
-            if store.saveFailed && store.currentStep == .alarmConfirm {
+            if model.saveFailed && model.currentStep == .alarmConfirm {
                 saveFailedBanner
             }
 
-            if let validationError = store.stepValidationError {
+            if let validationError = model.stepValidationError {
                 RedesignInlineErrorView(
                     model: InlineErrorModel(message: validationError.message)
                 )
             }
 
-            switch store.currentStep {
+            switch model.currentStep {
             case .basicInfo:
                 titleSection
                 stageSection
@@ -82,7 +81,7 @@ public struct NewTaskView: View {
         }
         .navigationBarTitleDisplayMode(.inline)
         .overlay(alignment: .bottom) {
-            if let message = store.toastMessage {
+            if let message = model.toastMessage {
                 RedesignToastView(
                     message: message,
                     style: .error,
@@ -93,28 +92,28 @@ public struct NewTaskView: View {
                         try? await _Concurrency.Task.sleep(
                             nanoseconds: RedesignToastView.defaultDismissNanoseconds
                         )
-                        store.send(.toastDismissed)
+                        model.toastDismissed()
                     }
             }
         }
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
                 Button("취소") {
-                    store.send(.cancelButtonTapped)
+                    model.cancelButtonTapped()
                 }
                 .font(.jsButtonMedium)
                 .foregroundColor(.labelAlternative)
-                .disabled(store.isSaving)
+                .disabled(model.isSaving)
             }
 
-            if isFooterCompacted, store.currentStep.previous != nil {
+            if isFooterCompacted, model.currentStep.previous != nil {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("이전") {
-                        store.send(.previousStepTapped)
+                        model.previousStepTapped()
                     }
                     .font(.jsButtonMedium)
                     .foregroundColor(.labelAlternative)
-                    .disabled(store.isSaving)
+                    .disabled(model.isSaving)
                 }
             }
         }
@@ -128,36 +127,43 @@ public struct NewTaskView: View {
         .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillHideNotification)) { _ in
             updateKeyboardVisibility(false)
         }
-        .onChange(of: store.isAlarmEnabled) { _, isEnabled in
-            guard isEnabled, store.currentStep == .alarmConfirm else { return }
+        .onChange(of: model.isAlarmEnabled) { _, isEnabled in
+            guard isEnabled, model.currentStep == .alarmConfirm else { return }
             let delay = reduceMotion
                 ? AlarmScrollPolicy.reducedMotionDelayNanoseconds
                 : AlarmScrollPolicy.expandedDelayNanoseconds
             requestAlarmPickerScroll(delayNanoseconds: delay)
         }
-        .alert($store.scope(state: \.alert, action: \.alert))
-        .animation(reduceMotion ? .none : .easeInOut(duration: 0.25), value: store.toastMessage)
+        .alert("작심 만들기를 그만둘까요?", isPresented: $model.isDiscardAlertPresented) {
+            Button("계속 작성", role: .cancel) {}
+            Button("그만두기", role: .destructive) {
+                model.confirmDiscardDraft()
+            }
+        } message: {
+            Text("입력한 제목과 사진은 저장되지 않아요.")
+        }
+        .animation(reduceMotion ? .none : .easeInOut(duration: 0.25), value: model.toastMessage)
     }
 
     private var stepProgressSection: some View {
-        let steps = NewTaskFeature.CreateChallengeStep.allCases
-        let currentIndex = store.currentStep.rawValue + 1
+        let steps = NewTaskModel.CreateChallengeStep.allCases
+        let currentIndex = model.currentStep.rawValue + 1
 
         return RedesignSectionCard(
             title: "단계 \(currentIndex)/\(steps.count)",
-            subtitle: store.currentStep.title
+            subtitle: model.currentStep.title
         ) {
             VStack(alignment: .leading, spacing: .jsSM) {
                 HStack(spacing: .jsXS) {
                     ForEach(steps, id: \.rawValue) { step in
                         Capsule()
-                            .fill(step.rawValue <= store.currentStep.rawValue ? Color.primaryNormal : Color.backgroundStrong)
+                            .fill(step.rawValue <= model.currentStep.rawValue ? Color.primaryNormal : Color.backgroundStrong)
                             .frame(maxWidth: .infinity)
                             .frame(height: 6.jsScaled())
                     }
                 }
 
-                Text(store.currentStep.description)
+                Text(model.currentStep.description)
                     .font(.jsBodySmall)
                     .foregroundColor(.labelAlternative)
             }
@@ -173,10 +179,10 @@ public struct NewTaskView: View {
                 JSInputField(
                     title: "",
                     placeholder: "예: 매일 10분 독서",
-                    text: $store.title
+                    text: $model.title
                 )
 
-                Text("\(store.title.count)/\(TextInputFieldPolicy.title.maxLength)")
+                Text("\(model.title.count)/\(TextInputFieldPolicy.title.maxLength)")
                     .font(.jsLabelMedium)
                     .foregroundColor(.labelAssistive)
 
@@ -198,14 +204,14 @@ public struct NewTaskView: View {
             ) { selected in
                 if !reduceMotion {
                     withAnimation(.easeInOut(duration: JSAnimation.durationNormal)) {
-                        store.stageType = stageType(for: selected)
+                        model.stageType = stageType(for: selected)
                     }
                 } else {
-                    store.stageType = stageType(for: selected)
+                    model.stageType = stageType(for: selected)
                 }
             }
 
-            Text("선택된 기간: \(store.stageType.durationDays)일")
+            Text("선택된 기간: \(model.stageType.durationDays)일")
                 .font(.jsBodySmall)
                 .foregroundColor(.labelAlternative)
                 .frame(maxWidth: .infinity, alignment: .trailing)
@@ -218,12 +224,12 @@ public struct NewTaskView: View {
             subtitle: "카드에 노출될 대표 이미지를 설정해요"
         ) {
             ImageAttachmentPicker(
-                image: store.image,
+                image: model.image,
                 emptyTitle: "대표 사진을 추가해 주세요",
                 emptySubtitle: "가로·세로 비율은 자동으로 맞춰져요",
                 height: 232.jsScaled()
             ) { image in
-                store.send(.imageSelected(image))
+                model.imageSelected(image)
             }
         }
     }
@@ -236,15 +242,15 @@ public struct NewTaskView: View {
             VStack(spacing: .jsSM) {
                 summaryRow(
                     title: "제목",
-                    value: store.trimmedTitle.isEmpty ? "미입력" : store.trimmedTitle
+                    value: model.trimmedTitle.isEmpty ? "미입력" : model.trimmedTitle
                 )
                 summaryRow(
                     title: "기간",
-                    value: "\(store.stageType.durationDays)일"
+                    value: "\(model.stageType.durationDays)일"
                 )
                 summaryRow(
                     title: "대표사진",
-                    value: store.image == nil ? "미선택" : "선택됨"
+                    value: model.image == nil ? "미선택" : "선택됨"
                 )
             }
         }
@@ -271,13 +277,13 @@ public struct NewTaskView: View {
             title: "알림",
             subtitle: "매일 같은 시간에 인증 리마인드를 받을 수 있어요"
         ) {
-            Toggle("알림 받기", isOn: $store.isAlarmEnabled)
+            Toggle("알림 받기", isOn: $model.isAlarmEnabled)
                 .font(.jsBodyMedium)
 
-            if store.isAlarmEnabled {
+            if model.isAlarmEnabled {
                 DatePicker(
                     "시간 선택",
-                    selection: $store.alarmDate,
+                    selection: $model.alarmDate,
                     displayedComponents: .hourAndMinute
                 )
                 .datePickerStyle(.wheel)
@@ -285,7 +291,7 @@ public struct NewTaskView: View {
                 .id(ScrollTarget.alarmPicker)
             }
         }
-        .animation(reduceMotion ? .none : .easeInOut(duration: 0.24), value: store.isAlarmEnabled)
+        .animation(reduceMotion ? .none : .easeInOut(duration: 0.24), value: model.isAlarmEnabled)
     }
 
     private var buttonSection: some View {
@@ -300,7 +306,7 @@ public struct NewTaskView: View {
                     primaryButtonTapped()
                 }
 
-                if store.isSaving && store.currentStep == .alarmConfirm {
+                if model.isSaving && model.currentStep == .alarmConfirm {
                     JSProgressIndicator(size: .small, tintColor: .white)
                 }
             }
@@ -340,7 +346,7 @@ public struct NewTaskView: View {
 
     private var contentBottomInset: CGFloat {
         let baseInset = isFooterCompacted ? FooterLayout.compactContentBottomInset : FooterLayout.contentBottomInset
-        guard store.currentStep == .alarmConfirm, store.isAlarmEnabled else { return baseInset }
+        guard model.currentStep == .alarmConfirm, model.isAlarmEnabled else { return baseInset }
         // Extra inset so DatePicker can settle fully above sticky footer.
         return baseInset + 96.jsScaled()
     }
@@ -350,7 +356,7 @@ public struct NewTaskView: View {
     }
 
     private var primaryButtonTitle: String {
-        switch store.currentStep {
+        switch model.currentStep {
         case .basicInfo, .photo:
             return "다음"
         case .alarmConfirm:
@@ -359,22 +365,22 @@ public struct NewTaskView: View {
     }
 
     private var isPrimaryButtonEnabled: Bool {
-        guard !store.isSaving else { return false }
+        guard !model.isSaving else { return false }
 
-        switch store.currentStep {
+        switch model.currentStep {
         case .basicInfo, .photo:
-            return store.canProceedCurrentStep
+            return model.canProceedCurrentStep
         case .alarmConfirm:
-            return store.canSubmit
+            return model.canSubmit
         }
     }
 
     private func primaryButtonTapped() {
-        switch store.currentStep {
+        switch model.currentStep {
         case .basicInfo, .photo:
-            store.send(.nextStepTapped)
+            model.nextStepTapped()
         case .alarmConfirm:
-            store.send(.saveButtonTapped)
+            model.saveButtonTapped()
         }
     }
 
@@ -388,9 +394,9 @@ public struct NewTaskView: View {
 
     private var stageDayBinding: Binding<Int> {
         Binding(
-            get: { store.stageType.durationDays },
+            get: { model.stageType.durationDays },
             set: { day in
-                store.stageType = stageType(for: day)
+                model.stageType = stageType(for: day)
             }
         )
     }
@@ -424,17 +430,17 @@ public struct NewTaskView: View {
 
     private var secondaryFooterActions: some View {
         HStack(spacing: FooterLayout.secondaryActionSpacing) {
-            if store.currentStep.previous != nil {
+            if model.currentStep.previous != nil {
                 Button("이전") {
-                    store.send(.previousStepTapped)
+                    model.previousStepTapped()
                 }
-                .disabled(store.isSaving)
+                .disabled(model.isSaving)
             }
 
             Button("취소") {
-                store.send(.cancelButtonTapped)
+                model.cancelButtonTapped()
             }
-            .disabled(store.isSaving)
+            .disabled(model.isSaving)
         }
         .font(.jsButtonSmall)
         .foregroundColor(.labelAlternative)

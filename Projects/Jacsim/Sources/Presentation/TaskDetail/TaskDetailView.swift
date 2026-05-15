@@ -1,16 +1,15 @@
 import SwiftUI
-import ComposableArchitecture
 import DSKit
 import Domain
 import Darwin
 import UIKit
 
 public struct TaskDetailView: View {
-    @Bindable var store: StoreOf<TaskDetailFeature>
+    @Bindable var model: TaskDetailModel
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    public init(store: StoreOf<TaskDetailFeature>) {
-        self.store = store
+    public init(model: TaskDetailModel) {
+        self.model = model
     }
 
     @State private var scrollOffset: CGFloat = 0
@@ -86,12 +85,12 @@ public struct TaskDetailView: View {
                 } action: { _, new in
                     scrollOffset = new
                 }
-                .onChange(of: store.shouldScrollToRecords) { _, shouldScroll in
+                .onChange(of: model.shouldScrollToRecords) { _, shouldScroll in
                     guard shouldScroll else { return }
                     withAnimation(.easeInOut) {
                         proxy.scrollTo("recordListSection", anchor: .top)
                     }
-                    store.send(.scrollToRecordsCompleted)
+                    model.scrollToRecordsCompleted()
                 }
             }
 
@@ -126,11 +125,11 @@ public struct TaskDetailView: View {
             .background(Color.backgroundNormal)
             .ignoresSafeArea(edges: .top)
         }
-        .onAppear { store.send(.onAppear) }
+        .onAppear { model.onAppear() }
         .navigationBarBackButtonHidden(true)
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
-                Button(action: { store.send(.backButtonTapped) }) {
+                Button(action: { model.backButtonTapped() }) {
                     Image(systemName: "chevron.left")
                         .font(.jsHeadlineMedium)
                         .foregroundColor(.white)
@@ -140,7 +139,7 @@ public struct TaskDetailView: View {
 
             ToolbarItem(placement: .principal) {
                 VStack(spacing: .jsMicro) {
-                    Text(store.task.title)
+                    Text(model.task.title)
                         .font(.jsHeadlineSmall)
                         .foregroundColor(.labelStrong)
                         .lineLimit(1)
@@ -156,21 +155,21 @@ public struct TaskDetailView: View {
 
             ToolbarItem(placement: .topBarTrailing) {
                 Menu {
-                    Button(action: { store.send(.changePhotoButtonTapped) }) {
+                    Button(action: { model.changePhotoButtonTapped() }) {
                         Label("대표 사진 변경", systemImage: "photo")
                     }
 
-                    Button(action: { store.send(.notificationSettingsButtonTapped) }) {
+                    Button(action: { model.notificationSettingsButtonTapped() }) {
                         Label("알림 설정", systemImage: "bell")
                     }
 
-                    Button(action: { store.send(.editMemoButtonTapped) }) {
+                    Button(action: { model.editMemoButtonTapped() }) {
                         Label("작심 메모 편집", systemImage: "note.text")
                     }
 
                     Divider()
 
-                    Button(role: .destructive, action: { store.send(.deleteButtonTapped) }) {
+                    Button(role: .destructive, action: { model.deleteButtonTapped() }) {
                         Label("삭제", systemImage: "trash")
                     }
                 } label: {
@@ -182,37 +181,37 @@ public struct TaskDetailView: View {
             }
         }
         .background(InteractivePopGestureEnabler())
-        .sheet(item: $store.scope(state: \.editTask, action: \.editTask)) { store in
+        .sheet(item: $model.editTask) { editModel in
             NavigationStack {
-                TaskEditView(store: store)
+                TaskEditView(model: editModel)
             }
             .presentationDragIndicator(.hidden)
             .interactiveDismissDisabled(true)
         }
         .overlay {
-            if store.isStagePopupPresented {
+            if model.isStagePopupPresented {
                 StageCompletionPopupView(
-                    result: store.stagePopupResult,
+                    result: model.stagePopupResult,
                     completedDays: stagePopupCompletedDays,
                     totalDays: stagePopupTotalDays,
                     recordImages: stagePopupRecordImages,
-                    hasNextStage: store.task.stages.last?.stageType.next != nil,
-                    onNextStage: { store.send(.nextStageButtonTapped) },
-                    onRetry: { store.send(.retryStageButtonTapped) },
-                    onDismiss: { store.send(.stagePopupDismissed) }
+                    hasNextStage: model.task.stages.last?.stageType.next != nil,
+                    onNextStage: { model.nextStageButtonTapped() },
+                    onRetry: { model.retryStageButtonTapped() },
+                    onDismiss: { model.stagePopupDismissed() }
                 )
             }
-            if store.isDeleteFlowPresented {
+            if model.isDeleteFlowPresented {
                 TaskDropoffGuardPopupView(
-                    step: store.deleteFlowStep,
-                    progressRate: store.stageProgress,
-                    completedDays: store.task.completedDays,
-                    countdown: store.deleteConfirmCountdown,
-                    isDeleteEnabled: store.isDeleteConfirmEnabled,
-                    onKeepGoing: { store.send(.deleteFlowKeepGoing) },
-                    onProceed: { store.send(.deleteFlowProceedToFinal) },
-                    onDelete: { store.send(.deleteFlowDeleteConfirmed) },
-                    onDismiss: { store.send(.deleteFlowDismissed) }
+                    step: model.deleteFlowStep,
+                    progressRate: model.stageProgress,
+                    completedDays: model.task.completedDays,
+                    countdown: model.deleteConfirmCountdown,
+                    isDeleteEnabled: model.isDeleteConfirmEnabled,
+                    onKeepGoing: { model.deleteFlowKeepGoing() },
+                    onProceed: { model.deleteFlowProceedToFinal() },
+                    onDelete: { model.deleteFlowDeleteConfirmed() },
+                    onDismiss: { model.deleteFlowDismissed() }
                 )
             }
         }
@@ -251,7 +250,7 @@ public struct TaskDetailView: View {
             )
 
             VStack(alignment: .leading, spacing: .jsXS) {
-                Text(store.task.title)
+                Text(model.task.title)
                     .font(.jsDisplaySmall)
                     .foregroundColor(.white)
                     .lineLimit(2)
@@ -292,7 +291,7 @@ public struct TaskDetailView: View {
             .frame(height: 280.jsScaled())
 
             VStack(alignment: .leading, spacing: .jsXS) {
-                Text(store.task.title)
+                Text(model.task.title)
                     .font(.jsDisplaySmall)
                     .foregroundColor(.white)
                     .lineLimit(2)
@@ -308,7 +307,7 @@ public struct TaskDetailView: View {
             VStack(alignment: .leading, spacing: .jsMD) {
                 HStack {
                     VStack(alignment: .leading, spacing: .jsMicro) {
-                        Text("\(store.currentStage?.stageType.durationDays ?? 7)일 스테이지")
+                        Text("\(model.currentStage?.stageType.durationDays ?? 7)일 스테이지")
                             .font(.jsHeadlineSmall)
                             .foregroundColor(.labelStrong)
                         
@@ -324,7 +323,7 @@ public struct TaskDetailView: View {
                 
                 VStack(alignment: .leading, spacing: .jsXS) {
                     JSProgress(
-                        progress: store.stageProgress,
+                        progress: model.stageProgress,
                         style: .linear,
                         size: .medium,
                         tintColor: progressColor
@@ -332,7 +331,7 @@ public struct TaskDetailView: View {
                     
                     HStack {
                         Spacer()
-                        Text(store.stageProgressText)
+                        Text(model.stageProgressText)
                             .font(.jsLabelMedium)
                             .foregroundColor(.labelAlternative)
                     }
@@ -342,20 +341,20 @@ public struct TaskDetailView: View {
     }
 
     private var stageDateRange: String {
-        guard let stage = store.currentStage else { return "" }
+        guard let stage = model.currentStage else { return "" }
         let formatter = DateFormatter()
         formatter.dateFormat = "M/d"
         return "\(formatter.string(from: stage.startDate)) ~ \(formatter.string(from: stage.endDate))"
     }
 
     private var navigationStageSubtitle: String {
-        "\(store.currentStage?.stageType.durationDays ?? 7)일 스테이지"
+        "\(model.currentStage?.stageType.durationDays ?? 7)일 스테이지"
     }
     
     private var stageStatusChip: some View {
         let state: JSStatusChipState
         
-        switch store.challengeState {
+        switch model.challengeState {
         case .stagePending:
             state = .pending
         case .stageSuccess:
@@ -370,7 +369,7 @@ public struct TaskDetailView: View {
     }
     
     private var progressColor: Color {
-        switch store.challengeState {
+        switch model.challengeState {
         case .stagePending:
             return .primaryNormal
         case .stageSuccess, .habitCompleted:
@@ -383,7 +382,7 @@ public struct TaskDetailView: View {
     private var todayStatusSection: some View {
         RedesignSectionCard(title: "오늘 상태") {
             HStack {
-                Text(store.todayStatus == .certified ? "오늘 인증을 마쳤어요" : "인증을 완료하면 연속 기록이 이어져요")
+                Text(model.todayStatus == .certified ? "오늘 인증을 마쳤어요" : "인증을 완료하면 연속 기록이 이어져요")
                     .font(.jsBodySmall)
                     .foregroundColor(.labelAlternative)
 
@@ -395,7 +394,7 @@ public struct TaskDetailView: View {
     }
 
     private var todayStatusChipState: JSStatusChipState {
-        switch store.todayStatus {
+        switch model.todayStatus {
         case .notCertified:
             return .pending
         case .certified:
@@ -409,7 +408,7 @@ public struct TaskDetailView: View {
                 .font(.jsHeadlineSmall)
                 .foregroundColor(.labelStrong)
 
-            if store.dayViewData.isEmpty {
+            if model.dayViewData.isEmpty {
                 RedesignStateBanner(
                     text: "아직 인증 기록이 없어요",
                     icon: "tray",
@@ -417,10 +416,10 @@ public struct TaskDetailView: View {
                 )
             } else {
                 LazyVStack(spacing: .jsSM) {
-                    ForEach(store.dayViewData) { data in
+                    ForEach(model.dayViewData) { data in
                         DailyRecordRow(data: data)
                             .onTapGesture {
-                                store.send(.dayTapped(data.date))
+                                model.dayTapped(data.date)
                             }
                     }
                 }
@@ -430,7 +429,7 @@ public struct TaskDetailView: View {
 
     @ViewBuilder
     private var bottomCTASection: some View {
-        switch store.challengeState {
+        switch model.challengeState {
         case .stagePending:
             stagePendingCTA
         case .stageSuccess:
@@ -443,9 +442,9 @@ public struct TaskDetailView: View {
     }
 
     private var shouldShowBottomCTA: Bool {
-        switch store.challengeState {
+        switch model.challengeState {
         case .stagePending:
-            return isTodayInChallengeRange && store.todayStatus == .notCertified
+            return isTodayInChallengeRange && model.todayStatus == .notCertified
         case .stageSuccess, .stageFail, .habitCompleted:
             return true
         }
@@ -456,19 +455,19 @@ public struct TaskDetailView: View {
     }
 
     private var stagePopupCompletedDays: Int {
-        store.dayViewData
+        model.dayViewData
             .filter { isDateInCurrentStage($0.date) }
             .filter(\.isChecked)
             .count
     }
 
     private var stagePopupTotalDays: Int {
-        store.currentStage?.durationDays ?? max(store.dayViewData.count, 1)
+        model.currentStage?.durationDays ?? max(model.dayViewData.count, 1)
     }
 
     private var stagePopupRecordImages: [UIImage] {
         Array(
-            store.dayViewData.lazy
+            model.dayViewData.lazy
                 .filter { isDateInCurrentStage($0.date) }
                 .filter(\.isChecked)
                 .compactMap(\.image)
@@ -477,7 +476,7 @@ public struct TaskDetailView: View {
     }
 
     private func isDateInCurrentStage(_ date: Date) -> Bool {
-        guard let stage = store.currentStage else { return true }
+        guard let stage = model.currentStage else { return true }
         let calendar = Calendar.current
         let day = calendar.startOfDay(for: date)
         return day >= calendar.startOfDay(for: stage.startDate)
@@ -486,19 +485,19 @@ public struct TaskDetailView: View {
 
     private var isTodayInChallengeRange: Bool {
         let today = Calendar.current.startOfDay(for: Date())
-        return today >= Calendar.current.startOfDay(for: store.task.startDate)
-            && today <= Calendar.current.startOfDay(for: store.task.endDate)
+        return today >= Calendar.current.startOfDay(for: model.task.startDate)
+            && today <= Calendar.current.startOfDay(for: model.task.endDate)
     }
     
     @ViewBuilder
     private var stagePendingCTA: some View {
-        if isTodayInChallengeRange && store.todayStatus == .notCertified {
+        if isTodayInChallengeRange && model.todayStatus == .notCertified {
             JSButton(
                 title: "오늘 작심 인증하러 가기",
                 style: .primary,
                 size: .large
             ) {
-                store.send(.certifyTodayTapped)
+                model.certifyTodayTapped()
             }
         } else {
             EmptyView()
@@ -512,7 +511,7 @@ public struct TaskDetailView: View {
                 style: .primary,
                 size: .large
             ) {
-                store.send(.nextStageButtonTapped)
+                model.nextStageButtonTapped()
             }
             
             JSButton(
@@ -520,7 +519,7 @@ public struct TaskDetailView: View {
                 style: .secondary,
                 size: .large
             ) {
-                store.send(.viewSuccessRecordTapped)
+                model.viewSuccessRecordTapped()
             }
         }
     }
@@ -537,7 +536,7 @@ public struct TaskDetailView: View {
                 style: .primary,
                 size: .large
             ) {
-                store.send(.retryStageButtonTapped)
+                model.retryStageButtonTapped()
             }
             
             JSButton(
@@ -545,7 +544,7 @@ public struct TaskDetailView: View {
                 style: .secondary,
                 size: .large
             ) {
-                store.send(.keepAsIsButtonTapped)
+                model.keepAsIsButtonTapped()
             }
         }
     }
@@ -562,13 +561,13 @@ public struct TaskDetailView: View {
                 style: .secondary,
                 size: .large
             ) {
-                store.send(.viewHistoryButtonTapped)
+                model.viewHistoryButtonTapped()
             }
         }
     }
     
     private func loadCoverImage() -> UIImage? {
-        return store.coverImage
+        return model.coverImage
     }
 }
 
@@ -600,7 +599,7 @@ private struct InteractivePopGestureEnabler: UIViewControllerRepresentable {
 }
 
 private struct DailyRecordRow: View {
-    let data: TaskDetailFeature.State.DayViewData
+    let data: TaskDetailModel.DayViewData
     
     var body: some View {
         HStack(spacing: .jsSM) {
@@ -662,7 +661,7 @@ private struct DailyRecordRow: View {
 }
 
 private struct TaskDropoffGuardPopupView: View {
-    let step: TaskDetailFeature.DeleteFlowStep
+    let step: TaskDetailModel.DeleteFlowStep
     let progressRate: Double
     let completedDays: Int
     let countdown: Int

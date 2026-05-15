@@ -1,17 +1,13 @@
 import SwiftUI
-import ComposableArchitecture
 
 @main
 struct JacsimApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
-    
-    let store = Store(initialState: AppFeature.State()) {
-        AppFeature()
-    }
+    @State private var model = AppModel()
 
     var body: some Scene {
         WindowGroup {
-            AppView(store: store)
+            AppView(model: model)
                 .onOpenURL { url in
                     NotificationCenter.default.post(
                         name: .jacsimDeepLinkReceived,

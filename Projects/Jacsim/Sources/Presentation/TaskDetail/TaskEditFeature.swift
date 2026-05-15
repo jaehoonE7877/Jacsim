@@ -1,103 +1,98 @@
-import Foundation
+import Core
 import Domain
-import ComposableArchitecture
+import Foundation
+import Observation
 import SwiftUI
 import UIKit
 
-@Reducer
-public struct TaskEditFeature {
-    @ObservableState
-    public struct State: Equatable, Identifiable {
-        public var id: TaskID { task.id }
-        public var task: Task
-        public var title: String
-        public var lastAcceptedTitle: String
-        public var image: UIImage?
-        public var isAlarmEnabled: Bool
-        public var alarmDate: Date
-        public var toastMessage: String? = nil
+@MainActor
+@Observable
+public final class TaskEditModel: Identifiable {
+    public nonisolated let id: TaskID
+    public var task: Task
+    public var title: String {
+        didSet { enforceTitleLimit() }
+    }
+    public var lastAcceptedTitle: String
+    public var image: UIImage?
+    public var isAlarmEnabled: Bool
+    public var alarmDate: Date
+    public var toastMessage: String?
 
-        public init(task: Task) {
-            self.task = task
-            self.title = task.title
-            self.lastAcceptedTitle = task.title
-            self.isAlarmEnabled = task.isNotificationEnabled
-            self.alarmDate = task.alarm ?? Date()
+    @ObservationIgnored private let dependencies: JacsimDependencies
+    @ObservationIgnored private let onSaved: (String, UIImage?, Bool, Date) -> Void
+    @ObservationIgnored private let onCancelled: () -> Void
+    @ObservationIgnored private var loadImageTask: _Concurrency.Task<Void, Never>?
+    @ObservationIgnored private var isEnforcingTitle = false
+
+    public init(
+        task: Task,
+        dependencies: JacsimDependencies,
+        onSaved: @escaping (String, UIImage?, Bool, Date) -> Void = { _, _, _, _ in },
+        onCancelled: @escaping () -> Void = {}
+    ) {
+        self.id = task.id
+        self.task = task
+        self.title = task.title
+        self.lastAcceptedTitle = task.title
+        self.isAlarmEnabled = task.isNotificationEnabled
+        self.alarmDate = task.alarm ?? Date()
+        self.dependencies = dependencies
+        self.onSaved = onSaved
+        self.onCancelled = onCancelled
+    }
+
+    deinit {
+        loadImageTask?.cancel()
+    }
+
+    public func onAppear() {
+        let key = task.mainImageKey
+        loadImageTask?.cancel()
+        loadImageTask = _Concurrency.Task { [dependencies] in
+            let imageData = await dependencies.imageStore.loadImage(key)
+            let image = imageData.flatMap { UIImage(data: $0) }
+            imageLoaded(image)
         }
     }
 
-    public enum Action: BindableAction {
-        case binding(BindingAction<State>)
-        case onAppear
-        case imageLoaded(UIImage?)
-        case saveButtonTapped
-        case cancelButtonTapped
-        case imageSelected(UIImage)
-        case toastDismissed
-        case delegate(Delegate)
-
-        public enum Delegate {
-            case saved(String, UIImage?, Bool, Date)
-            case cancelled
-        }
+    public func saveButtonTapped() {
+        let title = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        onSaved(title, image, isAlarmEnabled, alarmDate)
     }
 
-    @Dependency(\.imageStore) var imageStore
+    public func cancelButtonTapped() {
+        onCancelled()
+    }
 
-    public var body: some ReducerOf<Self> {
-        BindingReducer()
-        Reduce { state, action in
-            switch action {
-            case .onAppear:
-                let key = state.task.mainImageKey
-                let imageStore = imageStore
-                return .run { send in
-                    let imageData = await imageStore.loadImage(key)
-                    let image = imageData.flatMap { UIImage(data: $0) }
-                    await send(.imageLoaded(image))
-                }
+    public func imageSelected(_ image: UIImage) {
+        self.image = image
+    }
 
-            case let .imageLoaded(image):
-                state.image = image
-                return .none
+    public func toastDismissed() {
+        toastMessage = nil
+    }
 
-            case .saveButtonTapped:
-                let title = state.title.trimmingCharacters(in: .whitespacesAndNewlines)
-                let image = state.image
-                let isAlarmEnabled = state.isAlarmEnabled
-                let alarmDate = state.alarmDate
-                return .send(.delegate(.saved(title, image, isAlarmEnabled, alarmDate)))
+    private func imageLoaded(_ image: UIImage?) {
+        self.image = image
+    }
 
-            case .cancelButtonTapped:
-                return .send(.delegate(.cancelled))
-
-            case let .imageSelected(image):
-                state.image = image
-                return .none
-
-            case .toastDismissed:
-                state.toastMessage = nil
-                return .none
-
-            case .binding(\.title):
-                let result = TextInputLimiter.enforce(
-                    previousAcceptedText: state.lastAcceptedTitle,
-                    candidateText: state.title,
-                    policy: .title
-                )
-                switch result {
-                case let .accepted(text):
-                    state.title = text
-                    state.lastAcceptedTitle = text
-                case let .rejected(keep):
-                    state.title = keep
-                    state.toastMessage = TextInputFieldPolicy.title.exceededToastMessage
-                }
-                return .none
-
-            case .binding, .delegate:
-                return .none
-            }
+    private func enforceTitleLimit() {
+        guard !isEnforcingTitle else { return }
+        let result = TextInputLimiter.enforce(
+            previousAcceptedText: lastAcceptedTitle,
+            candidateText: title,
+            policy: .title
+        )
+        isEnforcingTitle = true
+        switch result {
+        case let .accepted(text):
+            title = text
+            lastAcceptedTitle = text
+        case let .rejected(keep):
+            title = keep
+            toastMessage = TextInputFieldPolicy.title.exceededToastMessage
         }
+        isEnforcingTitle = false
     }
 }

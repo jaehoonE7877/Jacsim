@@ -1,14 +1,13 @@
 import SwiftUI
-import ComposableArchitecture
 import DSKit
 import _Concurrency
 
 public struct TaskEditView: View {
-    @Bindable var store: StoreOf<TaskEditFeature>
+    @Bindable var model: TaskEditModel
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    public init(store: StoreOf<TaskEditFeature>) {
-        self.store = store
+    public init(model: TaskEditModel) {
+        self.model = model
     }
 
     public var body: some View {
@@ -18,7 +17,7 @@ public struct TaskEditView: View {
             stickyFooter: {
                 HStack(spacing: .jsSM) {
                     JSButton(title: "취소", style: .secondary, size: .large) {
-                        store.send(.cancelButtonTapped)
+                        model.cancelButtonTapped()
                     }
 
                     JSButton(
@@ -27,7 +26,7 @@ public struct TaskEditView: View {
                         size: .large,
                         isEnabled: isSaveEnabled
                     ) {
-                        store.send(.saveButtonTapped)
+                        model.saveButtonTapped()
                     }
                 }
                 .padding(.horizontal, .jsMD)
@@ -58,20 +57,20 @@ public struct TaskEditView: View {
         }
         .navigationTitle("작심 수정")
         .navigationBarTitleDisplayMode(.inline)
-        .onAppear { store.send(.onAppear) }
+        .onAppear { model.onAppear() }
         .overlay(alignment: .bottom) {
-            if let message = store.toastMessage {
+            if let message = model.toastMessage {
                 RedesignToastView(message: message, style: .error)
                     .transition(.move(edge: .bottom).combined(with: .opacity))
                     .task(id: message) {
                         try? await _Concurrency.Task.sleep(
                             nanoseconds: RedesignToastView.defaultDismissNanoseconds
                         )
-                        store.send(.toastDismissed)
+                        model.toastDismissed()
                     }
             }
         }
-        .animation(reduceMotion ? .none : .easeInOut(duration: 0.25), value: store.toastMessage)
+        .animation(reduceMotion ? .none : .easeInOut(duration: 0.25), value: model.toastMessage)
     }
 
     private var photoSection: some View {
@@ -80,12 +79,12 @@ public struct TaskEditView: View {
             subtitle: "카드에 노출될 대표 이미지를 설정해요"
         ) {
             ImageAttachmentPicker(
-                image: store.image,
+                image: model.image,
                 emptyTitle: "대표 사진을 추가해 주세요",
                 emptySubtitle: "가로·세로 비율은 자동으로 맞춰져요",
                 height: 232.jsScaled()
             ) { image in
-                store.send(.imageSelected(image))
+                model.imageSelected(image)
             }
         }
     }
@@ -99,10 +98,10 @@ public struct TaskEditView: View {
                 JSInputField(
                     title: "",
                     placeholder: "예: 매일 10분 독서",
-                    text: $store.title
+                    text: $model.title
                 )
 
-                Text("\(store.title.count)/\(TextInputFieldPolicy.title.maxLength)")
+                Text("\(model.title.count)/\(TextInputFieldPolicy.title.maxLength)")
                     .font(.jsLabelMedium)
                     .foregroundColor(.labelAssistive)
 
@@ -118,23 +117,23 @@ public struct TaskEditView: View {
             title: "알림",
             subtitle: "매일 같은 시간에 리마인드를 받을 수 있어요"
         ) {
-            Toggle("알림 받기", isOn: $store.isAlarmEnabled)
+            Toggle("알림 받기", isOn: $model.isAlarmEnabled)
                 .font(.jsBodyMedium)
 
-            if store.isAlarmEnabled {
+            if model.isAlarmEnabled {
                 DatePicker(
                     "시간 선택",
-                    selection: $store.alarmDate,
+                    selection: $model.alarmDate,
                     displayedComponents: .hourAndMinute
                 )
                 .datePickerStyle(.wheel)
                 .transition(.opacity.combined(with: .move(edge: .bottom)))
             }
         }
-        .animation(reduceMotion ? .none : .easeInOut(duration: 0.24), value: store.isAlarmEnabled)
+        .animation(reduceMotion ? .none : .easeInOut(duration: 0.24), value: model.isAlarmEnabled)
     }
 
     private var isSaveEnabled: Bool {
-        !store.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        !model.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 }

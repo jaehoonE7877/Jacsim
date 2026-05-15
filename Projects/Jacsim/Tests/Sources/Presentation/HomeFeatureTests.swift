@@ -1,49 +1,35 @@
+import Domain
 import Foundation
 import Testing
-import ComposableArchitecture
-import Domain
 
 @testable import Jacsim
 
 @Test("miniCardImageLoaded는 index가 아닌 id 기준으로 카드 이미지를 갱신한다")
 @MainActor
-func miniCardImageLoadedUpdatesById() async {
+func miniCardImageLoadedUpdatesById() {
     let firstID = UUID()
     let secondID = UUID()
     let loadedImage = Data("second-image".utf8)
-
-    var initialState = HomeFeature.State()
-    initialState.miniCardDisplayData = [
+    let model = HomeModel(dependencies: .test)
+    model.miniCardDisplayData = [
         .init(id: secondID, title: "B", progress: 0.3, totalDays: 10, completedDays: 3, imageData: nil, isTodayCertified: false),
         .init(id: firstID, title: "A", progress: 0.7, totalDays: 10, completedDays: 7, imageData: nil, isTodayCertified: true)
     ]
 
-    let store = TestStore(initialState: initialState) {
-        HomeFeature()
-    }
+    model.miniCardImageLoaded(id: firstID, imageData: loadedImage)
 
-    await store.send(.miniCardImageLoaded(id: firstID, imageData: loadedImage)) {
-        $0.miniCardDisplayData[1] = HomeFeature.State.MiniCardDisplayData(
-            id: firstID,
-            title: "A",
-            progress: 0.7,
-            totalDays: 10,
-            completedDays: 7,
-            imageData: loadedImage,
-            isTodayCertified: true
-        )
-    }
+    #expect(model.miniCardDisplayData[1].imageData == loadedImage)
+    #expect(model.miniCardDisplayData[0].imageData == nil)
 }
 
 @Test("miniCardImageLoaded는 존재하지 않는 id 응답을 무시한다")
 @MainActor
-func miniCardImageLoadedIgnoresUnknownId() async {
+func miniCardImageLoadedIgnoresUnknownId() {
     let knownID = UUID()
     let unknownID = UUID()
     let originalImage = Data("original-image".utf8)
-
-    var initialState = HomeFeature.State()
-    initialState.miniCardDisplayData = [
+    let model = HomeModel(dependencies: .test)
+    model.miniCardDisplayData = [
         .init(
             id: knownID,
             title: "Known",
@@ -55,32 +41,26 @@ func miniCardImageLoadedIgnoresUnknownId() async {
         )
     ]
 
-    let store = TestStore(initialState: initialState) {
-        HomeFeature()
-    }
+    model.miniCardImageLoaded(id: unknownID, imageData: Data("new".utf8))
 
-    await store.send(.miniCardImageLoaded(id: unknownID, imageData: Data("new".utf8)))
-    #expect(store.state.miniCardDisplayData[0].imageData == originalImage)
+    #expect(model.miniCardDisplayData[0].imageData == originalImage)
 }
 
 @Test("Home primary CTA는 오늘 미인증 작심을 바로 인증 화면으로 연결한다")
 @MainActor
-func homePrimaryCTAOpensCheckInForPendingTask() async {
+func homePrimaryCTAOpensCheckInForPendingTask() {
     let today = Calendar.current.startOfDay(for: Date())
     let task = makeHomeTask(startDate: today, endDate: today)
+    let model = HomeModel(dependencies: .test)
 
-    let store = TestStore(initialState: HomeFeature.State()) {
-        HomeFeature()
-    }
+    model.focusPrimaryButtonTapped(task)
 
-    await store.send(.focusPrimaryButtonTapped(task)) {
-        $0.path.append(.update(TaskUpdateFeature.State(task: task, index: 0)))
-    }
+    #expect(model.path == [.update(task, index: 0)])
 }
 
 @Test("Home primary CTA는 오늘 인증 완료 작심의 기록 영역으로 연결한다")
 @MainActor
-func homePrimaryCTAOpensRecordsForCompletedTask() async {
+func homePrimaryCTAOpensRecordsForCompletedTask() {
     let today = Calendar.current.startOfDay(for: Date())
     let record = DailyRecordSnapshot(
         id: UUID(),
@@ -90,16 +70,11 @@ func homePrimaryCTAOpensRecordsForCompletedTask() async {
         imagePath: "record.jpg"
     )
     let task = makeHomeTask(startDate: today, endDate: today, records: [record])
+    let model = HomeModel(dependencies: .test)
 
-    let store = TestStore(initialState: HomeFeature.State()) {
-        HomeFeature()
-    }
+    model.focusPrimaryButtonTapped(task)
 
-    await store.send(.focusPrimaryButtonTapped(task)) {
-        var detailState = TaskDetailFeature.State(task: task)
-        detailState.shouldScrollToRecords = true
-        $0.path.append(.detail(detailState))
-    }
+    #expect(model.path == [.detail(task, scrollToRecords: true)])
 }
 
 private func makeHomeTask(

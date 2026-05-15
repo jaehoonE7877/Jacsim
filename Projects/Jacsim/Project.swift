@@ -22,7 +22,6 @@ let project = Project.makeModule(
         .SPM.Kingfisher,
         .SPM.AcknowList,
         .SPM.CropViewController,
-        .SPM.ComposableArchitecture,
     ],
     tags: ["app", "jacsim"]
 )

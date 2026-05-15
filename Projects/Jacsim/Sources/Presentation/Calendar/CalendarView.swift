@@ -1,13 +1,12 @@
 import SwiftUI
-import ComposableArchitecture
 import DSKit
 import Domain
 
 public struct CalendarView: View {
-    @Bindable var store: StoreOf<CalendarFeature>
+    @Bindable var model: CalendarModel
 
-    public init(store: StoreOf<CalendarFeature>) {
-        self.store = store
+    public init(model: CalendarModel) {
+        self.model = model
     }
 
     public var body: some View {
@@ -23,13 +22,13 @@ public struct CalendarView: View {
                 selectedDateButton
 
                 JSCalendar(
-                    selectedDate: $store.selectedDate,
-                    scope: store.calendarScope,
-                    eventDates: store.eventDates,
-                    dateColors: convertDateColors(store.dateColors)
+                    selectedDate: $model.selectedDate,
+                    scope: model.calendarScope,
+                    eventDates: model.eventDates,
+                    dateColors: convertDateColors(model.dateColors)
                 )
-                .onChange(of: store.selectedDate) {
-                    store.send(.dateSelected(store.selectedDate))
+                .onChange(of: model.selectedDate) {
+                    model.dateSelected(model.selectedDate)
                 }
             }
 
@@ -47,40 +46,40 @@ public struct CalendarView: View {
                 }
             }
         }
-        .onAppear { store.send(.onAppear) }
+        .onAppear { model.loadTasks() }
         .overlay {
             JSDatePickerBottomSheet(
-                selectedDate: $store.datePickerDate,
-                isPresented: $store.isDatePickerPresented,
+                selectedDate: $model.datePickerDate,
+                isPresented: $model.isDatePickerPresented,
                 title: "날짜 선택",
                 onConfirm: {
-                    store.send(.datePickerConfirmed)
+                    model.datePickerConfirmed()
                 },
                 onDismiss: {
-                    store.send(.datePickerDismissed)
+                    model.datePickerDismissed()
                 }
             )
         }
     }
 
     private var screenState: RedesignScreenState {
-        if store.isLoading {
+        if model.isLoading {
             return .loading(message: "캘린더 기록을 준비하는 중이에요")
         }
 
-        if store.loadFailed {
+        if model.loadFailed {
             return .error(
                 RedesignErrorStateModel(
                     title: "캘린더를 불러오지 못했어요",
                     message: "잠시 후 다시 시도해 주세요",
                     retry: RetryActionModel {
-                        store.send(.onAppear)
+                        model.loadTasks()
                     }
                 )
             )
         }
 
-        if store.tasks.isEmpty {
+        if model.tasks.isEmpty {
             return .empty(
                 RedesignEmptyStateModel(
                     title: "표시할 작심이 없어요",
@@ -95,9 +94,9 @@ public struct CalendarView: View {
     
     private var tasksForSelectedDate: [Domain.Task] {
         let calendar = Calendar.current
-        let targetDate = calendar.startOfDay(for: store.selectedDate)
+        let targetDate = calendar.startOfDay(for: model.selectedDate)
         
-        return store.tasks.filter { task in
+        return model.tasks.filter { task in
             let start = calendar.startOfDay(for: task.startDate)
             let end = calendar.startOfDay(for: task.endDate)
             return targetDate >= start && targetDate <= end
@@ -119,7 +118,7 @@ public struct CalendarView: View {
 
     private var selectedDateButton: some View {
         Button {
-            store.send(.datePickerButtonTapped)
+            model.datePickerButtonTapped()
         } label: {
             HStack(spacing: .jsSM) {
                 Image(systemName: "calendar")
@@ -158,7 +157,7 @@ public struct CalendarView: View {
     }
     
     private func taskRow(task: Domain.Task) -> some View {
-        let isCompleted = isTaskCompleted(task, on: store.selectedDate)
+        let isCompleted = isTaskCompleted(task, on: model.selectedDate)
         
         return JSListItem(
             title: task.title,
@@ -175,7 +174,7 @@ public struct CalendarView: View {
     }
 
     private var formattedSelectedDate: String {
-        DateFormatType.toString(store.selectedDate, to: .fullWithoutYear)
+        DateFormatType.toString(model.selectedDate, to: .fullWithoutYear)
     }
     
     private func isTaskCompleted(_ task: Domain.Task, on date: Date) -> Bool {

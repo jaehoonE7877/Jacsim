@@ -1,9 +1,8 @@
 import SwiftUI
-import ComposableArchitecture
 import DSKit
 
 public struct WalkThroughView: View {
-    @Bindable var store: StoreOf<WalkThroughFeature>
+    @Bindable var model: WalkThroughModel
     
     private let images = [
         DSKitAsset.Assets.onboardingImg1.image,
@@ -24,8 +23,8 @@ public struct WalkThroughView: View {
         "지금 바로 첫 작심을 시작해 볼까요?"
     ]
 
-    public init(store: StoreOf<WalkThroughFeature>) {
-        self.store = store
+    public init(model: WalkThroughModel) {
+        self.model = model
     }
 
     public var body: some View {
@@ -35,7 +34,7 @@ public struct WalkThroughView: View {
             VStack(spacing: 0) {
                 topBar
 
-                TabView(selection: $store.currentPage) {
+                TabView(selection: $model.currentPage) {
                     ForEach(0..<images.count, id: \.self) { index in
                         VStack(spacing: .jsLG) {
                             Image(uiImage: images[index])
@@ -65,8 +64,8 @@ public struct WalkThroughView: View {
                 pageControl
                     .padding(.vertical, .jsLG)
 
-                if !store.fromSetting {
-                    if store.currentPage == 2, store.notificationPermissionStatus == .denied {
+                if !model.fromSetting {
+                    if model.currentPage == 2, model.notificationPermissionStatus == .denied {
                         Text("알림 권한이 꺼져 있어요. 설정 > 알림에서 허용해 주세요.")
                             .font(.jsBodySmall)
                             .foregroundColor(.labelAlternative)
@@ -81,16 +80,16 @@ public struct WalkThroughView: View {
                             style: .primary,
                             size: .large
                         ) {
-                            if store.currentPage == 2 {
-                                store.send(.requestNotificationPermission)
+                            if model.currentPage == 2 {
+                                model.requestNotificationPermission()
                             } else {
-                                store.send(.continueButtonTapped)
+                                model.continueButtonTapped()
                             }
                         }
 
-                        if store.currentPage == 2 {
+                        if model.currentPage == 2 {
                             Button("나중에") {
-                                store.send(.continueButtonTapped)
+                                model.continueButtonTapped()
                             }
                             .font(.jsButtonMedium)
                             .foregroundColor(.labelAlternative)
@@ -113,9 +112,9 @@ public struct WalkThroughView: View {
 
             Spacer()
 
-            if !store.fromSetting && store.currentPage < store.totalPages - 1 {
+            if !model.fromSetting && model.currentPage < model.totalPages - 1 {
                 Button("건너뛰기") {
-                    store.send(.skipButtonTapped)
+                    model.skipButtonTapped()
                 }
                 .font(.jsButtonSmall)
                 .foregroundColor(.labelAlternative)
@@ -127,27 +126,25 @@ public struct WalkThroughView: View {
 
     private var pageControl: some View {
         HStack(spacing: .jsXS) {
-            ForEach(0..<store.totalPages, id: \.self) { index in
+            ForEach(0..<model.totalPages, id: \.self) { index in
                 Capsule()
-                    .fill(index == store.currentPage ? Color.primaryNormal : Color.labelNeutral.opacity(0.3))
-                    .frame(width: index == store.currentPage ? 20.jsScaled() : .jsXS, height: .jsXS)
+                    .fill(index == model.currentPage ? Color.primaryNormal : Color.labelNeutral.opacity(0.3))
+                    .frame(width: index == model.currentPage ? 20.jsScaled() : .jsXS, height: .jsXS)
             }
         }
-        .animation(.easeInOut(duration: JSAnimation.durationNormal), value: store.currentPage)
+        .animation(.easeInOut(duration: JSAnimation.durationNormal), value: model.currentPage)
     }
 
     private var primaryButtonTitle: String {
-        if store.currentPage == 2 {
-            return store.notificationPermissionStatus == .denied ? "계속하기" : "알림 허용하기"
+        if model.currentPage == 2 {
+            return model.notificationPermissionStatus == .denied ? "계속하기" : "알림 허용하기"
         }
-        return store.currentPage == store.totalPages - 1 ? "시작하기" : "다음"
+        return model.currentPage == model.totalPages - 1 ? "시작하기" : "다음"
     }
 }
 
 #Preview {
     WalkThroughView(
-        store: Store(initialState: WalkThroughFeature.State(fromSetting: false)) {
-            WalkThroughFeature()
-        }
+        model: WalkThroughModel(fromSetting: false, dependencies: .test)
     )
 }

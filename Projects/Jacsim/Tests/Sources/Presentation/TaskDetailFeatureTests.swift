@@ -1,8 +1,7 @@
-import Foundation
-import Testing
-import ComposableArchitecture
 import Domain
 import ExternalInterface
+import Foundation
+import Testing
 import UIKit
 
 @testable import Jacsim
@@ -80,56 +79,24 @@ private actor TaskDetailDeleteRecorder {
 
 @MainActor
 @Test("작심 수정 저장은 기존 스테이지 기간을 유지해 updateTaskInfo를 호출한다")
-func taskDetailEditSaveKeepsCurrentDurationDays() async {
+func taskDetailEditSaveKeepsCurrentDurationDays() async throws {
     let task = makeTaskForDetailTests(durationDays: 7, completedRecords: 1)
     let updateRecorder = TaskDetailUpdateRecorder()
     let imageRecorder = TaskDetailImageSaveRecorder()
     let editedAlarmDate = Calendar.current.date(from: DateComponents(hour: 6, minute: 45)) ?? Date()
+    let model = TaskDetailModel(
+        task: task,
+        dependencies: makeTaskDetailDependencies(updateRecorder: updateRecorder, imageRecorder: imageRecorder)
+    )
 
-    var initialState = TaskDetailFeature.State(task: task)
-    initialState.editTask = TaskEditFeature.State(task: task)
+    model.editButtonTapped()
+    let editModel = try #require(model.editTask)
+    editModel.title = "수정 제목"
+    editModel.isAlarmEnabled = true
+    editModel.alarmDate = editedAlarmDate
+    editModel.saveButtonTapped()
 
-    let store = TestStore(initialState: initialState) {
-        TaskDetailFeature()
-    } withDependencies: {
-        $0.taskCommandClient = TaskCommandClientPort(
-            addTask: { _ in },
-            updateTask: { _ in },
-            deleteTask: { _ in },
-            updateTaskInfo: { task, title, durationDays, isAlarmEnabled, alarmDate in
-                await updateRecorder.recordUpdate(
-                    taskID: task.id,
-                    title: title,
-                    durationDays: durationDays,
-                    isAlarmEnabled: isAlarmEnabled,
-                    alarmDate: alarmDate
-                )
-            }
-        )
-        $0.imageStore = ImageStorePort(
-            saveImage: { key, data in
-                await imageRecorder.recordSave(key: key, data: data)
-                return key
-            },
-            loadImage: { _ in nil },
-            deleteImage: { _ in },
-            imageExists: { _ in false }
-        )
-    }
-    store.exhaustivity = .off
-
-    await store.send(
-        .editTask(
-            .presented(
-                .delegate(.saved("수정 제목", nil, true, editedAlarmDate))
-            )
-        )
-    ) {
-        $0.editTask = nil
-    }
-    await store.finish()
-
-    #expect(await updateRecorder.callCount() == 1)
+    await waitUntil { await updateRecorder.callCount() == 1 }
     let lastCall = await updateRecorder.lastCall()
     #expect(lastCall?.taskID == task.id)
     #expect(lastCall?.title == "수정 제목")
@@ -141,56 +108,27 @@ func taskDetailEditSaveKeepsCurrentDurationDays() async {
 
 @MainActor
 @Test("작심 수정 저장에서 이미지가 있으면 대표 이미지 키로 저장한다")
-func taskDetailEditSaveStoresImageWhenProvided() async {
+func taskDetailEditSaveStoresImageWhenProvided() async throws {
     let task = makeTaskForDetailTests(durationDays: 15, completedRecords: 0)
     let updateRecorder = TaskDetailUpdateRecorder()
     let imageRecorder = TaskDetailImageSaveRecorder()
     let image = makeSolidTestImage()
     let editedAlarmDate = Calendar.current.date(from: DateComponents(hour: 21, minute: 0)) ?? Date()
+    let model = TaskDetailModel(
+        task: task,
+        dependencies: makeTaskDetailDependencies(updateRecorder: updateRecorder, imageRecorder: imageRecorder)
+    )
 
-    var initialState = TaskDetailFeature.State(task: task)
-    initialState.editTask = TaskEditFeature.State(task: task)
+    model.editButtonTapped()
+    let editModel = try #require(model.editTask)
+    editModel.title = "이미지 수정"
+    editModel.image = image
+    editModel.isAlarmEnabled = false
+    editModel.alarmDate = editedAlarmDate
+    editModel.saveButtonTapped()
 
-    let store = TestStore(initialState: initialState) {
-        TaskDetailFeature()
-    } withDependencies: {
-        $0.taskCommandClient = TaskCommandClientPort(
-            addTask: { _ in },
-            updateTask: { _ in },
-            deleteTask: { _ in },
-            updateTaskInfo: { task, title, durationDays, isAlarmEnabled, alarmDate in
-                await updateRecorder.recordUpdate(
-                    taskID: task.id,
-                    title: title,
-                    durationDays: durationDays,
-                    isAlarmEnabled: isAlarmEnabled,
-                    alarmDate: alarmDate
-                )
-            }
-        )
-        $0.imageStore = ImageStorePort(
-            saveImage: { key, data in
-                await imageRecorder.recordSave(key: key, data: data)
-                return key
-            },
-            loadImage: { _ in nil },
-            deleteImage: { _ in },
-            imageExists: { _ in false }
-        )
-    }
-    store.exhaustivity = .off
-
-    await store.send(
-        .editTask(
-            .presented(
-                .delegate(.saved("이미지 수정", image, false, editedAlarmDate))
-            )
-        )
-    ) {
-        $0.editTask = nil
-    }
-    await store.finish()
-
+    await waitUntil { await updateRecorder.callCount() == 1 }
+    await waitUntil { await imageRecorder.callCount() == 1 }
     #expect(await updateRecorder.callCount() == 1)
     #expect(await imageRecorder.callCount() == 1)
     let firstSave = await imageRecorder.firstCall()
@@ -208,48 +146,61 @@ func taskDetailDeleteFlowDeletesStoredImages() async {
     )
     let deleteRecorder = TaskDetailDeleteRecorder()
     let imageRecorder = TaskDetailImageSaveRecorder()
+    var didDelete = false
+    let model = TaskDetailModel(
+        task: task,
+        dependencies: makeTaskDetailDependencies(deleteRecorder: deleteRecorder, imageRecorder: imageRecorder),
+        onTaskDeleted: { didDelete = true }
+    )
+    model.isDeleteFlowPresented = true
+    model.deleteFlowStep = .finalConfirmation
+    model.deleteConfirmCountdown = 0
+    model.isDeleteConfirmEnabled = true
 
-    var initialState = TaskDetailFeature.State(task: task)
-    initialState.isDeleteFlowPresented = true
-    initialState.deleteFlowStep = .finalConfirmation
-    initialState.deleteConfirmCountdown = 0
-    initialState.isDeleteConfirmEnabled = true
+    model.deleteFlowDeleteConfirmed()
 
-    let store = TestStore(initialState: initialState) {
-        TaskDetailFeature()
-    } withDependencies: {
-        $0.taskCommandClient = TaskCommandClientPort(
-            addTask: { _ in },
-            updateTask: { _ in },
-            deleteTask: { taskID in await deleteRecorder.recordDeleted(taskID) },
-            updateTaskInfo: { _, _, _, _, _ in }
-        )
-        $0.notificationScheduler = NotificationSchedulerPort(
-            scheduleDailyReminder: { _, _, _ in },
-            cancelReminder: { taskID in await deleteRecorder.recordCancelled(taskID) },
-            cancelAllReminders: {},
-            requestAuthorization: { true }
-        )
-        $0.imageStore = ImageStorePort(
-            saveImage: { key, data in
-                await imageRecorder.recordSave(key: key, data: data)
-                return key
-            },
-            loadImage: { _ in nil },
-            deleteImage: { key in await imageRecorder.recordDelete(key: key) },
-            imageExists: { _ in false }
-        )
-    }
-    store.exhaustivity = .off
-
-    await store.send(.deleteFlowDeleteConfirmed) {
-        $0.isDeleteFlowPresented = false
-    }
-    await store.finish()
-
+    await waitUntil { didDelete }
     #expect(await deleteRecorder.cancelledIDs() == [task.id])
     #expect(await deleteRecorder.deletedIDs() == [task.id])
     #expect(await imageRecorder.deletedKeys() == [task.mainImageKey, "day-1.jpg", "day-2.jpg"])
+}
+
+private func makeTaskDetailDependencies(
+    updateRecorder: TaskDetailUpdateRecorder? = nil,
+    deleteRecorder: TaskDetailDeleteRecorder? = nil,
+    imageRecorder: TaskDetailImageSaveRecorder
+) -> JacsimDependencies {
+    var dependencies = JacsimDependencies.test
+    dependencies.taskCommandClient = TaskCommandClientPort(
+        addTask: { _ in },
+        updateTask: { _ in },
+        deleteTask: { taskID in await deleteRecorder?.recordDeleted(taskID) },
+        updateTaskInfo: { task, title, durationDays, isAlarmEnabled, alarmDate in
+            await updateRecorder?.recordUpdate(
+                taskID: task.id,
+                title: title,
+                durationDays: durationDays,
+                isAlarmEnabled: isAlarmEnabled,
+                alarmDate: alarmDate
+            )
+        }
+    )
+    dependencies.notificationScheduler = NotificationSchedulerPort(
+        scheduleDailyReminder: { _, _, _ in },
+        cancelReminder: { taskID in await deleteRecorder?.recordCancelled(taskID) },
+        cancelAllReminders: {},
+        requestAuthorization: { true }
+    )
+    dependencies.imageStore = ImageStorePort(
+        saveImage: { key, data in
+            await imageRecorder.recordSave(key: key, data: data)
+            return key
+        },
+        loadImage: { _ in nil },
+        deleteImage: { key in await imageRecorder.recordDelete(key: key) },
+        imageExists: { _ in false }
+    )
+    return dependencies
 }
 
 private func makeTaskForDetailTests(
@@ -310,5 +261,16 @@ private func makeSolidTestImage() -> UIImage {
     return renderer.image { context in
         UIColor.systemOrange.setFill()
         context.fill(CGRect(x: 0, y: 0, width: 12, height: 12))
+    }
+}
+
+@MainActor
+private func waitUntil(
+    timeoutIterations: Int = 50,
+    condition: @escaping @MainActor () async -> Bool
+) async {
+    for _ in 0..<timeoutIterations {
+        if await condition() { return }
+        try? await _Concurrency.Task.sleep(nanoseconds: 20_000_000)
     }
 }

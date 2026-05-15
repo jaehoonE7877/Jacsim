@@ -1,75 +1,81 @@
-import Foundation
 import Domain
-import ComposableArchitecture
+import Foundation
+import Observation
 
-@Reducer
-public struct AllTaskFeature {
-    @ObservableState
-    public struct State: Equatable {
-        public var ongoingTasks: [Domain.Task] = []
-        public var successTasks: [Domain.Task] = []
-        public var failTasks: [Domain.Task] = []
-        public var isLoading: Bool = false
-        public var loadFailed: Bool = false
-        
-        public var isOngoingExpanded: Bool = true
-        public var isSuccessExpanded: Bool = true
-        public var isFailExpanded: Bool = true
-        
-        public init() {}
+@MainActor
+@Observable
+public final class AllTaskModel {
+    public var ongoingTasks: [Domain.Task] = []
+    public var successTasks: [Domain.Task] = []
+    public var failTasks: [Domain.Task] = []
+    public var isLoading: Bool = false
+    public var loadFailed: Bool = false
+    public var isOngoingExpanded: Bool = true
+    public var isSuccessExpanded: Bool = true
+    public var isFailExpanded: Bool = true
+
+    @ObservationIgnored private let dependencies: JacsimDependencies
+    @ObservationIgnored private let onTaskTapped: (Domain.Task) -> Void
+    @ObservationIgnored private var loadTask: _Concurrency.Task<Void, Never>?
+
+    public init(
+        dependencies: JacsimDependencies,
+        onTaskTapped: @escaping (Domain.Task) -> Void = { _ in }
+    ) {
+        self.dependencies = dependencies
+        self.onTaskTapped = onTaskTapped
     }
 
-    public enum Action {
-        case onAppear
-        case tasksResponse(ongoing: [Domain.Task], success: [Domain.Task], fail: [Domain.Task])
-        case tasksLoadFailed
-        case toggleOngoing
-        case toggleSuccess
-        case toggleFail
-        case taskTapped(Domain.Task)
+    deinit {
+        loadTask?.cancel()
     }
 
-    @Dependency(\.taskQueryClient) var taskQueryClient
-
-    public var body: some ReducerOf<Self> {
-        Reduce { state, action in
-            switch action {
-            case .onAppear:
-                state.isLoading = true
-                state.loadFailed = false
-                return .run { [taskQueryClient] send in
-                    do {
-                        let ongoing = try await taskQueryClient.fetchActiveTasks()
-                        let success = try await taskQueryClient.fetchIsSuccess()
-                        let fail = try await taskQueryClient.fetchIsFail()
-                        await send(.tasksResponse(ongoing: ongoing, success: success, fail: fail))
-                    } catch {
-                        await send(.tasksLoadFailed)
-                    }
-                }
-            case let .tasksResponse(ongoing, success, fail):
-                state.ongoingTasks = ongoing
-                state.successTasks = success
-                state.failTasks = fail
-                state.isLoading = false
-                state.loadFailed = false
-                return .none
-            case .tasksLoadFailed:
-                state.isLoading = false
-                state.loadFailed = true
-                return .none
-            case .toggleOngoing:
-                state.isOngoingExpanded.toggle()
-                return .none
-            case .toggleSuccess:
-                state.isSuccessExpanded.toggle()
-                return .none
-            case .toggleFail:
-                state.isFailExpanded.toggle()
-                return .none
-            case .taskTapped:
-                return .none
+    public func loadTasks() {
+        isLoading = true
+        loadFailed = false
+        loadTask?.cancel()
+        loadTask = _Concurrency.Task { [dependencies] in
+            do {
+                let ongoing = try await dependencies.taskQueryClient.fetchActiveTasks()
+                let success = try await dependencies.taskQueryClient.fetchIsSuccess()
+                let fail = try await dependencies.taskQueryClient.fetchIsFail()
+                tasksResponse(ongoing: ongoing, success: success, fail: fail)
+            } catch {
+                tasksLoadFailed()
             }
         }
+    }
+
+    public func toggleOngoing() {
+        isOngoingExpanded.toggle()
+    }
+
+    public func toggleSuccess() {
+        isSuccessExpanded.toggle()
+    }
+
+    public func toggleFail() {
+        isFailExpanded.toggle()
+    }
+
+    public func taskTapped(_ task: Domain.Task) {
+        onTaskTapped(task)
+    }
+
+    private func tasksResponse(
+        ongoing: [Domain.Task],
+        success: [Domain.Task],
+        fail: [Domain.Task]
+    ) {
+        ongoingTasks = ongoing
+        successTasks = success
+        failTasks = fail
+        isLoading = false
+        loadFailed = false
+    }
+
+    private func tasksLoadFailed() {
+        isLoading = false
+        loadFailed = true
     }
 }

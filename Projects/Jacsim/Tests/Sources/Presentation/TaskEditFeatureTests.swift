@@ -1,51 +1,25 @@
-import Foundation
-import Testing
-import ComposableArchitecture
 import Domain
 import ExternalInterface
+import Foundation
+import Testing
 import UIKit
 
 @testable import Jacsim
 
 private actor TaskEditNotificationRecorder {
-    struct ScheduledCall: Equatable {
-        let taskID: TaskID
-        let title: String
-        let hour: Int
-        let minute: Int
+    private(set) var scheduledCountValue = 0
+    private(set) var cancelledCountValue = 0
+
+    func recordSchedule() {
+        scheduledCountValue += 1
     }
 
-    private(set) var scheduledCalls: [ScheduledCall] = []
-    private(set) var cancelledTaskIDs: [TaskID] = []
-
-    func recordSchedule(taskID: TaskID, title: String, time: DateComponents) {
-        scheduledCalls.append(
-            ScheduledCall(
-                taskID: taskID,
-                title: title,
-                hour: time.hour ?? -1,
-                minute: time.minute ?? -1
-            )
-        )
+    func recordCancel() {
+        cancelledCountValue += 1
     }
 
-    func recordCancel(taskID: TaskID) {
-        cancelledTaskIDs.append(taskID)
-    }
-
-    func scheduledCount() -> Int { scheduledCalls.count }
-    func cancelledCount() -> Int { cancelledTaskIDs.count }
-    func lastScheduled() -> ScheduledCall? { scheduledCalls.last }
-}
-
-private actor TaskEditUserSettingsRecorder {
-    private let notificationEnabled: Bool
-
-    init(notificationEnabled: Bool) {
-        self.notificationEnabled = notificationEnabled
-    }
-
-    func isNotificationEnabled() -> Bool { notificationEnabled }
+    func scheduledCount() -> Int { scheduledCountValue }
+    func cancelledCount() -> Int { cancelledCountValue }
 }
 
 @MainActor
@@ -53,39 +27,22 @@ private actor TaskEditUserSettingsRecorder {
 func taskEditSaveSchedulesReminderWhenEnabled() async {
     let task = makeTaskForEditTests()
     let scheduler = TaskEditNotificationRecorder()
-    let settings = TaskEditUserSettingsRecorder(notificationEnabled: true)
     let alarmDate = Calendar.current.date(from: DateComponents(hour: 8, minute: 30)) ?? Date()
+    var saved: (String, UIImage?, Bool, Date)?
+    let model = TaskEditModel(
+        task: task,
+        dependencies: makeTaskEditDependencies(scheduler: scheduler),
+        onSaved: { saved = ($0, $1, $2, $3) }
+    )
+    model.title = "  새 제목  "
+    model.isAlarmEnabled = true
+    model.alarmDate = alarmDate
 
-    var initialState = TaskEditFeature.State(task: task)
-    initialState.title = "  새 제목  "
-    initialState.lastAcceptedTitle = "  새 제목  "
-    initialState.isAlarmEnabled = true
-    initialState.alarmDate = alarmDate
+    model.saveButtonTapped()
 
-    let store = TestStore(initialState: initialState) {
-        TaskEditFeature()
-    } withDependencies: {
-        $0.notificationScheduler = NotificationSchedulerPort(
-            scheduleDailyReminder: { taskID, title, time in
-                await scheduler.recordSchedule(taskID: taskID, title: title, time: time)
-            },
-            cancelReminder: { taskID in
-                await scheduler.recordCancel(taskID: taskID)
-            },
-            cancelAllReminders: {},
-            requestAuthorization: { true }
-        )
-        $0.userSettingsRepository = UserSettingsRepositoryPort(
-            isNotificationEnabled: { await settings.isNotificationEnabled() },
-            getAllReminders: { [] },
-            updateNotificationEnabled: { _ in }
-        )
-    }
-    store.exhaustivity = .off
-
-    await store.send(.saveButtonTapped)
-    await store.finish()
-
+    #expect(saved?.0 == "새 제목")
+    #expect(saved?.2 == true)
+    #expect(saved?.3 == alarmDate)
     #expect(await scheduler.cancelledCount() == 0)
     #expect(await scheduler.scheduledCount() == 0)
 }
@@ -95,37 +52,19 @@ func taskEditSaveSchedulesReminderWhenEnabled() async {
 func taskEditSaveCancelsOnlyWhenAlarmDisabled() async {
     let task = makeTaskForEditTests()
     let scheduler = TaskEditNotificationRecorder()
-    let settings = TaskEditUserSettingsRecorder(notificationEnabled: true)
+    var saved: (String, UIImage?, Bool, Date)?
+    let model = TaskEditModel(
+        task: task,
+        dependencies: makeTaskEditDependencies(scheduler: scheduler),
+        onSaved: { saved = ($0, $1, $2, $3) }
+    )
+    model.title = "수정 제목"
+    model.isAlarmEnabled = false
 
-    var initialState = TaskEditFeature.State(task: task)
-    initialState.title = "수정 제목"
-    initialState.lastAcceptedTitle = "수정 제목"
-    initialState.isAlarmEnabled = false
+    model.saveButtonTapped()
 
-    let store = TestStore(initialState: initialState) {
-        TaskEditFeature()
-    } withDependencies: {
-        $0.notificationScheduler = NotificationSchedulerPort(
-            scheduleDailyReminder: { taskID, title, time in
-                await scheduler.recordSchedule(taskID: taskID, title: title, time: time)
-            },
-            cancelReminder: { taskID in
-                await scheduler.recordCancel(taskID: taskID)
-            },
-            cancelAllReminders: {},
-            requestAuthorization: { true }
-        )
-        $0.userSettingsRepository = UserSettingsRepositoryPort(
-            isNotificationEnabled: { await settings.isNotificationEnabled() },
-            getAllReminders: { [] },
-            updateNotificationEnabled: { _ in }
-        )
-    }
-    store.exhaustivity = .off
-
-    await store.send(.saveButtonTapped)
-    await store.finish()
-
+    #expect(saved?.0 == "수정 제목")
+    #expect(saved?.2 == false)
     #expect(await scheduler.cancelledCount() == 0)
     #expect(await scheduler.scheduledCount() == 0)
 }
@@ -135,54 +74,44 @@ func taskEditSaveCancelsOnlyWhenAlarmDisabled() async {
 func taskEditSaveSkipsScheduleWhenGlobalNotificationOff() async {
     let task = makeTaskForEditTests()
     let scheduler = TaskEditNotificationRecorder()
-    let settings = TaskEditUserSettingsRecorder(notificationEnabled: false)
+    var saved: (String, UIImage?, Bool, Date)?
+    let model = TaskEditModel(
+        task: task,
+        dependencies: makeTaskEditDependencies(scheduler: scheduler),
+        onSaved: { saved = ($0, $1, $2, $3) }
+    )
+    model.title = "수정 제목"
+    model.isAlarmEnabled = true
 
-    var initialState = TaskEditFeature.State(task: task)
-    initialState.title = "수정 제목"
-    initialState.lastAcceptedTitle = "수정 제목"
-    initialState.isAlarmEnabled = true
+    model.saveButtonTapped()
 
-    let store = TestStore(initialState: initialState) {
-        TaskEditFeature()
-    } withDependencies: {
-        $0.notificationScheduler = NotificationSchedulerPort(
-            scheduleDailyReminder: { taskID, title, time in
-                await scheduler.recordSchedule(taskID: taskID, title: title, time: time)
-            },
-            cancelReminder: { taskID in
-                await scheduler.recordCancel(taskID: taskID)
-            },
-            cancelAllReminders: {},
-            requestAuthorization: { true }
-        )
-        $0.userSettingsRepository = UserSettingsRepositoryPort(
-            isNotificationEnabled: { await settings.isNotificationEnabled() },
-            getAllReminders: { [] },
-            updateNotificationEnabled: { _ in }
-        )
-    }
-    store.exhaustivity = .off
-
-    await store.send(.saveButtonTapped)
-    await store.finish()
-
+    #expect(saved?.0 == "수정 제목")
+    #expect(saved?.2 == true)
     #expect(await scheduler.cancelledCount() == 0)
     #expect(await scheduler.scheduledCount() == 0)
 }
 
 @MainActor
 @Test("이미지 선택 액션은 대표 이미지를 갱신한다")
-func taskEditImageSelectedUpdatesState() async {
+func taskEditImageSelectedUpdatesState() {
     let task = makeTaskForEditTests()
     let image = makeSolidTestImage()
+    let model = TaskEditModel(task: task, dependencies: .test)
 
-    let store = TestStore(initialState: TaskEditFeature.State(task: task)) {
-        TaskEditFeature()
-    }
+    model.imageSelected(image)
 
-    await store.send(.imageSelected(image)) {
-        $0.image = image
-    }
+    #expect(model.image === image)
+}
+
+private func makeTaskEditDependencies(scheduler: TaskEditNotificationRecorder) -> JacsimDependencies {
+    var dependencies = JacsimDependencies.test
+    dependencies.notificationScheduler = NotificationSchedulerPort(
+        scheduleDailyReminder: { _, _, _ in await scheduler.recordSchedule() },
+        cancelReminder: { _ in await scheduler.recordCancel() },
+        cancelAllReminders: {},
+        requestAuthorization: { true }
+    )
+    return dependencies
 }
 
 private func makeTaskForEditTests(

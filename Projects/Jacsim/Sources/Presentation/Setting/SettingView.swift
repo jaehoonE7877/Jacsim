@@ -1,18 +1,17 @@
 import SwiftUI
-import ComposableArchitecture
 import DSKit
 import AcknowList
 import StoreKit
 
 public struct SettingView: View {
-    let store: StoreOf<SettingFeature>
+     var model: SettingScreenModel
     @Environment(\.requestReview) private var requestReview
     @Environment(\.openURL) private var openURL
     @State private var isWalkThroughPresented = false
     @State private var isLicencePresented = false
 
-    public init(store: StoreOf<SettingFeature>) {
-        self.store = store
+    public init(model: SettingScreenModel) {
+        self.model = model
     }
 
     public var body: some View {
@@ -22,8 +21,8 @@ public struct SettingView: View {
         ) {
             RedesignSectionCard(title: "테마") {
                 Picker("테마", selection: Binding(
-                    get: { store.theme },
-                    set: { store.send(.themeChanged($0)) }
+                    get: { model.theme },
+                    set: { model.themeChanged($0) }
                 )) {
                     Text("시스템").tag(ThemeMode.system)
                     Text("라이트").tag(ThemeMode.light)
@@ -39,14 +38,14 @@ public struct SettingView: View {
                 Toggle(
                     "알림 설정",
                     isOn: Binding(
-                        get: { store.isNotificationEnabled },
-                        set: { store.send(.notificationToggleChanged($0)) }
+                        get: { model.isNotificationEnabled },
+                        set: { model.notificationToggleChanged($0) }
                     )
                 )
                 .font(.jsBodyMedium)
                 .foregroundColor(.labelNormal)
 
-                if store.isLoading {
+                if model.isLoading {
                     RedesignStateBanner(
                         text: "알림 설정을 반영하는 중이에요",
                         icon: "clock.arrow.circlepath",
@@ -54,7 +53,7 @@ public struct SettingView: View {
                     )
                 }
 
-                if store.notificationPermissionDenied {
+                if model.notificationPermissionDenied {
                     RedesignStateBanner(
                         text: "알림 권한이 꺼져 있어요. iOS 설정에서 알림을 허용한 뒤 다시 켜 주세요.",
                         icon: "bell.slash.fill",
@@ -85,7 +84,7 @@ public struct SettingView: View {
 
                     Spacer()
 
-                    Text(store.version)
+                    Text(model.version)
                         .font(.jsLabelLarge)
                         .foregroundColor(.labelAlternative)
                 }
@@ -102,14 +101,12 @@ public struct SettingView: View {
         .navigationTitle("설정")
         .navigationBarTitleDisplayMode(.inline)
         .task {
-            store.send(.loadNotificationSettings)
+            model.loadNotificationSettings()
         }
         .sheet(isPresented: $isWalkThroughPresented) {
             NavigationStack {
                 WalkThroughView(
-                    store: Store(initialState: WalkThroughFeature.State(fromSetting: true)) {
-                        WalkThroughFeature()
-                    }
+                    model: WalkThroughModel(fromSetting: true, dependencies: model.dependencies)
                 )
                 .toolbar {
                     ToolbarItem(placement: .topBarTrailing) {
@@ -169,9 +166,7 @@ public struct SettingView: View {
 #Preview {
     NavigationStack {
         SettingView(
-            store: Store(initialState: SettingFeature.State()) {
-                SettingFeature()
-            }
+            model: SettingScreenModel(dependencies: .test)
         )
     }
 }

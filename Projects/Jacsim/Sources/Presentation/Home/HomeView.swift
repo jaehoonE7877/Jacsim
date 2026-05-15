@@ -1,5 +1,4 @@
 import SwiftUI
-import ComposableArchitecture
 import Domain
 import DSKit
 import _Concurrency
@@ -11,7 +10,7 @@ public struct HomeView: View {
         case hidden
     }
 
-    @Bindable var store: StoreOf<HomeFeature>
+    @Bindable var model: HomeModel
     @State private var tapFeedbackTrigger = 0
     @State private var fabState: FabState = .expanded
     @State private var previousScrollOffset: CGFloat = 0
@@ -48,51 +47,62 @@ public struct HomeView: View {
         }
     }
     private var overallProgress: Double {
-        guard !store.activeTasks.isEmpty else { return 0 }
-        let total = store.activeTasks.reduce(0.0) { partial, task in
+        guard !model.activeTasks.isEmpty else { return 0 }
+        let total = model.activeTasks.reduce(0.0) { partial, task in
             partial + task.progress
         }
-        return total / Double(store.activeTasks.count)
+        return total / Double(model.activeTasks.count)
     }
     private var todayCompletedCount: Int {
-        store.activeTasks.filter { $0.isCompleted(on: Date()) }.count
+        model.activeTasks.filter { $0.isCompleted(on: Date()) }.count
     }
     private var todayLabel: String {
         DateFormatType.toString(Date(), to: .fullWithoutYear)
     }
 
-    public init(store: StoreOf<HomeFeature>) {
-        self.store = store
+    public init(model: HomeModel) {
+        self.model = model
     }
 
     public var body: some View {
-        NavigationStack(path: $store.scope(state: \.path, action: \.path)) {
+        NavigationStack(path: $model.path) {
             mainContent
                 .navigationBarHidden(true)
-        } destination: { store in
-            destinationView(store: store)
+                .navigationDestination(for: HomeModel.Route.self) { route in
+                    destinationView(route: route)
+                }
         }
     }
 
     @ViewBuilder
-    private func destinationView(store: Store<HomeFeature.Path.State, HomeFeature.Path.Action>) -> some View {
-        switch store.state {
-        case .detail:
-            if let store = store.scope(state: \.detail, action: \.detail) {
-                TaskDetailView(store: store)
-            }
-        case .update:
-            if let store = store.scope(state: \.update, action: \.update) {
-                TaskUpdateView(store: store)
-            }
+    private func destinationView(route: HomeModel.Route) -> some View {
+        switch route {
+        case let .detail(task, shouldScrollToRecords):
+            TaskDetailView(
+                model: TaskDetailModel(
+                    task: task,
+                    dependencies: model.dependencies,
+                    shouldScrollToRecords: shouldScrollToRecords,
+                    onTaskDeleted: model.taskDeleted,
+                    onNavigateToUpdate: { task, index in
+                        model.navigateToUpdate(task, index: index)
+                    },
+                    onNavigateBack: model.navigateBack
+                )
+            )
+        case let .update(task, index):
+            TaskUpdateView(
+                model: TaskUpdateModel(
+                    task: task,
+                    index: index,
+                    dependencies: model.dependencies,
+                    onSaveSuccess: model.updateSaved
+                )
+            )
         case .allTasks:
-            if let store = store.scope(state: \.allTasks, action: \.allTasks) {
-                AllTaskView(store: store)
-            }
+            AllTaskView(model: AllTaskModel(dependencies: model.dependencies))
         case .setting:
-            if let store = store.scope(state: \.setting, action: \.setting) {
-                SettingView(store: store)
-            }
+            SettingView(model: SettingScreenModel(dependencies: model.dependencies))
         }
     }
 
@@ -102,9 +112,9 @@ public struct HomeView: View {
 
             scrollContent
         }
-        .onAppear { store.send(.onAppear) }
+        .onAppear { model.onAppear() }
         .overlay(alignment: .bottom) {
-            if let message = store.toastMessage {
+            if let message = model.toastMessage {
                 RedesignToastView(
                     payload: .success(message),
                     bottomPadding: toastBottomPadding
@@ -124,13 +134,12 @@ public struct HomeView: View {
             .padding(.trailing, .jsMD)
             .padding(.bottom, .jsSM)
         }
-        .animation(reduceMotion ? .none : .easeInOut(duration: 0.25), value: store.toastMessage)
-        .sheet(item: $store.scope(state: \.destination?.challengeCreate, action: \.destination.challengeCreate)) { store in
-            ChallengeCreateView(store: store)
+        .animation(reduceMotion ? .none : .easeInOut(duration: 0.25), value: model.toastMessage)
+        .sheet(item: $model.challengeCreate) { challengeModel in
+            ChallengeCreateView(model: challengeModel)
                 .presentationDragIndicator(.hidden)
                 .interactiveDismissDisabled(true)
         }
-        .alert($store.scope(state: \.migrationAlert, action: \.migrationAlert))
         .sensoryFeedback(.impact(weight: .light), trigger: tapFeedbackTrigger)
     }
 
@@ -158,7 +167,7 @@ public struct HomeView: View {
             .padding(.bottom, contentBottomPadding)
             .animation(
                 reduceMotion ? .none : .easeInOut(duration: 0.22),
-                value: store.isLoading
+                value: model.isLoading
             )
             .background(
                 GeometryReader { proxy in
@@ -177,13 +186,13 @@ public struct HomeView: View {
 
     @ViewBuilder
     private var contentSection: some View {
-        if store.isLoading && store.tasks.isEmpty {
+        if model.isLoading && model.tasks.isEmpty {
             HomeSkeletonSection(
                 showsSummary: shouldShowSummarySection,
                 showsMiniCards: shouldShowMiniCardsSection
             )
             .transition(.opacity)
-        } else if let heroTask = store.heroTask {
+        } else if let heroTask = model.heroTask {
             loadedContent(for: heroTask)
         } else {
             HomeEmptyStateSection(onStart: handleAddButtonTap)
@@ -196,7 +205,7 @@ public struct HomeView: View {
     private func loadedContent(for heroTask: Domain.Task) -> some View {
         if shouldShowSummarySection {
             HomeSummaryCardSection(
-                activeTaskCount: store.activeTasks.count,
+                activeTaskCount: model.activeTasks.count,
                 overallProgress: overallProgress,
                 todayCompletedCount: todayCompletedCount
             )
@@ -205,7 +214,7 @@ public struct HomeView: View {
 
         HomeHeroTaskSection(
             task: heroTask,
-            imageData: store.heroTaskImageData,
+            imageData: model.heroTaskImageData,
             onTap: { handleTaskTap(heroTask) }
         )
         .padding(.horizontal, .jsXL)
@@ -217,9 +226,9 @@ public struct HomeView: View {
         )
         .padding(.horizontal, .jsXL)
 
-        if shouldShowMiniCardsSection && store.activeTasks.count > 1 {
+        if shouldShowMiniCardsSection && model.activeTasks.count > 1 {
             HomeMiniCardsSection(
-                cards: makeMiniHeroCardData(from: store.miniCardDisplayData),
+                cards: makeMiniHeroCardData(from: model.miniCardDisplayData),
                 onAllTasksTap: handleAllTasksButtonTap,
                 onCardTap: handleMiniCardTap
             )
@@ -230,41 +239,41 @@ public struct HomeView: View {
         try? await _Concurrency.Task.sleep(
             nanoseconds: RedesignToastView.defaultDismissNanoseconds
         )
-        store.send(.toastDismissed)
+        model.toastDismissed()
     }
 
     private func handleAddButtonTap() {
-        store.send(.addButtonTapped)
+        model.addButtonTapped()
         triggerTapFeedback()
     }
 
     private func handleSettingsButtonTap() {
-        store.send(.settingButtonTapped)
+        model.settingButtonTapped()
         triggerTapFeedback()
     }
 
     private func handleAllTasksButtonTap() {
-        store.send(.allTasksButtonTapped)
+        model.allTasksButtonTapped()
         triggerTapFeedback()
     }
 
     private func handleFocusPrimaryAction(_ task: Domain.Task) {
-        store.send(.focusPrimaryButtonTapped(task))
+        model.focusPrimaryButtonTapped(task)
         triggerTapFeedback()
     }
 
     private func handleFocusSecondaryAction(_ task: Domain.Task) {
-        store.send(.focusSecondaryButtonTapped(task))
+        model.focusSecondaryButtonTapped(task)
         triggerTapFeedback()
     }
 
     private func handleTaskTap(_ task: Domain.Task) {
-        store.send(.taskTapped(task))
+        model.taskTapped(task)
         triggerTapFeedback()
     }
 
     private func handleMiniCardTap(_ cardID: UUID) {
-        let tasks = Array(store.activeTasks.dropFirst())
+        let tasks = Array(model.activeTasks.dropFirst())
         guard let task = tasks.first(where: { $0.id.rawValue == cardID }) else { return }
         handleTaskTap(task)
     }
@@ -274,7 +283,7 @@ public struct HomeView: View {
     }
 
     private func makeMiniHeroCardData(
-        from displayData: [HomeFeature.State.MiniCardDisplayData]
+        from displayData: [HomeModel.MiniCardDisplayData]
     ) -> [JSMiniHeroCardData] {
         displayData.map { data in
             let image = data.imageData.flatMap { UIImage(data: $0) }.map { Image(uiImage: $0) }
@@ -347,10 +356,6 @@ private struct HomeScrollOffsetPreferenceKey: PreferenceKey {
 
 #Preview {
     HomeView(
-        store: Store(
-            initialState: HomeFeature.State()
-        ) {
-            HomeFeature()
-        }
+        model: HomeModel(dependencies: .test)
     )
 }

@@ -1,14 +1,13 @@
 import SwiftUI
-import ComposableArchitecture
 import Domain
 import DSKit
 
 public struct AllTaskView: View {
-    let store: StoreOf<AllTaskFeature>
+     var model: AllTaskModel
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    public init(store: StoreOf<AllTaskFeature>) {
-        self.store = store
+    public init(model: AllTaskModel) {
+        self.model = model
     }
 
     public var body: some View {
@@ -24,48 +23,48 @@ public struct AllTaskView: View {
 
             sectionView(
                 title: "진행 중",
-                tasks: store.ongoingTasks,
-                isExpanded: store.isOngoingExpanded,
-                toggleAction: { store.send(.toggleOngoing) },
+                tasks: model.ongoingTasks,
+                isExpanded: model.isOngoingExpanded,
+                toggleAction: model.toggleOngoing,
                 icon: "circle.fill",
                 iconColor: .primaryNormal
             )
 
             sectionView(
                 title: "성공",
-                tasks: store.successTasks,
-                isExpanded: store.isSuccessExpanded,
-                toggleAction: { store.send(.toggleSuccess) },
+                tasks: model.successTasks,
+                isExpanded: model.isSuccessExpanded,
+                toggleAction: model.toggleSuccess,
                 icon: "checkmark.circle.fill",
                 iconColor: .positive
             )
 
             sectionView(
                 title: "실패",
-                tasks: store.failTasks,
-                isExpanded: store.isFailExpanded,
-                toggleAction: { store.send(.toggleFail) },
+                tasks: model.failTasks,
+                isExpanded: model.isFailExpanded,
+                toggleAction: model.toggleFail,
                 icon: "xmark.circle.fill",
                 iconColor: .destructive
             )
         }
         .navigationTitle("작심 모아보기")
         .navigationBarTitleDisplayMode(.inline)
-        .onAppear { store.send(.onAppear) }
+        .onAppear { model.loadTasks() }
     }
 
     private var screenState: RedesignScreenState {
-        if store.isLoading {
+        if model.isLoading {
             return .loading(message: "작심 목록을 불러오는 중이에요")
         }
 
-        if store.loadFailed {
+        if model.loadFailed {
             return .error(
                 RedesignErrorStateModel(
                     title: "작심 목록을 불러오지 못했어요",
                     message: "네트워크 상태를 확인하고 다시 시도해 주세요",
                     retry: RetryActionModel {
-                        store.send(.onAppear)
+                        model.loadTasks()
                     }
                 )
             )
@@ -92,17 +91,17 @@ public struct AllTaskView: View {
             HStack(spacing: .jsSM) {
                 summaryPill(
                     title: "진행",
-                    count: store.ongoingTasks.count,
+                    count: model.ongoingTasks.count,
                     color: .primaryNormal
                 )
                 summaryPill(
                     title: "성공",
-                    count: store.successTasks.count,
+                    count: model.successTasks.count,
                     color: .positive
                 )
                 summaryPill(
                     title: "실패",
-                    count: store.failTasks.count,
+                    count: model.failTasks.count,
                     color: .destructive
                 )
             }
@@ -191,7 +190,7 @@ public struct AllTaskView: View {
             iconColor: statusColor(task),
             accessory: .disclosure
         ) {
-            store.send(.taskTapped(task))
+            model.taskTapped(task)
         }
         .background(
             RoundedRectangle(cornerRadius: .jsRadiusMD)
@@ -232,14 +231,14 @@ public struct AllTaskView: View {
     }
 
     private var totalCount: Int {
-        store.ongoingTasks.count + store.successTasks.count + store.failTasks.count
+        model.ongoingTasks.count + model.successTasks.count + model.failTasks.count
     }
 
     private func statusColor(_ task: Domain.Task) -> Color {
-        if store.successTasks.contains(where: { $0.id == task.id }) {
+        if model.successTasks.contains(where: { $0.id == task.id }) {
             return .positive
         }
-        if store.failTasks.contains(where: { $0.id == task.id }) {
+        if model.failTasks.contains(where: { $0.id == task.id }) {
             return .destructive
         }
         return .primaryNormal
@@ -271,9 +270,7 @@ private struct FoldTransitionModifier: ViewModifier {
 #Preview {
     NavigationStack {
         AllTaskView(
-            store: Store(initialState: AllTaskFeature.State()) {
-                AllTaskFeature()
-            }
+            model: AllTaskModel(dependencies: .test)
         )
     }
 }

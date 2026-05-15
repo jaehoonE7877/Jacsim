@@ -1,16 +1,15 @@
-import ComposableArchitecture
 import DSKit
 import SwiftUI
 
 public struct ChallengeCreateView: View {
-    @Bindable var store: StoreOf<ChallengeCreateFeature>
+    let model: ChallengeCreateModel
 
-    public init(store: StoreOf<ChallengeCreateFeature>) {
-        self.store = store
+    public init(model: ChallengeCreateModel) {
+        self.model = model
     }
 
     public var body: some View {
-        NewTaskView(store: store.scope(state: \.newTask, action: \.newTask))
+        NewTaskView(model: model.newTask)
             .presentationDetents([.large])
             .presentationDragIndicator(.hidden)
             .interactiveDismissDisabled(true)

@@ -1,8 +1,7 @@
-import Foundation
-import Testing
-import ComposableArchitecture
 import Domain
 import ExternalInterface
+import Foundation
+import Testing
 
 @testable import Jacsim
 
@@ -58,9 +57,9 @@ private actor UserSettingsRecorder {
 @MainActor
 @Test("설정 상태는 앱 버전 표시값을 주입받을 수 있다")
 func settingFeatureStateUsesInjectedVersion() {
-    let state = SettingFeature.State(version: "2.0.0")
+    let model = SettingScreenModel(dependencies: .test, version: "2.0.0")
 
-    #expect(state.version == "2.0.0")
+    #expect(model.version == "2.0.0")
 }
 
 @MainActor
@@ -68,30 +67,14 @@ func settingFeatureStateUsesInjectedVersion() {
 func settingFeatureLoadNotificationSettingsUsesGlobalToggle() async {
     let userSettings = UserSettingsRecorder(globalNotificationEnabled: false, reminders: [])
     let scheduler = NotificationSchedulerRecorder()
+    let model = SettingScreenModel(
+        dependencies: makeSettingDependencies(userSettings: userSettings, scheduler: scheduler)
+    )
 
-    let store = TestStore(initialState: SettingFeature.State()) {
-        SettingFeature()
-    } withDependencies: {
-        $0.userSettingsRepository = UserSettingsRepositoryPort(
-            isNotificationEnabled: { await userSettings.isNotificationEnabled() },
-            getAllReminders: { await userSettings.getAllReminders() },
-            updateNotificationEnabled: { await userSettings.updateNotificationEnabled($0) }
-        )
-        $0.notificationScheduler = NotificationSchedulerPort(
-            scheduleDailyReminder: { taskID, _, _ in await scheduler.recordScheduled(taskID) },
-            cancelReminder: { taskID in await scheduler.recordCancelled(taskID) },
-            cancelAllReminders: {},
-            requestAuthorization: { true }
-        )
-    }
+    model.loadNotificationSettings()
 
-    await store.send(.loadNotificationSettings) {
-        $0.isLoading = true
-    }
-    await store.receive(.notificationSettingsResponse(false)) {
-        $0.isNotificationEnabled = false
-        $0.isLoading = false
-    }
+    await waitUntil { model.isLoading == false }
+    #expect(model.isNotificationEnabled == false)
 }
 
 @MainActor
@@ -103,35 +86,15 @@ func settingFeatureToggleOffCancelsAllFetchedReminders() async {
     ]
     let userSettings = UserSettingsRecorder(globalNotificationEnabled: true, reminders: reminders)
     let scheduler = NotificationSchedulerRecorder()
+    let model = SettingScreenModel(
+        dependencies: makeSettingDependencies(userSettings: userSettings, scheduler: scheduler)
+    )
+    model.isNotificationEnabled = true
 
-    var initialState = SettingFeature.State()
-    initialState.isNotificationEnabled = true
+    model.notificationToggleChanged(false)
 
-    let store = TestStore(initialState: initialState) {
-        SettingFeature()
-    } withDependencies: {
-        $0.userSettingsRepository = UserSettingsRepositoryPort(
-            isNotificationEnabled: { await userSettings.isNotificationEnabled() },
-            getAllReminders: { await userSettings.getAllReminders() },
-            updateNotificationEnabled: { await userSettings.updateNotificationEnabled($0) }
-        )
-        $0.notificationScheduler = NotificationSchedulerPort(
-            scheduleDailyReminder: { taskID, _, _ in await scheduler.recordScheduled(taskID) },
-            cancelReminder: { taskID in await scheduler.recordCancelled(taskID) },
-            cancelAllReminders: {},
-            requestAuthorization: { true }
-        )
-    }
-
-    await store.send(.notificationToggleChanged(false)) {
-        $0.isNotificationEnabled = false
-        $0.isLoading = true
-    }
-    await store.receive(.notificationSettingsResponse(false)) {
-        $0.isNotificationEnabled = false
-        $0.isLoading = false
-    }
-
+    await waitUntil { model.isLoading == false }
+    #expect(model.isNotificationEnabled == false)
     #expect(await scheduler.cancelledCount() == 2)
     #expect(await scheduler.scheduledCount() == 0)
     #expect(await userSettings.lastUpdatedValue() == false)
@@ -146,32 +109,14 @@ func settingFeatureToggleOnSchedulesAllReminders() async {
     ]
     let userSettings = UserSettingsRecorder(globalNotificationEnabled: false, reminders: reminders)
     let scheduler = NotificationSchedulerRecorder()
+    let model = SettingScreenModel(
+        dependencies: makeSettingDependencies(userSettings: userSettings, scheduler: scheduler)
+    )
 
-    let store = TestStore(initialState: SettingFeature.State()) {
-        SettingFeature()
-    } withDependencies: {
-        $0.userSettingsRepository = UserSettingsRepositoryPort(
-            isNotificationEnabled: { await userSettings.isNotificationEnabled() },
-            getAllReminders: { await userSettings.getAllReminders() },
-            updateNotificationEnabled: { await userSettings.updateNotificationEnabled($0) }
-        )
-        $0.notificationScheduler = NotificationSchedulerPort(
-            scheduleDailyReminder: { taskID, _, _ in await scheduler.recordScheduled(taskID) },
-            cancelReminder: { taskID in await scheduler.recordCancelled(taskID) },
-            cancelAllReminders: {},
-            requestAuthorization: { true }
-        )
-    }
+    model.notificationToggleChanged(true)
 
-    await store.send(.notificationToggleChanged(true)) {
-        $0.isNotificationEnabled = true
-        $0.isLoading = true
-    }
-    await store.receive(.notificationSettingsResponse(true)) {
-        $0.isNotificationEnabled = true
-        $0.isLoading = false
-    }
-
+    await waitUntil { model.isLoading == false }
+    #expect(model.isNotificationEnabled)
     #expect(await scheduler.scheduledCount() == 2)
     #expect(await scheduler.cancelledCount() == 0)
     #expect(await userSettings.lastUpdatedValue() == true)
@@ -185,34 +130,50 @@ func settingFeatureToggleOnHandlesPermissionDenied() async {
     ]
     let userSettings = UserSettingsRecorder(globalNotificationEnabled: false, reminders: reminders)
     let scheduler = NotificationSchedulerRecorder()
-
-    let store = TestStore(initialState: SettingFeature.State()) {
-        SettingFeature()
-    } withDependencies: {
-        $0.userSettingsRepository = UserSettingsRepositoryPort(
-            isNotificationEnabled: { await userSettings.isNotificationEnabled() },
-            getAllReminders: { await userSettings.getAllReminders() },
-            updateNotificationEnabled: { await userSettings.updateNotificationEnabled($0) }
-        )
-        $0.notificationScheduler = NotificationSchedulerPort(
-            scheduleDailyReminder: { taskID, _, _ in await scheduler.recordScheduled(taskID) },
-            cancelReminder: { taskID in await scheduler.recordCancelled(taskID) },
-            cancelAllReminders: {},
+    let model = SettingScreenModel(
+        dependencies: makeSettingDependencies(
+            userSettings: userSettings,
+            scheduler: scheduler,
             requestAuthorization: { false }
         )
-    }
+    )
 
-    await store.send(.notificationToggleChanged(true)) {
-        $0.isNotificationEnabled = true
-        $0.isLoading = true
-        $0.notificationPermissionDenied = false
-    }
-    await store.receive(.notificationPermissionDenied) {
-        $0.isNotificationEnabled = false
-        $0.isLoading = false
-        $0.notificationPermissionDenied = true
-    }
+    model.notificationToggleChanged(true)
 
+    await waitUntil { model.isLoading == false }
+    #expect(model.isNotificationEnabled == false)
+    #expect(model.notificationPermissionDenied)
     #expect(await scheduler.scheduledCount() == 0)
     #expect(await userSettings.lastUpdatedValue() == false)
+}
+
+private func makeSettingDependencies(
+    userSettings: UserSettingsRecorder,
+    scheduler: NotificationSchedulerRecorder,
+    requestAuthorization: @escaping @Sendable () async throws -> Bool = { true }
+) -> JacsimDependencies {
+    var dependencies = JacsimDependencies.test
+    dependencies.userSettingsRepository = UserSettingsRepositoryPort(
+        isNotificationEnabled: { await userSettings.isNotificationEnabled() },
+        getAllReminders: { await userSettings.getAllReminders() },
+        updateNotificationEnabled: { await userSettings.updateNotificationEnabled($0) }
+    )
+    dependencies.notificationScheduler = NotificationSchedulerPort(
+        scheduleDailyReminder: { taskID, _, _ in await scheduler.recordScheduled(taskID) },
+        cancelReminder: { taskID in await scheduler.recordCancelled(taskID) },
+        cancelAllReminders: {},
+        requestAuthorization: requestAuthorization
+    )
+    return dependencies
+}
+
+@MainActor
+private func waitUntil(
+    timeoutIterations: Int = 50,
+    condition: @escaping @MainActor () async -> Bool
+) async {
+    for _ in 0..<timeoutIterations {
+        if await condition() { return }
+        try? await _Concurrency.Task.sleep(nanoseconds: 20_000_000)
+    }
 }

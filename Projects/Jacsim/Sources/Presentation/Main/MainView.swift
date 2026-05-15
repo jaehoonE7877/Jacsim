@@ -1,15 +1,14 @@
-import SwiftUI
-import ComposableArchitecture
 import DSKit
+import SwiftUI
 
 public struct MainView: View {
-    @Bindable var store: StoreOf<MainFeature>
+    @Bindable var model: MainModel
 
-    public init(store: StoreOf<MainFeature>) {
-        self.store = store
+    public init(model: MainModel) {
+        self.model = model
     }
 
     public var body: some View {
-        HomeView(store: store.scope(state: \.home, action: \.home))
+        HomeView(model: model.home)
     }
 }

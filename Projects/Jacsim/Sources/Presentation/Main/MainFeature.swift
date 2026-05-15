@@ -1,29 +1,11 @@
-import Foundation
-import ComposableArchitecture
+import Observation
 
-@Reducer
-public struct MainFeature {
-    @ObservableState
-    public struct State: Equatable {
-        public var home = HomeFeature.State()
+@MainActor
+@Observable
+public final class MainModel {
+    public let home: HomeModel
 
-        public init() {}
-    }
-
-    public enum Action {
-        case home(HomeFeature.Action)
-    }
-
-    public var body: some ReducerOf<Self> {
-        Scope(state: \.home, action: \.home) {
-            HomeFeature()
-        }
-
-        Reduce { _, action in
-            switch action {
-            case .home:
-                return .none
-            }
-        }
+    public init(dependencies: JacsimDependencies) {
+        self.home = HomeModel(dependencies: dependencies)
     }
 }

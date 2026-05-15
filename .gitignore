@@ -68,4 +68,8 @@ graph.dot
 /*.gcno
 ### Docs ###
 Docs/
+!docs/
+!docs/migration/
+!docs/migration/tca-to-swiftui-async-await/
+!docs/migration/tca-to-swiftui-async-await/*.md
 .sisyphus/

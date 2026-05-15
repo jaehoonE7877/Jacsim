@@ -1,5 +1,4 @@
 import Foundation
-import ComposableArchitecture
 import ExternalInterface
 
 public enum PresentationScreenKey: String, CaseIterable {
@@ -27,10 +26,9 @@ public enum PresentationSectionKey: String, CaseIterable {
     case taskFormAlarm
 }
 
+@MainActor
 public enum PresentationRedesignFlags {
-    private static var appPreferences: AppPreferencesPort {
-        DependencyValues().appPreferences
-    }
+    public static var appPreferences: AppPreferencesPort = JacsimDependencies.live.appPreferences
 
     public static func isEnabled(_ screen: PresentationScreenKey) -> Bool {
         if ProcessInfo.processInfo.arguments.contains("--disable-redesign") ||

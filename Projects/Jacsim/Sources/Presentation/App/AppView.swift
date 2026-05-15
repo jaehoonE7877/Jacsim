@@ -1,5 +1,4 @@
 import SwiftUI
-import ComposableArchitecture
 import UIKit
 import DSKit
 
@@ -11,8 +10,7 @@ private enum StartupTransitionPolicy {
 }
 
 public struct AppView: View {
-    let store: StoreOf<AppFeature>
-    @Dependency(\.appPreferences) private var appPreferences
+    @State private var model: AppModel
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -23,8 +21,8 @@ public struct AppView: View {
     @State private var didObserveHomeFetchStart = false
     @State private var canDismissFromLoad = false
 
-    public init(store: StoreOf<AppFeature>) {
-        self.store = store
+    public init(model: AppModel = AppModel()) {
+        _model = State(initialValue: model)
     }
 
     private var colorScheme: ColorScheme? {
@@ -44,17 +42,11 @@ public struct AppView: View {
 
     public var body: some View {
         Group {
-            switch store.state {
-            case .onboarding:
-                if let onboardingStore = store.scope(state: \.onboarding, action: \.onboarding) {
-                    WalkThroughView(store: onboardingStore)
-                }
-            case .main:
-                if let mainStore = store.scope(state: \.main, action: \.main) {
-                    NavigationStack {
-                        MainView(store: mainStore)
-                    }
-                }
+            switch model.screen {
+            case let .onboarding(onboardingModel):
+                WalkThroughView(model: onboardingModel)
+            case let .main(mainModel):
+                MainView(model: mainModel)
             }
         }
         .overlay {
@@ -68,21 +60,24 @@ public struct AppView: View {
             }
         }
         .onAppear {
-            store.send(.onAppear)
+            model.onAppear()
             refreshThemeFromPreferences()
             startSplashIfNeeded()
-            updateSplashEligibility(for: store.state)
+            updateSplashEligibility()
         }
         .onReceive(NotificationCenter.default.publisher(for: .jacsimThemeChanged)) { _ in
             refreshThemeFromPreferences()
         }
         .onChange(of: scenePhase) { _, newPhase in
             if newPhase == .active {
-                store.send(.appBecameActive)
+                model.appBecameActive()
             }
         }
-        .onChange(of: store.state) { _, newState in
-            updateSplashEligibility(for: newState)
+        .onChange(of: model.screenKind) { _, _ in
+            updateSplashEligibility()
+        }
+        .onChange(of: model.homeIsFetching) { _, _ in
+            updateSplashEligibility()
         }
         .onChange(of: minDurationPassed) { _, _ in
             dismissSplashIfPossible()
@@ -102,9 +97,9 @@ public struct AppView: View {
         didObserveHomeFetchStart = false
         canDismissFromLoad = false
 
-        Task { @MainActor in
+        _Concurrency.Task { @MainActor in
             do {
-                try await Task.sleep(nanoseconds: StartupTransitionPolicy.splashMinimumDuration)
+                try await _Concurrency.Task.sleep(nanoseconds: StartupTransitionPolicy.splashMinimumDuration)
             } catch is CancellationError {
                 return
             } catch {
@@ -114,10 +109,10 @@ public struct AppView: View {
             dismissSplashIfPossible()
         }
 
-        Task { @MainActor in
+        _Concurrency.Task { @MainActor in
             // Fallback to avoid lingering splash in unexpected states.
             do {
-                try await Task.sleep(nanoseconds: StartupTransitionPolicy.splashMaximumDuration)
+                try await _Concurrency.Task.sleep(nanoseconds: StartupTransitionPolicy.splashMaximumDuration)
             } catch is CancellationError {
                 return
             } catch {
@@ -129,7 +124,7 @@ public struct AppView: View {
     }
 
     private func refreshThemeFromPreferences() {
-        if let raw = appPreferences.getThemeModeRaw(),
+        if let raw = model.dependencies.appPreferences.getThemeModeRaw(),
            ThemeMode(rawValue: raw) != nil {
             themeRaw = raw
             return
@@ -137,13 +132,13 @@ public struct AppView: View {
         themeRaw = ThemeMode.system.rawValue
     }
 
-    private func updateSplashEligibility(for state: AppFeature.State) {
-        switch state {
+    private func updateSplashEligibility() {
+        switch model.screen {
         case .onboarding:
             canDismissFromLoad = true
 
-        case let .main(mainState):
-            let isFetching = mainState.home.isFetching
+        case .main:
+            let isFetching = model.homeIsFetching
             if isFetching {
                 didObserveHomeFetchStart = true
                 canDismissFromLoad = true

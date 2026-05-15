@@ -1,29 +1,28 @@
 import SwiftUI
-import ComposableArchitecture
 import DSKit
 import _Concurrency
 
 public struct TaskUpdateView: View {
-    @Bindable var store: StoreOf<TaskUpdateFeature>
+    @Bindable var model: TaskUpdateModel
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    public init(store: StoreOf<TaskUpdateFeature>) {
-        self.store = store
+    public init(model: TaskUpdateModel) {
+        self.model = model
     }
 
     public var body: some View {
         RedesignScreenScaffold(
             title: "오늘 인증",
-            subtitle: store.dateText,
+            subtitle: model.dateText,
             stickyFooter: {
                 bottomCTASection
             }
         ) {
-            if store.isOverwriteMode {
+            if model.isOverwriteMode {
                 overwriteBanner
             }
 
-            if store.saveFailed {
+            if model.saveFailed {
                 errorMessage
             }
 
@@ -35,25 +34,25 @@ public struct TaskUpdateView: View {
         }
         .navigationTitle("오늘 인증")
         .navigationBarTitleDisplayMode(.inline)
-        .onAppear { store.send(.onAppear) }
+        .onAppear { model.onAppear() }
         .overlay {
-            if store.isSaving {
+            if model.isSaving {
                 loadingOverlay
             }
         }
         .overlay(alignment: .bottom) {
-            if let message = store.toastMessage {
+            if let message = model.toastMessage {
                 RedesignToastView(message: message, style: .error)
                     .transition(.move(edge: .bottom).combined(with: .opacity))
                     .task(id: message) {
                         try? await _Concurrency.Task.sleep(
                             nanoseconds: RedesignToastView.defaultDismissNanoseconds
                         )
-                        store.send(.toastDismissed)
+                        model.toastDismissed()
                     }
             }
         }
-        .animation(reduceMotion ? .none : .easeInOut(duration: 0.25), value: store.toastMessage)
+        .animation(reduceMotion ? .none : .easeInOut(duration: 0.25), value: model.toastMessage)
     }
     
     private var overwriteBanner: some View {
@@ -70,12 +69,12 @@ public struct TaskUpdateView: View {
             subtitle: "오늘의 진행 상황을 남겨요"
         ) {
             ImageAttachmentPicker(
-                image: store.image,
+                image: model.image,
                 emptyTitle: "인증 사진을 추가해 주세요",
                 emptySubtitle: "가로·세로 비율은 자동으로 맞춰져요",
                 height: 300.jsScaled()
             ) { image in
-                store.send(.imageSelected(image))
+                model.imageSelected(image)
             }
         }
     }
@@ -86,7 +85,7 @@ public struct TaskUpdateView: View {
             subtitle: "선택사항 · 최대 30자"
         ) {
             VStack(alignment: .trailing, spacing: .jsXS) {
-                TextField("짧게 기록해요 (선택)", text: $store.memo, axis: .vertical)
+                TextField("짧게 기록해요 (선택)", text: $model.memo, axis: .vertical)
                     .font(.jsBodyMedium)
                     .padding()
                     .background(Color.backgroundStrong)
@@ -97,7 +96,7 @@ public struct TaskUpdateView: View {
                     )
                     .lineLimit(2...4)
                 
-                Text("\(store.memo.count)/\(TextInputFieldPolicy.memo.maxLength)")
+                Text("\(model.memo.count)/\(TextInputFieldPolicy.memo.maxLength)")
                     .font(.jsLabelMedium)
                     .foregroundColor(.labelAssistive)
 
@@ -122,9 +121,9 @@ public struct TaskUpdateView: View {
                 title: "오늘 작심 완료했어요",
                 style: .primary,
                 size: .large,
-                isEnabled: isButtonEnabled && !store.isSaving
+                isEnabled: isButtonEnabled && !model.isSaving
             ) {
-                store.send(.certifyButtonTapped)
+                model.certifyButtonTapped()
             }
             .padding(.horizontal, .jsMD)
             .padding(.vertical, .jsMD)
@@ -164,6 +163,6 @@ public struct TaskUpdateView: View {
     }
     
     private var isButtonEnabled: Bool {
-        store.image != nil
+        model.image != nil
     }
 }

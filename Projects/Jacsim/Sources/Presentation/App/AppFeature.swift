@@ -1,74 +1,91 @@
 import Foundation
-import ComposableArchitecture
+import Observation
 
-@Reducer
-public struct AppFeature {
-    @ObservableState
-    public enum State: Equatable {
-        case onboarding(WalkThroughFeature.State)
-        case main(MainFeature.State)
-        
-        public init() {
-            self = .onboarding(WalkThroughFeature.State(fromSetting: false))
+public enum AppScreen {
+    case onboarding(WalkThroughModel)
+    case main(MainModel)
+}
+
+public enum AppScreenKind: Equatable {
+    case onboarding
+    case main
+}
+
+@MainActor
+@Observable
+public final class AppModel {
+    public var screen: AppScreen
+
+    @ObservationIgnored public let dependencies: JacsimDependencies
+    @ObservationIgnored private var reminderSyncTask: _Concurrency.Task<Void, Never>?
+
+    public init(dependencies: JacsimDependencies = .live) {
+        self.dependencies = dependencies
+        self.screen = .onboarding(
+            WalkThroughModel(fromSetting: false, dependencies: dependencies)
+        )
+        self.screen = .onboarding(makeOnboardingModel())
+    }
+
+    deinit {
+        reminderSyncTask?.cancel()
+    }
+
+    public var screenKind: AppScreenKind {
+        switch screen {
+        case .onboarding:
+            return .onboarding
+        case .main:
+            return .main
         }
     }
 
-    public enum Action {
-        case onAppear
-        case appBecameActive
-        case onboarding(WalkThroughFeature.Action)
-        case main(MainFeature.Action)
+    public var homeIsFetching: Bool {
+        guard case let .main(mainModel) = screen else { return false }
+        return mainModel.home.isFetching
     }
 
-    @Dependency(\.appPreferences) var appPreferences
-    @Dependency(\.notificationScheduler) var notificationScheduler
-    @Dependency(\.userSettingsRepository) var userSettingsRepository
+    public func onAppear() {
+        let isOnboardingCompleted = dependencies.appPreferences.isOnboardingCompleted()
 
-    public var body: some ReducerOf<Self> {
-        Reduce { state, action in
-            switch action {
-            case .onAppear:
-                let isOnboardingCompleted = appPreferences.isOnboardingCompleted()
-                if isOnboardingCompleted, case .main = state {
-                    return .send(.appBecameActive)
-                }
-                if !isOnboardingCompleted, case .onboarding = state {
-                    return .send(.appBecameActive)
-                }
+        switch (isOnboardingCompleted, screen) {
+        case (true, .main), (false, .onboarding):
+            break
+        case (true, _):
+            screen = .main(MainModel(dependencies: dependencies))
+        case (false, _):
+            screen = .onboarding(makeOnboardingModel())
+        }
 
-                if isOnboardingCompleted {
-                    state = .main(MainFeature.State())
-                } else {
-                    state = .onboarding(WalkThroughFeature.State(fromSetting: false))
-                }
-                return .send(.appBecameActive)
+        appBecameActive()
+    }
 
-            case .appBecameActive:
-                return .run { [notificationScheduler, userSettingsRepository] _ in
-                    let isNotificationEnabled = await userSettingsRepository.isNotificationEnabled()
-                    let reminders = await userSettingsRepository.getAllReminders()
-                    let reminderUseCase = ReminderSchedulingUseCase()
-                    await reminderUseCase.syncGlobalReminders(
-                        isEnabled: isNotificationEnabled,
-                        reminders: reminders,
-                        notificationScheduler: notificationScheduler
-                    )
-                }
+    public func appBecameActive() {
+        reminderSyncTask?.cancel()
+        reminderSyncTask = _Concurrency.Task { [dependencies] in
+            let isNotificationEnabled = await dependencies.userSettingsRepository.isNotificationEnabled()
+            let reminders = await dependencies.userSettingsRepository.getAllReminders()
+            let reminderUseCase = ReminderSchedulingUseCase()
+            await reminderUseCase.syncGlobalReminders(
+                isEnabled: isNotificationEnabled,
+                reminders: reminders,
+                notificationScheduler: dependencies.notificationScheduler
+            )
+        }
+    }
 
-            case .onboarding(.delegate(.completeOnboarding)):
-                appPreferences.setOnboardingCompleted(true)
-                state = .main(MainFeature.State())
-                return .none
-                
-            case .onboarding, .main:
-                return .none
+    private func completeOnboarding() {
+        dependencies.appPreferences.setOnboardingCompleted(true)
+        screen = .main(MainModel(dependencies: dependencies))
+    }
+
+    private func makeOnboardingModel() -> WalkThroughModel {
+        WalkThroughModel(
+            fromSetting: false,
+            dependencies: dependencies,
+            onCompleteOnboarding: { [weak self] in
+                self?.completeOnboarding()
             }
-        }
-        .ifCaseLet(\.onboarding, action: \.onboarding) {
-            WalkThroughFeature()
-        }
-        .ifCaseLet(\.main, action: \.main) {
-            MainFeature()
-        }
+        )
     }
 }

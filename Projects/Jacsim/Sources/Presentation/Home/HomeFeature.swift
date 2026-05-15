@@ -1,457 +1,355 @@
-import Foundation
-import ComposableArchitecture
+import Core
 import Domain
 import DSKit
-import Core
+import Foundation
+import Observation
 
-@Reducer
-public struct HomeFeature {
-    @ObservableState
-    public struct State: Equatable {
-        public var selectedDate: Date = Date()
-        public var calendarScope: JSCalendarScope = .month
-        public var calendar = CalendarFeature.State()
-        public var tasks: [Domain.Task] = []
-        public var activeTasks: [Domain.Task] = []
-        public var heroTask: Domain.Task? = nil
-        public var miniCardDisplayData: [MiniCardDisplayData] = []
-        public var isLoading: Bool = false
-        public var isRefreshing: Bool = false
-        public var isFetching: Bool = false
-        public var loadFailed: Bool = false
-        public var hasStartedNotificationListener = false
-        public var toastMessage: String? = nil
-
-        @Presents public var destination: Destination.State?
-        @Presents public var migrationAlert: AlertState<Action.MigrationAlert>?
-        public var path = StackState<Path.State>()
-
-        public struct MiniCardDisplayData: Equatable, Identifiable {
-            public let id: UUID
-            public let title: String
-            public let progress: Double
-            public let totalDays: Int
-            public let completedDays: Int
-            public let imageData: Data?
-            public let isTodayCertified: Bool
-
-            public init(
-                id: UUID,
-                title: String,
-                progress: Double,
-                totalDays: Int,
-                completedDays: Int,
-                imageData: Data? = nil,
-                isTodayCertified: Bool = false
-            ) {
-                self.id = id
-                self.title = title
-                self.progress = progress
-                self.totalDays = totalDays
-                self.completedDays = completedDays
-                self.imageData = imageData
-                self.isTodayCertified = isTodayCertified
-            }
-        }
-
-        public var heroTaskImageData: Data? = nil
-        public var loadingStartTime: Date? = nil
-        
-        public init() {}
+@MainActor
+@Observable
+public final class HomeModel {
+    public enum Route: Hashable {
+        case detail(Domain.Task, scrollToRecords: Bool)
+        case update(Domain.Task, index: Int)
+        case allTasks
+        case setting
     }
 
-    public enum Action: BindableAction {
-        case onAppear
-        case binding(BindingAction<State>)
-        case dateSelected(Date)
-        case refreshTriggered
-        case tasksResponse([Domain.Task])
-        case tasksLoadFailed
-        case heroImageLoaded(Data?)
-        case miniCardImageLoaded(id: UUID, imageData: Data?)
-        case calendar(CalendarFeature.Action)
-        case settingButtonTapped
-        case addButtonTapped
-        case allTasksButtonTapped
-        case focusPrimaryButtonTapped(Domain.Task)
-        case focusSecondaryButtonTapped(Domain.Task)
-        case taskTapped(Domain.Task)
-        case notificationTapped(UUID)
-        case notificationTaskLoaded(Domain.Task?)
-        case deepLinkReceived(URL)
-        case deepLinkTaskLoaded(Domain.Task?)
-        case migrationCheckResponse(Bool)
-        case migrationAlert(PresentationAction<MigrationAlert>)
-        case toastDismissed
+    public struct MiniCardDisplayData: Equatable, Identifiable {
+        public let id: UUID
+        public let title: String
+        public let progress: Double
+        public let totalDays: Int
+        public let completedDays: Int
+        public let imageData: Data?
+        public let isTodayCertified: Bool
 
-        case destination(PresentationAction<Destination.Action>)
-        case path(StackAction<Path.State, Path.Action>)
-        
-        case delegate(Delegate)
-        public enum Delegate {
-            case complete
-        }
-
-        public enum MigrationAlert: Equatable {
-            case confirm
-            case cancel
+        public init(
+            id: UUID,
+            title: String,
+            progress: Double,
+            totalDays: Int,
+            completedDays: Int,
+            imageData: Data? = nil,
+            isTodayCertified: Bool = false
+        ) {
+            self.id = id
+            self.title = title
+            self.progress = progress
+            self.totalDays = totalDays
+            self.completedDays = completedDays
+            self.imageData = imageData
+            self.isTodayCertified = isTodayCertified
         }
     }
 
-    public struct Path: Reducer {
-        @ObservableState
-        @CasePathable
-        @dynamicMemberLookup
-        public enum State: Equatable {
-            case detail(TaskDetailFeature.State)
-            case update(TaskUpdateFeature.State)
-            case allTasks(AllTaskFeature.State)
-            case setting(SettingFeature.State)
-        }
-        @CasePathable
-        @dynamicMemberLookup
-        public enum Action {
-            case detail(TaskDetailFeature.Action)
-            case update(TaskUpdateFeature.Action)
-            case allTasks(AllTaskFeature.Action)
-            case setting(SettingFeature.Action)
-        }
-        public var body: some ReducerOf<Self> {
-            Scope(state: \.detail, action: \.detail) { TaskDetailFeature() }
-            Scope(state: \.update, action: \.update) { TaskUpdateFeature() }
-            Scope(state: \.allTasks, action: \.allTasks) { AllTaskFeature() }
-            Scope(state: \.setting, action: \.setting) { SettingFeature() }
-        }
-    }
+    public var selectedDate: Date = Date()
+    public var calendarScope: JSCalendarScope = .month
+    public var tasks: [Domain.Task] = []
+    public var activeTasks: [Domain.Task] = []
+    public var heroTask: Domain.Task?
+    public var miniCardDisplayData: [MiniCardDisplayData] = []
+    public var isLoading: Bool = false
+    public var isRefreshing: Bool = false
+    public var isFetching: Bool = false
+    public var loadFailed: Bool = false
+    public var hasStartedNotificationListener = false
+    public var toastMessage: String?
+    public var heroTaskImageData: Data?
+    public var loadingStartTime: Date?
+    public var path: [Route] = []
+    public var challengeCreate: ChallengeCreateModel?
 
-    public struct Destination: Reducer {
-        @ObservableState
-        @CasePathable
-        @dynamicMemberLookup
-        public enum State: Equatable {
-            case challengeCreate(ChallengeCreateFeature.State)
-        }
-        @CasePathable
-        @dynamicMemberLookup
-        public enum Action {
-            case challengeCreate(ChallengeCreateFeature.Action)
-        }
-        public var body: some ReducerOf<Self> {
-            Scope(state: \.challengeCreate, action: \.challengeCreate) { ChallengeCreateFeature() }
-        }
-    }
-
-    @Dependency(\.taskQueryClient) var taskQueryClient
-    @Dependency(\.activeTaskService) var activeTaskService
-    @Dependency(\.imageStore) var imageStore
+    @ObservationIgnored public let dependencies: JacsimDependencies
+    @ObservationIgnored private var fetchTask: _Concurrency.Task<Void, Never>?
+    @ObservationIgnored private var imageLoadingTask: _Concurrency.Task<Void, Never>?
+    @ObservationIgnored private var notificationListenerTask: _Concurrency.Task<Void, Never>?
+    @ObservationIgnored private var deepLinkListenerTask: _Concurrency.Task<Void, Never>?
 
     private enum LoadingPolicy {
         static let minimumSkeletonDuration: TimeInterval = 1.25
     }
 
-    private enum CancelID {
-        case imageLoading
+    public init(dependencies: JacsimDependencies) {
+        self.dependencies = dependencies
     }
 
-    public var body: some ReducerOf<Self> {
-        BindingReducer()
-        Scope(state: \.calendar, action: \.calendar) {
-            CalendarFeature()
-        }
-        Reduce { state, action in
-            switch action {
-            case .onAppear:
-                guard !state.isFetching else { return .none }
-                let shouldStartListener = !state.hasStartedNotificationListener
-                state.hasStartedNotificationListener = true
-                state.isFetching = true
-                state.isLoading = state.tasks.isEmpty
-                state.loadFailed = false
-                state.loadingStartTime = Date()
-                Logger.homeFetchingTasks()
-                let fetchStartTime = Date()
-                let fetchEffect: Effect<Action> = .run { [taskQueryClient] send in
-                    do {
-                        let tasks = try await taskQueryClient.fetchActiveTasks()
-                        Logger.homeTasksFetched(
-                            count: tasks.count,
-                            duration: Date().timeIntervalSince(fetchStartTime)
-                        )
-                        if let firstTask = tasks.first {
-                            let completedCount = firstTask.records.filter { $0.check }.count
-                            Logger.homeFirstTaskDetails(
-                                title: firstTask.title,
-                                totalRecords: firstTask.records.count,
-                                completedRecords: completedCount
-                            )
-                        }
-                        // Ensure minimum skeleton display duration for stable loading perception.
-                        let elapsed = Date().timeIntervalSince(fetchStartTime)
-                        let minDisplay = LoadingPolicy.minimumSkeletonDuration
-                        let remaining = minDisplay - elapsed
-                        if remaining > 0 {
-                            try await _Concurrency.Task.sleep(
-                                nanoseconds: UInt64(remaining * 1_000_000_000)
-                            )
-                        }
-                        await send(.tasksResponse(tasks))
-                    } catch is CancellationError {
-                        return
-                    } catch {
-                        await send(.tasksLoadFailed)
-                    }
-                }
-                let notificationEffect: Effect<Action> = shouldStartListener ? .run { send in
-                    for await notification in NotificationCenter.default.notifications(named: .jacsimLocalNotificationTapped) {
-                        if let idString = notification.userInfo?["id"] as? String,
-                           let id = UUID(uuidString: idString) {
-                            await send(.notificationTapped(id))
-                        }
-                    }
-                } : .none
-                let deepLinkEffect: Effect<Action> = shouldStartListener ? .run { send in
-                    for await notification in NotificationCenter.default.notifications(named: .jacsimDeepLinkReceived) {
-                        if let url = notification.userInfo?["url"] as? URL {
-                            await send(.deepLinkReceived(url))
-                        }
-                    }
-                } : .none
-                return .merge(
-                    .cancel(id: CancelID.imageLoading),
-                    fetchEffect,
-                    notificationEffect,
-                    deepLinkEffect
-                )
+    deinit {
+        fetchTask?.cancel()
+        imageLoadingTask?.cancel()
+        notificationListenerTask?.cancel()
+        deepLinkListenerTask?.cancel()
+    }
 
-            case let .dateSelected(date):
-                state.selectedDate = date
-                return .none
-
-            case .refreshTriggered:
-                state.isRefreshing = true
-                state.loadFailed = false
-                return .merge(
-                    .cancel(id: CancelID.imageLoading),
-                    .run { [taskQueryClient] send in
-                        do {
-                            let tasks = try await taskQueryClient.fetchActiveTasks()
-                            await send(.tasksResponse(tasks))
-                        } catch is CancellationError {
-                            return
-                        } catch {
-                            await send(.tasksLoadFailed)
-                        }
-                    }
+    public func onAppear() {
+        guard !isFetching else { return }
+        startListenersIfNeeded()
+        isFetching = true
+        isLoading = tasks.isEmpty
+        loadFailed = false
+        loadingStartTime = Date()
+        Logger.homeFetchingTasks()
+        let fetchStartTime = Date()
+        fetchTask?.cancel()
+        fetchTask = _Concurrency.Task { [dependencies] in
+            do {
+                let tasks = try await dependencies.taskQueryClient.fetchActiveTasks()
+                Logger.homeTasksFetched(
+                    count: tasks.count,
+                    duration: Date().timeIntervalSince(fetchStartTime)
                 )
-                
-            case let .tasksResponse(tasks):
-                let processStartTime = Date()
-                state.tasks = tasks
-                state.activeTasks = activeTaskService.filterActiveTasks(tasks, referenceDate: Date())
-                state.heroTask = state.activeTasks.first
-                let remainingTasks = Array(state.activeTasks.dropFirst())
-                state.miniCardDisplayData = remainingTasks.map { task in
-                    let completedDays = task.records.filter { $0.check }.count
-                    let totalDays = task.dayArray.count
-                    let progress = totalDays > 0 ? Double(completedDays) / Double(totalDays) : 0
-                    let isTodayCertified = task.isCompleted(on: Date())
-                    return State.MiniCardDisplayData(
-                        id: task.id.rawValue,
-                        title: task.title,
-                        progress: progress,
-                        totalDays: totalDays,
-                        completedDays: completedDays,
-                        imageData: nil,
-                        isTodayCertified: isTodayCertified
+                if let firstTask = tasks.first {
+                    let completedCount = firstTask.records.filter { $0.check }.count
+                    Logger.homeFirstTaskDetails(
+                        title: firstTask.title,
+                        totalRecords: firstTask.records.count,
+                        completedRecords: completedCount
                     )
                 }
-                state.isLoading = false
-                state.isRefreshing = false
-                state.isFetching = false
-                state.loadFailed = false
-                Logger.homeTasksProcessed(
-                    duration: Date().timeIntervalSince(processStartTime),
-                    activeCount: state.activeTasks.count,
-                    heroTaskTitle: state.heroTask?.title
-                )
-                let imageStore = imageStore
-                return .run { [heroTask = state.heroTask, remainingTasks, imageStore] send in
-                    if let heroTask = heroTask {
-                        let heroImageData = await imageStore.loadImage(heroTask.mainImageKey)
-                        await send(.heroImageLoaded(heroImageData))
-                    }
-                    for task in remainingTasks {
-                        let imageData = await imageStore.loadImage(task.mainImageKey)
-                        await send(.miniCardImageLoaded(id: task.id.rawValue, imageData: imageData))
-                    }
+                let elapsed = Date().timeIntervalSince(fetchStartTime)
+                let remaining = LoadingPolicy.minimumSkeletonDuration - elapsed
+                if remaining > 0 {
+                    try await _Concurrency.Task.sleep(nanoseconds: UInt64(remaining * 1_000_000_000))
                 }
-                .cancellable(id: CancelID.imageLoading, cancelInFlight: true)
-
-            case .tasksLoadFailed:
-                state.isLoading = false
-                state.isRefreshing = false
-                state.isFetching = false
-                state.loadFailed = true
-                return .none
-                
-            case .settingButtonTapped:
-                state.path.append(.setting(SettingFeature.State()))
-                return .none
-                
-            case .addButtonTapped:
-                state.destination = .challengeCreate(ChallengeCreateFeature.State())
-                return .none
-                
-            case .allTasksButtonTapped:
-                state.path.append(.allTasks(AllTaskFeature.State()))
-                return .none
-
-            case let .focusPrimaryButtonTapped(task):
-                if shouldOpenCheckIn(for: task),
-                   let index = todayIndex(in: task) {
-                    state.path.append(.update(TaskUpdateFeature.State(task: task, index: index)))
-                    return .none
-                }
-
-                let shouldScrollToRecords = task.isCompleted(on: Date())
-                state.path.append(makeDetailState(task: task, scrollToRecords: shouldScrollToRecords))
-                return .none
-
-            case let .focusSecondaryButtonTapped(task):
-                state.path.append(makeDetailState(task: task, scrollToRecords: false))
-                return .none
-                
-            case let .taskTapped(task):
-                state.path.append(.detail(TaskDetailFeature.State(task: task)))
-                return .none
-
-            case let .notificationTapped(id):
-                return .run { [taskQueryClient] send in
-                    do {
-                        let task = try await taskQueryClient.fetchTask(TaskID(id))
-                        await send(.notificationTaskLoaded(task))
-                    } catch {
-                        await send(.notificationTaskLoaded(nil))
-                    }
-                }
-
-            case let .notificationTaskLoaded(task):
-                guard let task else { return .none }
-                if let index = task.dayArray.firstIndex(where: { Calendar.current.isDate($0, inSameDayAs: Date()) }) {
-                    let isCertifiable = task.records.indices.contains(index) ? !task.records[index].check : true
-                    if isCertifiable {
-                        state.path.append(.update(TaskUpdateFeature.State(task: task, index: index)))
-                        return .none
-                    }
-                }
-                state.path.append(.detail(TaskDetailFeature.State(task: task)))
-                return .none
-
-            case let .deepLinkReceived(url):
-                guard url.scheme == "jacsim",
-                      url.host == "challenge" else {
-                    return .none
-                }
-                let idString = url.path.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
-                guard let id = UUID(uuidString: idString) else { return .none }
-                return .run { [taskQueryClient] send in
-                    do {
-                        let task = try await taskQueryClient.fetchTask(TaskID(id))
-                        await send(.deepLinkTaskLoaded(task))
-                    } catch {
-                        await send(.deepLinkTaskLoaded(nil))
-                    }
-                }
-
-            case let .deepLinkTaskLoaded(task):
-                guard let task else { return .none }
-                state.path.append(.detail(TaskDetailFeature.State(task: task)))
-                return .none
-
-            case let .heroImageLoaded(imageData):
-                state.heroTaskImageData = imageData
-                return .none
-
-            case let .miniCardImageLoaded(id, imageData):
-                guard let targetIndex = state.miniCardDisplayData.firstIndex(where: { $0.id == id }) else {
-                    return .none
-                }
-                let currentData = state.miniCardDisplayData[targetIndex]
-                state.miniCardDisplayData[targetIndex] = State.MiniCardDisplayData(
-                    id: currentData.id,
-                    title: currentData.title,
-                    progress: currentData.progress,
-                    totalDays: currentData.totalDays,
-                    completedDays: currentData.completedDays,
-                    imageData: imageData,
-                    isTodayCertified: currentData.isTodayCertified
-                )
-                return .none
-
-            case .migrationCheckResponse:
-                return .none
-
-            case .migrationAlert:
-                return .none
-                
-            case let .path(.element(id: _, action: .detail(.delegate(.navigateToUpdate(task, index))))):
-                state.path.append(.update(TaskUpdateFeature.State(task: task, index: index)))
-                return .none
-
-            case .path(.element(id: _, action: .detail(.delegate(.navigateBack)))):
-                state.path.removeLast()
-                return .none
-
-            case .path(.element(id: _, action: .detail(.delegate(.taskDeleted)))):
-                state.path.removeLast()
-                return .send(.onAppear)
-
-            case let .path(.element(id: _, action: .detail(.delegate(.navigateToMemoEdit(task))))):
-                let today = Calendar.current.startOfDay(for: Date())
-                if let index = task.dayArray.firstIndex(where: { Calendar.current.isDate($0, inSameDayAs: today) }) {
-                    state.path.append(.update(TaskUpdateFeature.State(task: task, index: index)))
-                }
-                return .none
-
-            case .path(.element(id: _, action: .update(.delegate(.saveSuccess)))):
-                state.path.removeLast()
-                return .run { send in
-                    await send(.onAppear)
-                }
-
-            case .destination(.dismiss):
-                return .send(.onAppear)
-
-            case .destination(.presented(.challengeCreate(.delegate(.challengeCreated)))):
-                state.destination = nil
-                state.toastMessage = "새 작심을 시작했어요"
-                return .send(.onAppear)
-
-            case .destination(.presented(.challengeCreate(.delegate(.cancelled)))):
-                state.destination = nil
-                return .none
-
-            case .toastDismissed:
-                state.toastMessage = nil
-                return .none
-
-            case .path:
-                return .none
-
-            case .binding, .calendar, .delegate:
-                return .none
-
-            case .destination:
-                return .none
+                tasksResponse(tasks)
+            } catch is CancellationError {
+                return
+            } catch {
+                tasksLoadFailed()
             }
         }
-        .ifLet(\.$destination, action: \.destination) {
-            Destination()
+    }
+
+    public func dateSelected(_ date: Date) {
+        selectedDate = date
+    }
+
+    public func refreshTriggered() {
+        isRefreshing = true
+        loadFailed = false
+        imageLoadingTask?.cancel()
+        fetchTask?.cancel()
+        fetchTask = _Concurrency.Task { [dependencies] in
+            do {
+                let tasks = try await dependencies.taskQueryClient.fetchActiveTasks()
+                tasksResponse(tasks)
+            } catch is CancellationError {
+                return
+            } catch {
+                tasksLoadFailed()
+            }
         }
-        .ifLet(\.$migrationAlert, action: \.migrationAlert)
-        .forEach(\.path, action: \.path) {
-            Path()
+    }
+
+    public func settingButtonTapped() {
+        path.append(.setting)
+    }
+
+    public func addButtonTapped() {
+        challengeCreate = ChallengeCreateModel(
+            dependencies: dependencies,
+            onChallengeCreated: { [weak self] in
+                self?.challengeCreated()
+            },
+            onCancelled: { [weak self] in
+                self?.challengeCancelled()
+            }
+        )
+    }
+
+    public func allTasksButtonTapped() {
+        path.append(.allTasks)
+    }
+
+    public func focusPrimaryButtonTapped(_ task: Domain.Task) {
+        if shouldOpenCheckIn(for: task),
+           let index = todayIndex(in: task) {
+            path.append(.update(task, index: index))
+            return
         }
+
+        let shouldScrollToRecords = task.isCompleted(on: Date())
+        path.append(.detail(task, scrollToRecords: shouldScrollToRecords))
+    }
+
+    public func focusSecondaryButtonTapped(_ task: Domain.Task) {
+        path.append(.detail(task, scrollToRecords: false))
+    }
+
+    public func taskTapped(_ task: Domain.Task) {
+        path.append(.detail(task, scrollToRecords: false))
+    }
+
+    public func notificationTapped(_ id: UUID) {
+        _Concurrency.Task { [dependencies] in
+            do {
+                let task = try await dependencies.taskQueryClient.fetchTask(TaskID(id))
+                notificationTaskLoaded(task)
+            } catch {
+                notificationTaskLoaded(nil)
+            }
+        }
+    }
+
+    public func deepLinkReceived(_ url: URL) {
+        guard url.scheme == "jacsim",
+              url.host == "challenge" else {
+            return
+        }
+        let idString = url.path.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+        guard let id = UUID(uuidString: idString) else { return }
+        _Concurrency.Task { [dependencies] in
+            do {
+                let task = try await dependencies.taskQueryClient.fetchTask(TaskID(id))
+                deepLinkTaskLoaded(task)
+            } catch {
+                deepLinkTaskLoaded(nil)
+            }
+        }
+    }
+
+    public func heroImageLoaded(_ imageData: Data?) {
+        heroTaskImageData = imageData
+    }
+
+    public func miniCardImageLoaded(id: UUID, imageData: Data?) {
+        guard let targetIndex = miniCardDisplayData.firstIndex(where: { $0.id == id }) else {
+            return
+        }
+        let currentData = miniCardDisplayData[targetIndex]
+        miniCardDisplayData[targetIndex] = MiniCardDisplayData(
+            id: currentData.id,
+            title: currentData.title,
+            progress: currentData.progress,
+            totalDays: currentData.totalDays,
+            completedDays: currentData.completedDays,
+            imageData: imageData,
+            isTodayCertified: currentData.isTodayCertified
+        )
+    }
+
+    public func navigateToUpdate(_ task: Domain.Task, index: Int) {
+        path.append(.update(task, index: index))
+    }
+
+    public func navigateBack() {
+        if !path.isEmpty {
+            path.removeLast()
+        }
+    }
+
+    public func taskDeleted() {
+        if !path.isEmpty {
+            path.removeLast()
+        }
+        onAppear()
+    }
+
+    public func updateSaved() {
+        if !path.isEmpty {
+            path.removeLast()
+        }
+        onAppear()
+    }
+
+    public func toastDismissed() {
+        toastMessage = nil
+    }
+
+    private func startListenersIfNeeded() {
+        guard !hasStartedNotificationListener else { return }
+        hasStartedNotificationListener = true
+        notificationListenerTask = _Concurrency.Task {
+            for await notification in NotificationCenter.default.notifications(named: .jacsimLocalNotificationTapped) {
+                if let idString = notification.userInfo?["id"] as? String,
+                   let id = UUID(uuidString: idString) {
+                    notificationTapped(id)
+                }
+            }
+        }
+        deepLinkListenerTask = _Concurrency.Task {
+            for await notification in NotificationCenter.default.notifications(named: .jacsimDeepLinkReceived) {
+                if let url = notification.userInfo?["url"] as? URL {
+                    deepLinkReceived(url)
+                }
+            }
+        }
+    }
+
+    private func tasksResponse(_ tasks: [Domain.Task]) {
+        let processStartTime = Date()
+        self.tasks = tasks
+        activeTasks = dependencies.activeTaskService.filterActiveTasks(tasks, referenceDate: Date())
+        heroTask = activeTasks.first
+        let remainingTasks = Array(activeTasks.dropFirst())
+        miniCardDisplayData = remainingTasks.map { task in
+            let completedDays = task.records.filter { $0.check }.count
+            let totalDays = task.dayArray.count
+            let progress = totalDays > 0 ? Double(completedDays) / Double(totalDays) : 0
+            let isTodayCertified = task.isCompleted(on: Date())
+            return MiniCardDisplayData(
+                id: task.id.rawValue,
+                title: task.title,
+                progress: progress,
+                totalDays: totalDays,
+                completedDays: completedDays,
+                imageData: nil,
+                isTodayCertified: isTodayCertified
+            )
+        }
+        isLoading = false
+        isRefreshing = false
+        isFetching = false
+        loadFailed = false
+        Logger.homeTasksProcessed(
+            duration: Date().timeIntervalSince(processStartTime),
+            activeCount: activeTasks.count,
+            heroTaskTitle: heroTask?.title
+        )
+        imageLoadingTask?.cancel()
+        imageLoadingTask = _Concurrency.Task { [heroTask, remainingTasks, dependencies] in
+            if let heroTask {
+                let heroImageData = await dependencies.imageStore.loadImage(heroTask.mainImageKey)
+                heroImageLoaded(heroImageData)
+            }
+            for task in remainingTasks {
+                let imageData = await dependencies.imageStore.loadImage(task.mainImageKey)
+                miniCardImageLoaded(id: task.id.rawValue, imageData: imageData)
+            }
+        }
+    }
+
+    private func tasksLoadFailed() {
+        isLoading = false
+        isRefreshing = false
+        isFetching = false
+        loadFailed = true
+    }
+
+    private func notificationTaskLoaded(_ task: Domain.Task?) {
+        guard let task else { return }
+        if let index = task.dayArray.firstIndex(where: { Calendar.current.isDate($0, inSameDayAs: Date()) }) {
+            let isCertifiable = task.records.indices.contains(index) ? !task.records[index].check : true
+            if isCertifiable {
+                path.append(.update(task, index: index))
+                return
+            }
+        }
+        path.append(.detail(task, scrollToRecords: false))
+    }
+
+    private func deepLinkTaskLoaded(_ task: Domain.Task?) {
+        guard let task else { return }
+        path.append(.detail(task, scrollToRecords: false))
+    }
+
+    private func challengeCreated() {
+        challengeCreate = nil
+        toastMessage = "새 작심을 시작했어요"
+        onAppear()
+    }
+
+    private func challengeCancelled() {
+        challengeCreate = nil
     }
 
     private func shouldOpenCheckIn(for task: Domain.Task) -> Bool {
@@ -461,11 +359,5 @@ public struct HomeFeature {
 
     private func todayIndex(in task: Domain.Task) -> Int? {
         task.dayArray.firstIndex { Calendar.current.isDate($0, inSameDayAs: Date()) }
-    }
-
-    private func makeDetailState(task: Domain.Task, scrollToRecords: Bool) -> Path.State {
-        var detailState = TaskDetailFeature.State(task: task)
-        detailState.shouldScrollToRecords = scrollToRecords
-        return .detail(detailState)
     }
 }
