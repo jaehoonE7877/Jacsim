@@ -8,6 +8,8 @@ public struct CalendarFeature {
     @ObservableState
     public struct State: Equatable {
         public var selectedDate: Date = Date()
+        public var datePickerDate: Date = Date()
+        public var isDatePickerPresented: Bool = false
         public var calendarScope: JSCalendarScope = .month
         public var tasks: [Domain.Task] = []
         public var eventDates: [Date] = []
@@ -22,6 +24,9 @@ public struct CalendarFeature {
         case onAppear
         case binding(BindingAction<State>)
         case dateSelected(Date)
+        case datePickerButtonTapped
+        case datePickerConfirmed
+        case datePickerDismissed
         case tasksResponse([Domain.Task])
         case tasksLoadFailed
     }
@@ -47,6 +52,21 @@ public struct CalendarFeature {
 
             case let .dateSelected(date):
                 state.selectedDate = date
+                return .none
+
+            case .datePickerButtonTapped:
+                state.datePickerDate = state.selectedDate
+                state.isDatePickerPresented = true
+                return .none
+
+            case .datePickerConfirmed:
+                state.selectedDate = state.datePickerDate
+                state.isDatePickerPresented = false
+                return .none
+
+            case .datePickerDismissed:
+                state.datePickerDate = state.selectedDate
+                state.isDatePickerPresented = false
                 return .none
 
             case let .tasksResponse(tasks):

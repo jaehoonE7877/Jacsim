@@ -56,6 +56,14 @@ private actor UserSettingsRecorder {
 }
 
 @MainActor
+@Test("설정 상태는 앱 버전 표시값을 주입받을 수 있다")
+func settingFeatureStateUsesInjectedVersion() {
+    let state = SettingFeature.State(version: "2.0.0")
+
+    #expect(state.version == "2.0.0")
+}
+
+@MainActor
 @Test("loadNotificationSettings는 전역 설정값을 반영한다")
 func settingFeatureLoadNotificationSettingsUsesGlobalToggle() async {
     let userSettings = UserSettingsRecorder(globalNotificationEnabled: false, reminders: [])
@@ -167,4 +175,44 @@ func settingFeatureToggleOnSchedulesAllReminders() async {
     #expect(await scheduler.scheduledCount() == 2)
     #expect(await scheduler.cancelledCount() == 0)
     #expect(await userSettings.lastUpdatedValue() == true)
+}
+
+@MainActor
+@Test("알림 ON 토글 시 시스템 권한이 거부되면 전역 알림을 다시 끄고 안내 상태로 전환한다")
+func settingFeatureToggleOnHandlesPermissionDenied() async {
+    let reminders: [ReminderInfo] = [
+        ReminderInfo(taskId: TaskID(UUID()), title: "A", time: DateComponents(hour: 7, minute: 45))
+    ]
+    let userSettings = UserSettingsRecorder(globalNotificationEnabled: false, reminders: reminders)
+    let scheduler = NotificationSchedulerRecorder()
+
+    let store = TestStore(initialState: SettingFeature.State()) {
+        SettingFeature()
+    } withDependencies: {
+        $0.userSettingsRepository = UserSettingsRepositoryPort(
+            isNotificationEnabled: { await userSettings.isNotificationEnabled() },
+            getAllReminders: { await userSettings.getAllReminders() },
+            updateNotificationEnabled: { await userSettings.updateNotificationEnabled($0) }
+        )
+        $0.notificationScheduler = NotificationSchedulerPort(
+            scheduleDailyReminder: { taskID, _, _ in await scheduler.recordScheduled(taskID) },
+            cancelReminder: { taskID in await scheduler.recordCancelled(taskID) },
+            cancelAllReminders: {},
+            requestAuthorization: { false }
+        )
+    }
+
+    await store.send(.notificationToggleChanged(true)) {
+        $0.isNotificationEnabled = true
+        $0.isLoading = true
+        $0.notificationPermissionDenied = false
+    }
+    await store.receive(.notificationPermissionDenied) {
+        $0.isNotificationEnabled = false
+        $0.isLoading = false
+        $0.notificationPermissionDenied = true
+    }
+
+    #expect(await scheduler.scheduledCount() == 0)
+    #expect(await userSettings.lastUpdatedValue() == false)
 }

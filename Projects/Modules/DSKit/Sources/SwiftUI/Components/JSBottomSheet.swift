@@ -10,6 +10,7 @@ public struct JSBottomSheet<Content: View>: View {
     let isPresented: Binding<Bool>
     let style: JSBottomSheetStyle
     let showDragIndicator: Bool
+    let allowsInteractiveDismiss: Bool
     let content: Content
     let onDismiss: (() -> Void)?
 
@@ -20,12 +21,14 @@ public struct JSBottomSheet<Content: View>: View {
         isPresented: Binding<Bool>,
         style: JSBottomSheetStyle = .flexible(maxHeight: 400),
         showDragIndicator: Bool = true,
+        allowsInteractiveDismiss: Bool = false,
         onDismiss: (() -> Void)? = nil,
         @ViewBuilder content: () -> Content
     ) {
         self.isPresented = isPresented
         self.style = style
         self.showDragIndicator = showDragIndicator
+        self.allowsInteractiveDismiss = allowsInteractiveDismiss
         self.onDismiss = onDismiss
         self.content = content()
     }
@@ -37,7 +40,9 @@ public struct JSBottomSheet<Content: View>: View {
                     .opacity(0.4 * max(0, 1 - abs(offset) / 300.0))
                     .ignoresSafeArea()
                     .onTapGesture {
-                        dismiss()
+                        if allowsInteractiveDismiss {
+                            dismiss()
+                        }
                     }
                     .transition(.opacity)
 
@@ -66,7 +71,7 @@ public struct JSBottomSheet<Content: View>: View {
                         .onEnded { value in
                             isDragging = false
                             let threshold: CGFloat = 100
-                            if value.translation.height > threshold {
+                            if allowsInteractiveDismiss, value.translation.height > threshold {
                                 dismiss()
                             } else {
                                 withAnimation(.spring()) {
@@ -156,6 +161,7 @@ public struct JSDatePickerBottomSheet: View {
         JSBottomSheet(
             isPresented: isPresented,
             style: .fixed(height: 420),
+            showDragIndicator: false,
             onDismiss: onDismiss
         ) {
             VStack(spacing: 0) {
@@ -263,9 +269,7 @@ struct JSBottomSheet_Previews: PreviewProvider {
                     selectedDate: $selectedDate,
                     isPresented: $showSheet,
                     title: "날짜 선택",
-                    onConfirm: {
-                        print("Selected: \(selectedDate)")
-                    }
+                    onConfirm: {}
                 )
             }
         }

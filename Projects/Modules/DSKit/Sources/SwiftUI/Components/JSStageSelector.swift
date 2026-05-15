@@ -151,9 +151,7 @@ struct JSStageSelector_Previews: PreviewProvider {
 
                         JSStageSelector(
                             selectedStage: $selectedStage,
-                            onStageSelected: { stage in
-                                print("Selected: \(stage)")
-                            }
+                            onStageSelected: { _ in }
                         )
                     }
 
@@ -163,9 +161,7 @@ struct JSStageSelector_Previews: PreviewProvider {
 
                         JSStageInputView(
                             selectedStage: $selectedStage,
-                            onConfirm: {
-                                print("Confirmed: \(selectedStage)")
-                            }
+                            onConfirm: {}
                         )
                     }
                     .frame(height: 300)

@@ -207,9 +207,7 @@ struct JSUnifiedMiniCard_Previews: PreviewProvider {
                             completedDays: 6
                         )
                     ],
-                    onCardTap: { index in
-                        print("Tapped card at index: \(index)")
-                    }
+                    onCardTap: { _ in }
                 )
                 .padding(.horizontal, -20)
             }

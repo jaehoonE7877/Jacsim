@@ -204,9 +204,7 @@ struct JSStatusChip_Previews: PreviewProvider {
                         completedCount: 2,
                         pendingCount: 1,
                         failedCount: 0,
-                        onChipTap: { state in
-                            print("Tapped: \(state)")
-                        }
+                        onChipTap: { _ in }
                     )
                 }
 
@@ -227,13 +225,9 @@ struct JSStatusChip_Previews: PreviewProvider {
                         .font(.jsHeadline18Bold)
 
                     HStack(spacing: 8) {
-                        JSStatusChip(state: .completed, count: 5) {
-                            print("Completed tapped")
-                        }
+                        JSStatusChip(state: .completed, count: 5) {}
 
-                        JSStatusChip(state: .pending, count: 2) {
-                            print("Pending tapped")
-                        }
+                        JSStatusChip(state: .pending, count: 2) {}
                     }
                 }
             }

@@ -265,9 +265,7 @@ struct JSMiniHeroCard_Previews: PreviewProvider {
                             completedDays: 25
                         )
                     ],
-                    onCardTap: { id in
-                        print("Tapped card id: \(id)")
-                    }
+                    onCardTap: { _ in }
                 )
             }
             .padding(.vertical)

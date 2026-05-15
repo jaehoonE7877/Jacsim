@@ -1,9 +1,15 @@
 import SwiftUI
 import ComposableArchitecture
 import DSKit
+import AcknowList
+import StoreKit
 
 public struct SettingView: View {
     let store: StoreOf<SettingFeature>
+    @Environment(\.requestReview) private var requestReview
+    @Environment(\.openURL) private var openURL
+    @State private var isWalkThroughPresented = false
+    @State private var isLicencePresented = false
 
     public init(store: StoreOf<SettingFeature>) {
         self.store = store
@@ -47,19 +53,27 @@ public struct SettingView: View {
                         tintColor: .primaryNormal
                     )
                 }
+
+                if store.notificationPermissionDenied {
+                    RedesignStateBanner(
+                        text: "알림 권한이 꺼져 있어요. iOS 설정에서 알림을 허용한 뒤 다시 켜 주세요.",
+                        icon: "bell.slash.fill",
+                        tintColor: .cautionary
+                    )
+                }
             }
 
             RedesignSectionCard(title: "도움말") {
                 actionRow(title: "사용법", systemImage: "book.pages") {
-                    store.send(.useCaseButtonTapped)
+                    isWalkThroughPresented = true
                 }
 
                 actionRow(title: "문의하기", systemImage: "envelope") {
-                    store.send(.inquiryButtonTapped)
+                    openURL(AppSupport.inquiryMailURL)
                 }
 
                 actionRow(title: "리뷰", systemImage: "star.bubble") {
-                    store.send(.reviewButtonTapped)
+                    requestReview()
                 }
             }
 
@@ -76,8 +90,12 @@ public struct SettingView: View {
                         .foregroundColor(.labelAlternative)
                 }
 
+                actionRow(title: "개인정보 처리방침", systemImage: "hand.raised") {
+                    openURL(AppSupport.privacyPolicyURL)
+                }
+
                 actionRow(title: "오픈소스 라이선스", systemImage: "doc.text") {
-                    store.send(.licenceButtonTapped)
+                    isLicencePresented = true
                 }
             }
         }
@@ -85,6 +103,35 @@ public struct SettingView: View {
         .navigationBarTitleDisplayMode(.inline)
         .task {
             store.send(.loadNotificationSettings)
+        }
+        .sheet(isPresented: $isWalkThroughPresented) {
+            NavigationStack {
+                WalkThroughView(
+                    store: Store(initialState: WalkThroughFeature.State(fromSetting: true)) {
+                        WalkThroughFeature()
+                    }
+                )
+                .toolbar {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button("닫기") {
+                            isWalkThroughPresented = false
+                        }
+                    }
+                }
+            }
+        }
+        .sheet(isPresented: $isLicencePresented) {
+            NavigationStack {
+                AcknowListSwiftUIView()
+                    .navigationTitle("오픈소스 라이선스")
+                    .toolbar {
+                        ToolbarItem(placement: .topBarTrailing) {
+                            Button("닫기") {
+                                isLicencePresented = false
+                            }
+                        }
+                    }
+            }
         }
     }
 
@@ -126,5 +173,21 @@ public struct SettingView: View {
                 SettingFeature()
             }
         )
+    }
+}
+
+private enum AppSupport {
+    static let supportEmail = "sjh7877@naver.com"
+    static let privacyPolicyURL = URL(string: "https://sjh7877.tistory.com/19")!
+
+    static var inquiryMailURL: URL {
+        var components = URLComponents()
+        components.scheme = "mailto"
+        components.path = supportEmail
+        components.queryItems = [
+            URLQueryItem(name: "subject", value: "작심 앱 문의"),
+            URLQueryItem(name: "body", value: "문의 내용을 적어 주세요.\n\n앱 버전: \(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "2.0.0")")
+        ]
+        return components.url ?? URL(string: "mailto:\(supportEmail)")!
     }
 }

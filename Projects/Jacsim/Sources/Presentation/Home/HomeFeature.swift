@@ -73,6 +73,8 @@ public struct HomeFeature {
         case settingButtonTapped
         case addButtonTapped
         case allTasksButtonTapped
+        case focusPrimaryButtonTapped(Domain.Task)
+        case focusSecondaryButtonTapped(Domain.Task)
         case taskTapped(Domain.Task)
         case notificationTapped(UUID)
         case notificationTaskLoaded(Domain.Task?)
@@ -303,6 +305,21 @@ public struct HomeFeature {
             case .allTasksButtonTapped:
                 state.path.append(.allTasks(AllTaskFeature.State()))
                 return .none
+
+            case let .focusPrimaryButtonTapped(task):
+                if shouldOpenCheckIn(for: task),
+                   let index = todayIndex(in: task) {
+                    state.path.append(.update(TaskUpdateFeature.State(task: task, index: index)))
+                    return .none
+                }
+
+                let shouldScrollToRecords = task.isCompleted(on: Date())
+                state.path.append(makeDetailState(task: task, scrollToRecords: shouldScrollToRecords))
+                return .none
+
+            case let .focusSecondaryButtonTapped(task):
+                state.path.append(makeDetailState(task: task, scrollToRecords: false))
+                return .none
                 
             case let .taskTapped(task):
                 state.path.append(.detail(TaskDetailFeature.State(task: task)))
@@ -435,5 +452,20 @@ public struct HomeFeature {
         .forEach(\.path, action: \.path) {
             Path()
         }
+    }
+
+    private func shouldOpenCheckIn(for task: Domain.Task) -> Bool {
+        guard (task.stages.last?.result ?? .inProgress) == .inProgress else { return false }
+        return todayIndex(in: task) != nil && !task.isCompleted(on: Date())
+    }
+
+    private func todayIndex(in task: Domain.Task) -> Int? {
+        task.dayArray.firstIndex { Calendar.current.isDate($0, inSameDayAs: Date()) }
+    }
+
+    private func makeDetailState(task: Domain.Task, scrollToRecords: Bool) -> Path.State {
+        var detailState = TaskDetailFeature.State(task: task)
+        detailState.shouldScrollToRecords = scrollToRecords
+        return .detail(detailState)
     }
 }

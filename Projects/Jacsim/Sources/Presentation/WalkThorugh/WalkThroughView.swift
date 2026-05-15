@@ -12,15 +12,15 @@ public struct WalkThroughView: View {
         DSKitAsset.Assets.onboardingImg4.image
     ]
     private let titles = [
-        "작심을 루틴으로 만들어요",
-        "하루 한 번, 사진으로 기록해요",
-        "매일 알림으로 흐름을 지켜요",
+        "작심을 작게 시작해요",
+        "사진으로 인증하면 더 쉬워요",
+        "알림으로 흐름을 지켜요",
         "작은 성공을 쌓아가요"
     ]
     private let subtitles = [
         "짧은 스테이지를 선택해 시작할 수 있어요",
         "기록이 쌓일수록 변화가 눈에 보여요",
-        "원하는 시간에 인증 리마인드를 받을 수 있어요",
+        "원하는 시간에 인증 리마인드를 받을 수 있어요. 알림은 나중에 켤 수도 있어요",
         "지금 바로 첫 작심을 시작해 볼까요?"
     ]
 
@@ -75,15 +75,26 @@ public struct WalkThroughView: View {
                             .padding(.bottom, .jsSM)
                     }
 
-                    JSButton(
-                        title: store.currentPage == store.totalPages - 1 ? "시작하기" : "계속하기",
-                        style: .primary,
-                        size: .large
-                    ) {
+                    VStack(spacing: .jsSM) {
+                        JSButton(
+                            title: primaryButtonTitle,
+                            style: .primary,
+                            size: .large
+                        ) {
+                            if store.currentPage == 2 {
+                                store.send(.requestNotificationPermission)
+                            } else {
+                                store.send(.continueButtonTapped)
+                            }
+                        }
+
                         if store.currentPage == 2 {
-                            store.send(.requestNotificationPermission)
-                        } else {
-                            store.send(.continueButtonTapped)
+                            Button("나중에") {
+                                store.send(.continueButtonTapped)
+                            }
+                            .font(.jsButtonMedium)
+                            .foregroundColor(.labelAlternative)
+                            .frame(minHeight: .jsTouchTarget)
                         }
                     }
                     .padding(.horizontal, .jsXL)
@@ -123,6 +134,13 @@ public struct WalkThroughView: View {
             }
         }
         .animation(.easeInOut(duration: JSAnimation.durationNormal), value: store.currentPage)
+    }
+
+    private var primaryButtonTitle: String {
+        if store.currentPage == 2 {
+            return store.notificationPermissionStatus == .denied ? "계속하기" : "알림 허용하기"
+        }
+        return store.currentPage == store.totalPages - 1 ? "시작하기" : "다음"
     }
 }
 

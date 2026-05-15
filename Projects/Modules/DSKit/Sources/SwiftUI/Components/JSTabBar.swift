@@ -118,9 +118,7 @@ struct JSTabBar_Previews: PreviewProvider {
             VStack(spacing: 0) {
                 JSTabView(
                     selectedTab: $selectedTab,
-                    onTabSelected: { tab in
-                        print("Selected: \(tab)")
-                    }
+                    onTabSelected: { _ in }
                 ) { tab in
                     VStack {
                         Spacer()

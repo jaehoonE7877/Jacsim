@@ -17,9 +17,11 @@ public struct CalendarView: View {
             state: screenState
         ) {
             RedesignSectionCard(
-                title: formattedSelectedDate,
-                subtitle: "\(tasksForSelectedDate.count)개의 작심"
+                title: "날짜 선택",
+                subtitle: "\(formattedSelectedDate) · \(tasksForSelectedDate.count)개의 작심"
             ) {
+                selectedDateButton
+
                 JSCalendar(
                     selectedDate: $store.selectedDate,
                     scope: store.calendarScope,
@@ -46,6 +48,19 @@ public struct CalendarView: View {
             }
         }
         .onAppear { store.send(.onAppear) }
+        .overlay {
+            JSDatePickerBottomSheet(
+                selectedDate: $store.datePickerDate,
+                isPresented: $store.isDatePickerPresented,
+                title: "날짜 선택",
+                onConfirm: {
+                    store.send(.datePickerConfirmed)
+                },
+                onDismiss: {
+                    store.send(.datePickerDismissed)
+                }
+            )
+        }
     }
 
     private var screenState: RedesignScreenState {
@@ -100,6 +115,46 @@ public struct CalendarView: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, .jsXL)
+    }
+
+    private var selectedDateButton: some View {
+        Button {
+            store.send(.datePickerButtonTapped)
+        } label: {
+            HStack(spacing: .jsSM) {
+                Image(systemName: "calendar")
+                    .font(.jsHeadlineSmall)
+                    .foregroundColor(.primaryNormal)
+                    .frame(width: 36.jsScaled(), height: 36.jsScaled())
+                    .background(
+                        Circle()
+                            .fill(Color.primaryNormal.opacity(0.12))
+                    )
+
+                VStack(alignment: .leading, spacing: .jsMicro) {
+                    Text(formattedSelectedDate)
+                        .font(.jsBodyMedium)
+                        .foregroundColor(.labelStrong)
+
+                    Text("탭해서 날짜를 빠르게 이동")
+                        .font(.jsLabelMedium)
+                        .foregroundColor(.labelAlternative)
+                }
+
+                Spacer(minLength: .jsXS)
+
+                Image(systemName: "chevron.up.chevron.down")
+                    .font(.jsLabelMedium)
+                    .foregroundColor(.labelAlternative)
+            }
+            .padding(.jsSM)
+            .background(
+                RoundedRectangle(cornerRadius: .jsRadiusMD, style: .continuous)
+                    .fill(Color.backgroundStrong)
+            )
+        }
+        .buttonStyle(.plain)
+        .accessibilityHint("날짜 선택 화면을 엽니다")
     }
     
     private func taskRow(task: Domain.Task) -> some View {
