@@ -1,7 +1,6 @@
 import SwiftUI
 import ComposableArchitecture
 import DSKit
-import PhotosUI
 import _Concurrency
 
 public struct TaskUpdateView: View {
@@ -66,100 +65,17 @@ public struct TaskUpdateView: View {
     }
     
     private var photoPickerSection: some View {
-        let photoHeight: CGFloat = 300.jsScaled()
-        let cardShape = RoundedRectangle(cornerRadius: .jsRadiusLG, style: .continuous)
-
-        return RedesignSectionCard(
+        RedesignSectionCard(
             title: "인증 사진",
             subtitle: "오늘의 진행 상황을 남겨요"
         ) {
-            VStack(spacing: .jsSM) {
-                ZStack {
-                    if let image = store.image {
-                        Image(uiImage: image)
-                            .resizable()
-                            .aspectRatio(contentMode: .fill)
-                            .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    } else {
-                        VStack(spacing: .jsXS) {
-                            Image(systemName: "photo.on.rectangle.angled")
-                                .font(.jsDisplayMedium)
-                                .foregroundColor(.labelAlternative)
-
-                            Text("인증 사진을 추가해 주세요")
-                                .font(.jsBodyMedium)
-                                .foregroundColor(.labelStrong)
-
-                            Text("가로·세로 비율은 자동으로 맞춰져요")
-                                .font(.jsLabelMedium)
-                                .foregroundColor(.labelAlternative)
-                        }
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .background(Color.backgroundStrong)
-                    }
-                }
-                .frame(maxWidth: .infinity, minHeight: photoHeight, maxHeight: photoHeight)
-                .clipShape(cardShape)
-                .overlay {
-                    cardShape
-                        .stroke(
-                            store.image == nil ? Color.primaryNormal.opacity(0.35) : Color.labelDisable.opacity(0.24),
-                            style: StrokeStyle(
-                                lineWidth: 1,
-                                dash: store.image == nil ? [8, 6] : []
-                            )
-                        )
-                }
-                .overlay(alignment: .topTrailing) {
-                    if store.image != nil {
-                        HStack(spacing: .jsMicro) {
-                            Image(systemName: "checkmark.circle.fill")
-                                .foregroundColor(.positive)
-
-                            Text("선택됨")
-                                .font(.jsLabelMedium)
-                                .foregroundColor(.labelStrong)
-                        }
-                        .padding(.horizontal, .jsXS)
-                        .padding(.vertical, .jsMicro)
-                        .background(Color.backgroundNormal.opacity(0.92))
-                        .clipShape(Capsule())
-                        .padding(.jsSM)
-                    }
-                }
-
-                let hasImage = store.image != nil
-                PhotosPicker(selection: $store.photoPickerItem, matching: .images) {
-                    HStack(spacing: .jsXS) {
-                        Image(systemName: hasImage ? "arrow.triangle.2.circlepath" : "photo.badge.plus")
-                            .font(.jsHeadlineSmall)
-                            .foregroundColor(.primaryNormal)
-
-                        Text(hasImage ? "인증 사진 변경" : "인증 사진 선택")
-                            .font(.jsButtonMedium)
-                            .foregroundColor(.labelStrong)
-
-                        Spacer(minLength: .jsXS)
-
-                        Image(systemName: "chevron.right")
-                            .font(.jsButtonSmall)
-                            .foregroundColor(.labelAlternative)
-                    }
-                    .padding(.horizontal, .jsMD)
-                    .padding(.vertical, .jsSM)
-                    .background(
-                        RoundedRectangle(cornerRadius: .jsRadiusMD, style: .continuous)
-                            .fill(Color.backgroundStrong)
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: .jsRadiusMD, style: .continuous)
-                            .stroke(Color.labelDisable.opacity(0.24), lineWidth: 1)
-                    )
-                }
-                .buttonStyle(.plain)
-                .onChange(of: store.photoPickerItem) { _, newItem in
-                    store.send(.photoPickerItemChanged(newItem))
-                }
+            ImageAttachmentPicker(
+                image: store.image,
+                emptyTitle: "인증 사진을 추가해 주세요",
+                emptySubtitle: "가로·세로 비율은 자동으로 맞춰져요",
+                height: 300.jsScaled()
+            ) { image in
+                store.send(.imageSelected(image))
             }
         }
     }

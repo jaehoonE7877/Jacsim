@@ -2,7 +2,6 @@ import Foundation
 import Domain
 import ComposableArchitecture
 import SwiftUI
-import PhotosUI
 import Core
 
 @Reducer
@@ -76,7 +75,6 @@ public struct NewTaskFeature {
         public var title: String = ""
         public var lastAcceptedTitle: String = ""
         public var image: UIImage?
-        public var photoPickerItem: PhotosPickerItem?
         public var stageType: StageType = .three
         public var alarmDate: Date = State.defaultAlarmDate()
         public var isAlarmEnabled: Bool = false
@@ -85,6 +83,7 @@ public struct NewTaskFeature {
         public var toastMessage: String? = nil
         public var currentStep: CreateChallengeStep = .basicInfo
         public var stepValidationError: StepValidationError?
+        public var isDiscardingDraft: Bool = false
         @Presents public var alert: AlertState<Action.Alert>?
 
         public init() {
@@ -116,6 +115,10 @@ public struct NewTaskFeature {
         public var canSubmit: Bool {
             !trimmedTitle.isEmpty && image != nil
         }
+
+        public var hasDraftContent: Bool {
+            !trimmedTitle.isEmpty || image != nil || stageType != .three || isAlarmEnabled
+        }
     }
 
     public enum Action: BindableAction {
@@ -125,18 +128,19 @@ public struct NewTaskFeature {
         case saveButtonTapped
         case saveCompleted(Result<Void, Error>)
         case imageSelected(UIImage)
-        case photoPickerItemChanged(PhotosPickerItem?)
         case toastDismissed
         case cancelButtonTapped
         case alert(PresentationAction<Alert>)
         case delegate(Delegate)
         
         public enum Alert: Equatable {
-            case dismiss
+            case confirmDiscard
         }
         
+        @CasePathable
         public enum Delegate {
             case taskCreated
+            case cancelled
         }
     }
 
@@ -212,23 +216,17 @@ public struct NewTaskFeature {
                 )
                 return .run { [taskCommandClient, notificationScheduler, imageStore, userSettingsRepository] send in
                     do {
-                        if let data = image.jpegData(compressionQuality: 0.4) {
-                            _ = try await imageStore.saveImage(taskToSave.mainImageKey, data)
-                        }
+                        let data = try makeImageStoreInputData(from: image)
+                        _ = try await imageStore.saveImage(taskToSave.mainImageKey, data)
                         try await taskCommandClient.addTask(taskToSave)
-                        if isAlarmEnabled {
-                            let reminderUseCase = ReminderSchedulingUseCase()
-                            let isNotificationEnabled = await userSettingsRepository.isNotificationEnabled()
-                            await reminderUseCase.scheduleReminderIfNeeded(
-                                taskID: taskToSave.id,
-                                title: taskToSave.title,
-                                isAlarmEnabled: isAlarmEnabled,
-                                alarmDate: alarmDate,
-                                isGlobalNotificationEnabled: isNotificationEnabled,
-                                cancelExistingReminder: false,
-                                notificationScheduler: notificationScheduler
-                            )
-                        }
+                        let reminderUseCase = ReminderSchedulingUseCase()
+                        let isNotificationEnabled = await userSettingsRepository.isNotificationEnabled()
+                        let reminders = await userSettingsRepository.getAllReminders()
+                        await reminderUseCase.syncGlobalReminders(
+                            isEnabled: isNotificationEnabled,
+                            reminders: reminders,
+                            notificationScheduler: notificationScheduler
+                        )
                         await send(.saveCompleted(.success(())))
                     } catch {
                         await send(.saveCompleted(.failure(error)))
@@ -253,14 +251,6 @@ public struct NewTaskFeature {
                 }
                 return .none
 
-            case let .photoPickerItemChanged(item):
-                guard let item else { return .none }
-                return .run { send in
-                    if let data = try? await item.loadTransferable(type: Data.self),
-                       let image = UIImage(data: data) {
-                        await send(.imageSelected(image))
-                    }
-                }
             case .binding(\.title):
                 state.saveFailed = false
                 let result = TextInputLimiter.enforce(
@@ -281,7 +271,20 @@ public struct NewTaskFeature {
                 }
                 return .none
 
-            case .binding, .cancelButtonTapped, .delegate, .alert:
+            case .cancelButtonTapped:
+                guard !state.isDiscardingDraft else { return .none }
+                guard state.hasDraftContent else {
+                    return .send(.delegate(.cancelled))
+                }
+                state.alert = .discardDraft()
+                return .none
+
+            case .alert(.presented(.confirmDiscard)):
+                state.alert = nil
+                state.isDiscardingDraft = true
+                return .send(.delegate(.cancelled))
+
+            case .binding, .delegate, .alert:
                 return .none
             }
         }
@@ -296,6 +299,23 @@ public struct NewTaskFeature {
             return state.image == nil ? .missingPhoto : nil
         case .alarmConfirm:
             return nil
+        }
+    }
+}
+
+extension AlertState where Action == NewTaskFeature.Action.Alert {
+    static func discardDraft() -> Self {
+        Self {
+            TextState("작심 만들기를 그만둘까요?")
+        } actions: {
+            ButtonState(role: .cancel) {
+                TextState("계속 작성")
+            }
+            ButtonState(role: .destructive, action: .confirmDiscard) {
+                TextState("그만두기")
+            }
+        } message: {
+            TextState("입력한 제목과 사진은 저장되지 않아요.")
         }
     }
 }

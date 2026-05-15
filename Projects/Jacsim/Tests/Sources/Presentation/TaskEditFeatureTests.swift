@@ -49,7 +49,7 @@ private actor TaskEditUserSettingsRecorder {
 }
 
 @MainActor
-@Test("작심 수정 저장 시 알림 활성 + 전역 알림 ON이면 기존 알림 취소 후 새 알림을 등록한다")
+@Test("작심 수정 저장은 편집 sheet 안에서 알림 예약을 직접 수행하지 않는다")
 func taskEditSaveSchedulesReminderWhenEnabled() async {
     let task = makeTaskForEditTests()
     let scheduler = TaskEditNotificationRecorder()
@@ -86,18 +86,12 @@ func taskEditSaveSchedulesReminderWhenEnabled() async {
     await store.send(.saveButtonTapped)
     await store.finish()
 
-    #expect(await scheduler.cancelledCount() == 1)
-    #expect(await scheduler.cancelledTaskIDs.first == task.id)
-    #expect(await scheduler.scheduledCount() == 1)
-    let scheduled = await scheduler.lastScheduled()
-    #expect(scheduled?.taskID == task.id)
-    #expect(scheduled?.title == "새 제목")
-    #expect(scheduled?.hour == 8)
-    #expect(scheduled?.minute == 30)
+    #expect(await scheduler.cancelledCount() == 0)
+    #expect(await scheduler.scheduledCount() == 0)
 }
 
 @MainActor
-@Test("작심 수정 저장 시 알림 비활성화면 스케줄 등록 없이 기존 알림만 취소한다")
+@Test("작심 수정 저장에서 알림을 꺼도 편집 sheet 안에서는 스케줄을 직접 변경하지 않는다")
 func taskEditSaveCancelsOnlyWhenAlarmDisabled() async {
     let task = makeTaskForEditTests()
     let scheduler = TaskEditNotificationRecorder()
@@ -132,12 +126,12 @@ func taskEditSaveCancelsOnlyWhenAlarmDisabled() async {
     await store.send(.saveButtonTapped)
     await store.finish()
 
-    #expect(await scheduler.cancelledCount() == 1)
+    #expect(await scheduler.cancelledCount() == 0)
     #expect(await scheduler.scheduledCount() == 0)
 }
 
 @MainActor
-@Test("작심 수정 저장 시 전역 알림 OFF이면 알림 ON 상태여도 새 알림을 등록하지 않는다")
+@Test("전역 알림 OFF여도 편집 sheet 안에서는 스케줄을 직접 변경하지 않는다")
 func taskEditSaveSkipsScheduleWhenGlobalNotificationOff() async {
     let task = makeTaskForEditTests()
     let scheduler = TaskEditNotificationRecorder()
@@ -172,7 +166,7 @@ func taskEditSaveSkipsScheduleWhenGlobalNotificationOff() async {
     await store.send(.saveButtonTapped)
     await store.finish()
 
-    #expect(await scheduler.cancelledCount() == 1)
+    #expect(await scheduler.cancelledCount() == 0)
     #expect(await scheduler.scheduledCount() == 0)
 }
 

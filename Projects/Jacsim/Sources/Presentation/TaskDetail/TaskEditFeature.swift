@@ -3,7 +3,6 @@ import Domain
 import ComposableArchitecture
 import SwiftUI
 import UIKit
-import PhotosUI
 
 @Reducer
 public struct TaskEditFeature {
@@ -14,7 +13,6 @@ public struct TaskEditFeature {
         public var title: String
         public var lastAcceptedTitle: String
         public var image: UIImage?
-        public var photoPickerItem: PhotosPickerItem?
         public var isAlarmEnabled: Bool
         public var alarmDate: Date
         public var toastMessage: String? = nil
@@ -35,7 +33,6 @@ public struct TaskEditFeature {
         case saveButtonTapped
         case cancelButtonTapped
         case imageSelected(UIImage)
-        case photoPickerItemChanged(PhotosPickerItem?)
         case toastDismissed
         case delegate(Delegate)
 
@@ -46,8 +43,6 @@ public struct TaskEditFeature {
     }
 
     @Dependency(\.imageStore) var imageStore
-    @Dependency(\.notificationScheduler) var notificationScheduler
-    @Dependency(\.userSettingsRepository) var userSettingsRepository
 
     public var body: some ReducerOf<Self> {
         BindingReducer()
@@ -68,24 +63,10 @@ public struct TaskEditFeature {
 
             case .saveButtonTapped:
                 let title = state.title.trimmingCharacters(in: .whitespacesAndNewlines)
-                let taskId = state.task.id
                 let image = state.image
                 let isAlarmEnabled = state.isAlarmEnabled
                 let alarmDate = state.alarmDate
-                return .run { [notificationScheduler, userSettingsRepository, title, taskId, image, isAlarmEnabled, alarmDate] send in
-                    let reminderUseCase = ReminderSchedulingUseCase()
-                    let isGlobalNotificationEnabled = await userSettingsRepository.isNotificationEnabled()
-                    await reminderUseCase.scheduleReminderIfNeeded(
-                        taskID: taskId,
-                        title: title,
-                        isAlarmEnabled: isAlarmEnabled,
-                        alarmDate: alarmDate,
-                        isGlobalNotificationEnabled: isGlobalNotificationEnabled,
-                        cancelExistingReminder: true,
-                        notificationScheduler: notificationScheduler
-                    )
-                    await send(.delegate(.saved(title, image, isAlarmEnabled, alarmDate)))
-                }
+                return .send(.delegate(.saved(title, image, isAlarmEnabled, alarmDate)))
 
             case .cancelButtonTapped:
                 return .send(.delegate(.cancelled))
@@ -93,15 +74,6 @@ public struct TaskEditFeature {
             case let .imageSelected(image):
                 state.image = image
                 return .none
-
-            case let .photoPickerItemChanged(item):
-                guard let item else { return .none }
-                return .run { send in
-                    if let data = try? await item.loadTransferable(type: Data.self),
-                       let image = UIImage(data: data) {
-                        await send(.imageSelected(image))
-                    }
-                }
 
             case .toastDismissed:
                 state.toastMessage = nil

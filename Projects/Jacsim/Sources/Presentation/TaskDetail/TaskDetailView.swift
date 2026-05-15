@@ -186,12 +186,16 @@ public struct TaskDetailView: View {
             NavigationStack {
                 TaskEditView(store: store)
             }
-            .presentationDragIndicator(.visible)
+            .presentationDragIndicator(.hidden)
+            .interactiveDismissDisabled(true)
         }
         .overlay {
             if store.isStagePopupPresented {
                 StageCompletionPopupView(
                     result: store.stagePopupResult,
+                    completedDays: stagePopupCompletedDays,
+                    totalDays: stagePopupTotalDays,
+                    recordImages: stagePopupRecordImages,
                     hasNextStage: store.task.stages.last?.stageType.next != nil,
                     onNextStage: { store.send(.nextStageButtonTapped) },
                     onRetry: { store.send(.retryStageButtonTapped) },
@@ -451,6 +455,35 @@ public struct TaskDetailView: View {
         shouldShowBottomCTA ? 140.jsScaled() : .jsXL
     }
 
+    private var stagePopupCompletedDays: Int {
+        store.dayViewData
+            .filter { isDateInCurrentStage($0.date) }
+            .filter(\.isChecked)
+            .count
+    }
+
+    private var stagePopupTotalDays: Int {
+        store.currentStage?.durationDays ?? max(store.dayViewData.count, 1)
+    }
+
+    private var stagePopupRecordImages: [UIImage] {
+        Array(
+            store.dayViewData.lazy
+                .filter { isDateInCurrentStage($0.date) }
+                .filter(\.isChecked)
+                .compactMap(\.image)
+                .prefix(3)
+        )
+    }
+
+    private func isDateInCurrentStage(_ date: Date) -> Bool {
+        guard let stage = store.currentStage else { return true }
+        let calendar = Calendar.current
+        let day = calendar.startOfDay(for: date)
+        return day >= calendar.startOfDay(for: stage.startDate)
+            && day <= calendar.startOfDay(for: stage.endDate)
+    }
+
     private var isTodayInChallengeRange: Bool {
         let today = Calendar.current.startOfDay(for: Date())
         return today >= Calendar.current.startOfDay(for: store.task.startDate)
@@ -644,9 +677,7 @@ private struct TaskDropoffGuardPopupView: View {
 
     var body: some View {
         ZStack {
-            Color.surfaceOverlay.opacity(0.5)
-                .ignoresSafeArea()
-                .onTapGesture { onDismiss() }
+            PopupBackdrop(opacity: 0.5)
 
             JSCard(style: .elevated, padding: .jsLG) {
                 VStack(spacing: .jsMD) {
@@ -752,6 +783,9 @@ private struct TaskDropoffGuardPopupView: View {
 
 private struct StageCompletionPopupView: View {
     let result: StageResult
+    let completedDays: Int
+    let totalDays: Int
+    let recordImages: [UIImage]
     let hasNextStage: Bool
     let onNextStage: () -> Void
     let onRetry: () -> Void
@@ -762,11 +796,7 @@ private struct StageCompletionPopupView: View {
 
     var body: some View {
         ZStack {
-            Color.surfaceOverlay.opacity(0.45)
-                .ignoresSafeArea()
-                .onTapGesture {
-                    onDismiss()
-                }
+            PopupBackdrop(opacity: 0.45)
 
             JSCard(style: .elevated, padding: .jsLG) {
                 VStack(spacing: .jsMD) {
@@ -776,10 +806,14 @@ private struct StageCompletionPopupView: View {
                     Text(result == .success ? "스테이지를 완료했어요" : "이번 스테이지는 아쉬웠어요")
                         .font(.jsHeadlineSmall)
                         .foregroundColor(.labelStrong)
+                        .multilineTextAlignment(.center)
 
                     Text(result == .success ? "다음 단계로 넘어가 볼까요?" : "다음 스테이지에서 다시 도전해요")
                         .font(.jsBodySmall)
                         .foregroundColor(.labelAlternative)
+                        .multilineTextAlignment(.center)
+
+                    stageSummary
 
                     if result == .fail {
                         JSButton(
@@ -815,6 +849,64 @@ private struct StageCompletionPopupView: View {
                 }
             }
         }
+    }
+
+    private var stageSummary: some View {
+        VStack(spacing: .jsSM) {
+            HStack(spacing: .jsSM) {
+                stageMetric(title: "인증", value: "\(completedDays)/\(totalDays)일")
+                stageMetric(title: "결과", value: result == .success ? "성공" : "재도전")
+            }
+
+            if !recordImages.isEmpty {
+                HStack(spacing: .jsXS) {
+                    ForEach(Array(recordImages.enumerated()), id: \.offset) { _, image in
+                        Image(uiImage: image)
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                            .frame(height: 72.jsScaled())
+                            .frame(maxWidth: .infinity)
+                            .clipShape(RoundedRectangle(cornerRadius: .jsRadiusMD, style: .continuous))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: .jsRadiusMD, style: .continuous)
+                                    .stroke(Color.labelDisable.opacity(0.18), lineWidth: 1)
+                            )
+                    }
+                }
+                .accessibilityLabel("최근 인증 사진")
+            }
+        }
+        .padding(.jsSM)
+        .background(
+            RoundedRectangle(cornerRadius: .jsRadiusMD, style: .continuous)
+                .fill(Color.backgroundStrong)
+        )
+    }
+
+    private func stageMetric(title: String, value: String) -> some View {
+        VStack(spacing: .jsMicro) {
+            Text(title)
+                .font(.jsLabelSmall)
+                .foregroundColor(.labelAlternative)
+            Text(value)
+                .font(.jsHeadlineSmall)
+                .foregroundColor(result == .success ? .positive : .cautionary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.85)
+        }
+        .frame(maxWidth: .infinity)
+    }
+}
+
+private struct PopupBackdrop: View {
+    let opacity: Double
+
+    var body: some View {
+        Color.surfaceOverlay.opacity(opacity)
+            .ignoresSafeArea()
+            .contentShape(Rectangle())
+            .onTapGesture { }
+            .accessibilityHidden(true)
     }
 }
 

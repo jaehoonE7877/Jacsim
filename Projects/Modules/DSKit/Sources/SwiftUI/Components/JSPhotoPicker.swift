@@ -1,4 +1,5 @@
 import SwiftUI
+import AVFoundation
 import Photos
 import PhotosUI
 import UIKit
@@ -11,7 +12,8 @@ public struct JSPhotoPicker: View {
     @State private var showImagePicker = false
     @State private var showActionSheet = false
     @State private var sourceType: UIImagePickerController.SourceType = .photoLibrary
-    @State private var showPermissionDenied = false
+    @State private var feedbackMessage: String?
+    @State private var showsSettingsAction = false
 
     public init(
         selectedImage: Binding<UIImage?>,
@@ -39,7 +41,7 @@ public struct JSPhotoPicker: View {
                             .overlay(
                                 VStack(spacing: 12) {
                                     Image(systemName: "camera.fill")
-                                        .font(.system(size: 32)) // Icon-only size constraint for visual weight
+                                        .font(.largeTitle)
                                         .foregroundColor(Color.labelNeutral)
 
                                     Text(placeholderText)
@@ -57,11 +59,9 @@ public struct JSPhotoPicker: View {
                             VStack {
                                 HStack {
                                     Spacer()
-                                    Button(action: {
-                                        selectedImage = nil
-                                    }) {
+                                    Button(action: removeSelectedImage) {
                                         Image(systemName: "xmark.circle.fill")
-                                            .font(.system(size: 24)) // Icon-only size constraint for close button tap target
+                                            .font(.title2)
                                             .foregroundColor(.white)
                                             .background(Color.surfaceOverlay.opacity(0.5))
                                             .clipShape(Circle())
@@ -78,79 +78,158 @@ public struct JSPhotoPicker: View {
             .frame(minWidth: 44, minHeight: 44)
             .contentShape(Rectangle())
 
-            if showPermissionDenied {
+            if let feedbackMessage {
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("사진 접근 권한이 필요해요.")
+                    Text(feedbackMessage)
                         .font(.jsBody14Bold)
                         .foregroundColor(Color.labelNeutral)
 
-                    Text("설정에서 사진 접근을 허용해주세요.")
-                        .font(.jsLabel12Regular)
-                        .foregroundColor(Color.labelNeutral)
-
-                    Button("설정에서 허용하기") {
-                        openSettings()
+                    if showsSettingsAction {
+                        Button("설정에서 허용하기") {
+                            openSettings()
+                        }
+                        .font(.jsLabel13Bold)
+                        .padding(.vertical, 6)
+                        .padding(.horizontal, 10)
+                        .background(Color.surfaceElevated.opacity(0.5))
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
                     }
-                    .font(.jsLabel13Bold)
-                    .padding(.vertical, 6)
-                    .padding(.horizontal, 10)
-                    .background(Color.surfaceElevated.opacity(0.5))
-                    .clipShape(RoundedRectangle(cornerRadius: 8))
                 }
             }
         }
         .confirmationDialog("사진 선택", isPresented: $showActionSheet, titleVisibility: .visible) {
-            Button("사진 라이브러리") {
-                sourceType = .photoLibrary
-                checkPhotoLibraryPermission()
+            Button("사진 찍기") {
+                presentCamera()
             }
 
-            Button("칩") {
-                sourceType = .camera
-                showImagePicker = true
+            Button("앨범에서 선택") {
+                presentPhotoLibrary()
             }
 
             if selectedImage != nil {
                 Button("사진 삭제", role: .destructive) {
-                    selectedImage = nil
+                    removeSelectedImage()
                 }
             }
 
             Button("취소", role: .cancel) {}
         }
         .sheet(isPresented: $showImagePicker) {
-            ImagePicker(sourceType: sourceType, selectedImage: $selectedImage, onImageSelected: onImageSelected)
+            ImagePicker(
+                sourceType: sourceType,
+                selectedImage: $selectedImage
+            ) { image in
+                clearFeedback()
+                onImageSelected?(image)
+            }
                 .presentationDragIndicator(.visible)
         }
     }
 
-    private func checkPhotoLibraryPermission() {
-        let status = PHPhotoLibrary.authorizationStatus()
+    private func presentCamera() {
+        guard UIImagePickerController.isSourceTypeAvailable(.camera) else {
+            showFeedback(
+                "이 기기에서는 카메라를 사용할 수 없어요. 앨범에서 사진을 선택해 주세요.",
+                showsSettingsAction: false
+            )
+            return
+        }
+
+        switch AVCaptureDevice.authorizationStatus(for: .video) {
+        case .authorized:
+            presentImagePicker(sourceType: .camera)
+        case .notDetermined:
+            AVCaptureDevice.requestAccess(for: .video) { granted in
+                DispatchQueue.main.async {
+                    if granted {
+                        presentImagePicker(sourceType: .camera)
+                    } else {
+                        showFeedback(
+                            "카메라 권한이 꺼져 있어요. iOS 설정에서 카메라 접근을 허용하거나 앨범에서 사진을 선택해 주세요.",
+                            showsSettingsAction: true
+                        )
+                    }
+                }
+            }
+        case .denied, .restricted:
+            showFeedback(
+                "카메라 권한이 꺼져 있어요. iOS 설정에서 카메라 접근을 허용하거나 앨범에서 사진을 선택해 주세요.",
+                showsSettingsAction: true
+            )
+        @unknown default:
+            showFeedback(
+                "카메라를 열 수 없어요. 앨범에서 사진을 선택해 주세요.",
+                showsSettingsAction: false
+            )
+        }
+    }
+
+    private func presentPhotoLibrary() {
+        guard UIImagePickerController.isSourceTypeAvailable(.photoLibrary) else {
+            showFeedback(
+                "앨범을 열 수 없어요. 카메라로 사진을 촬영해 주세요.",
+                showsSettingsAction: false
+            )
+            return
+        }
+
+        let status = PHPhotoLibrary.authorizationStatus(for: .readWrite)
         switch status {
         case .authorized, .limited:
-            showPermissionDenied = false
-            showImagePicker = true
+            presentImagePicker(sourceType: .photoLibrary)
         case .denied, .restricted:
-            showPermissionDenied = true
+            showFeedback(
+                "앨범 접근 권한이 꺼져 있어요. iOS 설정에서 사진 접근을 허용하거나 카메라로 촬영해 주세요.",
+                showsSettingsAction: true
+            )
         case .notDetermined:
-            PHPhotoLibrary.requestAuthorization { newStatus in
+            PHPhotoLibrary.requestAuthorization(for: .readWrite) { newStatus in
                 DispatchQueue.main.async {
                     switch newStatus {
                     case .authorized, .limited:
-                        showPermissionDenied = false
-                        showImagePicker = true
+                        presentImagePicker(sourceType: .photoLibrary)
                     case .denied, .restricted:
-                        showPermissionDenied = true
+                        showFeedback(
+                            "앨범 접근 권한이 꺼져 있어요. iOS 설정에서 사진 접근을 허용하거나 카메라로 촬영해 주세요.",
+                            showsSettingsAction: true
+                        )
                     case .notDetermined:
                         break
                     @unknown default:
-                        showPermissionDenied = true
+                        showFeedback(
+                            "앨범을 열 수 없어요. 카메라로 사진을 촬영해 주세요.",
+                            showsSettingsAction: false
+                        )
                     }
                 }
             }
         @unknown default:
-            showPermissionDenied = true
+            showFeedback(
+                "앨범을 열 수 없어요. 카메라로 사진을 촬영해 주세요.",
+                showsSettingsAction: false
+            )
         }
+    }
+
+    private func presentImagePicker(sourceType: UIImagePickerController.SourceType) {
+        self.sourceType = sourceType
+        clearFeedback()
+        showImagePicker = true
+    }
+
+    private func removeSelectedImage() {
+        selectedImage = nil
+        clearFeedback()
+    }
+
+    private func showFeedback(_ message: String, showsSettingsAction: Bool) {
+        feedbackMessage = message
+        self.showsSettingsAction = showsSettingsAction
+    }
+
+    private func clearFeedback() {
+        feedbackMessage = nil
+        showsSettingsAction = false
     }
 
     private func openSettings() {

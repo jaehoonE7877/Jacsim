@@ -36,6 +36,7 @@ public struct JSModal<Content: View>: View {
     let content: Content
     let primaryButton: JSModalButton?
     let secondaryButton: JSModalButton?
+    let allowsBackdropDismiss: Bool
 
     public init(
         isPresented: Binding<Bool>,
@@ -43,6 +44,7 @@ public struct JSModal<Content: View>: View {
         title: String? = nil,
         primaryButton: JSModalButton? = nil,
         secondaryButton: JSModalButton? = nil,
+        allowsBackdropDismiss: Bool = false,
         @ViewBuilder content: () -> Content
     ) {
         self.isPresented = isPresented
@@ -50,6 +52,7 @@ public struct JSModal<Content: View>: View {
         self.title = title
         self.primaryButton = primaryButton
         self.secondaryButton = secondaryButton
+        self.allowsBackdropDismiss = allowsBackdropDismiss
         self.content = content()
     }
 
@@ -71,7 +74,7 @@ public struct JSModal<Content: View>: View {
             .opacity(0.4)
             .ignoresSafeArea()
             .onTapGesture {
-                if style == .bottomSheet {
+                if allowsBackdropDismiss {
                     isPresented.wrappedValue = false
                 }
             }

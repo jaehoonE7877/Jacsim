@@ -1,6 +1,7 @@
 import Foundation
 import Domain
 import ComposableArchitecture
+import ExternalInterface
 import UIKit
 import DSKit
 import Core
@@ -100,6 +101,7 @@ public struct TaskDetailFeature {
     @Dependency(\.stageFlowClient) var stageFlowClient
     @Dependency(\.imageStore) var imageStore
     @Dependency(\.notificationScheduler) var notificationScheduler
+    @Dependency(\.userSettingsRepository) var userSettingsRepository
     @Dependency(\.challengeStateService) var challengeStateService
 
     private enum DeleteFlowPolicy {
@@ -115,10 +117,15 @@ public struct TaskDetailFeature {
         Reduce { state, action in
             switch action {
             case .onAppear:
+                let originalTask = state.task
                 let evaluation = challengeStateService.evaluateChallengeState(
                     for: state.task,
                     today: Date()
                 )
+                if let refreshedStage = evaluation.currentStage,
+                   let stageIndex = state.task.stages.firstIndex(where: { $0.id == refreshedStage.id }) {
+                    state.task.stages[stageIndex] = refreshedStage
+                }
                 state.challengeState = evaluation.challengeState
                 state.todayStatus = evaluation.todayStatus
                 state.currentStage = evaluation.currentStage
@@ -129,14 +136,24 @@ public struct TaskDetailFeature {
                 state.dayViewData = evaluation.dayViewData.map {
                     State.DayViewData(date: $0.date, memo: $0.memo, image: nil, isChecked: $0.isChecked)
                 }
-                return .merge(
-                    .send(.loadImages),
-                    .run { [stageFlowClient, stage = evaluation.currentStage] send in
-                        guard let stage else { return }
-                        let result = await stageFlowClient.evaluateStageResult(stage)
-                        await send(.stageResultChecked(result))
-                    }
-                )
+
+                var effects: [Effect<Action>] = [.send(.loadImages)]
+                if state.task != originalTask {
+                    effects.append(
+                        .run { [taskCommandClient, task = state.task] _ in
+                            do {
+                                try await taskCommandClient.updateTask(task)
+                            } catch {
+                                Logger.certificationFailed(error: error)
+                            }
+                        }
+                    )
+                }
+                if let result = evaluation.currentStage?.result,
+                   result != .inProgress {
+                    effects.append(.send(.stageResultChecked(result)))
+                }
+                return .merge(effects)
                 
             case .loadImages:
                 return .run { [task = state.task, dayDates = state.dayViewData.map(\.date), imageStore] send in
@@ -191,13 +208,15 @@ public struct TaskDetailFeature {
             case .deleteConfirmed:
                 state.isDeleteConfirmationPresented = false
                 state.isDeleteFlowPresented = false
-                let taskId = state.task.id
+                let task = state.task
+                let taskId = task.id
                 return .merge(
                     .cancel(id: CancelID.deleteFlowCountdown),
-                    .run { [taskCommandClient, notificationScheduler] send in
+                    .run { [taskCommandClient, notificationScheduler, imageStore, task] send in
                         await notificationScheduler.cancelReminder(taskId)
                         do {
                             try await taskCommandClient.deleteTask(taskId)
+                            await deleteStoredImages(for: task, imageStore: imageStore)
                         } catch {
                             Logger.certificationFailed(error: error)
                         }
@@ -263,13 +282,15 @@ public struct TaskDetailFeature {
                 guard state.isDeleteConfirmEnabled else { return .none }
                 state.isDeleteFlowPresented = false
                 state.isDeleteConfirmationPresented = false
-                let taskId = state.task.id
+                let task = state.task
+                let taskId = task.id
                 return .merge(
                     .cancel(id: CancelID.deleteFlowCountdown),
-                    .run { [taskCommandClient, notificationScheduler] send in
+                    .run { [taskCommandClient, notificationScheduler, imageStore, task] send in
                         await notificationScheduler.cancelReminder(taskId)
                         do {
                             try await taskCommandClient.deleteTask(taskId)
+                            await deleteStoredImages(for: task, imageStore: imageStore)
                         } catch {
                             Logger.certificationFailed(error: error)
                         }
@@ -291,18 +312,24 @@ public struct TaskDetailFeature {
                 let task = state.task
                 let durationDays = task.currentStage?.durationDays ?? task.stages.last?.durationDays ?? 3
                 state.editTask = nil
-                return .run { [taskCommandClient, imageStore, task, durationDays] send in
+                return .run { [taskCommandClient, imageStore, notificationScheduler, userSettingsRepository, task, durationDays] send in
                     await taskCommandClient.updateTaskInfo(task, title, durationDays, isAlarmEnabled, alarmDate)
                     if let image {
-                        let data = image.jpegData(compressionQuality: 0.4)
-                        if let data {
-                            do {
-                                _ = try await imageStore.saveImage(task.mainImageKey, data)
-                            } catch {
-                                Logger.certificationFailed(error: error)
-                            }
+                        do {
+                            let data = try makeImageStoreInputData(from: image)
+                            _ = try await imageStore.saveImage(task.mainImageKey, data)
+                        } catch {
+                            Logger.certificationFailed(error: error)
                         }
                     }
+                    let isGlobalNotificationEnabled = await userSettingsRepository.isNotificationEnabled()
+                    let reminders = await userSettingsRepository.getAllReminders()
+                    let reminderUseCase = ReminderSchedulingUseCase()
+                    await reminderUseCase.syncGlobalReminders(
+                        isEnabled: isGlobalNotificationEnabled,
+                        reminders: reminders,
+                        notificationScheduler: notificationScheduler
+                    )
                     await send(.onAppear)
                 }
 
@@ -337,8 +364,16 @@ public struct TaskDetailFeature {
 
             case .nextStageButtonTapped:
                 let taskId = state.task.id
-                return .run { [stageFlowClient] send in
+                return .run { [stageFlowClient, notificationScheduler, userSettingsRepository] send in
                     await stageFlowClient.createNextStage(taskId)
+                    let isGlobalNotificationEnabled = await userSettingsRepository.isNotificationEnabled()
+                    let reminders = await userSettingsRepository.getAllReminders()
+                    let reminderUseCase = ReminderSchedulingUseCase()
+                    await reminderUseCase.syncGlobalReminders(
+                        isEnabled: isGlobalNotificationEnabled,
+                        reminders: reminders,
+                        notificationScheduler: notificationScheduler
+                    )
                     await send(.stagePopupDismissed)
                     await send(.onAppear)
                 }
@@ -349,8 +384,16 @@ public struct TaskDetailFeature {
                 return .none
 
             case .retryStageButtonTapped:
-                return .run { [stageFlowClient, taskId = state.task.id] send in
+                return .run { [stageFlowClient, notificationScheduler, userSettingsRepository, taskId = state.task.id] send in
                     await stageFlowClient.resetStageRecords(taskId)
+                    let isGlobalNotificationEnabled = await userSettingsRepository.isNotificationEnabled()
+                    let reminders = await userSettingsRepository.getAllReminders()
+                    let reminderUseCase = ReminderSchedulingUseCase()
+                    await reminderUseCase.syncGlobalReminders(
+                        isEnabled: isGlobalNotificationEnabled,
+                        reminders: reminders,
+                        notificationScheduler: notificationScheduler
+                    )
                     await send(.onAppear)
                 }
 
@@ -372,5 +415,14 @@ public struct TaskDetailFeature {
         .ifLet(\.$editTask, action: \.editTask) {
             TaskEditFeature()
         }
+    }
+}
+
+private func deleteStoredImages(for task: Domain.Task, imageStore: ImageStorePort) async {
+    let imageKeys = [task.mainImageKey] + task.records.compactMap(\.imagePath)
+    var deletedKeys = Set<String>()
+
+    for key in imageKeys where deletedKeys.insert(key).inserted {
+        await imageStore.deleteImage(key)
     }
 }

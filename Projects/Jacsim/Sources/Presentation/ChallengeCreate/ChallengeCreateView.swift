@@ -12,6 +12,7 @@ public struct ChallengeCreateView: View {
     public var body: some View {
         NewTaskView(store: store.scope(state: \.newTask, action: \.newTask))
             .presentationDetents([.large])
-            .presentationDragIndicator(.visible)
+            .presentationDragIndicator(.hidden)
+            .interactiveDismissDisabled(true)
     }
 }

@@ -3,7 +3,6 @@ import Domain
 import ComposableArchitecture
 import UIKit
 import Photos
-import PhotosUI
 import SwiftUI
 import Core
 
@@ -17,7 +16,6 @@ public struct TaskUpdateFeature {
         public var lastAcceptedMemo: String = ""
         public var image: UIImage?
         public var dateText: String
-        public var photoPickerItem: PhotosPickerItem?
         public var isSaving: Bool = false
         public var saveFailed: Bool = false
         public var isOverwriteMode: Bool = false
@@ -37,7 +35,6 @@ public struct TaskUpdateFeature {
         case imageLoaded(UIImage?)
         case certifyButtonTapped
         case imageSelected(UIImage)
-        case photoPickerItemChanged(PhotosPickerItem?)
         case saveCompleted(Result<Void, Error>)
         case toastDismissed
         case dismiss
@@ -50,6 +47,8 @@ public struct TaskUpdateFeature {
 
     @Dependency(\.certificationClient) var certificationClient
     @Dependency(\.imageStore) var imageStore
+    @Dependency(\.notificationScheduler) var notificationScheduler
+    @Dependency(\.userSettingsRepository) var userSettingsRepository
 
     public var body: some ReducerOf<Self> {
         BindingReducer()
@@ -76,16 +75,17 @@ public struct TaskUpdateFeature {
                 let memo = state.memo.trimmingCharacters(in: .whitespacesAndNewlines)
                 let image = state.image
                 let imagePath = image != nil ? state.task.imageKey(for: index) : nil
-                return .run { [certificationClient, imageStore] send in
+                return .run { [certificationClient, imageStore, notificationScheduler, userSettingsRepository] send in
                     Logger.certificationStarted(taskId: taskId.rawValue.uuidString, memo: memo, hasImage: image != nil)
                     let certifyStartTime = Date()
                     do {
                         if let image = image {
-                            let data = image.jpegData(compressionQuality: 0.4)
-                            if let data, let imagePath = imagePath {
-                                _ = try await imageStore.saveImage(imagePath, data)
-                                Logger.imageSaved(key: imagePath)
+                            let data = try makeImageStoreInputData(from: image)
+                            guard let imagePath else {
+                                throw ImageStoreInputEncodingError.jpegEncodingFailed
                             }
+                            _ = try await imageStore.saveImage(imagePath, data)
+                            Logger.imageSaved(key: imagePath)
                         }
                         await certificationClient.certifyToday(taskId, index, memo, imagePath)
                         Logger.certificationCompleted(
@@ -94,6 +94,14 @@ public struct TaskUpdateFeature {
                             check: true,
                             memo: memo,
                             imagePath: imagePath
+                        )
+                        let isGlobalNotificationEnabled = await userSettingsRepository.isNotificationEnabled()
+                        let reminders = await userSettingsRepository.getAllReminders()
+                        let reminderUseCase = ReminderSchedulingUseCase()
+                        await reminderUseCase.syncGlobalReminders(
+                            isEnabled: isGlobalNotificationEnabled,
+                            reminders: reminders,
+                            notificationScheduler: notificationScheduler
                         )
                         await send(.saveCompleted(.success(())))
                     } catch {
@@ -138,17 +146,6 @@ public struct TaskUpdateFeature {
                 state.image = image
                 state.saveFailed = false
                 return .none
-
-            case let .photoPickerItemChanged(item):
-                guard let item = item else {
-                    return .none
-                }
-                return .run { send in
-                    if let data = try? await item.loadTransferable(type: Data.self),
-                       let image = UIImage(data: data) {
-                        await send(.imageSelected(image))
-                    }
-                }
 
             case .binding, .delegate:
                 return .none

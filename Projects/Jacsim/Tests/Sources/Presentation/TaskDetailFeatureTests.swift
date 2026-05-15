@@ -47,13 +47,35 @@ private actor TaskDetailImageSaveRecorder {
     }
 
     private(set) var saveCalls: [SaveCall] = []
+    private(set) var deleteCalls: [String] = []
 
     func recordSave(key: String, data: Data) {
         saveCalls.append(SaveCall(key: key, byteCount: data.count))
     }
 
+    func recordDelete(key: String) {
+        deleteCalls.append(key)
+    }
+
     func callCount() -> Int { saveCalls.count }
     func firstCall() -> SaveCall? { saveCalls.first }
+    func deletedKeys() -> [String] { deleteCalls }
+}
+
+private actor TaskDetailDeleteRecorder {
+    private(set) var deletedTaskIDs: [TaskID] = []
+    private(set) var cancelledTaskIDs: [TaskID] = []
+
+    func recordDeleted(_ taskID: TaskID) {
+        deletedTaskIDs.append(taskID)
+    }
+
+    func recordCancelled(_ taskID: TaskID) {
+        cancelledTaskIDs.append(taskID)
+    }
+
+    func deletedIDs() -> [TaskID] { deletedTaskIDs }
+    func cancelledIDs() -> [TaskID] { cancelledTaskIDs }
 }
 
 @MainActor
@@ -176,9 +198,64 @@ func taskDetailEditSaveStoresImageWhenProvided() async {
     #expect((firstSave?.byteCount ?? 0) > 0)
 }
 
+@MainActor
+@Test("작심 삭제는 대표 이미지와 기록 이미지를 함께 정리한다")
+func taskDetailDeleteFlowDeletesStoredImages() async {
+    let task = makeTaskForDetailTests(
+        durationDays: 7,
+        completedRecords: 3,
+        recordImagePaths: ["day-1.jpg", "day-2.jpg", "day-1.jpg"]
+    )
+    let deleteRecorder = TaskDetailDeleteRecorder()
+    let imageRecorder = TaskDetailImageSaveRecorder()
+
+    var initialState = TaskDetailFeature.State(task: task)
+    initialState.isDeleteFlowPresented = true
+    initialState.deleteFlowStep = .finalConfirmation
+    initialState.deleteConfirmCountdown = 0
+    initialState.isDeleteConfirmEnabled = true
+
+    let store = TestStore(initialState: initialState) {
+        TaskDetailFeature()
+    } withDependencies: {
+        $0.taskCommandClient = TaskCommandClientPort(
+            addTask: { _ in },
+            updateTask: { _ in },
+            deleteTask: { taskID in await deleteRecorder.recordDeleted(taskID) },
+            updateTaskInfo: { _, _, _, _, _ in }
+        )
+        $0.notificationScheduler = NotificationSchedulerPort(
+            scheduleDailyReminder: { _, _, _ in },
+            cancelReminder: { taskID in await deleteRecorder.recordCancelled(taskID) },
+            cancelAllReminders: {},
+            requestAuthorization: { true }
+        )
+        $0.imageStore = ImageStorePort(
+            saveImage: { key, data in
+                await imageRecorder.recordSave(key: key, data: data)
+                return key
+            },
+            loadImage: { _ in nil },
+            deleteImage: { key in await imageRecorder.recordDelete(key: key) },
+            imageExists: { _ in false }
+        )
+    }
+    store.exhaustivity = .off
+
+    await store.send(.deleteFlowDeleteConfirmed) {
+        $0.isDeleteFlowPresented = false
+    }
+    await store.finish()
+
+    #expect(await deleteRecorder.cancelledIDs() == [task.id])
+    #expect(await deleteRecorder.deletedIDs() == [task.id])
+    #expect(await imageRecorder.deletedKeys() == [task.mainImageKey, "day-1.jpg", "day-2.jpg"])
+}
+
 private func makeTaskForDetailTests(
     durationDays: Int,
-    completedRecords: Int
+    completedRecords: Int,
+    recordImagePaths: [String?] = []
 ) -> Task {
     let start = Calendar.current.startOfDay(for: Date())
     let end = Calendar.current.date(byAdding: .day, value: max(durationDays - 1, 0), to: start) ?? start
@@ -212,7 +289,7 @@ private func makeTaskForDetailTests(
             memo: "",
             check: true,
             date: date,
-            imagePath: nil
+            imagePath: recordImagePaths.indices.contains(index) ? recordImagePaths[index] : nil
         )
     }
 

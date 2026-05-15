@@ -31,7 +31,7 @@ public struct ChallengeCreateFeature {
             case .newTask(.delegate(.taskCreated)):
                 return .send(.delegate(.challengeCreated))
 
-            case .cancelButtonTapped, .newTask(.cancelButtonTapped):
+            case .cancelButtonTapped, .newTask(.delegate(.cancelled)):
                 return .send(.delegate(.cancelled))
 
             case .newTask, .delegate:
