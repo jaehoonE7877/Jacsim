@@ -1,0 +1,6 @@
+- 작업 대상: `/Volumes/jaehoon_ex/Applications/Jacsim/AGENTS.md`
+- 변경 항목: Quick Start, Success Criteria, Repo Structure, Code Style, Boundaries, Git & PR Workflow, Context Hygiene, Sub-Module Guides 섹션의 설명을 한국어로 번역
+- 기술 용어(Quick Start, Code Style, SwiftUI, TCA, port client, Use case 등)는 영문 유지
+- 코드 블록/명령어 예시/경로/클래스명 및 markdown 형식은 유지
+- `Never Do`와 `Ask First`의 경로/명령어 표기 규칙은 원문 그대로 유지
+- 변경 파일 수: `AGENTS.md` 1개

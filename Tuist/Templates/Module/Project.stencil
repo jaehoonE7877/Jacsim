@@ -1,12 +1,10 @@
 import ProjectDescription
 import ProjectDescriptionHelpers
-import DependencyPlugin
 
-let project = Project.makeModule(
+let project = Project.makeFrameworkProject(
     name: "{{ name }}",
-    targets: [.unitTest, .staticFramework],
-    internalDependencies: [
-        
-    ],
+    swiftLanguageVersion: .v6,
+    hasResources: true,
+    includeTests: true,
     tags: ["module"]
 )

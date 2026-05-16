@@ -25,7 +25,7 @@ public struct CalendarEventService: Sendable {
                 currentDate = next
             }
         }
-        return Array(dates)
+        return dates.sorted()
     }
     
     public func calculateDateColors(from tasks: [Task]) -> [Date: TaskSuccessRate] {

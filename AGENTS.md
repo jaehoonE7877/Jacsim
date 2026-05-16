@@ -1,79 +1,95 @@
-# Jacsim Knowledge Base (AGENTS.md)
+# AGENTS.md — Jacsim
 
-## Overview
-- iOS 18+, Swift 6, Tuist + SPM 멀티모듈
-- SwiftUI + TCA + Port & Adapter 아키텍처 기반
-- 앱 로직은 레이어 경계를 유지하며 모듈 단위로 관리
+> iOS 18+ · Swift 6 · Tuist 4 · SwiftUI + TCA · Port & Adapter
 
-## Current Structure
-```text
-./
-├── Projects/
-│   ├── Jacsim/                     # App(Presentation/Application)
-│   ├── Domain/                     # Domain rules/entities/services
-│   ├── ExternalInterface/          # Port contracts
-│   ├── Data/                       # Adapter implementations
-│   ├── Modules/
-│   │   ├── Core/                   # Utilities/extensions
-│   │   ├── DSKit/                  # Design system
-│   │   └── ThirdPartyLibs/         # Third-party aggregation
-│   └── Features/                   # Legacy/experimental traces
-├── Tuist/
-├── Plugins/
-├── xcconfigs/
-├── Workspace.swift
-└── Package.swift
-```
+## Quick Start
 
-## Layer Responsibilities
-- `Jacsim`: Presentation(TCA) + Application use case orchestration
-- `Domain`: 비즈니스 규칙, 엔티티 불변식, 도메인 계산
-- `ExternalInterface`: 상위 레이어가 의존할 Port 계약
-- `Data`: 외부 I/O 구현체(Adapter)
-
-## Why ExternalInterface Exists
-- Domain/Application이 구체 구현(Data)에 직접 의존하지 않도록 DIP를 보장
-- 구현체 교체 비용을 낮추고 테스트에서 mock/in-memory 포트 주입을 쉽게 만듦
-- 레이어 간 의존 방향을 고정해 아키텍처 안정성 확보
-
-## Where to Find
-| Task | Location |
-|---|---|
-| App entry | `Projects/Jacsim/Sources/Application/JacsimApp.swift` |
-| App lifecycle | `Projects/Jacsim/Sources/Application/AppDelegate.swift` |
-| App use cases | `Projects/Jacsim/Sources/Application/UseCases/**` |
-| TCA screens | `Projects/Jacsim/Sources/Presentation/**` |
-| Domain logic | `Projects/Domain/Sources/**` |
-| Port contracts | `Projects/ExternalInterface/Sources/**` |
-| Data adapters | `Projects/Data/Sources/Adapters/**` |
-| Design system | `Projects/Modules/DSKit/**` |
-| Common utilities | `Projects/Modules/Core/**` |
-
-## Core Rules
-- 신규 화면은 SwiftUI + TCA만 허용
-- RxSwift/Realm 신규 도입 금지
-- 생성 산출물 직접 수정 금지: `Projects/**/Derived/**`, `.build/**`, `.derivedData/**`, `build/**`
-
-## Commands
 ```bash
+tuist install
 tuist generate
 tuist build Jacsim
 tuist test Jacsim
+tuist test JacsimClient
 tuist test Domain
-tuist test Data
-tuist test ExternalInterface
+tuist test Workflows
+tuist test Ports
+tuist test Adapters
+tuist test Shared
 ```
 
-## Public Repository Policy
-- 문서에 비밀값/인증키/개인 식별자/내부 운영 절차를 기록하지 않습니다.
-- 민감 설정은 로컬/CI 비밀 저장소에서 관리합니다.
+> `DesignSystem`에는 전용 unit test target이 없습니다. DSKit 변경은 `tuist build Jacsim`과 영향받는 downstream scheme 테스트로 검증합니다.
+> No lint/format tool is configured yet. Do not introduce one without approval.
 
-## Sub AGENTS
-- `Projects/Jacsim/AGENTS.md`
-- `Projects/Modules/DSKit/AGENTS.md`
-- `Projects/Modules/Core/AGENTS.md`
-- `Projects/Modules/ThirdPartyLibs/AGENTS.md`
-- `Projects/Features/AGENTS.md`
-- `Tuist/AGENTS.md`
-- `Plugins/AGENTS.md`
-- `xcconfigs/AGENTS.md`
+## Success Criteria
+
+1. `tuist generate` completes without errors.
+2. `tuist build Jacsim` succeeds.
+3. `tuist test <affected-scheme>` passes for every touched module.
+4. No new compiler warnings are introduced.
+
+## Key Paths
+
+| Task | Path |
+|---|---|
+| App entry | `Projects/Jacsim/Sources/Application/JacsimApp.swift` |
+| App lifecycle | `Projects/Jacsim/Sources/Application/AppDelegate.swift` |
+| Presentation | `Projects/Jacsim/Sources/Presentation/**` |
+| Use cases | `Projects/Workflows/Sources/UseCases/**` |
+| Domain | `Projects/Domain/Sources/**` |
+| Ports | `Projects/ExternalInterface/Sources/**` |
+| Adapters | `Projects/Data/Sources/Adapters/**` |
+| Design system | `Projects/Modules/DSKit/Sources/**` |
+| Shared utilities | `Projects/Modules/Core/Sources/**` |
+
+## Boundaries
+
+### Never Do
+
+| Rule | Detail |
+|---|---|
+| Generated files | Do not edit `Projects/**/Derived/**`, `.build/**`, `.derivedData/**`, or `build/**`. |
+| Secrets | Do not commit API keys, credentials, or personal data. |
+| Legacy frameworks | Do not add new RxSwift or Realm usage. |
+| UIKit screens | Do not add new UIKit-based views. |
+| Production deploy | Do not trigger Xcode Cloud or App Store workflows directly. |
+| CI workflows | Do not edit `.github/workflows/**` without explicit approval. |
+
+### Ask First
+
+| Rule | Detail |
+|---|---|
+| New dependency | Adding a package to `Package.swift` needs approval. |
+| Tuist config | Changes to `Tuist.swift`, `Workspace.swift`, or `Plugins/**` need review. |
+| xcconfig | Changes to `xcconfigs/**` can affect all targets; confirm scope first. |
+| New module | Follow Tuist templates for any new `Projects/` module. |
+| Design system | DSKit token or component changes affect app-wide UI. |
+
+## Context Hygiene
+
+- Read this file first, then the relevant scoped `AGENTS.md`, then source files.
+- Do not read `.build/`, `.derivedData/`, `build/`, or `*.xcodeproj/` contents.
+- Summarize command output over 200 lines instead of pasting it whole.
+- Use the `Key Paths` table before scanning directories.
+
+## Sub-Module Guides
+
+| Module | Guide | Read When |
+|---|---|---|
+| App (`Jacsim`) | `Projects/Jacsim/AGENTS.md` | Screen changes, use case wiring, app lifecycle |
+| `JacsimClient` | `Projects/JacsimClient/AGENTS.md` | DI bridge, ports/adapters wiring |
+| `Workflows` | `Projects/Workflows/AGENTS.md` | Use case changes, orchestration |
+| `Domain` | `Projects/Domain/AGENTS.md` | Entities, policies, domain services |
+| `Ports` | `Projects/ExternalInterface/AGENTS.md` | Port contracts and boundaries |
+| `Adapters` | `Projects/Data/AGENTS.md` | Infrastructure adapters and mapping |
+| `DSKit` | `Projects/Modules/DSKit/AGENTS.md` | Design tokens and shared UI components |
+| `Core` | `Projects/Modules/Core/AGENTS.md` | Shared utilities and extensions |
+| `ThirdPartyLibs` | `Projects/Modules/ThirdPartyLibs/AGENTS.md` | External dependency management |
+| `Tuist` | `Tuist/AGENTS.md` | Project generation and templates |
+| `Plugins` | `Plugins/AGENTS.md` | Dependency alias and environment config |
+| `xcconfigs` | `xcconfigs/AGENTS.md` | Build setting changes |
+
+## Maintenance
+
+- If an agent repeats the same mistake, add a one-line rule to the relevant file.
+- Keep this file lean; prune rules that no longer change behavior.
+- For a new module, add `Projects/<NewModule>/AGENTS.md` and register it in the table above.
