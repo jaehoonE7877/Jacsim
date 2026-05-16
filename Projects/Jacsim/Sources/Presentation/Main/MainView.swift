@@ -106,5 +106,10 @@ public struct MainView: View {
             guard let context = notification.object as? GraduationContext else { return }
             model.graduationPresented(context)
         }
+#if DEBUG
+        .task {
+            model.presentDebugGraduationIfRequested()
+        }
+#endif
     }
 }

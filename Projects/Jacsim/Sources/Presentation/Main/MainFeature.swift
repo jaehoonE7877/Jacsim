@@ -1,5 +1,6 @@
 import Domain
 import DSKit
+import Foundation
 import Observation
 
 @MainActor
@@ -17,6 +18,9 @@ public final class MainModel {
     public let coach: CoachModel
 
     @ObservationIgnored private let dependencies: JacsimDependencies
+#if DEBUG
+    @ObservationIgnored private var didPresentDebugGraduation = false
+#endif
 
     public init(dependencies: JacsimDependencies) {
         self.dependencies = dependencies
@@ -87,6 +91,23 @@ public final class MainModel {
     public func graduationPresented(_ context: GraduationContext) {
         presentedGraduation = context
     }
+
+#if DEBUG
+    public func presentDebugGraduationIfRequested() {
+        guard !didPresentDebugGraduation else { return }
+        guard ProcessInfo.processInfo.arguments.contains("-JACSIM_SHOW_GRADUATION_DEMO") else { return }
+        didPresentDebugGraduation = true
+        graduationPresented(
+            GraduationContext(
+                taskId: TaskID(UUID()),
+                taskTitle: "테스트 작심",
+                stageTypeRaw: 7,
+                durationDays: 7,
+                successDays: 7
+            )
+        )
+    }
+#endif
 
     public func graduationNextStageTapped() {
         guard let context = presentedGraduation else { return }
