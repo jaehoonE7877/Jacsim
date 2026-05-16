@@ -13,7 +13,7 @@ public enum SwiftLanguageVersion: String {
     case v6 = "6"
 }
 
-public enum FeatureTarget {
+public enum FeatureTarget: Hashable {
     case app    // iOS App
     case interface      // Feature Interface
     case dynamicFramework

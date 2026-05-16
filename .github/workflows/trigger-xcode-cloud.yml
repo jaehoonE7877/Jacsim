@@ -6,7 +6,7 @@ on:
     types:
       - completed
     branches:
-      - develop
+      - Develop
 
 concurrency:
   group: xcode-cloud-trigger-${{ github.ref }}
@@ -15,7 +15,7 @@ concurrency:
 jobs:
   trigger-xcode-cloud:
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' && github.ref == 'refs/heads/develop' }}
+    if: ${{ github.event.workflow_run.conclusion == 'success' && github.ref == 'refs/heads/Develop' && github.event.workflow_run.event == 'push' }}
     steps:
       - name: Trigger Xcode Cloud via App Store Connect API
         env:

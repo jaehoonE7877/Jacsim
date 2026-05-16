@@ -92,4 +92,4 @@
 - [ ] `loading/empty/error` 상태 확인
 - [ ] 주요 액션에 접근성 라벨 제공
 - [ ] `reduceMotion` 대응 확인
-- [ ] 플래그(`PresentationRedesignFlags`)로 롤백 가능
+- [ ] 리디자인 기본 동선(요약/사진/알림/기록)이 상시 노출되는지 확인

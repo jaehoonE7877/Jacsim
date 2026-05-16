@@ -1,37 +1,106 @@
 import Foundation
 
+public enum NotificationSuppressionReason: String, Sendable, Codable, Equatable {
+    case globalNotificationsDisabled
+    case challengeNotificationsDisabled
+    case missingReminderTime
+    case stageNotInProgress
+    case challengeNotStarted
+    case stageFinished
+    case completedToday
+}
+
 public struct NotificationEligibility: Sendable, Codable, Equatable {
     public let shouldSchedule: Bool
-    public let reason: String
-    
-    public init(shouldSchedule: Bool, reason: String) {
+    public let suppressionReason: NotificationSuppressionReason?
+    public let nextEligibleDate: Date?
+
+    public init(
+        shouldSchedule: Bool,
+        suppressionReason: NotificationSuppressionReason?,
+        nextEligibleDate: Date?
+    ) {
         self.shouldSchedule = shouldSchedule
-        self.reason = reason
+        self.suppressionReason = suppressionReason
+        self.nextEligibleDate = nextEligibleDate
     }
 }
 
-public func shouldScheduleNotification(
+public func evaluateNotificationEligibility(
     task: Task,
-    stage: StageSnapshot,
-    hasRecordToday: Bool,
-    notificationEnabled: Bool
+    referenceDate: Date,
+    globalNotificationsEnabled: Bool
 ) -> NotificationEligibility {
-    guard notificationEnabled else {
-        return NotificationEligibility(shouldSchedule: false, reason: "Notifications disabled in settings")
+    let calendar = Calendar.current
+    let day = calendar.startOfDay(for: referenceDate)
+
+    guard globalNotificationsEnabled else {
+        return NotificationEligibility(
+            shouldSchedule: false,
+            suppressionReason: .globalNotificationsDisabled,
+            nextEligibleDate: nil
+        )
     }
-    
-    guard stage.result == .inProgress else {
-        return NotificationEligibility(shouldSchedule: false, reason: "Stage not in progress")
+
+    guard task.isNotificationEnabled else {
+        return NotificationEligibility(
+            shouldSchedule: false,
+            suppressionReason: .challengeNotificationsDisabled,
+            nextEligibleDate: nil
+        )
     }
-    
-    let today = Date()
-    guard today >= stage.startDate && today <= stage.endDate else {
-        return NotificationEligibility(shouldSchedule: false, reason: "Today outside stage date range")
+
+    guard task.alarm != nil else {
+        return NotificationEligibility(
+            shouldSchedule: false,
+            suppressionReason: .missingReminderTime,
+            nextEligibleDate: nil
+        )
     }
-    
-    guard !hasRecordToday else {
-        return NotificationEligibility(shouldSchedule: false, reason: "Record already exists for today")
+
+    guard let stage = task.currentStage, stage.result == .inProgress else {
+        return NotificationEligibility(
+            shouldSchedule: false,
+            suppressionReason: .stageNotInProgress,
+            nextEligibleDate: nil
+        )
     }
-    
-    return NotificationEligibility(shouldSchedule: true, reason: "All conditions met")
+
+    let stageStart = calendar.startOfDay(for: stage.startDate)
+    let stageEnd = calendar.startOfDay(for: stage.endDate)
+
+    if day < stageStart {
+        return NotificationEligibility(
+            shouldSchedule: false,
+            suppressionReason: .challengeNotStarted,
+            nextEligibleDate: stageStart
+        )
+    }
+
+    guard day <= stageEnd else {
+        return NotificationEligibility(
+            shouldSchedule: false,
+            suppressionReason: .stageFinished,
+            nextEligibleDate: nil
+        )
+    }
+
+    if task.isCompleted(on: day) {
+        let tomorrow = calendar.date(byAdding: .day, value: 1, to: day)
+        let nextEligibleDate = tomorrow.flatMap { nextDay in
+            calendar.startOfDay(for: nextDay) <= stageEnd ? calendar.startOfDay(for: nextDay) : nil
+        }
+
+        return NotificationEligibility(
+            shouldSchedule: false,
+            suppressionReason: .completedToday,
+            nextEligibleDate: nextEligibleDate
+        )
+    }
+
+    return NotificationEligibility(
+        shouldSchedule: true,
+        suppressionReason: nil,
+        nextEligibleDate: day
+    )
 }
