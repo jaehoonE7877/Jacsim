@@ -2,7 +2,8 @@
 
 ## Overview
 - iOS 26+, Swift 6, Tuist + SPM 멀티모듈
-- SwiftUI + TCA + Port & Adapter 아키텍처 기반
+- SwiftUI + @Observable + Port & Adapter 아키텍처 기반
+- Liquid Glass + focus.mode + Social V2 디자인/소셜 시스템 적용
 - 앱 로직은 레이어 경계를 유지하며 모듈 단위로 관리
 
 ## Current Structure
@@ -10,6 +11,7 @@
 ./
 ├── Projects/
 │   ├── Jacsim/                     # App(Presentation/Application)
+│   ├── JacsimWidget/               # WidgetKit extensions
 │   ├── Domain/                     # Domain rules/entities/services
 │   ├── ExternalInterface/          # Port contracts
 │   ├── Data/                       # Adapter implementations
@@ -26,7 +28,7 @@
 ```
 
 ## Layer Responsibilities
-- `Jacsim`: Presentation(TCA) + Application use case orchestration
+- `Jacsim`: Presentation(SwiftUI + @Observable) + Application use case orchestration
 - `Domain`: 비즈니스 규칙, 엔티티 불변식, 도메인 계산
 - `ExternalInterface`: 상위 레이어가 의존할 Port 계약
 - `Data`: 외부 I/O 구현체(Adapter)
@@ -42,7 +44,8 @@
 | App entry | `Projects/Jacsim/Sources/Application/JacsimApp.swift` |
 | App lifecycle | `Projects/Jacsim/Sources/Application/AppDelegate.swift` |
 | App use cases | `Projects/Jacsim/Sources/Application/UseCases/**` |
-| TCA screens | `Projects/Jacsim/Sources/Presentation/**` |
+| App screens | `Projects/Jacsim/Sources/Presentation/**` |
+| Widgets | `Projects/JacsimWidget/**` |
 | Domain logic | `Projects/Domain/Sources/**` |
 | Port contracts | `Projects/ExternalInterface/Sources/**` |
 | Data adapters | `Projects/Data/Sources/Adapters/**` |
@@ -50,7 +53,7 @@
 | Common utilities | `Projects/Modules/Core/**` |
 
 ## Core Rules
-- 신규 화면은 SwiftUI + TCA만 허용
+- 신규 화면은 SwiftUI + @Observable만 허용
 - RxSwift/Realm 신규 도입 금지
 - 생성 산출물 직접 수정 금지: `Projects/**/Derived/**`, `.build/**`, `.derivedData/**`, `build/**`
 

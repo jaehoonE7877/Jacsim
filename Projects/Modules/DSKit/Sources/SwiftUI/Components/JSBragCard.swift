@@ -139,18 +139,25 @@ public struct JSBragCard: View {
             Button(action: onCheer) {
                 Label("\(post.cheerCount)", systemImage: post.hasCheered ? "hands.clap.fill" : "hands.clap")
             }
+            .jsTouchTarget()
             .accessibilityLabel("응원 \(post.cheerCount)개")
+            .accessibilityHint("응원을 보냅니다")
+            .sensoryFeedback(.success, trigger: post.hasCheered)
 
             Button(action: onComment) {
                 Label("\(post.commentCount)", systemImage: "bubble.left")
             }
+            .jsTouchTarget()
             .accessibilityLabel("댓글 \(post.commentCount)개")
+            .accessibilityHint("댓글을 엽니다")
 
             Button(action: onFollowChallenge) {
                 Label("따라하기", systemImage: "arrow.triangle.branch")
             }
             .font(.jsBodySmall)
+            .jsTouchTarget()
             .accessibilityLabel("이 작심 따라하기")
+            .accessibilityHint("이 작심을 내 작심으로 시작합니다")
 
             Spacer()
         }

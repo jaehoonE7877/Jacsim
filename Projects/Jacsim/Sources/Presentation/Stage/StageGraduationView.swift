@@ -78,12 +78,15 @@ public struct StageGraduationView: View {
                             .padding(.vertical, .jsSM)
                     }
                     .buttonStyle(.plain)
+                    .jsTouchTarget()
                     .accessibilityLabel("이 졸업을 자랑할까요")
+                    .accessibilityHint("졸업 자랑 글 쓰기 화면을 엽니다")
                 }
                 .padding(.horizontal, .jsMD)
                 .padding(.bottom, .jsLG)
             }
         }
+        .sensoryFeedback(.success, trigger: didReveal)
         .onAppear {
             guard !reduceMotion else {
                 didReveal = true

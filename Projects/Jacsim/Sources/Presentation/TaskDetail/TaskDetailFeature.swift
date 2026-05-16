@@ -42,6 +42,7 @@ public final class TaskDetailModel {
     public var coverImage: UIImage?
     public var editTask: TaskEditModel?
     public var isVisibilitySelectorPresented: Bool = false
+    public var wallpaperRaw: String = "morning"
 
     @ObservationIgnored private let dependencies: JacsimDependencies
     @ObservationIgnored private let onTaskDeleted: () -> Void
@@ -104,6 +105,7 @@ public final class TaskDetailModel {
         }
 
         loadImages()
+        loadWallpaper()
 
         if task != originalTask {
             updateTask?.cancel()
@@ -138,6 +140,17 @@ public final class TaskDetailModel {
                 let image = imageData.flatMap { UIImage(data: $0) }
                 imageLoaded(date, image)
             }
+        }
+    }
+
+    public func wallpaperLoaded(_ rawValue: String) {
+        wallpaperRaw = rawValue
+    }
+
+    private func loadWallpaper() {
+        let dependencies = dependencies
+        _Concurrency.Task {
+            wallpaperLoaded(await dependencies.userSettingsRepository.wallpaperRaw())
         }
     }
 

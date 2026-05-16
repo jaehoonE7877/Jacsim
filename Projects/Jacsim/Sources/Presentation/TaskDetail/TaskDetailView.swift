@@ -17,6 +17,16 @@ public struct TaskDetailView: View {
     @State private var scrollOffset: CGFloat = 0
     @State private var isHeaderMinimized = false
     private let minHeaderHeight: CGFloat = 100.jsScaled()
+    private var wallpaperGradient: LinearGradient {
+        switch model.wallpaperRaw {
+        case "forest":
+            return .wallpaperForest
+        case "dusk":
+            return .wallpaperDusk
+        default:
+            return .wallpaperMorning
+        }
+    }
 
     public var body: some View {
         GeometryReader { geometry in
@@ -89,8 +99,12 @@ public struct TaskDetailView: View {
                 }
                 .onChange(of: model.shouldScrollToRecords) { _, shouldScroll in
                     guard shouldScroll else { return }
-                    withAnimation(.easeInOut) {
+                    if reduceMotion {
                         proxy.scrollTo("recordListSection", anchor: .top)
+                    } else {
+                        withAnimation(.easeInOut) {
+                            proxy.scrollTo("recordListSection", anchor: .top)
+                        }
                     }
                     model.scrollToRecordsCompleted()
                 }
@@ -124,7 +138,10 @@ public struct TaskDetailView: View {
             .onAppear {
                 isHeaderMinimized = shouldMinimizeHeaderTitle
             }
-            .background(Color.backgroundNormal)
+            .background(
+                wallpaperGradient
+                    .overlay(Color.backgroundNormal.opacity(0.18))
+            )
             .ignoresSafeArea(edges: .top)
         }
         .onAppear { model.onAppear() }
@@ -152,7 +169,7 @@ public struct TaskDetailView: View {
                         .lineLimit(1)
                 }
                 .opacity(isHeaderMinimized ? 1 : 0)
-                .animation(.easeOut(duration: 0.12), value: isHeaderMinimized)
+                .animation(reduceMotion ? nil : .easeOut(duration: 0.12), value: isHeaderMinimized)
             }
 
             ToolbarItem(placement: .topBarTrailing) {
@@ -242,13 +259,7 @@ public struct TaskDetailView: View {
                     .clipped()
             } else {
                 Rectangle()
-                    .fill(
-                        LinearGradient(
-                            colors: [Color.primaryNormal, Color.primaryStrong],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
+                    .fill(wallpaperGradient)
             }
         }
     }
@@ -285,13 +296,7 @@ public struct TaskDetailView: View {
                     .clipped()
             } else {
                 Rectangle()
-                    .fill(
-                        LinearGradient(
-                            colors: [Color.primaryNormal, Color.primaryStrong],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
+                    .fill(wallpaperGradient)
                     .frame(height: 280.jsScaled())
             }
 

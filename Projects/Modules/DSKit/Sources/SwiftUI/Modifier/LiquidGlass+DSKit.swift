@@ -2,6 +2,7 @@ import Foundation
 import SwiftUI
 
 public struct JSGlassToastModifier: ViewModifier {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Binding private var isPresented: Bool
     private let duration: TimeInterval
 
@@ -20,8 +21,8 @@ public struct JSGlassToastModifier: ViewModifier {
             .offset(y: isPresented ? 0 : 0 - .jsLG)
             .allowsHitTesting(isPresented)
             .accessibilityHidden(!isPresented)
-            .transition(.move(edge: .top).combined(with: .opacity))
-            .animation(JSAnimation.spring, value: isPresented)
+            .transition(reduceMotion ? .identity : .move(edge: .top).combined(with: .opacity))
+            .animation(reduceMotion ? nil : JSAnimation.spring, value: isPresented)
             .sensoryFeedback(.impact(weight: .light), trigger: isPresented)
             .task(id: isPresented) {
                 guard isPresented, duration > 0 else { return }

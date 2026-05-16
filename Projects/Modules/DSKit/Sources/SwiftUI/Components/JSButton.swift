@@ -51,7 +51,7 @@ public struct JSButton: View {
         }
         .disabled(!isEnabled)
         .opacity(isEnabled ? 1.0 : 0.5)
-        .frame(minHeight: 44.jsScaled(.touchTarget))
+        .frame(minWidth: 44.jsScaled(.touchTarget), minHeight: 44.jsScaled(.touchTarget))
     }
 
     private var font: Font {

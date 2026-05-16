@@ -7,6 +7,8 @@ public enum JSBottomSheetStyle {
 }
 
 public struct JSBottomSheet<Content: View>: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     let isPresented: Binding<Bool>
     let style: JSBottomSheetStyle
     let showDragIndicator: Bool
@@ -47,7 +49,7 @@ public struct JSBottomSheet<Content: View>: View {
                             dismiss()
                         }
                     }
-                    .transition(.opacity)
+                    .transition(reduceMotion ? .identity : .opacity)
 
                 VStack(spacing: 0) {
                     if showDragIndicator {
@@ -62,12 +64,12 @@ public struct JSBottomSheet<Content: View>: View {
                 .background(sheetBackground)
                 .jsGlassSheet()
                 .offset(y: max(0, offset))
-                .transition(.move(edge: .bottom))
+                .transition(reduceMotion ? .identity : .move(edge: .bottom))
                 .accessibilityElement(children: .contain)
                 .accessibilityIdentifier("glass.bottom.sheet")
             }
         }
-        .animation(.spring(response: 0.3, dampingFraction: 0.8), value: isPresented.wrappedValue)
+        .animation(reduceMotion ? nil : .spring(response: 0.3, dampingFraction: 0.8), value: isPresented.wrappedValue)
     }
 
     @ViewBuilder

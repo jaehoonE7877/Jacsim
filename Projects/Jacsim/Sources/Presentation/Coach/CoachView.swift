@@ -5,6 +5,7 @@ import SwiftUI
 public struct CoachView: View {
     @Bindable var model: CoachModel
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var toastPresented = false
 
     public init(model: CoachModel) {
@@ -77,8 +78,12 @@ public struct CoachView: View {
             }
             .onChange(of: model.messages.count) { _, _ in
                 guard let last = model.messages.last else { return }
-                withAnimation(JSAnimation.easeInOut) {
+                if reduceMotion {
                     proxy.scrollTo(last.id, anchor: .bottom)
+                } else {
+                    withAnimation(JSAnimation.easeInOut) {
+                        proxy.scrollTo(last.id, anchor: .bottom)
+                    }
                 }
             }
         }
@@ -124,6 +129,7 @@ public struct CoachView: View {
                     .foregroundStyle(model.canSend ? Color.forestAccent : Color.labelDisable)
             }
             .disabled(!model.canSend)
+            .jsTouchTarget()
             .accessibilityLabel("AI 코치에게 보내기")
         }
         .padding(.horizontal, .jsMD)

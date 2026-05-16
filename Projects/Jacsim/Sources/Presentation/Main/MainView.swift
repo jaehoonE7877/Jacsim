@@ -68,14 +68,14 @@ public struct MainView: View {
         }
         .overlay(alignment: .top) {
             if let toastText = model.plusToastText {
-                JSGlassToast(text: toastText)
-                    .padding(.top, .jsXL)
-                    .padding(.horizontal, .jsXL)
-                    .transition(.move(edge: .top).combined(with: .opacity))
+                    JSGlassToast(text: toastText)
+                        .padding(.top, .jsXL)
+                        .padding(.horizontal, .jsXL)
+                    .transition(reduceMotion ? .identity : .move(edge: .top).combined(with: .opacity))
                     .accessibilityLabel(toastText)
             }
         }
-        .animation(JSAnimation.spring, value: model.plusToastText)
+        .animation(reduceMotion ? nil : JSAnimation.spring, value: model.plusToastText)
         .sensoryFeedback(.impact(weight: .light), trigger: model.plusToastText)
         .task(id: model.plusToastText) {
             guard model.plusToastText != nil else { return }

@@ -29,6 +29,17 @@ public struct FriendsSearchView: View {
 
                 ScrollView {
                     LazyVStack(spacing: .jsSM) {
+                        if !model.rows.isEmpty {
+                            Text("데모 데이터")
+                                .font(.jsLabelMedium)
+                                .foregroundStyle(Color.backgroundNormal)
+                                .padding(.horizontal, .jsSM)
+                                .padding(.vertical, .jsXS)
+                                .background(Color.forestAccent, in: Capsule())
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .accessibilityLabel("데모 데이터")
+                        }
+
                         ForEach(model.rows) { row in
                             friendRow(row)
                         }
@@ -96,7 +107,9 @@ public struct FriendsSearchView: View {
                 }
                 .buttonStyle(.plain)
                 .disabled(row.state != .follow)
+                .jsTouchTarget()
                 .accessibilityLabel("\(row.user.displayName) \(row.state.title)")
+                .accessibilityHint(row.state == .follow ? "친구 요청을 보냅니다" : "현재 \(row.state.title) 상태입니다")
             }
         }
     }

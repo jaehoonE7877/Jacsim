@@ -20,6 +20,7 @@ public struct JSGlassToast: View {
 }
 
 public struct JSGlassToastTextModifier: ViewModifier {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Binding private var text: String?
     @Binding private var isPresented: Bool
     private let duration: TimeInterval
@@ -40,11 +41,11 @@ public struct JSGlassToastTextModifier: ViewModifier {
                 if isPresented, let text {
                     JSGlassToast(text: text)
                         .padding(.top, .jsLG)
-                        .transition(.move(edge: .top).combined(with: .opacity))
+                        .transition(reduceMotion ? .identity : .move(edge: .top).combined(with: .opacity))
                 }
             }
             .sensoryFeedback(.impact(weight: .light), trigger: isPresented)
-            .animation(JSAnimation.spring, value: isPresented)
+            .animation(reduceMotion ? nil : JSAnimation.spring, value: isPresented)
             .task(id: isPresented) {
                 guard isPresented, duration > 0 else { return }
                 try? await Task.sleep(nanoseconds: UInt64(duration * 1_000_000_000))

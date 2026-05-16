@@ -25,6 +25,7 @@ public final class SettingScreenModel {
     public var theme: ThemeMode = .system
     public var wallpaperRaw: String = "morning"
     public var pendingFollowRequests: [PendingFollowRequestRow] = []
+    public var acceptFeedbackTrigger: Int = 0
 
     @ObservationIgnored public let dependencies: JacsimDependencies
     @ObservationIgnored private var settingsTask: _Concurrency.Task<Void, Never>?
@@ -112,6 +113,7 @@ public final class SettingScreenModel {
     }
 
     public func acceptFollowRequest(_ row: PendingFollowRequestRow) {
+        acceptFeedbackTrigger += 1
         updateFollowRequest(row, state: .accepted)
     }
 

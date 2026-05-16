@@ -36,6 +36,7 @@ public struct SettingView: View {
         }
         .navigationTitle("설정")
         .navigationBarTitleDisplayMode(.inline)
+        .sensoryFeedback(.success, trigger: model.acceptFeedbackTrigger)
         .task {
             model.loadNotificationSettings()
         }
@@ -156,7 +157,9 @@ public struct SettingView: View {
                     .font(.jsLabelMedium)
                     .foregroundColor(.labelAlternative)
                     .buttonStyle(.plain)
+                    .jsTouchTarget()
                     .accessibilityLabel("\(row.user.displayName) 친구 요청 거절")
+                    .accessibilityHint("친구 요청을 거절합니다")
 
                     Button("수락") {
                         model.acceptFollowRequest(row)
@@ -167,7 +170,9 @@ public struct SettingView: View {
                     .padding(.vertical, .jsXS)
                     .background(Color.forestAccent, in: Capsule())
                     .buttonStyle(.plain)
+                    .jsTouchTarget()
                     .accessibilityLabel("\(row.user.displayName) 친구 요청 수락")
+                    .accessibilityHint("친구 요청을 수락합니다")
                 }
                 .padding(.horizontal, .jsMD)
                 .padding(.vertical, .jsXS)
