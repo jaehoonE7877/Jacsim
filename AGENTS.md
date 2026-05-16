@@ -2,7 +2,7 @@
 
 ## Overview
 - iOS 18+, Swift 6, Tuist + SPM 멀티모듈
-- SwiftUI + TCA + Port & Adapter 아키텍처 기반
+- SwiftUI + async/await + Observation + Port & Adapter 아키텍처 기반
 - 앱 로직은 레이어 경계를 유지하며 모듈 단위로 관리
 
 ## Current Structure
@@ -26,7 +26,7 @@
 ```
 
 ## Layer Responsibilities
-- `Jacsim`: Presentation(TCA) + Application use case orchestration
+- `Jacsim`: Presentation(SwiftUI + Observation) + Application use case orchestration
 - `Domain`: 비즈니스 규칙, 엔티티 불변식, 도메인 계산
 - `ExternalInterface`: 상위 레이어가 의존할 Port 계약
 - `Data`: 외부 I/O 구현체(Adapter)
@@ -42,7 +42,7 @@
 | App entry | `Projects/Jacsim/Sources/Application/JacsimApp.swift` |
 | App lifecycle | `Projects/Jacsim/Sources/Application/AppDelegate.swift` |
 | App use cases | `Projects/Jacsim/Sources/Application/UseCases/**` |
-| TCA screens | `Projects/Jacsim/Sources/Presentation/**` |
+| SwiftUI screens/models | `Projects/Jacsim/Sources/Presentation/**` |
 | Domain logic | `Projects/Domain/Sources/**` |
 | Port contracts | `Projects/ExternalInterface/Sources/**` |
 | Data adapters | `Projects/Data/Sources/Adapters/**` |
@@ -50,7 +50,7 @@
 | Common utilities | `Projects/Modules/Core/**` |
 
 ## Core Rules
-- 신규 화면은 SwiftUI + TCA만 허용
+- 신규 화면은 SwiftUI + `@Observable` 화면 모델 + async/await만 허용
 - RxSwift/Realm 신규 도입 금지
 - 생성 산출물 직접 수정 금지: `Projects/**/Derived/**`, `.build/**`, `.derivedData/**`, `build/**`
 
