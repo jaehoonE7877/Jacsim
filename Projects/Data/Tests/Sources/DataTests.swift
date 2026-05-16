@@ -74,7 +74,7 @@ func userJacsimModelRestoresWhenCurrentStageTypeRawIsMissing() {
     #expect(task.currentStage?.stageType == .three)
 }
 
-@Test("SwiftData V1→V2 마이그레이션은 기존 작심 visibility를 private으로 채운다")
+@Test("SwiftData V1→V3 마이그레이션은 기존 작심 visibility를 private으로 채운다")
 func swiftDataMigrationSetsExistingTaskVisibilityPrivate() throws {
     let directory = FileManager.default.temporaryDirectory
         .appendingPathComponent("SwiftDataMigrationTests")
@@ -106,7 +106,7 @@ func swiftDataMigrationSetsExistingTaskVisibilityPrivate() throws {
     }
 
     do {
-        let schema = Schema(versionedSchema: JacsimSchemaV2.self)
+        let schema = Schema(versionedSchema: JacsimSchemaV3.self)
         let config = ModelConfiguration(schema: schema, url: storeURL)
         let container = try ModelContainer(
             for: schema,

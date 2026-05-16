@@ -5,13 +5,15 @@ public enum JacsimMigrationPlan: SchemaMigrationPlan {
     public static var schemas: [any VersionedSchema.Type] {
         [
             JacsimSchemaV1.self,
-            JacsimSchemaV2.self
+            JacsimSchemaV2.self,
+            JacsimSchemaV3.self
         ]
     }
 
     public static var stages: [MigrationStage] {
         [
-            migrateV1ToV2
+            migrateV1ToV2,
+            .lightweight(fromVersion: JacsimSchemaV2.self, toVersion: JacsimSchemaV3.self)
         ]
     }
 
@@ -47,7 +49,7 @@ public final class SwiftDataStack: @unchecked Sendable {
     }
 
     public static func makeContainer(isStoredInMemoryOnly: Bool = false) throws -> ModelContainer {
-        let schema = Schema(versionedSchema: JacsimSchemaV2.self)
+        let schema = Schema(versionedSchema: JacsimSchemaV3.self)
         let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: isStoredInMemoryOnly)
         return try ModelContainer(
             for: schema,
