@@ -7,6 +7,7 @@ public struct SettingView: View {
     @Environment(\.requestReview) private var requestReview
     @Environment(\.openURL) private var openURL
     @State private var isWalkThroughPresented = false
+    @State private var isNotificationSettingsPresented = false
 
     public init(model: SettingScreenModel) {
         self.model = model
@@ -37,6 +38,11 @@ public struct SettingView: View {
         .navigationBarTitleDisplayMode(.inline)
         .task {
             model.loadNotificationSettings()
+        }
+        .navigationDestination(isPresented: $isNotificationSettingsPresented) {
+            NotificationSettingsView(
+                model: NotificationSettingsModel(dependencies: model.dependencies)
+            )
         }
         .sheet(isPresented: $isWalkThroughPresented) {
             NavigationStack {
@@ -104,19 +110,14 @@ public struct SettingView: View {
                 )
             )
 
-            NavigationLink {
-                NotificationSettingsView(
-                    model: NotificationSettingsModel(dependencies: model.dependencies)
-                )
-            } label: {
-                JSListItem(
-                    title: "알림 설정",
-                    subtitle: "소셜 알림과 AI 코치 회고",
-                    icon: "bell.and.waves.left.and.right",
-                    accessory: .disclosure
-                )
+            JSListItem(
+                title: "알림 설정",
+                subtitle: "소셜 알림과 AI 코치 회고",
+                icon: "bell.and.waves.left.and.right",
+                accessory: .disclosure
+            ) {
+                isNotificationSettingsPresented = true
             }
-            .buttonStyle(.plain)
             .accessibilityLabel("알림 설정")
 
             if model.notificationPermissionDenied {
