@@ -40,7 +40,7 @@ public final class SwiftDataStack: @unchecked Sendable {
     
     private init() {
         do {
-            container = try Self.makeContainer()
+            container = try Self.makeContainer(isStoredInMemoryOnly: Self.isRunningTests)
         } catch {
             fatalError("SwiftData container initialization failed: \(error)")
         }
@@ -58,5 +58,9 @@ public final class SwiftDataStack: @unchecked Sendable {
 
     public func makeContext() -> ModelContext {
         ModelContext(container)
+    }
+
+    private static var isRunningTests: Bool {
+        ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
     }
 }
