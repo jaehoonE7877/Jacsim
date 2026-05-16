@@ -4,6 +4,7 @@ public struct JSGlassFloatingTabBar: View {
     @Binding private var selection: JSTabItem
     private let onSelect: (JSTabItem) -> Void
     private let onPlusTap: () -> Void
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     public init(
         selection: Binding<JSTabItem>,
@@ -57,7 +58,7 @@ public struct JSGlassFloatingTabBar: View {
         }
         .frame(maxWidth: .infinity)
         .frame(height: 52)
-        .animation(JSAnimation.spring, value: selection)
+        .animation(reduceMotion ? .none : JSAnimation.spring, value: selection)
     }
 
     private func selectedBackground(_ selected: Bool) -> Color {
@@ -69,7 +70,22 @@ public struct JSGlassFloatingTabBar: View {
     }
 
     private func accessibilityLabel(for item: JSTabItem) -> String {
-        item == .plus ? "새 작심 추가" : "\(item.title) 탭"
+        switch item {
+        case .today:
+            return "오늘"
+        case .calendar:
+            return "달력"
+        case .plus:
+            return "추가"
+        case .feed:
+            return "피드"
+        case .me:
+            return "나"
+        case .home:
+            return "홈"
+        case .settings:
+            return "설정"
+        }
     }
 }
 
