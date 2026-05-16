@@ -7,6 +7,16 @@ public enum TaskRepositoryAdapterError: Error {
     case taskNotFound(TaskID)
 }
 
+private struct TaskRefreshPersistenceState: Sendable {
+    let isDone: Bool
+    let isSuccess: Bool
+    let statusRaw: String
+    let resultRaw: String
+    let currentStageTypeRaw: Int?
+    let stageSuccessDays: [Int]
+    let stageResultRaw: [String]
+}
+
 public actor SwiftDataTaskRepositoryAdapter {
     private let container: ModelContainer
     
@@ -103,8 +113,17 @@ public actor SwiftDataTaskRepositoryAdapter {
     ) -> [Domain.Task] {
         var didUpdate = false
         let tasks = models.map { model in
+            let persistenceState = TaskRefreshPersistenceState(
+                isDone: model.isDone,
+                isSuccess: model.isSuccess,
+                statusRaw: model.statusRaw,
+                resultRaw: model.resultRaw,
+                currentStageTypeRaw: model.currentStageTypeRaw,
+                stageSuccessDays: model.stages.map(\.successDays),
+                stageResultRaw: model.stages.map(\.resultRaw)
+            )
             let refreshedTask = refreshTask(from: model, now: now)
-            didUpdate = didUpdate || shouldPersistRefresh(refreshedTask, over: model)
+            didUpdate = didUpdate || shouldPersistRefresh(refreshedTask, over: persistenceState)
             _ = mapToSwiftDataModel(refreshedTask, existing: model)
             return refreshedTask
         }
@@ -121,15 +140,24 @@ public actor SwiftDataTaskRepositoryAdapter {
         in context: ModelContext,
         now: Date
     ) -> Domain.Task {
+        let persistenceState = TaskRefreshPersistenceState(
+            isDone: model.isDone,
+            isSuccess: model.isSuccess,
+            statusRaw: model.statusRaw,
+            resultRaw: model.resultRaw,
+            currentStageTypeRaw: model.currentStageTypeRaw,
+            stageSuccessDays: model.stages.map(\.successDays),
+            stageResultRaw: model.stages.map(\.resultRaw)
+        )
         let refreshedTask = refreshTask(from: model, now: now)
-        if shouldPersistRefresh(refreshedTask, over: model) {
+        if shouldPersistRefresh(refreshedTask, over: persistenceState) {
             _ = mapToSwiftDataModel(refreshedTask, existing: model)
             try? context.save()
         }
         return refreshedTask
     }
 
-    private nonisolated func refreshTask(
+    private func refreshTask(
         from model: UserJacsimModel,
         now: Date
     ) -> Domain.Task {
@@ -138,19 +166,19 @@ public actor SwiftDataTaskRepositoryAdapter {
 
     private nonisolated func shouldPersistRefresh(
         _ task: Domain.Task,
-        over model: UserJacsimModel
+        over state: TaskRefreshPersistenceState
     ) -> Bool {
-        model.isDone != task.isTerminallyDone ||
-            model.isSuccess != task.isTerminallySuccessful ||
-            model.statusRaw != (
+        state.isDone != task.isTerminallyDone ||
+            state.isSuccess != task.isTerminallySuccessful ||
+            state.statusRaw != (
                 task.isTerminallyDone
                     ? Domain.ChallengeStatus.done.rawValue
                     : Domain.ChallengeStatus.inProgress.rawValue
             ) ||
-            model.resultRaw != resultRaw(for: task) ||
-            model.currentStageTypeRaw != task.stages.last?.stageTypeRaw ||
-            model.stages.map(\.successDays) != task.stages.map(\.successDays) ||
-            model.stages.map(\.resultRaw) != task.stages.map(\.resultRaw)
+            state.resultRaw != resultRaw(for: task) ||
+            state.currentStageTypeRaw != task.stages.last?.stageTypeRaw ||
+            state.stageSuccessDays != task.stages.map(\.successDays) ||
+            state.stageResultRaw != task.stages.map(\.resultRaw)
     }
 
     private nonisolated func resultRaw(for task: Domain.Task) -> String {
