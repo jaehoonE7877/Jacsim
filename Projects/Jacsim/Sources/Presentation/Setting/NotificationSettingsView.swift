@@ -127,11 +127,13 @@ public struct NotificationSettingsView: View {
                 .font(.jsSerifTitle)
                 .foregroundStyle(Color.labelStrong)
 
-            JSGlassCard(accessibilityLabel: title) {
-                VStack(alignment: .leading, spacing: .jsMD) {
-                    content()
-                }
+            VStack(alignment: .leading, spacing: .jsMD) {
+                content()
             }
+            .padding(.jsLG)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Color.surfaceElevated.opacity(0.2))
+            .jsGlassCard(cornerRadius: 24)
         }
     }
 
