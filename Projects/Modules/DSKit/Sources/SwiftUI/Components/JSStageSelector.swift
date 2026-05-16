@@ -16,7 +16,10 @@ public struct JSStageSelector: View {
     }
 
     public var body: some View {
-        HStack(spacing: .jsSM) {
+        LazyVGrid(
+            columns: [GridItem(.adaptive(minimum: 72.jsScaled()), spacing: .jsSM)],
+            spacing: .jsSM
+        ) {
             ForEach(stages, id: \.self) { stage in
                 StageButton(
                     stage: stage,
@@ -42,14 +45,14 @@ private struct StageButton: View {
         Button(action: onTap) {
             VStack(spacing: .jsMicro) {
                 Text("\(stage)")
-                    .font(.jsHeadline20Bold)
+                    .font(.jsMonoMedium)
 
                 Text("일")
                     .font(.jsLabel12Medium)
             }
-            .foregroundColor(isSelected ? .white : Color.labelNormal)
+            .foregroundColor(isSelected ? .backgroundNormal : Color.labelNormal)
             .frame(maxWidth: .infinity)
-            .frame(height: 80.jsScaled())
+            .frame(height: 72.jsScaled())
             .background(
                 RoundedRectangle(cornerRadius: .jsRadiusSM)
                     .fill(isSelected ? Color.primaryNormal : Color.backgroundAlternative.opacity(0.2))
@@ -123,7 +126,7 @@ public struct JSStageInputView: View {
             Button(action: { onConfirm?() }) {
                 Text("확인")
                     .font(.jsHeadline17Bold)
-                    .foregroundColor(.white)
+                    .foregroundColor(.backgroundNormal)
                     .frame(maxWidth: .infinity)
                     .frame(height: 50.jsScaled())
                     .background(

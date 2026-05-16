@@ -83,17 +83,20 @@ public struct TaskCommandClientPort: Sendable {
     public var updateTask: @Sendable (Domain.Task) async throws -> Void
     public var deleteTask: @Sendable (TaskID) async throws -> Void
     public var updateTaskInfo: @Sendable (Domain.Task, String, Int, Bool, Date) async -> Void
+    public var updateVisibility: @Sendable (TaskID, TaskVisibility) async throws -> Void
 
     public init(
         addTask: @escaping @Sendable (Domain.Task) async throws -> Void,
         updateTask: @escaping @Sendable (Domain.Task) async throws -> Void,
         deleteTask: @escaping @Sendable (TaskID) async throws -> Void,
-        updateTaskInfo: @escaping @Sendable (Domain.Task, String, Int, Bool, Date) async -> Void
+        updateTaskInfo: @escaping @Sendable (Domain.Task, String, Int, Bool, Date) async -> Void,
+        updateVisibility: @escaping @Sendable (TaskID, TaskVisibility) async throws -> Void = { _, _ in }
     ) {
         self.addTask = addTask
         self.updateTask = updateTask
         self.deleteTask = deleteTask
         self.updateTaskInfo = updateTaskInfo
+        self.updateVisibility = updateVisibility
     }
 }
 

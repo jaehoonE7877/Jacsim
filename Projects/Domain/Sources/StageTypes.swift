@@ -3,8 +3,14 @@ import Foundation
 public enum StageType: Int, CaseIterable, Sendable {
     case three = 3
     case seven = 7
+    case fourteen = 14
     case fifteen = 15
+    case twentyOne = 21
     case thirty = 30
+    case fortyFive = 45
+    case sixty = 60
+    case ninety = 90
+    case oneEighty = 180
 
     public var durationDays: Int {
         rawValue
@@ -15,10 +21,22 @@ public enum StageType: Int, CaseIterable, Sendable {
         case .three:
             return .seven
         case .seven:
-            return .fifteen
+            return .fourteen
+        case .fourteen:
+            return .twentyOne
         case .fifteen:
             return .thirty
+        case .twentyOne:
+            return .thirty
         case .thirty:
+            return .fortyFive
+        case .fortyFive:
+            return .sixty
+        case .sixty:
+            return .ninety
+        case .ninety:
+            return .oneEighty
+        case .oneEighty:
             return nil
         }
     }

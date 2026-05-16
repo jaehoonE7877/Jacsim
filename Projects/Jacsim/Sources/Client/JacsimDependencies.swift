@@ -192,7 +192,12 @@ public extension JacsimDependencies {
             addTask: { try await jacsimClient.addTask($0) },
             updateTask: { try await jacsimClient.updateTask($0) },
             deleteTask: { try await jacsimClient.deleteTask($0) },
-            updateTaskInfo: { await jacsimClient.updateTaskInfo($0, $1, $2, $3, $4) }
+            updateTaskInfo: { await jacsimClient.updateTaskInfo($0, $1, $2, $3, $4) },
+            updateVisibility: { taskId, visibility in
+                guard var task = try await taskRepository.fetchTask(taskId) else { return }
+                task.visibility = visibility
+                try await taskRepository.updateTask(task)
+            }
         )
         let stageFlowClient = StageFlowClientPort(
             evaluateStageResult: { await jacsimClient.evaluateStageResult($0) },
@@ -224,7 +229,9 @@ public extension JacsimDependencies {
         let userSettingsRepository = UserSettingsRepositoryPort(
             isNotificationEnabled: { await userSettingsAdapter.isNotificationEnabled() },
             getAllReminders: { await userSettingsAdapter.getAllReminders() },
-            updateNotificationEnabled: { await userSettingsAdapter.updateNotificationEnabled($0) }
+            updateNotificationEnabled: { await userSettingsAdapter.updateNotificationEnabled($0) },
+            wallpaperRaw: { await userSettingsAdapter.wallpaperRaw() },
+            updateWallpaperRaw: { await userSettingsAdapter.updateWallpaperRaw($0) }
         )
 
         let socialUserRepositoryAdapter = SocialUserRepositoryAdapter()

@@ -49,6 +49,16 @@ public actor UserSettingsRepositoryAdapter {
         try? context.save()
     }
 
+    public func wallpaperRaw() async -> String {
+        fetchOrCreateGlobalSettings().wallpaperRaw ?? "morning"
+    }
+
+    public func updateWallpaperRaw(_ rawValue: String) async {
+        let settings = fetchOrCreateGlobalSettings()
+        settings.wallpaperRaw = rawValue
+        try? context.save()
+    }
+
     private func fetchOrCreateGlobalSettings() -> AppSettingsModel {
         let settingsDescriptor = FetchDescriptor<AppSettingsModel>()
         if let existing = (try? context.fetch(settingsDescriptor))?.first(where: { $0.id == GlobalSettings.id }) {

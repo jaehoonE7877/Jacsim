@@ -234,10 +234,16 @@ public enum JacsimSchemaV2: VersionedSchema {
     public final class AppSettingsModel {
         @Attribute(.unique) public var id: String
         public var isNotificationEnabled: Bool
+        public var wallpaperRaw: String?
 
-        public init(id: String = "global", isNotificationEnabled: Bool = false) {
+        public init(
+            id: String = "global",
+            isNotificationEnabled: Bool = false,
+            wallpaperRaw: String? = "morning"
+        ) {
             self.id = id
             self.isNotificationEnabled = isNotificationEnabled
+            self.wallpaperRaw = wallpaperRaw
         }
     }
 
