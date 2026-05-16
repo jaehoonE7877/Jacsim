@@ -11,6 +11,7 @@ public struct JSBottomSheet<Content: View>: View {
     let style: JSBottomSheetStyle
     let showDragIndicator: Bool
     let allowsInteractiveDismiss: Bool
+    let glass: Bool
     let content: Content
     let onDismiss: (() -> Void)?
 
@@ -22,6 +23,7 @@ public struct JSBottomSheet<Content: View>: View {
         style: JSBottomSheetStyle = .flexible(maxHeight: 400),
         showDragIndicator: Bool = true,
         allowsInteractiveDismiss: Bool = false,
+        glass: Bool = true,
         onDismiss: (() -> Void)? = nil,
         @ViewBuilder content: () -> Content
     ) {
@@ -29,6 +31,7 @@ public struct JSBottomSheet<Content: View>: View {
         self.style = style
         self.showDragIndicator = showDragIndicator
         self.allowsInteractiveDismiss = allowsInteractiveDismiss
+        self.glass = glass
         self.onDismiss = onDismiss
         self.content = content()
     }
@@ -55,10 +58,8 @@ public struct JSBottomSheet<Content: View>: View {
                         .frame(maxWidth: .infinity)
                         .frame(height: sheetHeight)
                 }
-                .background(
-                    Color.surfaceElevated
-                        .jsCornerRadius(16, corners: [.topLeft, .topRight])
-                )
+                .background(sheetBackground)
+                .jsGlassSheet()
                 .offset(y: max(0, offset))
                 .gesture(
                     DragGesture()
@@ -81,9 +82,23 @@ public struct JSBottomSheet<Content: View>: View {
                         }
                 )
                 .transition(.move(edge: .bottom))
+                .accessibilityLabel("Glass bottom sheet")
             }
         }
         .animation(.spring(response: 0.3, dampingFraction: 0.8), value: isPresented.wrappedValue)
+    }
+
+    @ViewBuilder
+    private var sheetBackground: some View {
+        if glass {
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .fill(.thinMaterial)
+                .jsGlassCard(cornerRadius: 24)
+                .jsCornerRadius(24, corners: [.topLeft, .topRight])
+        } else {
+            Color.surfaceElevated
+                .jsCornerRadius(16, corners: [.topLeft, .topRight])
+        }
     }
 
     private var dragIndicator: some View {

@@ -1,16 +1,38 @@
 import SwiftUI
 
 public enum JSTabItem: CaseIterable {
-    case home
+    case today
     case calendar
+    case plus
+    case feed
+    case me
+    @available(*, deprecated, message: "Use JSGlassFloatingTabBar")
+    case home
+    @available(*, deprecated, message: "Use JSGlassFloatingTabBar")
     case settings
+
+    public static var allCases: [JSTabItem] {
+        [.today, .calendar, .plus, .feed, .me]
+    }
+
+    static var legacyCases: [JSTabItem] {
+        [.home, .calendar, .settings]
+    }
 
     var icon: String {
         switch self {
+        case .today:
+            return "sun.max.fill"
         case .home:
             return "house.fill"
         case .calendar:
             return "calendar"
+        case .plus:
+            return "plus"
+        case .feed:
+            return "person.2.fill"
+        case .me:
+            return "person.crop.circle.fill"
         case .settings:
             return "gearshape.fill"
         }
@@ -18,16 +40,25 @@ public enum JSTabItem: CaseIterable {
 
     var title: String {
         switch self {
+        case .today:
+            return "오늘"
         case .home:
             return "홈"
         case .calendar:
             return "캘린더"
+        case .plus:
+            return "추가"
+        case .feed:
+            return "피드"
+        case .me:
+            return "나"
         case .settings:
             return "설정"
         }
     }
 }
 
+@available(*, deprecated, message: "Use JSGlassFloatingTabBar")
 public struct JSTabBar: View {
     @Binding var selectedTab: JSTabItem
     let onTabSelected: ((JSTabItem) -> Void)?
@@ -42,7 +73,7 @@ public struct JSTabBar: View {
 
     public var body: some View {
         HStack(spacing: 0) {
-            ForEach(JSTabItem.allCases, id: \.self) { tab in
+            ForEach(JSTabItem.legacyCases, id: \.self) { tab in
                 tabButton(for: tab)
             }
         }
@@ -82,6 +113,7 @@ public struct JSTabBar: View {
     }
 }
 
+@available(*, deprecated, message: "Use JSGlassFloatingTabBar")
 public struct JSTabView<Content: View>: View {
     @Binding var selectedTab: JSTabItem
     let onTabSelected: ((JSTabItem) -> Void)?

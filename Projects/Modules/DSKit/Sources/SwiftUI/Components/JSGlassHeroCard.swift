@@ -49,7 +49,7 @@ public struct JSGlassHeroCard: View {
                 }
 
                 LinearGradient(
-                    colors: [.clear, .black.opacity(0.8)],
+                    colors: [.clear, Color.surfaceOverlay.opacity(0.82)],
                     startPoint: .top,
                     endPoint: .bottom
                 )
@@ -60,7 +60,7 @@ public struct JSGlassHeroCard: View {
                         Spacer()
                         Text(isTodayCertified ? "오늘 인증 완료" : "오늘 미인증")
                             .font(.jsLabel12Bold)
-                            .foregroundColor(isTodayCertified ? .green : .white)
+                            .foregroundColor(isTodayCertified ? Color.positive : Color.backgroundNormal)
                             .padding(.horizontal, 12)
                             .padding(.vertical, 6)
                             .background(.ultraThinMaterial)
@@ -72,13 +72,13 @@ public struct JSGlassHeroCard: View {
                     VStack(alignment: .leading, spacing: 8) {
                         Text(title)
                             .font(.jsDisplay28Bold)
-                            .foregroundColor(.white)
+                            .foregroundColor(Color.backgroundNormal)
                             .lineLimit(2)
 
                         if let subtitle = subtitle {
                             Text(subtitle)
                                 .font(.jsBody15Medium)
-                                .foregroundColor(.white.opacity(0.8))
+                                .foregroundColor(Color.backgroundNormal.opacity(0.8))
                                 .lineLimit(1)
                         }
 
@@ -86,11 +86,11 @@ public struct JSGlassHeroCard: View {
                             GeometryReader { geo in
                                 ZStack(alignment: .leading) {
                                     Capsule()
-                                        .fill(.white.opacity(0.3))
+                                        .fill(Color.backgroundNormal.opacity(0.3))
                                         .frame(height: 6)
                                     
                                     Capsule()
-                                        .fill(.white)
+                                        .fill(Color.backgroundNormal)
                                         .frame(width: geo.size.width * CGFloat(progress), height: 6)
                                 }
                             }
@@ -98,7 +98,7 @@ public struct JSGlassHeroCard: View {
 
                             Text("\(completedDays)/\(totalDays)일")
                                 .font(.jsLabel14Bold)
-                                .foregroundColor(.white)
+                                .foregroundColor(Color.backgroundNormal)
                         }
                         .padding(.top, 8)
                     }
