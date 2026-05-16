@@ -281,12 +281,12 @@ func swiftDataTaskRepositoryDerivesCompletedStageStatusOnFetch() async throws {
     let context = ModelContext(container)
     let calendar = Calendar.current
     let endDate = calendar.date(byAdding: .day, value: -2, to: calendar.startOfDay(for: Date()))!
-    let startDate = calendar.date(byAdding: .day, value: -29, to: endDate)!
+    let startDate = calendar.date(byAdding: .day, value: -179, to: endDate)!
     let model = makeStageStatusModel(
         title: "완료된 작심",
-        stageType: .thirty,
+        stageType: .oneEighty,
         startDate: startDate,
-        checkedOffsets: Set(0..<15)
+        checkedOffsets: Set(0..<90)
     )
 
     context.insert(model)
