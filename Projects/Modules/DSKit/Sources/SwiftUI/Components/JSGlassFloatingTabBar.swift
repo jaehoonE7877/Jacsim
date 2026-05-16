@@ -26,7 +26,10 @@ public struct JSGlassFloatingTabBar: View {
                 }
                 .buttonStyle(.plain)
                 .jsTouchTarget()
+                .accessibilityElement(children: .ignore)
                 .accessibilityLabel(accessibilityLabel(for: item))
+                .accessibilityIdentifier(accessibilityIdentifier(for: item))
+                .accessibilityAddTraits(selection == item ? [.isSelected] : [])
             }
         }
         .frame(height: 64)
@@ -34,7 +37,7 @@ public struct JSGlassFloatingTabBar: View {
         .glassEffect(.regular, in: .rect(cornerRadius: 32))
         .padding(.horizontal, .jsTabBarMargin)
         .accessibilityElement(children: .contain)
-        .accessibilityLabel("Liquid Glass floating tab bar")
+        .accessibilityIdentifier("main.tabbar")
     }
 
     private func handleTap(_ item: JSTabItem) {
@@ -85,6 +88,25 @@ public struct JSGlassFloatingTabBar: View {
             return "홈"
         case .settings:
             return "설정"
+        }
+    }
+
+    private func accessibilityIdentifier(for item: JSTabItem) -> String {
+        switch item {
+        case .today:
+            return "main.tab.today"
+        case .calendar:
+            return "main.tab.calendar"
+        case .plus:
+            return "main.tab.plus"
+        case .feed:
+            return "main.tab.feed"
+        case .me:
+            return "main.tab.me"
+        case .home:
+            return "main.tab.home"
+        case .settings:
+            return "main.tab.settings"
         }
     }
 }

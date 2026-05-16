@@ -52,6 +52,7 @@ public struct JSBottomSheet<Content: View>: View {
                 VStack(spacing: 0) {
                     if showDragIndicator {
                         dragIndicator
+                            .gesture(sheetDragGesture)
                     }
 
                     content
@@ -61,28 +62,9 @@ public struct JSBottomSheet<Content: View>: View {
                 .background(sheetBackground)
                 .jsGlassSheet()
                 .offset(y: max(0, offset))
-                .gesture(
-                    DragGesture()
-                        .onChanged { value in
-                            isDragging = true
-                            if value.translation.height > 0 {
-                                offset = value.translation.height
-                            }
-                        }
-                        .onEnded { value in
-                            isDragging = false
-                            let threshold: CGFloat = 100
-                            if allowsInteractiveDismiss, value.translation.height > threshold {
-                                dismiss()
-                            } else {
-                                withAnimation(.spring()) {
-                                    offset = 0
-                                }
-                            }
-                        }
-                )
                 .transition(.move(edge: .bottom))
-                .accessibilityLabel("Glass bottom sheet")
+                .accessibilityElement(children: .contain)
+                .accessibilityIdentifier("glass.bottom.sheet")
             }
         }
         .animation(.spring(response: 0.3, dampingFraction: 0.8), value: isPresented.wrappedValue)
@@ -107,6 +89,27 @@ public struct JSBottomSheet<Content: View>: View {
             .frame(width: 36, height: 5)
             .padding(.top, 8)
             .padding(.bottom, 4)
+    }
+
+    private var sheetDragGesture: some Gesture {
+        DragGesture()
+            .onChanged { value in
+                isDragging = true
+                if value.translation.height > 0 {
+                    offset = value.translation.height
+                }
+            }
+            .onEnded { value in
+                isDragging = false
+                let threshold: CGFloat = 100
+                if allowsInteractiveDismiss, value.translation.height > threshold {
+                    dismiss()
+                } else {
+                    withAnimation(.spring()) {
+                        offset = 0
+                    }
+                }
+            }
     }
 
     private var sheetHeight: CGFloat? {
