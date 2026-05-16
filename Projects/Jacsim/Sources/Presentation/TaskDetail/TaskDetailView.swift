@@ -7,6 +7,8 @@ import UIKit
 public struct TaskDetailView: View {
     @Bindable var model: TaskDetailModel
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var selectedCertificationDate: Date?
+    @State private var isCertificationSheetPresented = false
 
     public init(model: TaskDetailModel) {
         self.model = model
@@ -132,7 +134,7 @@ public struct TaskDetailView: View {
                 Button(action: { model.backButtonTapped() }) {
                     Image(systemName: "chevron.left")
                         .font(.jsHeadlineMedium)
-                        .foregroundColor(.white)
+                        .foregroundColor(.labelStrong)
                         .frame(width: 44.jsScaled(.touchTarget), height: 44.jsScaled(.touchTarget))
                 }
             }
@@ -155,12 +157,16 @@ public struct TaskDetailView: View {
 
             ToolbarItem(placement: .topBarTrailing) {
                 Menu {
+                    Button(action: { model.visibilityButtonTapped() }) {
+                        Label("공개 범위 변경", systemImage: "person.2.badge.gearshape")
+                    }
+
                     Button(action: { model.changePhotoButtonTapped() }) {
                         Label("대표 사진 변경", systemImage: "photo")
                     }
 
                     Button(action: { model.notificationSettingsButtonTapped() }) {
-                        Label("알림 설정", systemImage: "bell")
+                        Label("알림 변경", systemImage: "bell")
                     }
 
                     Button(action: { model.editMemoButtonTapped() }) {
@@ -175,7 +181,7 @@ public struct TaskDetailView: View {
                 } label: {
                     Image(systemName: "ellipsis")
                         .font(.jsHeadlineMedium)
-                        .foregroundColor(.white)
+                        .foregroundColor(.labelStrong)
                         .frame(width: 44.jsScaled(.touchTarget), height: 44.jsScaled(.touchTarget))
                 }
             }
@@ -214,6 +220,15 @@ public struct TaskDetailView: View {
                     onDismiss: { model.deleteFlowDismissed() }
                 )
             }
+            if model.isVisibilitySelectorPresented {
+                VisibilitySelectorSheet(
+                    selectedVisibility: visibilityBinding,
+                    isPresented: $model.isVisibilitySelectorPresented,
+                    onSave: { model.visibilitySelected($0) }
+                )
+            }
+
+            certificationSheet
         }
     }
 
@@ -252,7 +267,7 @@ public struct TaskDetailView: View {
             VStack(alignment: .leading, spacing: .jsXS) {
                 Text(model.task.title)
                     .font(.jsDisplaySmall)
-                    .foregroundColor(.white)
+                    .foregroundColor(.backgroundNormal)
                     .lineLimit(2)
             }
             .padding(.jsMD)
@@ -293,7 +308,7 @@ public struct TaskDetailView: View {
             VStack(alignment: .leading, spacing: .jsXS) {
                 Text(model.task.title)
                     .font(.jsDisplaySmall)
-                    .foregroundColor(.white)
+                    .foregroundColor(.backgroundNormal)
                     .lineLimit(2)
             }
             .padding(.jsMD)
@@ -303,41 +318,85 @@ public struct TaskDetailView: View {
     }
     
     private var stageInfoSection: some View {
-        JSCard(style: .elevated) {
-            VStack(alignment: .leading, spacing: .jsMD) {
-                HStack {
-                    VStack(alignment: .leading, spacing: .jsMicro) {
-                        Text("\(model.currentStage?.stageType.durationDays ?? 7)일 스테이지")
-                            .font(.jsHeadlineSmall)
-                            .foregroundColor(.labelStrong)
-                        
-                        Text(stageDateRange)
-                            .font(.jsBodySmall)
-                            .foregroundColor(.labelAlternative)
-                    }
-                    
-                    Spacer()
-                    
-                    stageStatusChip
-                }
-                
-                VStack(alignment: .leading, spacing: .jsXS) {
-                    JSProgress(
-                        progress: model.stageProgress,
-                        style: .linear,
-                        size: .medium,
-                        tintColor: progressColor
+        JSGlassCard(accessibilityLabel: "\(model.task.title) 상세 정보") {
+            VStack(alignment: .leading, spacing: .jsLG) {
+                HStack(alignment: .center, spacing: .jsLG) {
+                    JSStageRing(
+                        currentDays: stagePopupCompletedDays,
+                        targetDays: stagePopupTotalDays,
+                        stageType: jsStageType,
+                        accessibilityLabel: "현재 스테이지 \(stagePopupCompletedDays)일 완료"
                     )
-                    
-                    HStack {
-                        Spacer()
-                        Text(model.stageProgressText)
-                            .font(.jsLabelMedium)
+                    .frame(width: 132.jsScaled(), height: 132.jsScaled())
+
+                    VStack(alignment: .leading, spacing: .jsSM) {
+                        HStack {
+                            stageStatusChip
+                            visibilityChip
+                        }
+
+                        Text(model.task.title)
+                            .font(.jsSerifTitle)
+                            .foregroundColor(.labelStrong)
+                            .lineLimit(2)
+
+                        Text(stageDateRange)
+                            .font(.jsMonoSmall)
                             .foregroundColor(.labelAlternative)
+
+                        Text(model.stageProgressText)
+                            .font(.jsMonoMedium)
+                            .foregroundColor(.forestAccent)
                     }
                 }
+
+                JSProgress(
+                    progress: model.stageProgress,
+                    style: .linear,
+                    size: .medium,
+                    tintColor: progressColor
+                )
+
+                stageDaysGrid
             }
         }
+    }
+
+    private var stageDaysGrid: some View {
+        LazyVGrid(
+            columns: [GridItem(.adaptive(minimum: 44.jsScaled(.touchTarget)), spacing: .jsXS)],
+            spacing: .jsXS
+        ) {
+            ForEach(model.dayViewData) { data in
+                Button {
+                    selectedCertificationDate = data.date
+                    isCertificationSheetPresented = true
+                } label: {
+                    Text("\(Calendar.current.component(.day, from: data.date))")
+                        .font(.jsMonoSmall)
+                        .foregroundColor(data.isChecked ? .backgroundNormal : .labelNormal)
+                        .frame(width: 44.jsScaled(.touchTarget), height: 44.jsScaled(.touchTarget))
+                        .background(
+                            RoundedRectangle(cornerRadius: .jsRadiusSM, style: .continuous)
+                                .fill(data.isChecked ? Color.streakCompleted : Color.surfaceElevated.opacity(0.3))
+                        )
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("\(formattedDate(data.date)) 인증")
+            }
+        }
+    }
+
+    private var visibilityChip: some View {
+        Text(visibilityTitle(model.task.visibility))
+            .font(.jsLabelSmall)
+            .foregroundColor(.forestAccent)
+            .padding(.horizontal, .jsSM)
+            .padding(.vertical, .jsMicro)
+            .background(
+                Capsule()
+                    .fill(Color.forestAccent.opacity(0.12))
+            )
     }
 
     private var stageDateRange: String {
@@ -345,6 +404,63 @@ public struct TaskDetailView: View {
         let formatter = DateFormatter()
         formatter.dateFormat = "M/d"
         return "\(formatter.string(from: stage.startDate)) ~ \(formatter.string(from: stage.endDate))"
+    }
+
+    private var jsStageType: JSStageRing.StageType {
+        let days = model.currentStage?.durationDays ?? model.task.stages.last?.durationDays ?? 7
+        return JSStageRing.StageType(rawValue: days) ?? .seven
+    }
+
+    private var visibilityBinding: Binding<TaskVisibility> {
+        Binding(
+            get: { model.task.visibility },
+            set: { model.task.visibility = $0 }
+        )
+    }
+
+    private var certificationSheet: some View {
+        JSBottomSheet(
+            isPresented: $isCertificationSheetPresented,
+            style: .contentHeight,
+            allowsInteractiveDismiss: true,
+            glass: true
+        ) {
+            VStack(alignment: .leading, spacing: .jsMD) {
+                Text(selectedCertificationDate.map(formattedDate) ?? "인증")
+                    .font(.jsSerifTitle)
+                    .foregroundColor(.labelStrong)
+
+                Text("해당 날짜의 인증 기록을 확인하거나 편집합니다.")
+                    .font(.jsBodyMedium)
+                    .foregroundColor(.labelAlternative)
+
+                JSButton(title: "기록 편집하기", style: .primary, size: .large) {
+                    guard let selectedCertificationDate else { return }
+                    isCertificationSheetPresented = false
+                    model.dayTapped(selectedCertificationDate)
+                }
+            }
+            .padding(.horizontal, .jsLG)
+            .padding(.bottom, .jsLG)
+        }
+    }
+
+    private func visibilityTitle(_ visibility: TaskVisibility) -> String {
+        switch visibility {
+        case .private:
+            return "나만 보기"
+        case .followers:
+            return "팔로워"
+        case .public:
+            return "전체 공개"
+        }
+    }
+
+    private func formattedDate(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "ko_KR")
+        formatter.dateFormat = "M월 d일"
+        return formatter.string(from: date)
     }
 
     private var navigationStageSubtitle: String {

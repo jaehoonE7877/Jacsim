@@ -41,6 +41,7 @@ public final class TaskDetailModel {
     public var shouldScrollToRecords: Bool = false
     public var coverImage: UIImage?
     public var editTask: TaskEditModel?
+    public var isVisibilitySelectorPresented: Bool = false
 
     @ObservationIgnored private let dependencies: JacsimDependencies
     @ObservationIgnored private let onTaskDeleted: () -> Void
@@ -146,6 +147,29 @@ public final class TaskDetailModel {
 
     public func notificationSettingsButtonTapped() {
         presentEditTask()
+    }
+
+    public func visibilityButtonTapped() {
+        isVisibilitySelectorPresented = true
+    }
+
+    public func visibilitySelected(_ visibility: TaskVisibility) {
+        let previousVisibility = task.visibility
+        task.visibility = visibility
+        isVisibilitySelectorPresented = false
+        updateTask?.cancel()
+        updateTask = _Concurrency.Task { [dependencies, taskId = task.id] in
+            do {
+                try await dependencies.taskCommandClient.updateVisibility(taskId, visibility)
+            } catch {
+                Logger.certificationFailed(error: error)
+                task.visibility = previousVisibility
+            }
+        }
+    }
+
+    public func visibilitySelectionDismissed() {
+        isVisibilitySelectorPresented = false
     }
 
     public func editMemoButtonTapped() {
