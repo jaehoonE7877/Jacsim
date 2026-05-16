@@ -2,60 +2,6 @@ import SwiftUI
 import Domain
 import DSKit
 
-struct HomeFloatingAddButton: View {
-    let isExpanded: Bool
-    let isHidden: Bool
-    let reduceMotion: Bool
-    let height: CGFloat
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            HStack(spacing: .jsXS) {
-                Image(systemName: "plus")
-                    .font(.title3.weight(.semibold))
-                    .foregroundColor(.white)
-
-                if isExpanded {
-                    Text("새 작심")
-                        .font(.jsButtonMedium)
-                        .foregroundColor(.white)
-                        .lineLimit(1)
-                        .transition(.opacity.combined(with: .move(edge: .trailing)))
-                }
-            }
-            .frame(height: height)
-            .padding(.horizontal, isExpanded ? .jsLG : .jsMD)
-            .background(
-                Capsule()
-                    .fill(Color.primaryNormal)
-            )
-            .overlay(
-                Capsule()
-                    .stroke(Color.white.opacity(0.16), lineWidth: 1)
-            )
-            .shadow(color: .primaryNormal.opacity(0.26), radius: 14.jsScaled(), x: 0, y: 8.jsScaled())
-            .contentShape(Capsule())
-        }
-        .pressEffect()
-        .opacity(isHidden ? 0 : 1)
-        .scaleEffect(isHidden ? 0.92 : 1)
-        .offset(y: isHidden ? 24.jsScaled() : 0)
-        .allowsHitTesting(!isHidden)
-        .accessibilityHidden(isHidden)
-        .animation(
-            reduceMotion ? .none : .spring(response: 0.28, dampingFraction: 0.88),
-            value: isHidden
-        )
-        .animation(
-            reduceMotion ? .none : .spring(response: 0.28, dampingFraction: 0.88),
-            value: isExpanded
-        )
-        .accessibilityLabel("새 작심 만들기")
-        .accessibilityHint("새 작심 추가 화면을 엽니다")
-    }
-}
-
 struct HomeHeaderSection: View {
     let todayLabel: String
     let onSettingsTap: () -> Void
@@ -242,8 +188,6 @@ struct HomeMiniCardsSection: View {
 }
 
 struct HomeEmptyStateSection: View {
-    let onStart: () -> Void
-
     var body: some View {
         VStack(spacing: .jsXL) {
             Image(systemName: "square.text.square.fill")
@@ -259,17 +203,6 @@ struct HomeEmptyStateSection: View {
                     .font(.jsBodySmall)
                     .foregroundColor(.labelAlternative)
             }
-
-            Button(action: onStart) {
-                Text("작심 시작하기")
-                    .font(.jsButtonMedium)
-                    .foregroundColor(.white)
-                    .frame(height: 50.jsScaled())
-                    .frame(maxWidth: .infinity)
-                    .background(Color.primaryNormal)
-                    .cornerRadius(.jsRadiusMD)
-            }
-            .padding(.horizontal, .jsXL)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 40.jsScaled())

@@ -57,7 +57,6 @@ public final class HomeModel {
     public var heroTaskImageData: Data?
     public var loadingStartTime: Date?
     public var path: [Route] = []
-    public var challengeCreate: ChallengeCreateModel?
 
     @ObservationIgnored public let dependencies: JacsimDependencies
     @ObservationIgnored private var fetchTask: _Concurrency.Task<Void, Never>?
@@ -142,18 +141,6 @@ public final class HomeModel {
 
     public func settingButtonTapped() {
         path.append(.setting)
-    }
-
-    public func addButtonTapped() {
-        challengeCreate = ChallengeCreateModel(
-            dependencies: dependencies,
-            onChallengeCreated: { [weak self] in
-                self?.challengeCreated()
-            },
-            onCancelled: { [weak self] in
-                self?.challengeCancelled()
-            }
-        )
     }
 
     public func allTasksButtonTapped() {
@@ -340,16 +327,6 @@ public final class HomeModel {
     private func deepLinkTaskLoaded(_ task: Domain.Task?) {
         guard let task else { return }
         path.append(.detail(task, scrollToRecords: false))
-    }
-
-    private func challengeCreated() {
-        challengeCreate = nil
-        toastMessage = "새 작심을 시작했어요"
-        onAppear()
-    }
-
-    private func challengeCancelled() {
-        challengeCreate = nil
     }
 
     private func shouldOpenCheckIn(for task: Domain.Task) -> Bool {
