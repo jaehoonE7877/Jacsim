@@ -26,6 +26,7 @@ func mapToSwiftDataModel(_ task: Domain.Task, existing: UserJacsimModel? = nil) 
     userJacsim.endDate = task.endDate
     userJacsim.alarm = task.alarm
     userJacsim.isNotificationEnabled = task.isNotificationEnabled
+    userJacsim.visibilityRaw = task.visibility.rawValue
     userJacsim.success = success
     userJacsim.isDone = task.isTerminallyDone
     userJacsim.isSuccess = task.isTerminallySuccessful
@@ -149,6 +150,7 @@ func mapToDomainModel(_ userJacsim: UserJacsimModel) -> Domain.Task {
         isNotificationEnabled: userJacsim.isNotificationEnabled,
         stages: stages,
         records: records,
+        visibility: Domain.TaskVisibility(rawValue: userJacsim.visibilityRaw) ?? .private,
         isDeleted: false,
         createdAt: createdAt,
         updatedAt: updatedAt
