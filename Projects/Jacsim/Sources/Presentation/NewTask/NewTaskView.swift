@@ -43,8 +43,7 @@ public struct NewTaskView: View {
 
     public var body: some View {
         RedesignScreenScaffold(
-            title: "새 작심 만들기",
-            subtitle: model.currentStep.description,
+            title: "새 작심",
             contentBottomInset: contentBottomInset,
             scrollToID: scrollTargetID,
             scrollAnchor: .center,
@@ -53,6 +52,7 @@ public struct NewTaskView: View {
             }
         ) {
             stepProgressSection
+            challengePreviewCard
 
             if model.saveFailed && model.currentStep == .alarmConfirm {
                 saveFailedBanner
@@ -149,32 +149,74 @@ public struct NewTaskView: View {
         let steps = NewTaskModel.CreateChallengeStep.allCases
         let currentIndex = model.currentStep.rawValue + 1
 
-        return RedesignSectionCard(
-            title: "단계 \(currentIndex)/\(steps.count)",
-            subtitle: model.currentStep.title
-        ) {
-            VStack(alignment: .leading, spacing: .jsSM) {
-                HStack(spacing: .jsXS) {
-                    ForEach(steps, id: \.rawValue) { step in
-                        Capsule()
-                            .fill(step.rawValue <= model.currentStep.rawValue ? Color.primaryNormal : Color.backgroundStrong)
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 6.jsScaled())
-                    }
-                }
-
-                Text(model.currentStep.description)
-                    .font(.jsBodySmall)
+        return VStack(alignment: .leading, spacing: .jsSM) {
+            HStack {
+                JSV2StatusChip("단계 \(currentIndex)/\(steps.count)", systemImage: "sparkles", style: .accent)
+                Spacer()
+                Text(model.currentStep.title)
+                    .font(.jsButtonSmall)
                     .foregroundColor(.labelAlternative)
             }
+
+            HStack(spacing: .jsXS) {
+                ForEach(steps, id: \.rawValue) { step in
+                    Capsule()
+                        .fill(step.rawValue <= model.currentStep.rawValue ? Color.v2BrandBlue : Color.v2Surface)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 7.jsScaled())
+                }
+            }
         }
+        .padding(.horizontal, .jsMD)
+    }
+
+    private var challengePreviewCard: some View {
+        ZStack(alignment: .bottomLeading) {
+            if let image = model.image {
+                Image(uiImage: image)
+                    .resizable()
+                    .scaledToFill()
+            } else {
+                LinearGradient(
+                    colors: [.v2BrandBlue.opacity(0.76), .v2BrandBlueStrong.opacity(0.92)],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                Image(systemName: "camera.fill")
+                    .font(.jsDisplayMedium)
+                    .foregroundColor(.white.opacity(0.72))
+            }
+
+            LinearGradient(
+                colors: [.clear, Color.black.opacity(0.68)],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+
+            VStack(alignment: .leading, spacing: .jsSM) {
+                HStack(spacing: .jsXS) {
+                    JSV2StatusChip("\(model.stageType.durationDays)일", systemImage: "calendar", style: .neutral)
+                    JSV2StatusChip(model.isAlarmEnabled ? "알림" : "알림 없음", systemImage: "bell.fill", style: model.isAlarmEnabled ? .accent : .neutral)
+                }
+
+                Text(model.trimmedTitle.isEmpty ? "오늘 시작할 작심" : model.trimmedTitle)
+                    .font(.jsDisplay26Bold)
+                    .foregroundColor(.white)
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.82)
+            }
+            .padding(.jsLG)
+        }
+        .frame(height: 240.jsScaled())
+        .frame(maxWidth: .infinity)
+        .clipShape(RoundedRectangle(cornerRadius: 28.jsScaled(), style: .continuous))
+        .padding(.horizontal, .jsMD)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("새 작심 미리보기, \(model.trimmedTitle.isEmpty ? "제목 미입력" : model.trimmedTitle), \(model.stageType.durationDays)일")
     }
 
     private var titleSection: some View {
-        RedesignSectionCard(
-            title: "제목",
-            subtitle: "나중에 변경할 수 없어요"
-        ) {
+        RedesignSectionCard(title: "무엇을 이어갈까요?") {
             VStack(alignment: .trailing, spacing: .jsXS) {
                 JSInputField(
                     title: "",
@@ -185,19 +227,12 @@ public struct NewTaskView: View {
                 Text("\(model.title.count)/\(TextInputFieldPolicy.title.maxLength)")
                     .font(.jsLabelMedium)
                     .foregroundColor(.labelAssistive)
-
-                Text("공백 포함 · 저장 시 앞뒤 공백은 자동 정리돼요")
-                    .font(.jsLabelSmall)
-                    .foregroundColor(.labelAssistive)
             }
         }
     }
 
     private var stageSection: some View {
-        RedesignSectionCard(
-            title: "스테이지",
-            subtitle: "이번 목표를 며칠 동안 이어갈까요?"
-        ) {
+        RedesignSectionCard(title: "기간") {
             JSStageSelector(
                 selectedStage: stageDayBinding,
                 stages: [3, 7, 15, 30]
@@ -211,22 +246,22 @@ public struct NewTaskView: View {
                 }
             }
 
-            Text("선택된 기간: \(model.stageType.durationDays)일")
-                .font(.jsBodySmall)
-                .foregroundColor(.labelAlternative)
-                .frame(maxWidth: .infinity, alignment: .trailing)
+            HStack {
+                Spacer()
+                JSV2StatusChip("\(model.stageType.durationDays)일", systemImage: "calendar", style: .accent)
+            }
         }
     }
 
     private var photoSection: some View {
-        RedesignSectionCard(
-            title: "대표 사진",
-            subtitle: "카드에 노출될 대표 이미지를 설정해요"
-        ) {
+        RedesignSectionCard(title: "대표 사진") {
             ImageAttachmentPicker(
                 image: model.image,
-                emptyTitle: "대표 사진을 추가해 주세요",
-                emptySubtitle: "가로·세로 비율은 자동으로 맞춰져요",
+                emptyTitle: "카드 사진",
+                emptySubtitle: "작심이 한눈에 보이게",
+                selectedBadgeTitle: "대표",
+                cameraButtonTitle: "촬영",
+                libraryButtonTitle: "앨범",
                 height: 232.jsScaled()
             ) { image in
                 model.imageSelected(image)
@@ -235,10 +270,7 @@ public struct NewTaskView: View {
     }
 
     private var challengeSummarySection: some View {
-        RedesignSectionCard(
-            title: "작심 확인",
-            subtitle: "아래 내용으로 챌린지를 시작해요"
-        ) {
+        RedesignSectionCard(title: "카드 확인") {
             VStack(spacing: .jsSM) {
                 summaryRow(
                     title: "제목",
@@ -273,11 +305,8 @@ public struct NewTaskView: View {
     }
 
     private var alarmSection: some View {
-        RedesignSectionCard(
-            title: "알림",
-            subtitle: "매일 같은 시간에 인증 리마인드를 받을 수 있어요"
-        ) {
-            Toggle("알림 받기", isOn: $model.isAlarmEnabled)
+        RedesignSectionCard(title: "알림") {
+            Toggle("작심 알림", isOn: $model.isAlarmEnabled)
                 .font(.jsBodyMedium)
 
             if model.isAlarmEnabled {
@@ -299,6 +328,7 @@ public struct NewTaskView: View {
             ZStack {
                 JSButton(
                     title: primaryButtonTitle,
+                    systemImage: primaryButtonIcon,
                     style: .primary,
                     size: .medium,
                     isEnabled: isPrimaryButtonEnabled
@@ -319,13 +349,13 @@ public struct NewTaskView: View {
         .padding(.horizontal, FooterLayout.horizontalPadding)
         .padding(.top, isFooterCompacted ? FooterLayout.compactTopPadding : FooterLayout.topPadding)
         .padding(.bottom, isFooterCompacted ? FooterLayout.compactBottomPadding : FooterLayout.bottomPadding)
-        .background(Color.backgroundNormal)
+        .background(Color.v2Background)
         .background(alignment: .top) {
             LinearGradient(
                 colors: [
-                    Color.backgroundNormal.opacity(0),
-                    Color.backgroundNormal.opacity(0.9),
-                    Color.backgroundNormal
+                    Color.v2Background.opacity(0),
+                    Color.v2Background.opacity(0.9),
+                    Color.v2Background
                 ],
                 startPoint: .top,
                 endPoint: .bottom
@@ -360,7 +390,16 @@ public struct NewTaskView: View {
         case .basicInfo, .photo:
             return "다음"
         case .alarmConfirm:
-            return "챌린지 시작"
+            return "시작하기"
+        }
+    }
+
+    private var primaryButtonIcon: String {
+        switch model.currentStep {
+        case .basicInfo, .photo:
+            return "arrow.right"
+        case .alarmConfirm:
+            return "sparkles"
         }
     }
 

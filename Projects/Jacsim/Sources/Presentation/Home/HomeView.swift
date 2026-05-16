@@ -108,7 +108,7 @@ public struct HomeView: View {
 
     private var mainContent: some View {
         ZStack {
-            Color.backgroundNormal.ignoresSafeArea()
+            Color.v2Background.ignoresSafeArea()
 
             scrollContent
         }
@@ -155,7 +155,7 @@ public struct HomeView: View {
 
     private var scrollContent: some View {
         ScrollView(showsIndicators: false) {
-            VStack(alignment: .leading, spacing: .jsXXL) {
+            VStack(alignment: .leading, spacing: .jsLG) {
                 HomeHeaderSection(
                     todayLabel: todayLabel,
                     onSettingsTap: handleSettingsButtonTap
@@ -203,15 +203,6 @@ public struct HomeView: View {
 
     @ViewBuilder
     private func loadedContent(for heroTask: Domain.Task) -> some View {
-        if shouldShowSummarySection {
-            HomeSummaryCardSection(
-                activeTaskCount: model.activeTasks.count,
-                overallProgress: overallProgress,
-                todayCompletedCount: todayCompletedCount
-            )
-            .transition(.opacity)
-        }
-
         HomeHeroTaskSection(
             task: heroTask,
             imageData: model.heroTaskImageData,
@@ -225,6 +216,15 @@ public struct HomeView: View {
             onSecondaryTap: { handleFocusSecondaryAction(heroTask) }
         )
         .padding(.horizontal, .jsXL)
+
+        if shouldShowSummarySection {
+            HomeSummaryCardSection(
+                activeTaskCount: model.activeTasks.count,
+                overallProgress: overallProgress,
+                todayCompletedCount: todayCompletedCount
+            )
+            .transition(.opacity)
+        }
 
         if shouldShowMiniCardsSection && model.activeTasks.count > 1 {
             HomeMiniCardsSection(

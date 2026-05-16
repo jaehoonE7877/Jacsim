@@ -3,7 +3,7 @@ import Domain
 import DSKit
 
 public struct AllTaskView: View {
-     var model: AllTaskModel
+    var model: AllTaskModel
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     public init(model: AllTaskModel) {
@@ -12,8 +12,7 @@ public struct AllTaskView: View {
 
     public var body: some View {
         RedesignScreenScaffold(
-            title: "작심 모아보기",
-            subtitle: "진행 상태별로 모든 작심을 확인해요",
+            title: "전체 작심",
             state: screenState
         ) {
             if PresentationRedesignFlags.isEnabled(.allTask) &&
@@ -55,14 +54,14 @@ public struct AllTaskView: View {
 
     private var screenState: RedesignScreenState {
         if model.isLoading {
-            return .loading(message: "작심 목록을 불러오는 중이에요")
+            return .loading(message: "작심을 불러오는 중")
         }
 
         if model.loadFailed {
             return .error(
                 RedesignErrorStateModel(
-                    title: "작심 목록을 불러오지 못했어요",
-                    message: "네트워크 상태를 확인하고 다시 시도해 주세요",
+                    title: "작심을 불러오지 못했어요",
+                    message: "다시 시도해 주세요",
                     retry: RetryActionModel {
                         model.loadTasks()
                     }
@@ -74,7 +73,7 @@ public struct AllTaskView: View {
             return .empty(
                 RedesignEmptyStateModel(
                     title: "아직 작심이 없어요",
-                    message: "첫 작심을 만들면 진행 상태가 여기에 표시돼요",
+                    message: "첫 작심을 시작해 보세요",
                     icon: "square.and.pencil"
                 )
             )
@@ -84,25 +83,25 @@ public struct AllTaskView: View {
     }
 
     private var summaryCard: some View {
-        RedesignSectionCard(
-            title: "요약",
-            subtitle: "총 \(totalCount)개의 작심을 기록 중이에요"
-        ) {
+        RedesignSectionCard(title: "흐름") {
             HStack(spacing: .jsSM) {
-                summaryPill(
+                JSV2MetricPill(
                     title: "진행",
-                    count: model.ongoingTasks.count,
-                    color: .primaryNormal
+                    value: "\(model.ongoingTasks.count)",
+                    systemImage: "circle.fill",
+                    style: .accent
                 )
-                summaryPill(
+                JSV2MetricPill(
                     title: "성공",
-                    count: model.successTasks.count,
-                    color: .positive
+                    value: "\(model.successTasks.count)",
+                    systemImage: "checkmark.circle.fill",
+                    style: .success
                 )
-                summaryPill(
+                JSV2MetricPill(
                     title: "실패",
-                    count: model.failTasks.count,
-                    color: .destructive
+                    value: "\(model.failTasks.count)",
+                    systemImage: "xmark.circle.fill",
+                    style: .danger
                 )
             }
         }
@@ -132,6 +131,10 @@ public struct AllTaskView: View {
                             .font(.jsLabelSmall)
 
                         Spacer()
+
+                        Text(isExpanded ? "접기" : "보기")
+                            .font(.jsButtonSmall)
+                            .foregroundColor(.v2BrandBlue)
 
                         Image(systemName: "chevron.down")
                             .font(.jsButtonSmall)
@@ -183,19 +186,60 @@ public struct AllTaskView: View {
     }
 
     private func taskRow(task: Domain.Task) -> some View {
-        JSListItem(
-            title: task.title,
-            subtitle: taskDateRange(task),
-            icon: "flag.fill",
-            iconColor: statusColor(task),
-            accessory: .disclosure
-        ) {
+        Button {
             model.taskTapped(task)
         }
-        .background(
-            RoundedRectangle(cornerRadius: .jsRadiusMD)
-                .fill(Color.backgroundAlternative)
-        )
+        label: {
+            HStack(spacing: .jsSM) {
+                ZStack(alignment: .bottomLeading) {
+                    RoundedRectangle(cornerRadius: 18.jsScaled(), style: .continuous)
+                        .fill(
+                            LinearGradient(
+                                colors: statusGradientColors(task),
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+
+                    Image(systemName: statusIcon(task))
+                        .font(.jsHeadlineMedium)
+                        .foregroundColor(.white)
+                        .padding(.jsSM)
+                }
+                .frame(width: 86.jsScaled(), height: 86.jsScaled())
+                .accessibilityHidden(true)
+
+                VStack(alignment: .leading, spacing: .jsXS) {
+                    Text(task.title)
+                        .font(.jsHeadlineSmall)
+                        .foregroundColor(.labelStrong)
+                        .lineLimit(2)
+                        .multilineTextAlignment(.leading)
+
+                    Text(taskDateRange(task))
+                        .font(.jsLabelMedium)
+                        .foregroundColor(.labelAlternative)
+                        .lineLimit(1)
+
+                    JSV2StatusChip(
+                        statusTitle(task),
+                        systemImage: statusIcon(task),
+                        style: statusStyle(task)
+                    )
+                }
+
+                Spacer(minLength: .jsXS)
+
+                Image(systemName: "chevron.right")
+                    .font(.jsButtonSmall)
+                    .foregroundColor(.labelNeutral)
+            }
+            .padding(.jsSM)
+            .jsv2CardSurface(cornerRadius: 20.jsScaled(), shadowOpacity: 0.05)
+            .contentShape(RoundedRectangle(cornerRadius: 20.jsScaled(), style: .continuous))
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("\(task.title), \(statusTitle(task)), \(taskDateRange(task))")
     }
 
     private func emptyRow(text: String) -> some View {
@@ -210,23 +254,7 @@ public struct AllTaskView: View {
         .padding(.jsSM)
         .background(
             RoundedRectangle(cornerRadius: .jsRadiusSM)
-                .fill(Color.backgroundAlternative)
-        )
-    }
-
-    private func summaryPill(title: String, count: Int, color: Color) -> some View {
-        VStack(spacing: .jsMicro) {
-            Text(title)
-                .font(.jsLabelMedium)
-                .foregroundColor(.labelAlternative)
-            Text("\(count)")
-                .font(.jsHeadlineSmall)
-                .foregroundColor(color)
-        }
-        .frame(maxWidth: .infinity, minHeight: 72.jsScaled())
-        .background(
-            RoundedRectangle(cornerRadius: .jsRadiusMD)
-                .fill(color.opacity(0.1))
+                .fill(Color.v2Surface)
         )
     }
 
@@ -234,14 +262,45 @@ public struct AllTaskView: View {
         model.ongoingTasks.count + model.successTasks.count + model.failTasks.count
     }
 
-    private func statusColor(_ task: Domain.Task) -> Color {
+    private func statusStyle(_ task: Domain.Task) -> JSV2StatusStyle {
         if model.successTasks.contains(where: { $0.id == task.id }) {
-            return .positive
+            return .success
         }
         if model.failTasks.contains(where: { $0.id == task.id }) {
-            return .destructive
+            return .danger
         }
-        return .primaryNormal
+        return .accent
+    }
+
+    private func statusTitle(_ task: Domain.Task) -> String {
+        if model.successTasks.contains(where: { $0.id == task.id }) {
+            return "성공"
+        }
+        if model.failTasks.contains(where: { $0.id == task.id }) {
+            return "실패"
+        }
+        return "진행 중"
+    }
+
+    private func statusIcon(_ task: Domain.Task) -> String {
+        if model.successTasks.contains(where: { $0.id == task.id }) {
+            return "checkmark.circle.fill"
+        }
+        if model.failTasks.contains(where: { $0.id == task.id }) {
+            return "xmark.circle.fill"
+        }
+        return "circle.fill"
+    }
+
+    private func statusGradientColors(_ task: Domain.Task) -> [Color] {
+        switch statusStyle(task) {
+        case .success:
+            return [Color.positive.opacity(0.86), Color.v2BrandBlue.opacity(0.78)]
+        case .danger:
+            return [Color.destructive.opacity(0.84), Color.cautionary.opacity(0.68)]
+        case .accent, .warning, .neutral:
+            return [Color.v2BrandBlue.opacity(0.86), Color.v2BrandBlueStrong.opacity(0.82)]
+        }
     }
 
     private func taskDateRange(_ task: Domain.Task) -> String {

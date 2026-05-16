@@ -11,14 +11,10 @@ public struct CalendarView: View {
 
     public var body: some View {
         RedesignScreenScaffold(
-            title: "캘린더",
-            subtitle: "날짜별 작심 인증 상태를 확인해요",
+            title: "탐색",
             state: screenState
         ) {
-            RedesignSectionCard(
-                title: "날짜 선택",
-                subtitle: "\(formattedSelectedDate) · \(tasksForSelectedDate.count)개의 작심"
-            ) {
+            RedesignSectionCard(title: "날짜") {
                 selectedDateButton
 
                 JSCalendar(
@@ -32,7 +28,7 @@ public struct CalendarView: View {
                 }
             }
 
-            RedesignSectionCard(title: "오늘의 기록") {
+            RedesignSectionCard(title: "인증 피드") {
                 let tasksForDate = tasksForSelectedDate
 
                 if tasksForDate.isEmpty {
@@ -64,14 +60,14 @@ public struct CalendarView: View {
 
     private var screenState: RedesignScreenState {
         if model.isLoading {
-            return .loading(message: "캘린더 기록을 준비하는 중이에요")
+            return .loading(message: "기록을 불러오는 중")
         }
 
         if model.loadFailed {
             return .error(
                 RedesignErrorStateModel(
-                    title: "캘린더를 불러오지 못했어요",
-                    message: "잠시 후 다시 시도해 주세요",
+                    title: "기록을 불러오지 못했어요",
+                    message: "다시 시도해 주세요",
                     retry: RetryActionModel {
                         model.loadTasks()
                     }
@@ -82,8 +78,8 @@ public struct CalendarView: View {
         if model.tasks.isEmpty {
             return .empty(
                 RedesignEmptyStateModel(
-                    title: "표시할 작심이 없어요",
-                    message: "작심을 시작하면 날짜별 인증 상태를 볼 수 있어요",
+                    title: "아직 작심이 없어요",
+                    message: "첫 작심을 시작해 보세요",
                     icon: "calendar.badge.plus"
                 )
             )
@@ -108,7 +104,7 @@ public struct CalendarView: View {
             Image(systemName: "calendar.badge.exclamationmark")
                 .font(.jsDisplayScaledSemiBold(size: 48))
                 .foregroundColor(.labelAssistive)
-            Text("이 날은 작심이 없어요")
+            Text("이 날은 비어 있어요")
                 .font(.jsBodyMedium)
                 .foregroundColor(.labelAlternative)
         }
@@ -123,11 +119,11 @@ public struct CalendarView: View {
             HStack(spacing: .jsSM) {
                 Image(systemName: "calendar")
                     .font(.jsHeadlineSmall)
-                    .foregroundColor(.primaryNormal)
+                    .foregroundColor(.v2BrandBlue)
                     .frame(width: 36.jsScaled(), height: 36.jsScaled())
                     .background(
                         Circle()
-                            .fill(Color.primaryNormal.opacity(0.12))
+                            .fill(Color.v2BrandBlueSoft)
                     )
 
                 VStack(alignment: .leading, spacing: .jsMicro) {
@@ -135,7 +131,7 @@ public struct CalendarView: View {
                         .font(.jsBodyMedium)
                         .foregroundColor(.labelStrong)
 
-                    Text("탭해서 날짜를 빠르게 이동")
+                    Text("\(tasksForSelectedDate.count)개 작심")
                         .font(.jsLabelMedium)
                         .foregroundColor(.labelAlternative)
                 }
@@ -149,7 +145,7 @@ public struct CalendarView: View {
             .padding(.jsSM)
             .background(
                 RoundedRectangle(cornerRadius: .jsRadiusMD, style: .continuous)
-                    .fill(Color.backgroundStrong)
+                    .fill(Color.v2Surface)
             )
         }
         .buttonStyle(.plain)
@@ -159,18 +155,50 @@ public struct CalendarView: View {
     private func taskRow(task: Domain.Task) -> some View {
         let isCompleted = isTaskCompleted(task, on: model.selectedDate)
         
-        return JSListItem(
-            title: task.title,
-            icon: isCompleted ? "checkmark.circle.fill" : "circle",
-            iconColor: isCompleted ? .primaryNormal : .labelDisable,
-            accessory: isCompleted ? .checkmark(isSelected: true) : .disclosure
-        )
-        .padding(.vertical, .jsXS)
-        .background(
-            RoundedRectangle(cornerRadius: .jsRadiusMD)
-                .fill(Color.backgroundAlternative)
-                .jsShadow(JSShadow.small)
-        )
+        return HStack(spacing: .jsSM) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 18.jsScaled(), style: .continuous)
+                    .fill(
+                        LinearGradient(
+                            colors: isCompleted
+                                ? [Color.v2BrandBlue.opacity(0.86), Color.positive.opacity(0.82)]
+                                : [Color.v2Surface, Color.v2BrandBlueSoft],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+
+                Image(systemName: isCompleted ? "checkmark.circle.fill" : "camera.fill")
+                    .font(.jsHeadlineLarge)
+                    .foregroundColor(isCompleted ? .white : .v2BrandBlue)
+            }
+            .frame(width: 74.jsScaled(), height: 74.jsScaled())
+            .accessibilityHidden(true)
+
+            VStack(alignment: .leading, spacing: .jsXS) {
+                Text(task.title)
+                    .font(.jsHeadlineSmall)
+                    .foregroundColor(.labelStrong)
+                    .lineLimit(2)
+
+                Text(taskDateRange(task))
+                    .font(.jsLabelMedium)
+                    .foregroundColor(.labelAlternative)
+                    .lineLimit(1)
+
+                JSV2StatusChip(
+                    isCompleted ? "인증 완료" : "인증 전",
+                    systemImage: isCompleted ? "checkmark.circle.fill" : "circle",
+                    style: isCompleted ? .success : .neutral
+                )
+            }
+
+            Spacer(minLength: .jsXS)
+        }
+        .padding(.jsSM)
+        .jsv2CardSurface(cornerRadius: 20.jsScaled(), shadowOpacity: 0.05)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("\(task.title), \(formattedSelectedDate), \(isCompleted ? "인증 완료" : "인증 전")")
     }
 
     private var formattedSelectedDate: String {
@@ -187,6 +215,12 @@ public struct CalendarView: View {
             return dailyRecord.check
         }
         return false
+    }
+
+    private func taskDateRange(_ task: Domain.Task) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "M.d"
+        return "\(formatter.string(from: task.startDate)) - \(formatter.string(from: task.endDate))"
     }
 
     private func convertDateColors(_ colors: [Date: Domain.TaskSuccessRate]) -> [Date: JSCalendarDateColor] {
