@@ -80,6 +80,7 @@ public struct JSMiniHeroCard: View {
                         .font(.jsLabel14Bold)
                         .foregroundColor(.white)
                         .lineLimit(1)
+                        .minimumScaleFactor(0.82)
 
                     // Progress bar (same style as Hero)
                     HStack(spacing: JSMiniHeroCardLayout.progressSpacing) {
@@ -92,14 +93,14 @@ public struct JSMiniHeroCard: View {
                                 Capsule()
                                     .fill(.white)
                                     .frame(
-                                        width: geo.size.width * CGFloat(progress),
+                                        width: geo.size.width * CGFloat(clampedProgress),
                                         height: JSMiniHeroCardLayout.progressBarHeight
                                     )
                             }
                         }
                         .frame(height: JSMiniHeroCardLayout.progressBarHeight)
 
-                        Text("\(Int(progress * 100))%")
+                        Text("\(progressPercentage)%")
                             .font(.jsLabel11Bold)
                             .foregroundColor(.white)
                     }
@@ -118,10 +119,31 @@ public struct JSMiniHeroCard: View {
             .jsShadow(.medium)
         }
         .buttonStyle(PressEffectButtonStyle())
+        .frame(minWidth: 44.jsScaled(.touchTarget), minHeight: 44.jsScaled(.touchTarget))
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(accessibilityLabel)
+        .accessibilityHint("상세 화면으로 이동합니다")
+        .accessibilityAddTraits(.isButton)
     }
 
     private var hasImage: Bool {
         image != nil
+    }
+
+    private var clampedProgress: Double {
+        max(0, min(1, progress))
+    }
+
+    private var progressPercentage: Int {
+        Int(clampedProgress * 100)
+    }
+
+    private var todayStatusText: String {
+        isTodayCertified ? "오늘 인증 완료" : "오늘 인증 전"
+    }
+
+    private var accessibilityLabel: String {
+        "\(title), \(todayStatusText), 진행률 \(progressPercentage)퍼센트, \(completedDays)/\(totalDays)일"
     }
 }
 
@@ -129,9 +151,9 @@ private struct StatusBadge: View {
     let isCertified: Bool
 
     var body: some View {
-        Text(isCertified ? "오늘 인증 완료" : "오늘 미인증")
+        Text(isCertified ? "완료" : "인증 전")
             .font(.jsLabel10Bold)
-            .foregroundColor(isCertified ? .green : .white)
+            .foregroundColor(isCertified ? .positive : .white)
             .padding(.horizontal, JSMiniHeroCardLayout.badgeHorizontalPadding)
             .padding(.vertical, JSMiniHeroCardLayout.badgeVerticalPadding)
             .background(
@@ -139,7 +161,7 @@ private struct StatusBadge: View {
                     .fill(.ultraThinMaterial)
                     .overlay(
                         Capsule()
-                            .stroke(isCertified ? .green.opacity(0.3) : .white.opacity(0.2), lineWidth: 1)
+                            .stroke(isCertified ? Color.positive.opacity(0.3) : .white.opacity(0.2), lineWidth: 1)
                     )
             )
     }

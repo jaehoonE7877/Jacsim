@@ -15,6 +15,7 @@ public enum JSButtonSize {
 
 public struct JSButton: View {
     let title: String
+    let systemImage: String?
     let style: JSButtonStyle
     let size: JSButtonSize
     let isEnabled: Bool
@@ -22,12 +23,14 @@ public struct JSButton: View {
 
     public init(
         title: String,
+        systemImage: String? = nil,
         style: JSButtonStyle = .primary,
         size: JSButtonSize = .medium,
         isEnabled: Bool = true,
         action: @escaping () -> Void
     ) {
         self.title = title
+        self.systemImage = systemImage
         self.style = style
         self.size = size
         self.isEnabled = isEnabled
@@ -36,22 +39,35 @@ public struct JSButton: View {
 
     public var body: some View {
         Button(action: action) {
-            Text(title)
-                .font(font)
-                .foregroundColor(foregroundColor)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, verticalPadding)
-                .padding(.horizontal, horizontalPadding)
-                .background(backgroundColor)
-                .cornerRadius(.jsCornerSmall)
-                .overlay(
-                    RoundedRectangle(cornerRadius: .jsCornerSmall)
-                        .stroke(borderColor, lineWidth: borderWidth)
-                )
+            HStack(spacing: 6.jsScaled()) {
+                if let systemImage {
+                    Image(systemName: systemImage)
+                        .font(font)
+                        .accessibilityHidden(true)
+                }
+
+                Text(title)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.82)
+            }
+            .font(font)
+            .foregroundColor(foregroundColor)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, verticalPadding)
+            .padding(.horizontal, horizontalPadding)
+            .background(backgroundColor)
+            .cornerRadius(.jsCornerSmall)
+            .overlay(
+                RoundedRectangle(cornerRadius: .jsCornerSmall)
+                    .stroke(borderColor, lineWidth: borderWidth)
+            )
         }
         .disabled(!isEnabled)
         .opacity(isEnabled ? 1.0 : 0.5)
         .frame(minHeight: 44.jsScaled(.touchTarget))
+        .contentShape(RoundedRectangle(cornerRadius: .jsCornerSmall, style: .continuous))
+        .accessibilityLabel(title)
+        .accessibilityHint(isEnabled ? "" : "현재 사용할 수 없습니다")
     }
 
     private var font: Font {
@@ -92,14 +108,14 @@ public struct JSButton: View {
         case .primary, .destructive:
             return .white
         case .secondary, .ghost:
-            return isEnabled ? .primaryNormal : .labelNeutral
+            return isEnabled ? .v2BrandBlue : .labelNeutral
         }
     }
 
     private var backgroundColor: Color {
         switch style {
         case .primary:
-            return .primaryNormal
+            return .v2BrandBlue
         case .secondary:
             return .backgroundNormal
         case .destructive:
