@@ -119,6 +119,7 @@ public struct SettingView: View {
         }
         .sheet(isPresented: $isLicencePresented) {
             NavigationStack {
+                // TODO(Goal 6): Include DSKit font OFL files staged at Resources/Font/Licenses.
                 AcknowListSwiftUIView()
                     .navigationTitle("오픈소스 라이선스")
                     .toolbar {

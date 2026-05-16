@@ -33,4 +33,18 @@ public extension Color {
     static var surfaceElevated: Color { Color(uiColor: .surfaceElevated) }
     static var surfaceOverlay: Color { Color(uiColor: .surfaceOverlay) }
     static var surfaceSelected: Color { Color(uiColor: .surfaceSelected) }
+
+    static var forestAccent: Color { Color(uiColor: .forestAccent) }
+
+    static var wallpaperMorning: Color { Color(uiColor: .wallpaperMorning) }
+    static var wallpaperMorningTop: Color { Color(uiColor: .wallpaperMorningTop) }
+    static var wallpaperMorningBottom: Color { Color(uiColor: .wallpaperMorningBottom) }
+
+    static var wallpaperForest: Color { Color(uiColor: .wallpaperForest) }
+    static var wallpaperForestTop: Color { Color(uiColor: .wallpaperForestTop) }
+    static var wallpaperForestBottom: Color { Color(uiColor: .wallpaperForestBottom) }
+
+    static var wallpaperDusk: Color { Color(uiColor: .wallpaperDusk) }
+    static var wallpaperDuskTop: Color { Color(uiColor: .wallpaperDuskTop) }
+    static var wallpaperDuskBottom: Color { Color(uiColor: .wallpaperDuskBottom) }
 }
