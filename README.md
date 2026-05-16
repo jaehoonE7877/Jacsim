@@ -36,7 +36,7 @@ Presentation(App) ──▶ Application UseCases ──▶ ExternalInterface(Por
 ### 요구사항
 - Xcode
 - Tuist
-- iOS 18+ 시뮬레이터 또는 디바이스
+- iOS 26+ 시뮬레이터 또는 디바이스
 
 ### 로컬 빌드
 ```bash
@@ -72,6 +72,11 @@ tuist test ExternalInterface
 - Xcode Cloud의 `CI_BUILD_NUMBER`를 Post-clone에서 `TUIST_APP_BUILD_NUMBER`로 전달
 - Tuist 생성 시 `CURRENT_PROJECT_VERSION`이 `TUIST_APP_BUILD_NUMBER`로 설정
 - `CFBundleVersion`은 `$(CURRENT_PROJECT_VERSION)`를 사용하므로 매 빌드마다 자동 증가
+
+## 로컬 Firebase 설정
+- `Projects/Jacsim/Resources/GoogleService-Info.plist`는 `.gitignore` 대상이며 커밋하지 않습니다.
+- 로컬 빌드는 `scripts/local/prepare-google-service-info.sh`가 `$HOME/Downloads/GoogleService-Info.plist`를 자동으로 복사해 사용합니다.
+- 다른 위치의 plist를 쓰려면 `JACSIM_GOOGLE_SERVICE_INFO_PLIST`에 파일 경로를 지정합니다.
 
 ### 공식 문서
 - Getting started with Xcode Cloud: https://developer.apple.com/documentation/xcode/getting-started-with-xcode-cloud

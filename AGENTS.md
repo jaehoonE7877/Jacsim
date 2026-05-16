@@ -1,7 +1,7 @@
 # Jacsim Knowledge Base (AGENTS.md)
 
 ## Overview
-- iOS 18+, Swift 6, Tuist + SPM 멀티모듈
+- iOS 26+, Swift 6, Tuist + SPM 멀티모듈
 - SwiftUI + TCA + Port & Adapter 아키텍처 기반
 - 앱 로직은 레이어 경계를 유지하며 모듈 단위로 관리
 

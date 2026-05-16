@@ -72,7 +72,7 @@ public extension Project {
                 infoPlist: .extendingDefault(with: infoPlist),
                 buildableFolders: ["Sources", "Resources"],
                 entitlements: "\(name).entitlements",
-                scripts: [.FirebaseCrashlyticsString],
+                scripts: [.GoogleServiceInfoLocal, .FirebaseCrashlyticsString],
                 dependencies: [
                     internalDependencies,
                     externalDependencies,
@@ -305,6 +305,13 @@ extension Project {
 }
 
 public extension TargetScript {
+    static let GoogleServiceInfoLocal = TargetScript.pre(
+        path: .relativeToRoot("scripts/local/prepare-google-service-info.sh"),
+        name: "Prepare GoogleService-Info.plist",
+        basedOnDependencyAnalysis: false,
+        shellPath: "/bin/bash"
+    )
+
     static let FirebaseCrashlyticsString = TargetScript.post(
         script: """
         OUTPUT_FILE="${DERIVED_FILE_DIR}/FirebaseCrashlyticsUploadDone"
