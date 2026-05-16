@@ -8,13 +8,13 @@
 
 import UIKit
 
-//MARK: - 기본 색상
+//MARK: - Primary
 public extension UIColor {
     
     static var primaryNormal: UIColor {
         return UIColor { (traits) -> UIColor in
             if traits.userInterfaceStyle == .dark {
-                return UIColor(hexString: "#2B6BE5")
+                return UIColor(hexString: "#3385FF")
             }
             return UIColor(hexString: "#0066FF")
         }
@@ -23,7 +23,7 @@ public extension UIColor {
     static var primaryStrong: UIColor {
         return UIColor { (traits) -> UIColor in
             if traits.userInterfaceStyle == .dark {
-                return UIColor(hexString: "#1F5FD6")
+                return UIColor(hexString: "#1A75FF")
             }
             return UIColor(hexString: "#005EEB")
         }
@@ -32,22 +32,71 @@ public extension UIColor {
     static var primaryHeavy: UIColor {
         return UIColor { (traits) -> UIColor in
             if traits.userInterfaceStyle == .dark {
-                return UIColor(hexString: "#174FB9")
+                return UIColor(hexString: "#0066FF")
             }
             return UIColor(hexString: "#0054D1")
         }
     }
-    
-    /// Text color for use on primary colored backgrounds (always white for maximum contrast)
-    static var onPrimary: UIColor {
-        return UIColor { (traits) -> UIColor in
-            // Keep dark primary hues contrast-safe for white foreground text.
-            return UIColor(hexString: "#FFFFFF")
+}
+
+// MARK: - V2 Brand
+public extension UIColor {
+
+    static var v2BrandBlue: UIColor {
+        UIColor { traits -> UIColor in
+            if traits.accessibilityContrast == .high {
+                return traits.userInterfaceStyle == .dark
+                    ? UIColor(hexString: "#5AA2FF")
+                    : UIColor(hexString: "#0057D8")
+            }
+            return traits.userInterfaceStyle == .dark
+                ? UIColor(hexString: "#4D9BFF")
+                : UIColor(hexString: "#0077FF")
+        }
+    }
+
+    static var v2BrandBlueStrong: UIColor {
+        UIColor { traits -> UIColor in
+            traits.userInterfaceStyle == .dark
+                ? UIColor(hexString: "#1677FF")
+                : UIColor(hexString: "#005EEB")
+        }
+    }
+
+    static var v2BrandBlueSoft: UIColor {
+        UIColor { traits -> UIColor in
+            traits.userInterfaceStyle == .dark
+                ? UIColor(hexString: "#0B3A6B", alpha: 0.72)
+                : UIColor(hexString: "#EAF3FF")
+        }
+    }
+
+    static var v2Background: UIColor {
+        UIColor { traits -> UIColor in
+            traits.userInterfaceStyle == .dark
+                ? UIColor(hexString: "#111316")
+                : UIColor(hexString: "#FFFFFF")
+        }
+    }
+
+    static var v2Surface: UIColor {
+        UIColor { traits -> UIColor in
+            traits.userInterfaceStyle == .dark
+                ? UIColor(hexString: "#1B1E23")
+                : UIColor(hexString: "#F5F8FC")
+        }
+    }
+
+    static var v2SurfaceElevated: UIColor {
+        UIColor { traits -> UIColor in
+            traits.userInterfaceStyle == .dark
+                ? UIColor(hexString: "#242830")
+                : UIColor(hexString: "#FFFFFF")
         }
     }
 }
 
-//MARK: - 라벨
+//MARK: - Label
 public extension UIColor {
     
     static var labelNormal: UIColor {
@@ -80,32 +129,32 @@ public extension UIColor {
     static var labelAlternative: UIColor {
         return UIColor { (traits) -> UIColor in
             if traits.userInterfaceStyle == .dark {
-                return UIColor(hexString: "#AEB0B6", alpha: 0.70)
+                return UIColor(hexString: "#AEB0B6", alpha: 0.61)
             }
-            return UIColor(hexString: "#37383C", alpha: 0.70)
+            return UIColor(hexString: "#37383C", alpha: 0.61)
         }
     }
     
     static var labelAssistive: UIColor {
         return UIColor { (traits) -> UIColor in
             if traits.userInterfaceStyle == .dark {
-                return UIColor(hexString: "#AEB0B6", alpha: 0.56)
+                return UIColor(hexString: "#AEB0B6", alpha: 0.28)
             }
-            return UIColor(hexString: "#37383C", alpha: 0.56)
+            return UIColor(hexString: "#37383C", alpha: 0.28)
         }
     }
     
     static var labelDisable: UIColor {
         return UIColor { (traits) -> UIColor in
             if traits.userInterfaceStyle == .dark {
-                return UIColor(hexString: "#989BA2", alpha: 0.24)
+                return UIColor(hexString: "#989BA2", alpha: 0.16)
             }
-            return UIColor(hexString: "#37383C", alpha: 0.22)
+            return UIColor(hexString: "#37383C", alpha: 0.16)
         }
     }
 }
 
-//MARK: - 배경
+//MARK: - Background
 public extension UIColor {
 
     static var backgroundNormal: UIColor {
@@ -136,7 +185,7 @@ public extension UIColor {
     }
 }
 
-//MARK: - 상태
+//MARK: - Status
 public extension UIColor {
     
     static var positive: UIColor {
@@ -167,7 +216,7 @@ public extension UIColor {
     }
 }
 
-//MARK: - 연속 기록
+//MARK: - Streak
 public extension UIColor {
     
     static var streakActive: UIColor {
@@ -198,7 +247,7 @@ public extension UIColor {
     }
 }
 
-//MARK: - 진행 상태
+//MARK: - Progress
 public extension UIColor {
     
     static var progressLow: UIColor {
@@ -229,7 +278,7 @@ public extension UIColor {
     }
 }
 
-//MARK: - 업적
+//MARK: - Achievement
 public extension UIColor {
     
     static var achievement: UIColor {
@@ -242,7 +291,7 @@ public extension UIColor {
     }
 }
 
-//MARK: - 표면
+//MARK: - Surface
 public extension UIColor {
     
     static var surfaceElevated: UIColor {
@@ -273,40 +322,9 @@ public extension UIColor {
     }
 }
 
-//MARK: - 스켈레톤
-public extension UIColor {
-
-    static var skeletonContainer: UIColor {
-        return UIColor { (traits) -> UIColor in
-            if traits.userInterfaceStyle == .dark {
-                return UIColor(hexString: "#2C2D2F")
-            }
-            return UIColor(hexString: "#FFFFFF")
-        }
-    }
-
-    static var skeletonBase: UIColor {
-        return UIColor { (traits) -> UIColor in
-            if traits.userInterfaceStyle == .dark {
-                return UIColor(hexString: "#3A3D42")
-            }
-            return UIColor(hexString: "#E9EDF2")
-        }
-    }
-
-    static var skeletonHighlight: UIColor {
-        return UIColor { (traits) -> UIColor in
-            if traits.userInterfaceStyle == .dark {
-                return UIColor(hexString: "#6F7785")
-            }
-            return UIColor(hexString: "#D4DCE7")
-        }
-    }
-}
-
 extension UIColor {
-    /// Hex 값으로 컬러를 할당할 수 있습니다
-    /// 태그: #Hex
+    ///Hex값으로 컬러 할당 가능
+    /// Tag: #Hex
     convenience init(hexString: String, alpha: CGFloat = 1.0) {
          var hexFormatted: String = hexString.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines).uppercased()
          

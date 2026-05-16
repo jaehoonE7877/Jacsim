@@ -8,6 +8,7 @@
 import Foundation
 import ConfigurationPlugin
 import EnvironmentPlugin
+import DependencyPlugin
 import ProjectDescription
 
 private let appBuildNumber: String = {
@@ -20,135 +21,190 @@ private let appBuildNumber: String = {
 }()
 
 public extension Project {
-    static func makeAppProject(
+    static func makeModule(
         name: String,
         swiftLanguageVersion: SwiftLanguageVersion = .v5,
-        internalDependencies: [TargetDependency] = [],
-        externalDependencies: [TargetDependency] = [],
-        tags: [String] = []
-    ) -> Project {
-        let deploymentTarget = Environment.deploymentTarget
-        let destination: Set<Destination> = [.iPhone]
-        let moduleTags = Array(Set(tags + [name]))
-
-        let versionSetting: [String: SettingValue] = [
-            "MARKETING_VERSION": SettingValue(stringLiteral: Environment.appVersion),
-            "CURRENT_PROJECT_VERSION": SettingValue(stringLiteral: appBuildNumber)
-        ]
-        let settings: SettingsDictionary = .baseSettings
-            .setSwiftLanguageVersion(swiftLanguageVersion.rawValue)
-            .setHeaderSearchPath(isModule: false)
-            .merging(versionSetting)
-
-        let appTarget = Target.target(
-            name: name,
-            destinations: destination,
-            product: .app,
-            bundleId: "\(Environment.bundlePrefix)",
-            deploymentTargets: deploymentTarget,
-            infoPlist: .extendingDefault(with: Project.appInfoPlist),
-            buildableFolders: ["Sources", "Resources"],
-            entitlements: "\(name).entitlements",
-            scripts: [.FirebaseCrashlyticsString],
-            dependencies: internalDependencies + externalDependencies,
-            settings: .settings(
-                base: settings.setCodeSignAutomatic(),
-                configurations: XCConfig.project
-            ),
-            metadata: .metadata(tags: moduleTags + ["app"])
-        )
-
-        let testTarget = Target.target(
-            name: "\(name)Tests",
-            destinations: destination,
-            product: .unitTests,
-            bundleId: "\(Environment.bundlePrefix).\(name)Tests",
-            deploymentTargets: deploymentTarget,
-            infoPlist: .default,
-            buildableFolders: ["Tests/Sources"],
-            dependencies: [.target(name: name)],
-            settings: .settings(
-                base: settings.setCodeSignAutomatic(),
-                configurations: XCConfig.tests
-            ),
-            metadata: .metadata(tags: moduleTags + ["test"])
-        )
-
-        return Project(
-            name: name,
-            organizationName: Environment.workspaceName,
-            packages: [],
-            settings: .settings(configurations: XCConfig.project),
-            targets: [appTarget, testTarget],
-            schemes: Project.makeAppSchemes(name: name),
-            resourceSynthesizers: [
-                .fonts(),
-                .assets(),
-            ]
-        )
-    }
-
-    static func makeFrameworkProject(
-        name: String,
-        swiftLanguageVersion: SwiftLanguageVersion = .v5,
-        internalDependencies: [TargetDependency] = [],
-        externalDependencies: [TargetDependency] = [],
+        targets: Set<FeatureTarget> = Set([.staticFramework, .unitTest, .demo]),
+        packages: [Package] = [],
+        internalDependencies: [TargetDependency] = [],  // 모듈간 의존성
+        externalDependencies: [TargetDependency] = [],  // 외부 라이브러리 의존성
+        interfaceDependencies: [TargetDependency] = [], // Feature Interface 의존성
+        dependencies: [TargetDependency] = [],
         hasResources: Bool = false,
-        includeTests: Bool = true,
         tags: [String] = []
     ) -> Project {
+        
+        let configurationName: ConfigurationName = "Debug"
+        let hasDynamicFramework = targets.contains(.dynamicFramework)
+        let hasApp = targets.contains(.app)
         let deploymentTarget = Environment.deploymentTarget
         let destination: Set<Destination> = [.iPhone]
         let moduleTags = Array(Set(tags + [name]))
+        
         let baseSettings: SettingsDictionary = .baseSettings
             .setSwiftLanguageVersion(swiftLanguageVersion.rawValue)
-            .setHeaderSearchPath(isModule: false)
-
+        
         var projectTargets: [Target] = []
+        var schemes: [Scheme] = []
 
-        let frameworkTarget = Target.target(
-            name: name,
-            destinations: destination,
-            product: .staticFramework,
-            bundleId: "\(Environment.bundlePrefix).\(name)",
-            deploymentTargets: deploymentTarget,
-            infoPlist: .default,
-            buildableFolders: hasResources ? ["Sources", "Resources"] : ["Sources"],
-            dependencies: internalDependencies + externalDependencies,
-            settings: .settings(
-                base: baseSettings.setCodeSignAutomatic(),
-                configurations: XCConfig.framework
-            ),
-            metadata: .metadata(tags: moduleTags + ["framework"])
-        )
-        projectTargets.append(frameworkTarget)
-
-        if includeTests {
-            let testTarget = Target.target(
-                name: "\(name)Tests",
+        func metadata(_ extraTags: [String] = []) -> TargetMetadata {
+            .metadata(tags: moduleTags + extraTags)
+        }
+        
+        // MARK: - App
+        
+        if targets.contains(.app) {
+            let infoPlist = name.contains("Demo") ? Project.demoInfoPlist : Project.appInfoPlist
+            let versionSetting: [String: SettingValue] = [
+                "MARKETING_VERSION": SettingValue(stringLiteral: Environment.appVersion),
+                "CURRENT_PROJECT_VERSION": SettingValue(stringLiteral: appBuildNumber)
+            ]
+            let settings: SettingsDictionary = baseSettings
+                .merging(versionSetting)
+                .setHeaderSearchPath(isModule: false)
+            
+            let target = Target.target(
+                name: name,
                 destinations: destination,
+                product: .app,
+                bundleId: "\(Environment.bundlePrefix)",
+                deploymentTargets: deploymentTarget,
+                infoPlist: .extendingDefault(with: infoPlist),
+                buildableFolders: ["Sources", "Resources"],
+                entitlements: "\(name).entitlements",
+                scripts: [.FirebaseCrashlyticsString],
+                dependencies: [
+                    internalDependencies,
+                    externalDependencies,
+                    dependencies
+                ].flatMap { $0 },
+                settings: .settings(base: settings.setCodeSignAutomatic(),
+                                    configurations: XCConfig.project),
+                metadata: metadata(["app"])
+            )
+            projectTargets.append(target)
+        }
+        
+        // MARK: - Feature Interface
+        
+        if targets.contains(.interface) {
+            let settings = baseSettings
+            
+            let target = Target.target(
+                name: "\(name)Interface",
+                destinations: destination,
+                product: .framework,
+                bundleId: "\(Environment.bundlePrefix).\(name)Interface",
+                deploymentTargets: deploymentTarget,
+                infoPlist: .default,
+                buildableFolders: ["Interface/Sources"],
+                dependencies: interfaceDependencies,
+                settings: .settings(base: settings, configurations: XCConfig.framework),
+                metadata: metadata(["interface"])
+            )
+            
+            projectTargets.append(target)
+        }
+        
+        // MARK: - Framework
+        
+        if targets.contains(where: { $0.hasFramework }) {
+            let deps: [TargetDependency] = targets.contains(.interface)
+            ? [.target(name: "\(name)Interface")]
+            : []
+            let isNetworks = (name == "Networks") || name.contains("Feature")
+            let settings = baseSettings
+                .setHeaderSearchPath(isModule: isNetworks)
+            
+            let target = Target.target(
+                name: name,
+                destinations: destination,
+                product: hasDynamicFramework ? .framework : .staticFramework,
+                bundleId: "\(Environment.bundlePrefix).\(name)",
+                deploymentTargets: deploymentTarget,
+                infoPlist: .default,
+                buildableFolders: hasResources ? ["Sources", "Resources"] : ["Sources"],
+                dependencies: deps + internalDependencies + externalDependencies + dependencies,
+                settings: .settings(base: settings.setCodeSignAutomatic(), configurations: XCConfig.framework),
+                metadata: metadata(["framework"])
+            )
+            
+            projectTargets.append(target)
+        }
+        
+        // MARK: - Feature Executable
+        
+        if targets.contains(.demo) {
+            let deps: [TargetDependency] = [.target(name: name)]
+            
+            let target = Target.target(
+                name: "\(name)Demo",
+                destinations: .iOS,
+                product: .app,
+                bundleId: "\(Environment.bundlePrefix).\(name)Demo",
+                deploymentTargets: deploymentTarget,
+                infoPlist: .extendingDefault(with: Project.demoInfoPlist),
+                buildableFolders: ["Demo/Sources", "Demo/Resources"],
+                dependencies: [
+                    deps,
+                    dependencies
+                ].flatMap { $0 },
+                settings: .settings(base: baseSettings.setCodeSignAutomatic(),
+                                    configurations: XCConfig.demo),
+                metadata: metadata(["demo"])
+            )
+            
+            projectTargets.append(target)
+        }
+        
+        // MARK: - Unit Tests
+        
+        if targets.contains(.unitTest) {
+            let deps: [TargetDependency] = [.target(name: name)]
+            let testConfigurations = hasApp ? XCConfig.tests : XCConfig.frameworkTests
+            
+            let target = Target.target(
+                name: "\(name)Tests",
+                destinations: .iOS,
                 product: .unitTests,
                 bundleId: "\(Environment.bundlePrefix).\(name)Tests",
                 deploymentTargets: deploymentTarget,
                 infoPlist: .default,
-                buildableFolders: ["Tests/Sources"],
-                dependencies: [.target(name: name)],
-                settings: .settings(
-                    base: baseSettings.setCodeSignAutomatic(),
-                    configurations: XCConfig.tests
-                ),
-                metadata: .metadata(tags: moduleTags + ["test"])
+                sources: ["Tests/Sources/**"],
+                dependencies: deps,
+                settings: .settings(base: baseSettings.setCodeSignAutomatic(),
+                                    configurations: testConfigurations),
+                metadata: metadata(["test"])
             )
-            projectTargets.append(testTarget)
+            
+            projectTargets.append(target)
         }
-
+        
+        // MARK: - Schemes
+        
+        let additionalSchemes = targets.contains(.demo)
+        ? [Scheme.makeScheme(target: configurationName, name: name),
+           Scheme.makeDemoScheme(target: configurationName, name: name)]
+        : [Scheme.makeScheme(target: configurationName, name: name)]
+        
+        schemes += additionalSchemes
+        
+        var scheme = hasApp
+        ? makeAppSchemes(name: name)
+        : schemes
+        
+        if name.contains("Demo") {
+            let testAppScheme = Scheme.makeScheme(target: "Debug", name: name)
+            scheme.append(testAppScheme)
+        }
+        
         return Project(
             name: name,
             organizationName: Environment.workspaceName,
-            packages: [],
+            packages: packages,
             settings: .settings(configurations: XCConfig.project),
             targets: projectTargets,
-            schemes: [Project.makeFrameworkScheme(name: name, includeTests: includeTests)],
+            schemes: scheme,
             resourceSynthesizers: [
                 .fonts(),
                 .assets(),
@@ -157,33 +213,41 @@ public extension Project {
     }
 }
 
-private extension Project {
-    static func makeFrameworkScheme(name: String, includeTests: Bool) -> Scheme {
-        if includeTests {
-            return Scheme.scheme(
-                name: name,
-                shared: true,
-                buildAction: .buildAction(targets: ["\(name)"]),
-                testAction: .targets(
-                    ["\(name)Tests"],
-                    configuration: "Debug",
-                    options: .options(coverage: false)
-                ),
-                runAction: .runAction(configuration: "Debug"),
-                archiveAction: .archiveAction(configuration: "Debug"),
-                profileAction: .profileAction(configuration: "Debug"),
-                analyzeAction: .analyzeAction(configuration: "Debug")
-            )
-        }
+extension Scheme {
+    static func makeScheme(target: ConfigurationName, name: String) -> Scheme {
+        let buildTarget: TargetReference = .target(name)
 
         return Scheme.scheme(
             name: name,
             shared: true,
-            buildAction: .buildAction(targets: ["\(name)"]),
-            runAction: .runAction(configuration: "Debug"),
-            archiveAction: .archiveAction(configuration: "Debug"),
-            profileAction: .profileAction(configuration: "Debug"),
-            analyzeAction: .analyzeAction(configuration: "Debug")
+            buildAction: .buildAction(targets: [buildTarget]),
+            testAction: .targets(
+                ["\(name)Tests"],
+                configuration: target,
+                options: .options(coverage: false)
+            ),
+            runAction: .runAction(configuration: target),
+            archiveAction: .archiveAction(configuration: target),
+            profileAction: .profileAction(configuration: target),
+            analyzeAction: .analyzeAction(configuration: target)
+        )
+    }
+    static func makeDemoScheme(target: ConfigurationName, name: String) -> Scheme {
+        let buildTarget: TargetReference = .target("\(name)Demo")
+
+        return Scheme.scheme(
+            name: name,
+            shared: true,
+            buildAction: .buildAction(targets: [buildTarget]),
+            testAction: .targets(
+                ["\(name)Tests"],
+                configuration: target,
+                options: .options(coverage: false)
+            ),
+            runAction: .runAction(configuration: target),
+            archiveAction: .archiveAction(configuration: target),
+            profileAction: .profileAction(configuration: target),
+            analyzeAction: .analyzeAction(configuration: target)
         )
     }
 }
@@ -191,32 +255,40 @@ private extension Project {
 extension Project {
     static func makeAppSchemes(name: String) -> [Scheme] {
         [
-            makeAppScheme(name: name, schemeName: name, coverageEnabled: true),
-            makeAppScheme(name: name, schemeName: "\(name)Local", coverageEnabled: false)
+            makeAppScheme(
+                schemeName: name,
+                targetName: name,
+                testTargetName: "\(name)Tests",
+                coverage: true
+            ),
+            makeAppScheme(
+                schemeName: "\(name)Local",
+                targetName: name,
+                testTargetName: "\(name)Tests",
+                coverage: false
+            ),
         ]
     }
 
-    private static func makeAppScheme(name: String, schemeName: String, coverageEnabled: Bool) -> Scheme {
-        let testTargets: [TestableTarget] = [
-            .testableTarget(target: .target("\(name)Tests"))
-        ]
-        let testOptions: TestActionOptions = if coverageEnabled {
-            .options(
-                coverage: true,
-                codeCoverageTargets: [.target(name)]
-            )
-        } else {
-            .options(coverage: false)
-        }
+    private static func makeAppScheme(
+        schemeName: String,
+        targetName: String,
+        testTargetName: String,
+        coverage: Bool
+    ) -> Scheme {
+        let appTarget: TargetReference = .target(targetName)
 
         return .scheme(
             name: schemeName,
             shared: true,
-            buildAction: .buildAction(targets: [.target(name)], postActions: [ ]),
+            buildAction: .buildAction(targets: [appTarget], postActions: []),
             testAction: .targets(
-                testTargets,
+                [TestableTarget(stringLiteral: testTargetName)],
                 configuration: "Debug",
-                options: testOptions
+                options: .options(
+                    coverage: coverage,
+                    codeCoverageTargets: coverage ? [appTarget] : []
+                )
             ),
             runAction: .runAction(
                 configuration: "Debug",

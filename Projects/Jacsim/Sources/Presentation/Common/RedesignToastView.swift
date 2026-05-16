@@ -1,6 +1,5 @@
 import SwiftUI
-import DesignSystem
-import UIKit
+import DSKit
 
 enum RedesignToastStyle: Equatable {
     case `default`
@@ -47,26 +46,20 @@ struct RedesignToastPayload: Equatable {
     }
 }
 
-@MainActor
 struct RedesignToastView: View {
     static let defaultDismissNanoseconds: UInt64 = 3_000_000_000
 
-    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
-
     let payload: RedesignToastPayload
     let bottomPadding: CGFloat
-    let dismissAction: (() -> Void)?
 
-    init(payload: RedesignToastPayload, bottomPadding: CGFloat = .jsXL, dismissAction: (() -> Void)? = nil) {
+    init(payload: RedesignToastPayload, bottomPadding: CGFloat = .jsXL) {
         self.payload = payload
         self.bottomPadding = bottomPadding
-        self.dismissAction = dismissAction
     }
 
-    init(message: String, style: RedesignToastStyle = .default, bottomPadding: CGFloat = .jsXL, dismissAction: (() -> Void)? = nil) {
+    init(message: String, style: RedesignToastStyle = .default, bottomPadding: CGFloat = .jsXL) {
         self.payload = .init(message: message, style: style)
         self.bottomPadding = bottomPadding
-        self.dismissAction = dismissAction
     }
 
     var body: some View {
@@ -75,38 +68,34 @@ struct RedesignToastView: View {
                 .font(.jsHeadlineSmall)
                 .foregroundColor(payload.style.accentColor)
                 .frame(width: 28.jsScaled(.touchTarget), height: 28.jsScaled(.touchTarget))
-                .background(payload.style.accentColor.opacity(0.12))
+                .background(Color.white.opacity(0.14))
                 .clipShape(Circle())
 
             Text(payload.message)
                 .font(.jsBodyMedium)
-                .foregroundColor(.labelStrong)
-                .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 2)
+                .foregroundColor(.white)
+                .lineLimit(2)
                 .multilineTextAlignment(.leading)
                 .frame(maxWidth: .infinity, alignment: .leading)
-
-            if let dismissAction {
-                Button(action: dismissAction) {
-                    Image(systemName: "xmark")
-                        .font(.jsLabelLarge)
-                        .foregroundColor(.labelNeutral)
-                        .frame(width: 28.jsScaled(.touchTarget), height: 28.jsScaled(.touchTarget))
-                        .background(Color.backgroundNormal.opacity(0.9))
-                        .clipShape(Circle())
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("안내 닫기")
-            }
         }
         .padding(.horizontal, .jsMD)
         .padding(.vertical, 10.jsScaled())
         .background(
             RoundedRectangle(cornerRadius: .jsRadiusLG)
-                .fill(Color.backgroundAlternative.opacity(0.96))
+                .fill(
+                    LinearGradient(
+                        colors: [
+                            Color.surfaceOverlay.opacity(0.88),
+                            payload.style.accentColor.opacity(0.62)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
         )
         .overlay(
             RoundedRectangle(cornerRadius: .jsRadiusLG)
-                .stroke(payload.style.accentColor.opacity(0.22), lineWidth: 1)
+                .stroke(Color.white.opacity(0.24), lineWidth: 1)
         )
         .shadow(
             color: payload.style.accentColor.opacity(0.28),
@@ -119,8 +108,5 @@ struct RedesignToastView: View {
         .accessibilityHint("잠시 후 자동으로 사라지는 안내 메시지")
         .padding(.bottom, bottomPadding)
         .padding(.horizontal, .jsXL)
-        .onAppear {
-            UIAccessibility.post(notification: .announcement, argument: payload.message)
-        }
     }
 }

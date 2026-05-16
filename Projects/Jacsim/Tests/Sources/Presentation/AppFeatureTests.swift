@@ -1,121 +1,77 @@
-import Testing
-import ComposableArchitecture
 import Domain
-import Ports
-import JacsimClient
-import SwiftUI
+import ExternalInterface
+import Foundation
+import Testing
 
 @testable import Jacsim
 
-private actor ReminderSchedulingRecorder {
-    private(set) var syncCount = 0
+private actor AppNotificationSchedulerRecorder {
+    private(set) var scheduledTaskIDs: [TaskID] = []
+    private(set) var cancelledTaskIDs: [TaskID] = []
 
-    func markSync() {
-        syncCount += 1
+    func recordScheduled(_ taskID: TaskID) {
+        scheduledTaskIDs.append(taskID)
     }
+
+    func recordCancelled(_ taskID: TaskID) {
+        cancelledTaskIDs.append(taskID)
+    }
+
+    func scheduledIDs() -> [TaskID] { scheduledTaskIDs }
+    func cancelledIDs() -> [TaskID] { cancelledTaskIDs }
 }
 
 @MainActor
-@Test("onAppear 시 온보딩 완료 사용자는 home으로 라우팅된다")
-func appFeatureRoutesToHomeOnAppearWhenOnboardingCompleted() async {
-    let appPreferences = AppPreferencesPort.inMemory()
-    appPreferences.setOnboardingCompleted(true)
-    let recorder = ReminderSchedulingRecorder()
-
-    let store = TestStore(initialState: AppFeature.State()) {
-        AppFeature()
-    } withDependencies: {
-        $0.appPreferences = appPreferences
-        $0.reminderSchedulingUseCase = ReminderSchedulingUseCase(
-            notificationScheduler: .init(
-                scheduleReminder: { _ in },
-                cancelReminder: { _ in },
-                cancelAllReminders: { await recorder.markSync() },
-                requestAuthorization: { false }
-            ),
-            userSettingsRepository: .init(
-                isNotificationEnabled: { false },
-                getAllReminders: { [] },
-                updateNotificationEnabled: { _ in }
-            ),
-            taskRepository: .init(
-                fetchActiveTasks: { [] },
-                fetchTask: { _ in nil },
-                addTask: { _ in },
-                updateTask: { _ in },
-                deleteTask: { _ in },
-                fetchTasksByStatus: { _ in [] }
-            ),
-            activeTaskService: ActiveTaskService()
-        )
-    }
-    store.exhaustivity = .off
-
-    await store.send(.onAppear)
-    #expect(
-        ifCaseHome(store.state)
+@Test("앱 활성화는 대표 reminder 1건만 예약하고 나머지는 stale reminder로 정리한다")
+func appFeatureActiveSyncSchedulesOnlyRepresentativeReminder() async {
+    let focusTaskID = TaskID(UUID())
+    let staleTaskID = TaskID(UUID())
+    let recorder = AppNotificationSchedulerRecorder()
+    var dependencies = JacsimDependencies.test
+    dependencies.appPreferences = .inMemory()
+    dependencies.userSettingsRepository = UserSettingsRepositoryPort(
+        isNotificationEnabled: { true },
+        getAllReminders: {
+            [
+                ReminderInfo(
+                    taskId: focusTaskID,
+                    title: "대표 작심",
+                    time: DateComponents(year: 2026, month: 5, day: 2, hour: 21, minute: 0)
+                ),
+                ReminderInfo(
+                    taskId: staleTaskID,
+                    title: "비대표 작심",
+                    time: DateComponents(hour: 22, minute: 0),
+                    shouldSchedule: false
+                )
+            ]
+        },
+        updateNotificationEnabled: { _ in }
     )
-    #expect(await recorder.syncCount == 1)
+    dependencies.notificationScheduler = NotificationSchedulerPort(
+        scheduleDailyReminder: { taskID, _, _ in await recorder.recordScheduled(taskID) },
+        cancelReminder: { taskID in await recorder.recordCancelled(taskID) },
+        cancelAllReminders: {},
+        requestAuthorization: { true }
+    )
+    let model = AppModel(dependencies: dependencies)
+
+    model.appBecameActive()
+
+    await waitUntil {
+        await recorder.scheduledIDs() == [focusTaskID]
+    }
+    #expect(await recorder.scheduledIDs() == [focusTaskID])
+    #expect(await recorder.cancelledIDs() == [staleTaskID])
 }
 
 @MainActor
-@Test("온보딩 완료 액션은 home 전환과 완료 플래그 저장을 수행한다")
-func appFeatureCompleteOnboardingUpdatesStateAndPreference() async {
-    let appPreferences = AppPreferencesPort.inMemory()
-
-    let store = TestStore(initialState: AppFeature.State()) {
-        AppFeature()
-    } withDependencies: {
-        $0.appPreferences = appPreferences
+private func waitUntil(
+    timeoutIterations: Int = 50,
+    condition: @escaping @MainActor () async -> Bool
+) async {
+    for _ in 0..<timeoutIterations {
+        if await condition() { return }
+        try? await _Concurrency.Task.sleep(nanoseconds: 20_000_000)
     }
-    store.exhaustivity = .off
-
-    await store.send(.onboarding(.delegate(.completeOnboarding)))
-
-    #expect(ifCaseHome(store.state))
-    #expect(appPreferences.isOnboardingCompleted())
-}
-
-@MainActor
-@Test("scenePhase active 시 reminder schedule을 다시 동기화한다")
-func appFeatureResyncsReminderWhenSceneBecomesActive() async {
-    let recorder = ReminderSchedulingRecorder()
-    var initialState = AppFeature.State()
-    initialState.home = HomeFeature.State()
-    initialState.onboarding = nil
-
-    let store = TestStore(initialState: initialState) {
-        AppFeature()
-    } withDependencies: {
-        $0.reminderSchedulingUseCase = ReminderSchedulingUseCase(
-            notificationScheduler: .init(
-                scheduleReminder: { _ in },
-                cancelReminder: { _ in },
-                cancelAllReminders: { await recorder.markSync() },
-                requestAuthorization: { false }
-            ),
-            userSettingsRepository: .init(
-                isNotificationEnabled: { false },
-                getAllReminders: { [] },
-                updateNotificationEnabled: { _ in }
-            ),
-            taskRepository: .init(
-                fetchActiveTasks: { [] },
-                fetchTask: { _ in nil },
-                addTask: { _ in },
-                updateTask: { _ in },
-                deleteTask: { _ in },
-                fetchTasksByStatus: { _ in [] }
-            ),
-            activeTaskService: ActiveTaskService()
-        )
-    }
-    store.exhaustivity = .off
-
-    await store.send(.scenePhaseChanged(.active))
-    #expect(await recorder.syncCount == 1)
-}
-
-private func ifCaseHome(_ state: AppFeature.State) -> Bool {
-    state.home != nil
 }

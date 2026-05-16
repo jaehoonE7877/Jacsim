@@ -59,7 +59,7 @@ struct ChallengeStateServiceTests {
             startDate: lastWeek,
             endDate: today,
             stages: [stage],
-            records: []
+            records: makeRecords(startDate: lastWeek, count: 7, checkedOffsets: [0, 1, 2, 3, 4])
         )
         
         let result = service.evaluateChallengeState(for: task, today: Date())
@@ -88,7 +88,7 @@ struct ChallengeStateServiceTests {
             startDate: lastMonth,
             endDate: today,
             stages: [stage],
-            records: []
+            records: makeRecords(startDate: lastMonth, count: 30, checkedOffsets: Set(0..<20))
         )
         
         let result = service.evaluateChallengeState(for: task, today: Date())
@@ -167,5 +167,21 @@ struct ChallengeStateServiceTests {
         #expect(result.dayViewData[0].isChecked == false)
         #expect(result.dayViewData[1].memo == "First")
         #expect(result.dayViewData[1].isChecked == true)
+    }
+
+    private func makeRecords(
+        startDate: Date,
+        count: Int,
+        checkedOffsets: Set<Int>
+    ) -> [DailyRecordSnapshot] {
+        (0..<count).map { offset in
+            DailyRecordSnapshot(
+                id: UUID(),
+                memo: "",
+                check: checkedOffsets.contains(offset),
+                date: calendar.date(byAdding: .day, value: offset, to: startDate) ?? startDate,
+                imagePath: nil
+            )
+        }
     }
 }

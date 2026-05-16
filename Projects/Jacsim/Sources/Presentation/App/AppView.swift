@@ -1,37 +1,32 @@
 import SwiftUI
-import ComposableArchitecture
 import UIKit
-import DesignSystem
+import DSKit
 
 private enum StartupTransitionPolicy {
-    static var splashMinimumDuration: UInt64 {
-        UInt64(StartupDisplayPolicy.splashMinimumDuration * 1_000_000_000)
-    }
-    static var splashMaximumDuration: UInt64 {
-        UInt64(StartupDisplayPolicy.splashMaximumDuration * 1_000_000_000)
-    }
+    static let splashMinimumDuration: UInt64 = 550_000_000
+    static let splashMaximumDuration: UInt64 = 1_600_000_000
+    static let splashDismissAnimationDuration: Double = 0.24
     static let splashDismissScale: CGFloat = 0.985
-    static let launchFrameHoldDuration: Double = 0.12
-    static let launchLogoWidthRatio: CGFloat = 0.615385
 }
 
 public struct AppView: View {
-    let store: StoreOf<AppFeature>
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var model: AppModel
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
+    @State private var themeRaw: String = ThemeMode.system.rawValue
     @State private var isSplashVisible = true
     @State private var hasPlayedSplash = false
     @State private var minDurationPassed = false
     @State private var didObserveHomeFetchStart = false
     @State private var canDismissFromLoad = false
 
-    public init(store: StoreOf<AppFeature>) {
-        self.store = store
+    public init(model: AppModel = AppModel()) {
+        _model = State(initialValue: model)
     }
 
     private var colorScheme: ColorScheme? {
-        switch store.state.themeRaw {
+        switch themeRaw {
         case "light": return .light
         case "dark": return .dark
         default: return nil
@@ -46,45 +41,15 @@ public struct AppView: View {
     }
 
     public var body: some View {
-        rootContent
-        .allowsHitTesting(!isSplashVisible)
-        .accessibilityHidden(isSplashVisible)
-        .overlay(alignment: .center) {
-            splashOverlay
-        }
-        .onAppear {
-            handleAppear()
-        }
-        .onReceive(NotificationCenter.default.publisher(for: .jacsimThemeChanged)) { notification in
-            handleThemePreferenceRefresh(notification)
-        }
-        .onChange(of: scenePhase) { _, newPhase in
-            handleScenePhaseChange(newPhase)
-        }
-        .onChange(of: store.state) { _, newState in
-            handleStateChange(newState)
-        }
-        .onChange(of: minDurationPassed) { _, _ in
-            handleSplashEligibilityChange()
-        }
-        .onChange(of: canDismissFromLoad) { _, _ in
-            handleSplashEligibilityChange()
-        }
-        .preferredColorScheme(colorScheme)
-    }
-
-    private var rootContent: some View {
         Group {
-            if let onboardingStore = store.scope(state: \.onboarding, action: \.onboarding) {
-                WalkThroughView(store: onboardingStore)
-            } else if let homeStore = store.scope(state: \.home, action: \.home) {
-                HomeView(store: homeStore)
+            switch model.screen {
+            case let .onboarding(onboardingModel):
+                WalkThroughView(model: onboardingModel)
+            case let .main(mainModel):
+                MainView(model: mainModel)
             }
         }
-    }
-
-    private var splashOverlay: some View {
-        Group {
+        .overlay {
             if isSplashVisible {
                 AppStartupSplashView(
                     reduceMotion: reduceMotion,
@@ -94,43 +59,37 @@ public struct AppView: View {
                 .zIndex(1000)
             }
         }
-    }
-
-    private func handleAppear() {
-        store.send(.onAppear)
-        startSplashIfNeeded(for: store.state)
-        updateSplashEligibility(for: store.state)
-    }
-
-    private func handleThemePreferenceRefresh(_: Notification) {
-        store.send(.themePreferenceRefreshRequested)
-    }
-
-    private func handleScenePhaseChange(_ newPhase: ScenePhase) {
-        store.send(.scenePhaseChanged(newPhase))
-    }
-
-    private func handleStateChange(_ newState: AppFeature.State) {
-        startSplashIfNeeded(for: newState)
-        updateSplashEligibility(for: newState)
-    }
-
-    private func handleSplashEligibilityChange() {
-        dismissSplashIfPossible()
-    }
-
-    private func startSplashIfNeeded(for state: AppFeature.State) {
-        guard !hasPlayedSplash else { return }
-
-        if state.onboarding != nil {
-            // Startup splash is intentionally skipped for onboarding flow.
-            hasPlayedSplash = true
-            isSplashVisible = false
-            minDurationPassed = true
-            didObserveHomeFetchStart = false
-            canDismissFromLoad = true
-            return
+        .onAppear {
+            model.onAppear()
+            refreshThemeFromPreferences()
+            startSplashIfNeeded()
+            updateSplashEligibility()
         }
+        .onReceive(NotificationCenter.default.publisher(for: .jacsimThemeChanged)) { _ in
+            refreshThemeFromPreferences()
+        }
+        .onChange(of: scenePhase) { _, newPhase in
+            if newPhase == .active {
+                model.appBecameActive()
+            }
+        }
+        .onChange(of: model.screenKind) { _, _ in
+            updateSplashEligibility()
+        }
+        .onChange(of: model.homeIsFetching) { _, _ in
+            updateSplashEligibility()
+        }
+        .onChange(of: minDurationPassed) { _, _ in
+            dismissSplashIfPossible()
+        }
+        .onChange(of: canDismissFromLoad) { _, _ in
+            dismissSplashIfPossible()
+        }
+        .preferredColorScheme(colorScheme)
+    }
+
+    private func startSplashIfNeeded() {
+        guard !hasPlayedSplash else { return }
 
         hasPlayedSplash = true
         isSplashVisible = true
@@ -138,9 +97,9 @@ public struct AppView: View {
         didObserveHomeFetchStart = false
         canDismissFromLoad = false
 
-        Task { @MainActor in
+        _Concurrency.Task { @MainActor in
             do {
-                try await Task.sleep(nanoseconds: StartupTransitionPolicy.splashMinimumDuration)
+                try await _Concurrency.Task.sleep(nanoseconds: StartupTransitionPolicy.splashMinimumDuration)
             } catch is CancellationError {
                 return
             } catch {
@@ -150,10 +109,10 @@ public struct AppView: View {
             dismissSplashIfPossible()
         }
 
-        Task { @MainActor in
+        _Concurrency.Task { @MainActor in
             // Fallback to avoid lingering splash in unexpected states.
             do {
-                try await Task.sleep(nanoseconds: StartupTransitionPolicy.splashMaximumDuration)
+                try await _Concurrency.Task.sleep(nanoseconds: StartupTransitionPolicy.splashMaximumDuration)
             } catch is CancellationError {
                 return
             } catch {
@@ -164,14 +123,22 @@ public struct AppView: View {
         }
     }
 
-    private func updateSplashEligibility(for state: AppFeature.State) {
-        guard isSplashVisible else { return }
+    private func refreshThemeFromPreferences() {
+        if let raw = model.dependencies.appPreferences.getThemeModeRaw(),
+           ThemeMode(rawValue: raw) != nil {
+            themeRaw = raw
+            return
+        }
+        themeRaw = ThemeMode.system.rawValue
+    }
 
-        if state.onboarding != nil {
+    private func updateSplashEligibility() {
+        switch model.screen {
+        case .onboarding:
             canDismissFromLoad = true
 
-        } else if let homeState = state.home {
-            let isFetching = homeState.isFetching
+        case .main:
+            let isFetching = model.homeIsFetching
             if isFetching {
                 didObserveHomeFetchStart = true
                 canDismissFromLoad = true
@@ -191,7 +158,7 @@ public struct AppView: View {
         if reduceMotion {
             isSplashVisible = false
         } else {
-            withAnimation(JSAnimation.easeOut) {
+            withAnimation(.easeOut(duration: StartupTransitionPolicy.splashDismissAnimationDuration)) {
                 isSplashVisible = false
             }
         }
@@ -202,109 +169,80 @@ private struct AppStartupSplashView: View {
     let reduceMotion: Bool
     let hasLogo: Bool
 
-    @State private var showAmbientHighlight = false
-    @State private var logoScale: CGFloat = 1
-    @State private var showStatusLockup = false
-    @State private var didStartAnimation = false
+    @State private var showLogo = false
+    @State private var showGlow = false
 
     var body: some View {
-        GeometryReader { proxy in
-            let logoSize = proxy.size.width * StartupTransitionPolicy.launchLogoWidthRatio
-            let fallbackIconSize = max(logoSize * 0.18, 28)
-
-            VStack(spacing: .jsLG) {
-                ZStack {
-                    Circle()
-                        .fill(Color.primaryNormal.opacity(0.08))
-                        .frame(width: logoSize * 1.08, height: logoSize * 1.08)
-                        .blur(radius: 18)
-                        .opacity(showAmbientHighlight ? 1 : 0)
-                        .scaleEffect(showAmbientHighlight ? 1.02 : 0.96)
-
-                    Circle()
-                        .fill(Color.primaryNormal.opacity(0.05))
-                        .frame(width: logoSize * 0.9, height: logoSize * 0.9)
-
-                    if hasLogo {
-                        Image("jacsimMonotone")
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: logoSize, height: logoSize)
-                    } else {
-                        Image(systemName: "checklist")
-                            .font(.pretendardSemiBold(size: fallbackIconSize, relativeTo: .title1))
-                            .foregroundColor(.primaryNormal)
-                            .frame(width: logoSize, height: logoSize)
-                    }
-                }
-                .frame(width: logoSize * 1.18, height: logoSize * 1.18)
-
-                VStack(spacing: .jsXS) {
-                    Text("작심")
-                        .font(.jsDisplaySmall)
-                        .foregroundColor(.labelStrong)
-
-                    Text("오늘의 루틴을 준비하고 있어요")
-                        .font(.jsBodySmall)
-                        .foregroundColor(.labelNeutral)
-                }
-                .opacity(showStatusLockup ? 1 : 0.68)
-                .offset(y: showStatusLockup ? 0 : 6)
-
-                HStack(spacing: .jsXS) {
-                    ProgressView()
-                        .controlSize(.small)
-                        .tint(.primaryNormal)
-
-                    Text("홈 화면을 정리하는 중")
-                        .font(.jsLabelMedium)
-                        .foregroundColor(.labelStrong)
-                }
-                .padding(.horizontal, .jsSM)
-                .padding(.vertical, .jsXS)
-                .background(
-                    Capsule()
-                        .fill(Color.backgroundNormal.opacity(0.92))
-                        .overlay(
-                            Capsule()
-                                .stroke(Color.primaryNormal.opacity(0.14), lineWidth: 1)
-                        )
-                )
-                .shadow(color: Color.primaryNormal.opacity(0.08), radius: 14, y: 6)
-                .opacity(showStatusLockup ? 1 : 0)
-                .offset(y: showStatusLockup ? 0 : 10)
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .background(
-                LinearGradient(
-                    colors: [
-                        Color.backgroundAlternative,
-                        Color.backgroundNormal
-                    ],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
+        ZStack {
+            Rectangle()
+                .fill(.ultraThinMaterial)
+                .ignoresSafeArea()
+                .overlay {
+                    LinearGradient(
+                        colors: [
+                            Color.backgroundNormal.opacity(0.72),
+                            Color.backgroundStrong.opacity(0.54)
+                        ],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
                     .ignoresSafeArea()
-            )
-            .scaleEffect(logoScale)
-            .onAppear {
-                guard !didStartAnimation else { return }
-                didStartAnimation = true
-                guard !reduceMotion else { return }
+                }
 
-                withAnimation(
-                    JSAnimation.easeOut
-                        .delay(StartupTransitionPolicy.launchFrameHoldDuration)
-                ) {
-                    showAmbientHighlight = true
-                    logoScale = 1.012
-                    showStatusLockup = true
+            Circle()
+                .fill(Color.primaryNormal.opacity(showGlow ? 0.1 : 0.0))
+                .frame(width: 280.jsScaled(), height: 280.jsScaled())
+                .blur(radius: 24.jsScaled())
+                .scaleEffect(reduceMotion ? 1 : (showGlow ? 1 : 0.84))
+
+            Circle()
+                .fill(Color.backgroundAlternative.opacity(showGlow ? 0.22 : 0.12))
+                .frame(width: 220.jsScaled(), height: 220.jsScaled())
+                .blur(radius: 18.jsScaled())
+                .scaleEffect(reduceMotion ? 1 : (showGlow ? 1 : 0.92))
+
+            ZStack {
+                Circle()
+                    .fill(Color.backgroundAlternative.opacity(0.74))
+                    .frame(width: 184.jsScaled(), height: 184.jsScaled())
+                    .overlay(
+                        Circle()
+                            .stroke(Color.labelDisable.opacity(0.28), lineWidth: 1.jsScaled())
+                    )
+                    .shadow(
+                        color: Color.surfaceOverlay.opacity(0.24),
+                        radius: 16.jsScaled(),
+                        x: 0,
+                        y: 7.jsScaled()
+                    )
+
+                if hasLogo {
+                    Image("jacsimMonotone")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 128.jsScaled(), height: 128.jsScaled())
+                } else {
+                    Image(systemName: "checklist")
+                        .font(.largeTitle.weight(.semibold))
+                        .foregroundColor(.primaryNormal)
+                }
+            }
+            .opacity(showLogo ? 1 : 0)
+            .scaleEffect(reduceMotion ? 1 : (showLogo ? 1 : 0.96))
+            .onAppear {
+                if reduceMotion {
+                    showGlow = true
+                    showLogo = true
+                } else {
+                    withAnimation(.easeOut(duration: 0.36)) {
+                        showGlow = true
+                    }
+                    withAnimation(.easeOut(duration: 0.34).delay(0.08)) {
+                        showLogo = true
+                    }
                 }
             }
         }
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel("작심을 준비하는 중")
-        .accessibilityValue("홈 화면을 정리하는 중")
-        .accessibilityHint("잠시 후 홈 화면으로 이동합니다")
+        .accessibilityHidden(true)
     }
 }

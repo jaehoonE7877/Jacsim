@@ -1,79 +1,49 @@
 import Foundation
 import UserNotifications
 import Domain
-import Ports
+import ExternalInterface
 
 public actor LocalNotificationSchedulerAdapter {
-    private var notificationCenter: UNUserNotificationCenter?
-
-    public init(notificationCenter: UNUserNotificationCenter? = nil) {
+    private let notificationCenter: UNUserNotificationCenter
+    
+    public init(notificationCenter: UNUserNotificationCenter = .current()) {
         self.notificationCenter = notificationCenter
     }
-
-    public nonisolated func makePort() -> NotificationSchedulerPort {
-        let adapter = self
-
-        return NotificationSchedulerPort(
-            scheduleReminder: { try await adapter.scheduleReminder(request: $0) },
-            cancelReminder: { await adapter.cancelReminder(taskId: $0) },
-            cancelAllReminders: { await adapter.cancelAllReminders() },
-            requestAuthorization: { try await adapter.requestAuthorization() }
-        )
-    }
     
-    public func scheduleReminder(request: NotificationReminderRequest) async throws {
-        let notificationCenter = resolvedNotificationCenter()
-        let identifier = "jacsim-\(request.taskID.rawValue.uuidString)"
+    public func scheduleReminder(taskId: TaskID, title: String, time: DateComponents) async throws {
+        let identifier = "jacsim-\(taskId.rawValue.uuidString)"
         
         notificationCenter.removePendingNotificationRequests(withIdentifiers: [identifier])
         
         let content = UNMutableNotificationContent()
-        content.title = request.title
-        content.body = request.body
+        content.title = "작심 인증"
+        content.body = "\(title) 인증할 시간이에요"
         content.sound = .default
         
-        let trigger = UNCalendarNotificationTrigger(
-            dateMatching: request.dateComponents,
-            repeats: request.repeats
-        )
+        let repeats = time.year == nil && time.month == nil && time.day == nil
+        let trigger = UNCalendarNotificationTrigger(dateMatching: time, repeats: repeats)
         let request = UNNotificationRequest(identifier: identifier, content: content, trigger: trigger)
         
-        try await addNotificationRequest(request, notificationCenter: notificationCenter)
+        try await addNotificationRequest(request)
     }
     
     public func cancelReminder(taskId: TaskID) async {
-        let notificationCenter = resolvedNotificationCenter()
         let identifier = "jacsim-\(taskId.rawValue.uuidString)"
         notificationCenter.removePendingNotificationRequests(withIdentifiers: [identifier])
         notificationCenter.removeDeliveredNotifications(withIdentifiers: [identifier])
     }
     
     public func cancelAllReminders() async {
-        let notificationCenter = resolvedNotificationCenter()
         notificationCenter.removeAllPendingNotificationRequests()
         notificationCenter.removeAllDeliveredNotifications()
     }
     
     public func requestAuthorization() async throws -> Bool {
-        let notificationCenter = resolvedNotificationCenter()
         let options: UNAuthorizationOptions = [.alert, .sound, .badge]
-        return try await requestAuthorization(options: options, notificationCenter: notificationCenter)
+        return try await requestAuthorization(options: options)
     }
 
-    private func resolvedNotificationCenter() -> UNUserNotificationCenter {
-        if let notificationCenter {
-            return notificationCenter
-        }
-
-        let currentNotificationCenter = UNUserNotificationCenter.current()
-        notificationCenter = currentNotificationCenter
-        return currentNotificationCenter
-    }
-
-    private func addNotificationRequest(
-        _ request: UNNotificationRequest,
-        notificationCenter: UNUserNotificationCenter
-    ) async throws {
+    private func addNotificationRequest(_ request: UNNotificationRequest) async throws {
         try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
             notificationCenter.add(request) { error in
                 if let error {
@@ -85,10 +55,7 @@ public actor LocalNotificationSchedulerAdapter {
         }
     }
 
-    private func requestAuthorization(
-        options: UNAuthorizationOptions,
-        notificationCenter: UNUserNotificationCenter
-    ) async throws -> Bool {
+    private func requestAuthorization(options: UNAuthorizationOptions) async throws -> Bool {
         try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Bool, Error>) in
             notificationCenter.requestAuthorization(options: options) { granted, error in
                 if let error {

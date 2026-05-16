@@ -8,39 +8,35 @@
 import ProjectDescription
 
 public extension ProjectDescription.Path {
+    static func relativeToFeature(_ path: String) -> Self {
+        return .relativeToRoot("Projects/Features/\(path)")
+    }
+    
     static func relativeToModules(_ path: String) -> Self {
         return .relativeToRoot("Projects/Modules/\(path)")
     }
     
     static var app: Self {
-        return .relativeToRoot("Projects/Jacsim")
+        return .relativeToRoot("Projects/App")
     }
     
-    static var adapters: Self {
+    static var data: Self {
         return .relativeToRoot("Projects/Data")
-    }
-
-    static var jacsimClient: Self {
-        return .relativeToRoot("Projects/JacsimClient")
     }
     
     static var domain: Self {
         return .relativeToRoot("Projects/Domain")
     }
     
-    static var shared: Self {
+    static var core: Self {
         return .relativeToRoot("Projects/Modules/Core")
     }
     
-    static var designSystem: Self {
+    static var dsKit: Self {
         return .relativeToRoot("Projects/Modules/DSKit")
     }
     
-    static var ports: Self {
+    static var externalInterface: Self {
         return .relativeToRoot("Projects/ExternalInterface")
-    }
-
-    static var workflows: Self {
-        return .relativeToRoot("Projects/Workflows")
     }
 }

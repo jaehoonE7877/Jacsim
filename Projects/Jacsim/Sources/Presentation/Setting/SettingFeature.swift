@@ -1,7 +1,5 @@
 import Foundation
-import ComposableArchitecture
-import UIKit
-import JacsimClient
+import Observation
 
 public enum ThemeMode: String, Equatable, CaseIterable {
     case system = "system"
@@ -9,139 +7,90 @@ public enum ThemeMode: String, Equatable, CaseIterable {
     case dark = "dark"
 }
 
-@Reducer
-public struct SettingFeature {
-    public enum NotificationBanner: Equatable {
-        case permissionDenied
-        case permissionError
+@MainActor
+@Observable
+public final class SettingScreenModel {
+    public var version: String
+    public var isNotificationEnabled: Bool = false
+    public var isLoading: Bool = false
+    public var notificationPermissionDenied: Bool = false
+    public var theme: ThemeMode = .system
+
+    @ObservationIgnored public let dependencies: JacsimDependencies
+    @ObservationIgnored private var settingsTask: _Concurrency.Task<Void, Never>?
+
+    public init(
+        dependencies: JacsimDependencies,
+        version: String = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "2.0.0"
+    ) {
+        self.dependencies = dependencies
+        self.version = version
     }
 
-    @ObservableState
-    public struct State: Equatable {
-        public var version: String
-        public var isNotificationEnabled: Bool = false
-        public var isLoading: Bool = false
-        public var theme: ThemeMode = .system
-        public var notificationBanner: NotificationBanner? = nil
+    deinit {
+        settingsTask?.cancel()
+    }
 
-        public init() {
-            version = Bundle.main.shortVersionString
+    public func loadNotificationSettings() {
+        if let raw = dependencies.appPreferences.getThemeModeRaw(),
+           let mode = ThemeMode(rawValue: raw) {
+            theme = mode
+        }
+        isLoading = true
+        settingsTask?.cancel()
+        settingsTask = _Concurrency.Task { [dependencies] in
+            let isEnabled = await dependencies.userSettingsRepository.isNotificationEnabled()
+            notificationSettingsResponse(isEnabled)
         }
     }
 
-    public enum Action: Equatable {
-        case useCaseButtonTapped
-        case inquiryButtonTapped
-        case reviewButtonTapped
-        case licenceButtonTapped
-        case loadNotificationSettings
-        case notificationToggleChanged(Bool)
-        case notificationSettingsResponse(Bool)
-        case notificationPermissionDenied
-        case notificationPermissionError
-        case notificationBannerDismissed
-        case openSystemSettingsTapped
-        case themeChanged(ThemeMode)
-        
-        case delegate(Delegate)
-        public enum Delegate: Equatable {
-            case navigateToWalkThrough
-            case presentMailCompose
-            case openReviewURL
-            case navigateToLicence
-        }
-    }
-
-    @Dependency(\.userSettingsRepository) var userSettingsRepository
-    @Dependency(\.appPreferences) var appPreferences
-    @Dependency(\.globalNotificationSettingUseCase) var globalNotificationSettingUseCase
-
-    public var body: some ReducerOf<Self> {
-        Reduce { state, action in
-            switch action {
-            case .useCaseButtonTapped:
-                return .send(.delegate(.navigateToWalkThrough))
-            case .inquiryButtonTapped:
-                return .send(.delegate(.presentMailCompose))
-            case .reviewButtonTapped:
-                return .send(.delegate(.openReviewURL))
-            case .licenceButtonTapped:
-                return .send(.delegate(.navigateToLicence))
-            case .loadNotificationSettings:
-                if let raw = appPreferences.getThemeModeRaw(),
-                   let mode = ThemeMode(rawValue: raw) {
-                    state.theme = mode
-                }
-                state.notificationBanner = nil
-
-                state.isLoading = true
-                return .run { [userSettingsRepository] send in
-                    let isEnabled = await userSettingsRepository.isNotificationEnabled()
-                    await send(.notificationSettingsResponse(isEnabled))
-                }
-            case let .notificationToggleChanged(isEnabled):
-                state.isNotificationEnabled = isEnabled
-                state.isLoading = true
-                state.notificationBanner = nil
-
-                return .run { [globalNotificationSettingUseCase] send in
-                    let outcome = await globalNotificationSettingUseCase.setEnabled(isEnabled)
-                    switch outcome {
-                    case .enabled:
-                        await send(.notificationSettingsResponse(true))
-                    case .disabled:
-                        await send(.notificationSettingsResponse(false))
-                    case .permissionDenied:
-                        await send(.notificationSettingsResponse(false))
-                        await send(.notificationPermissionDenied)
-                    case .permissionError:
-                        await send(.notificationSettingsResponse(false))
-                        await send(.notificationPermissionError)
+    public func notificationToggleChanged(_ isEnabled: Bool) {
+        isNotificationEnabled = isEnabled
+        isLoading = true
+        notificationPermissionDenied = false
+        settingsTask?.cancel()
+        settingsTask = _Concurrency.Task { [dependencies] in
+            if isEnabled {
+                do {
+                    let granted = try await dependencies.notificationScheduler.requestAuthorization()
+                    guard granted else {
+                        await dependencies.userSettingsRepository.updateNotificationEnabled(false)
+                        notificationPermissionDeniedResponse()
+                        return
                     }
+                } catch {
+                    await dependencies.userSettingsRepository.updateNotificationEnabled(false)
+                    notificationPermissionDeniedResponse()
+                    return
                 }
-
-            case .notificationPermissionDenied:
-                state.notificationBanner = .permissionDenied
-                return .none
-
-            case .notificationPermissionError:
-                state.notificationBanner = .permissionError
-                return .none
-
-            case .notificationBannerDismissed:
-                state.notificationBanner = nil
-                return .none
-
-            case .openSystemSettingsTapped:
-                return .run { _ in
-                    guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
-                    await MainActor.run {
-                        UIApplication.shared.open(url)
-                    }
-                }
-
-            case let .notificationSettingsResponse(isEnabled):
-                state.isNotificationEnabled = isEnabled
-                state.isLoading = false
-                return .none
-
-            case let .themeChanged(mode):
-                state.theme = mode
-                appPreferences.setThemeModeRaw(mode.rawValue)
-                NotificationCenter.default.post(name: .jacsimThemeChanged, object: nil)
-                return .none
-
-            case .delegate:
-                return .none
             }
+
+            let reminderUseCase = ReminderSchedulingUseCase()
+            let reminders = await dependencies.userSettingsRepository.getAllReminders()
+            await reminderUseCase.syncGlobalReminders(
+                isEnabled: isEnabled,
+                reminders: reminders,
+                notificationScheduler: dependencies.notificationScheduler
+            )
+            await dependencies.userSettingsRepository.updateNotificationEnabled(isEnabled)
+            notificationSettingsResponse(isEnabled)
         }
     }
-}
 
-private extension Bundle {
-    var shortVersionString: String {
-        (object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String)
-        ?? (object(forInfoDictionaryKey: "CFBundleVersion") as? String)
-        ?? ""
+    public func themeChanged(_ mode: ThemeMode) {
+        theme = mode
+        dependencies.appPreferences.setThemeModeRaw(mode.rawValue)
+        NotificationCenter.default.post(name: .jacsimThemeChanged, object: nil)
+    }
+
+    private func notificationSettingsResponse(_ isEnabled: Bool) {
+        isNotificationEnabled = isEnabled
+        isLoading = false
+    }
+
+    private func notificationPermissionDeniedResponse() {
+        isNotificationEnabled = false
+        isLoading = false
+        notificationPermissionDenied = true
     }
 }

@@ -1,71 +1,69 @@
 import SwiftUI
-import ComposableArchitecture
 import Domain
-import DesignSystem
+import DSKit
 
 public struct AllTaskView: View {
-    let store: StoreOf<AllTaskFeature>
+    var model: AllTaskModel
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    public init(store: StoreOf<AllTaskFeature>) {
-        self.store = store
+    public init(model: AllTaskModel) {
+        self.model = model
     }
 
     public var body: some View {
         RedesignScreenScaffold(
-            title: "작심 모아보기",
-            subtitle: "지금 어디까지 왔는지 빠르게 확인해요",
+            title: "전체 작심",
             state: screenState
         ) {
-            summaryCard
+            if PresentationRedesignFlags.isEnabled(.allTask) &&
+                PresentationRedesignFlags.isSectionEnabled(.allTaskSummary) {
+                summaryCard
+            }
 
-            AllTaskSectionCard(
-                kind: .ongoing,
-                tasks: store.ongoingTasks,
-                isExpanded: store.isOngoingExpanded,
-                reduceMotion: reduceMotion,
-                animation: foldAnimation,
-                onToggle: toggleOngoing,
-                onTaskTapped: taskTapped
+            sectionView(
+                title: "진행 중",
+                tasks: model.ongoingTasks,
+                isExpanded: model.isOngoingExpanded,
+                toggleAction: model.toggleOngoing,
+                icon: "circle.fill",
+                iconColor: .primaryNormal
             )
 
-            AllTaskSectionCard(
-                kind: .success,
-                tasks: store.successTasks,
-                isExpanded: store.isSuccessExpanded,
-                reduceMotion: reduceMotion,
-                animation: foldAnimation,
-                onToggle: toggleSuccess,
-                onTaskTapped: taskTapped
+            sectionView(
+                title: "성공",
+                tasks: model.successTasks,
+                isExpanded: model.isSuccessExpanded,
+                toggleAction: model.toggleSuccess,
+                icon: "checkmark.circle.fill",
+                iconColor: .positive
             )
 
-            AllTaskSectionCard(
-                kind: .fail,
-                tasks: store.failTasks,
-                isExpanded: store.isFailExpanded,
-                reduceMotion: reduceMotion,
-                animation: foldAnimation,
-                onToggle: toggleFail,
-                onTaskTapped: taskTapped
+            sectionView(
+                title: "실패",
+                tasks: model.failTasks,
+                isExpanded: model.isFailExpanded,
+                toggleAction: model.toggleFail,
+                icon: "xmark.circle.fill",
+                iconColor: .destructive
             )
         }
         .navigationTitle("작심 모아보기")
         .navigationBarTitleDisplayMode(.inline)
-        .onAppear { store.send(.onAppear) }
+        .onAppear { model.loadTasks() }
     }
 
     private var screenState: RedesignScreenState {
-        if store.isLoading {
-            return .loading(message: "작심 목록을 불러오는 중이에요")
+        if model.isLoading {
+            return .loading(message: "작심을 불러오는 중")
         }
 
-        if store.loadFailed {
+        if model.loadFailed {
             return .error(
                 RedesignErrorStateModel(
-                    title: "작심 목록을 불러오지 못했어요",
-                    message: "네트워크 상태를 확인하고 다시 시도해 주세요",
+                    title: "작심을 불러오지 못했어요",
+                    message: "다시 시도해 주세요",
                     retry: RetryActionModel {
-                        store.send(.onAppear)
+                        model.loadTasks()
                     }
                 )
             )
@@ -75,11 +73,8 @@ public struct AllTaskView: View {
             return .empty(
                 RedesignEmptyStateModel(
                     title: "아직 작심이 없어요",
-                    message: "첫 작심을 만들면 진행 상태가 바로 정리돼요",
-                    icon: "square.and.pencil",
-                    action: RetryActionModel(title: "새 작심 만들기") {
-                        store.send(.createTaskButtonTapped)
-                    }
+                    message: "첫 작심을 시작해 보세요",
+                    icon: "square.and.pencil"
                 )
             )
         }
@@ -88,188 +83,76 @@ public struct AllTaskView: View {
     }
 
     private var summaryCard: some View {
-        RedesignSectionCard(
-            title: "요약",
-            subtitle: "총 \(totalCount)개의 작심을 상태별로 정리했어요"
-        ) {
+        RedesignSectionCard(title: "흐름") {
             HStack(spacing: .jsSM) {
-                summaryPill(
+                JSV2MetricPill(
                     title: "진행",
-                    count: store.ongoingTasks.count,
-                    color: .primaryNormal
+                    value: "\(model.ongoingTasks.count)",
+                    systemImage: "circle.fill",
+                    style: .accent
                 )
-                summaryPill(
+                JSV2MetricPill(
                     title: "성공",
-                    count: store.successTasks.count,
-                    color: .positive
+                    value: "\(model.successTasks.count)",
+                    systemImage: "checkmark.circle.fill",
+                    style: .success
                 )
-                summaryPill(
+                JSV2MetricPill(
                     title: "실패",
-                    count: store.failTasks.count,
-                    color: .destructive
+                    value: "\(model.failTasks.count)",
+                    systemImage: "xmark.circle.fill",
+                    style: .danger
                 )
             }
         }
     }
 
-    private var foldAnimation: Animation {
-        reduceMotion ? .linear(duration: 0.12) : JSAnimation.navigation
-    }
-
-    private func taskRow(task: Domain.Task, tint: Color) -> some View {
-        AllTaskTaskRow(
-            task: task,
-            subtitle: taskSummary(task),
-            tint: tint,
-            onTap: {
-                store.send(.taskTapped(task))
-            }
-        )
-    }
-
-    private func emptyRow(text: String) -> some View {
-        HStack(spacing: .jsXS) {
-            Image(systemName: "tray")
-                .foregroundColor(.labelAlternative)
-            Text(text)
-                .font(.jsBodySmall)
-                .foregroundColor(.labelNeutral)
-            Spacer()
-        }
-        .padding(.jsSM)
-        .background(
-            RoundedRectangle(cornerRadius: .jsRadiusSM)
-                .fill(Color.backgroundAlternative)
-        )
-    }
-
-    private func summaryPill(title: String, count: Int, color: Color) -> some View {
-        VStack(alignment: .leading, spacing: .jsMicro) {
-            Text(title)
-                .font(.jsLabelMedium)
-                .foregroundColor(.labelNeutral)
-            Text("\(count)")
-                .font(.jsHeadlineSmall)
-                .foregroundColor(color)
-        }
-        .frame(maxWidth: .infinity, minHeight: 72.jsScaled(), alignment: .leading)
-        .padding(.horizontal, .jsSM)
-        .background(
-            RoundedRectangle(cornerRadius: .jsRadiusMD)
-                .fill(color.opacity(0.1))
-        )
-    }
-
-    private var totalCount: Int {
-        store.ongoingTasks.count + store.successTasks.count + store.failTasks.count
-    }
-
-    private func taskDateRange(_ task: Domain.Task) -> String {
-        let start = AllTaskDateFormatter.shared.string(from: task.startDate)
-        let end = AllTaskDateFormatter.shared.string(from: task.endDate)
-        return "\(start) - \(end)"
-    }
-
-    private func taskSummary(_ task: Domain.Task) -> String {
-        "\(taskDateRange(task)) · \(task.completedDays)/\(max(task.dayArray.count, 1))일 완료"
-    }
-
-    private func toggleOngoing() {
-        _ = withAnimation(foldAnimation) {
-            store.send(.toggleOngoing)
-        }
-    }
-
-    private func toggleSuccess() {
-        _ = withAnimation(foldAnimation) {
-            store.send(.toggleSuccess)
-        }
-    }
-
-    private func toggleFail() {
-        _ = withAnimation(foldAnimation) {
-            store.send(.toggleFail)
-        }
-    }
-
-    private func taskTapped(_ task: Domain.Task) {
-        store.send(.taskTapped(task))
-    }
-
-}
-
-private struct AllTaskSectionCard: View {
-    let kind: AllTaskSectionKind
-    let tasks: [Domain.Task]
-    let isExpanded: Bool
-    let reduceMotion: Bool
-    let animation: Animation
-    let onToggle: () -> Void
-    let onTaskTapped: (Domain.Task) -> Void
-
-    var body: some View {
-        JSCard(style: .elevated, padding: .jsMD) {
-            VStack(alignment: .leading, spacing: .jsSM) {
-                Button(action: onToggle) {
+    private func sectionView(
+        title: String,
+        tasks: [Domain.Task],
+        isExpanded: Bool,
+        toggleAction: @escaping () -> Void,
+        icon: String,
+        iconColor: Color
+    ) -> some View {
+        RedesignSectionCard(
+            title: title,
+            subtitle: "\(tasks.count)개"
+        ) {
+            VStack(spacing: .jsXS) {
+                Button {
+                    withAnimation(foldAnimation) {
+                        toggleAction()
+                    }
+                } label: {
                     HStack(spacing: .jsSM) {
-                        Image(systemName: kind.icon)
-                            .foregroundColor(kind.iconColor)
-                            .font(.jsBodySmall)
-                            .frame(width: 32.jsScaled(), height: 32.jsScaled())
-                            .background(kind.iconColor.opacity(0.12))
-                            .clipShape(RoundedRectangle(cornerRadius: .jsRadiusSM))
+                        Image(systemName: icon)
+                            .foregroundColor(iconColor)
+                            .font(.jsLabelSmall)
 
-                        VStack(alignment: .leading, spacing: .jsMicro) {
-                            Text(kind.title)
-                                .font(.jsHeadlineSmall)
-                                .foregroundColor(.labelStrong)
+                        Spacer()
 
-                            Text(kind.subtitle)
-                                .font(.jsLabelMedium)
-                                .foregroundColor(.labelNeutral)
-                        }
-
-                        Spacer(minLength: .jsSM)
-
-                        Text("\(tasks.count)")
+                        Text(isExpanded ? "접기" : "보기")
                             .font(.jsButtonSmall)
-                            .foregroundColor(.labelStrong)
-                            .padding(.horizontal, .jsSM)
-                            .padding(.vertical, .jsMicro)
-                            .background(
-                                Capsule()
-                                    .fill(Color.backgroundAlternative)
-                            )
+                            .foregroundColor(.v2BrandBlue)
 
                         Image(systemName: "chevron.down")
                             .font(.jsButtonSmall)
                             .foregroundColor(.labelNeutral)
                             .rotationEffect(.degrees(isExpanded ? 180 : 0))
-                            .animation(animation, value: isExpanded)
+                            .animation(foldAnimation, value: isExpanded)
                     }
-                    .padding(.vertical, .jsMicro)
-                    .contentShape(Rectangle())
+                    .padding(.vertical, .jsXS)
                 }
-                .buttonStyle(.plain)
-                .accessibilityAddTraits(.isButton)
-                .accessibilityLabel("\(kind.title) 작심 \(tasks.count)개")
-                .accessibilityValue(isExpanded ? "펼쳐짐" : "접힘")
-                .accessibilityHint(isExpanded ? "두 번 탭해 접습니다" : "두 번 탭해 펼칩니다")
+                .jsAccessibility("\(title), \(tasks.count)개의 작심", traits: .isButton)
 
                 if isExpanded {
                     VStack(spacing: .jsSM) {
                         if tasks.isEmpty {
-                            emptyRow(text: kind.emptyMessage)
+                            emptyRow(text: "\(title) 작심이 아직 없어요")
                         } else {
                             ForEach(tasks, id: \.id) { task in
-                                AllTaskTaskRow(
-                                    task: task,
-                                    subtitle: Self.subtitle(for: task),
-                                    tint: kind.iconColor,
-                                    onTap: {
-                                        onTaskTapped(task)
-                                    }
-                                )
+                                taskRow(task: task)
                             }
                         }
                     }
@@ -281,11 +164,8 @@ private struct AllTaskSectionCard: View {
         }
     }
 
-    private static func subtitle(for task: Domain.Task) -> String {
-        let formatter = AllTaskDateFormatter.shared
-        let start = formatter.string(from: task.startDate)
-        let end = formatter.string(from: task.endDate)
-        return "\(start) - \(end) · \(task.completedDays)/\(max(task.dayArray.count, 1))일 완료"
+    private var foldAnimation: Animation {
+        reduceMotion ? .linear(duration: 0.12) : .easeInOut(duration: 0.24)
     }
 
     private var foldTransition: AnyTransition {
@@ -305,111 +185,130 @@ private struct AllTaskSectionCard: View {
         )
     }
 
+    private func taskRow(task: Domain.Task) -> some View {
+        Button {
+            model.taskTapped(task)
+        }
+        label: {
+            HStack(spacing: .jsSM) {
+                ZStack(alignment: .bottomLeading) {
+                    RoundedRectangle(cornerRadius: 18.jsScaled(), style: .continuous)
+                        .fill(
+                            LinearGradient(
+                                colors: statusGradientColors(task),
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+
+                    Image(systemName: statusIcon(task))
+                        .font(.jsHeadlineMedium)
+                        .foregroundColor(.white)
+                        .padding(.jsSM)
+                }
+                .frame(width: 86.jsScaled(), height: 86.jsScaled())
+                .accessibilityHidden(true)
+
+                VStack(alignment: .leading, spacing: .jsXS) {
+                    Text(task.title)
+                        .font(.jsHeadlineSmall)
+                        .foregroundColor(.labelStrong)
+                        .lineLimit(2)
+                        .multilineTextAlignment(.leading)
+
+                    Text(taskDateRange(task))
+                        .font(.jsLabelMedium)
+                        .foregroundColor(.labelAlternative)
+                        .lineLimit(1)
+
+                    JSV2StatusChip(
+                        statusTitle(task),
+                        systemImage: statusIcon(task),
+                        style: statusStyle(task)
+                    )
+                }
+
+                Spacer(minLength: .jsXS)
+
+                Image(systemName: "chevron.right")
+                    .font(.jsButtonSmall)
+                    .foregroundColor(.labelNeutral)
+            }
+            .padding(.jsSM)
+            .jsv2CardSurface(cornerRadius: 20.jsScaled(), shadowOpacity: 0.05)
+            .contentShape(RoundedRectangle(cornerRadius: 20.jsScaled(), style: .continuous))
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("\(task.title), \(statusTitle(task)), \(taskDateRange(task))")
+    }
+
     private func emptyRow(text: String) -> some View {
         HStack(spacing: .jsXS) {
             Image(systemName: "tray")
-                .foregroundColor(.labelAlternative)
+                .foregroundColor(.labelAssistive)
             Text(text)
                 .font(.jsBodySmall)
-                .foregroundColor(.labelNeutral)
+                .foregroundColor(.labelAlternative)
             Spacer()
         }
         .padding(.jsSM)
         .background(
             RoundedRectangle(cornerRadius: .jsRadiusSM)
-                .fill(Color.backgroundAlternative)
+                .fill(Color.v2Surface)
         )
     }
-}
 
-private enum AllTaskDateFormatter {
-    static let shared: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "MM.dd"
-        return formatter
-    }()
-}
-
-private struct AllTaskTaskRow: View {
-    let task: Domain.Task
-    let subtitle: String
-    let tint: Color
-    let onTap: () -> Void
-
-    var body: some View {
-        JSListItem(
-            title: task.title,
-            subtitle: subtitle,
-            icon: "flag.fill",
-            iconColor: tint,
-            accessory: .disclosure,
-            action: onTap
-        )
-        .background(
-            RoundedRectangle(cornerRadius: .jsRadiusMD)
-                .fill(Color.backgroundAlternative)
-        )
+    private var totalCount: Int {
+        model.ongoingTasks.count + model.successTasks.count + model.failTasks.count
     }
-}
 
-private enum AllTaskSectionKind {
-    case ongoing
-    case success
-    case fail
+    private func statusStyle(_ task: Domain.Task) -> JSV2StatusStyle {
+        if model.successTasks.contains(where: { $0.id == task.id }) {
+            return .success
+        }
+        if model.failTasks.contains(where: { $0.id == task.id }) {
+            return .danger
+        }
+        return .accent
+    }
 
-    var title: String {
-        switch self {
-        case .ongoing:
-            return "진행 중"
-        case .success:
+    private func statusTitle(_ task: Domain.Task) -> String {
+        if model.successTasks.contains(where: { $0.id == task.id }) {
             return "성공"
-        case .fail:
+        }
+        if model.failTasks.contains(where: { $0.id == task.id }) {
             return "실패"
         }
+        return "진행 중"
     }
 
-    var subtitle: String {
-        switch self {
-        case .ongoing:
-            return "지금 이어가는 작심"
-        case .success:
-            return "끝까지 해낸 작심"
-        case .fail:
-            return "다시 시작할 수 있는 작심"
-        }
-    }
-
-    var emptyMessage: String {
-        switch self {
-        case .ongoing:
-            return "진행 중인 작심이 아직 없어요"
-        case .success:
-            return "성공한 작심이 아직 없어요"
-        case .fail:
-            return "실패한 작심이 아직 없어요"
-        }
-    }
-
-    var icon: String {
-        switch self {
-        case .ongoing:
-            return "circle.fill"
-        case .success:
+    private func statusIcon(_ task: Domain.Task) -> String {
+        if model.successTasks.contains(where: { $0.id == task.id }) {
             return "checkmark.circle.fill"
-        case .fail:
+        }
+        if model.failTasks.contains(where: { $0.id == task.id }) {
             return "xmark.circle.fill"
         }
+        return "circle.fill"
     }
 
-    var iconColor: Color {
-        switch self {
-        case .ongoing:
-            return .primaryNormal
+    private func statusGradientColors(_ task: Domain.Task) -> [Color] {
+        switch statusStyle(task) {
         case .success:
-            return .positive
-        case .fail:
-            return .destructive
+            return [Color.positive.opacity(0.86), Color.v2BrandBlue.opacity(0.78)]
+        case .danger:
+            return [Color.destructive.opacity(0.84), Color.cautionary.opacity(0.68)]
+        case .accent, .warning, .neutral:
+            return [Color.v2BrandBlue.opacity(0.86), Color.v2BrandBlueStrong.opacity(0.82)]
         }
+    }
+
+    private func taskDateRange(_ task: Domain.Task) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MM.dd"
+        let start = formatter.string(from: task.startDate)
+        let end = formatter.string(from: task.endDate)
+        return "\(start) - \(end)"
     }
 }
 
@@ -430,9 +329,7 @@ private struct FoldTransitionModifier: ViewModifier {
 #Preview {
     NavigationStack {
         AllTaskView(
-            store: Store(initialState: AllTaskFeature.State()) {
-                AllTaskFeature()
-            }
+            model: AllTaskModel(dependencies: .test)
         )
     }
 }

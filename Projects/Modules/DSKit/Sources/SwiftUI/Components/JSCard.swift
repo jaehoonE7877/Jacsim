@@ -24,7 +24,7 @@ public struct JSCard<Content: View>: View {
     public var body: some View {
         content
             .padding(padding)
-            .background(Color.backgroundNormal)
+            .background(Color.surfaceElevated)
             .cornerRadius(.jsCornerSmall)
             .overlay(
                 RoundedRectangle(cornerRadius: .jsCornerSmall)
@@ -36,7 +36,7 @@ public struct JSCard<Content: View>: View {
     private var borderColor: Color {
         switch style {
         case .outlined:
-            return .labelAlternative
+            return .labelAssistive
         case .elevated, .flat:
             return .clear
         }

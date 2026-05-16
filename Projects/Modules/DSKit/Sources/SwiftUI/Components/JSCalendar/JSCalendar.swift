@@ -15,7 +15,7 @@ public enum JSCalendarDateColor {
 public struct JSCalendar: View {
     @Binding var selectedDate: Date
     @State private var viewDate: Date
-    @Binding var scope: JSCalendarScope
+    @State private var scope: JSCalendarScope
     private let eventDates: [Date]
     private let dateColors: [Date: JSCalendarDateColor]
     private let calendar = Calendar.current
@@ -23,13 +23,13 @@ public struct JSCalendar: View {
 
     public init(
         selectedDate: Binding<Date>,
-        scope: Binding<JSCalendarScope>,
+        scope: JSCalendarScope = .month,
         eventDates: [Date] = [],
         dateColors: [Date: JSCalendarDateColor] = [:]
     ) {
         self._selectedDate = selectedDate
         self._viewDate = State(initialValue: selectedDate.wrappedValue)
-        self._scope = scope
+        self._scope = State(initialValue: scope)
         self.eventDates = eventDates
         self.dateColors = dateColors
     }
@@ -37,80 +37,77 @@ public struct JSCalendar: View {
     public var body: some View {
         VStack(spacing: 0) {
             headerView
-
+            
             weekdayHeaderView
-
+            
             calendarGridView
-                .animation(JSAnimation.navigationSpring, value: viewDate)
-                .animation(JSAnimation.navigationSpring, value: scope)
+                .gesture(gridGesture)
+                .animation(.spring(response: 0.35, dampingFraction: 0.82), value: viewDate)
+                .animation(.spring(response: 0.35, dampingFraction: 0.82), value: scope)
+            
+            handleBar
         }
         .background(Color.backgroundNormal)
         .clipped()
-        .onChange(of: selectedDate) { _, newDate in
-            alignViewDate(for: scope, selectedDate: newDate)
-        }
-        .onChange(of: scope) { _, newScope in
-            alignViewDate(for: newScope, selectedDate: selectedDate)
-        }
     }
 
     private var headerView: some View {
-        VStack(alignment: .leading, spacing: .jsSM) {
-            HStack(spacing: .jsSM) {
-                VStack(alignment: .leading, spacing: .jsMicro) {
-                    Button(action: { withAnimation(JSAnimation.navigation) { moveToToday() } }) {
-                        Text(headerTitle)
-                            .font(.jsDisplay22Bold)
-                            .foregroundColor(Color.labelNormal)
-                            .contentShape(Rectangle())
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel("\(headerTitle), 오늘로 이동")
-
-                    Text(scopeText)
-                        .font(.jsLabel12Medium)
-                        .foregroundColor(Color.labelNeutral)
+        HStack(spacing: .jsSM) {
+            VStack(alignment: .leading, spacing: 2.jsScaled()) {
+                Button(action: { withAnimation { moveToToday() } }) {
+                    Text(headerTitle)
+                        .font(.jsDisplay22Bold)
+                        .foregroundColor(Color.labelNormal)
+                        .contentShape(Rectangle())
                 }
-                Spacer()
+                Text(scopeText)
+                    .font(.jsLabel12Medium)
+                    .foregroundColor(Color.labelNeutral)
+            }
+            Spacer()
 
-                if !calendar.isDateInToday(viewDate) || !calendar.isDate(viewDate, inSameDayAs: selectedDate) {
-                    Button(action: { withAnimation(JSAnimation.navigationSpring) { moveToToday() } }) {
-                        Text("오늘")
-                            .font(.jsLabel13Bold)
-                            .foregroundColor(.white)
-                            .padding(.horizontal, .jsSM)
-                            .padding(.vertical, .jsXS)
-                            .background(
-                                Capsule()
-                                    .fill(Color.primaryNormal)
-                                    .jsShadow(.medium)
-                            )
-                    }
-                    .buttonStyle(.plain)
-                }
-
-                HStack(spacing: .jsXS) {
-                    calendarPagingButton(
-                        systemName: "chevron.left",
-                        accessibilityLabel: scope == .month ? "이전 달" : "이전 주",
-                        action: { movePage(by: -1) }
-                    )
-                    calendarPagingButton(
-                        systemName: "chevron.right",
-                        accessibilityLabel: scope == .month ? "다음 달" : "다음 주",
-                        action: { movePage(by: 1) }
-                    )
+            if !calendar.isDateInToday(viewDate) || !calendar.isDate(viewDate, inSameDayAs: selectedDate) {
+                Button(action: { withAnimation(.spring(response: 0.35, dampingFraction: 0.82)) { moveToToday() } }) {
+                    Text("오늘")
+                        .font(.jsLabel13Bold)
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 12.jsScaled())
+                        .padding(.vertical, 8.jsScaled())
+                        .background(
+                            Capsule()
+                                .fill(Color.primaryNormal)
+                                .jsShadow(.medium)
+                        )
                 }
             }
 
-            Picker("캘린더 보기", selection: $scope) {
-                Text("월간").tag(JSCalendarScope.month)
-                Text("주간").tag(JSCalendarScope.week)
+            HStack(spacing: 10.jsScaled()) {
+                Button(action: { withAnimation { movePage(by: -1) } }) {
+                    Image(systemName: "chevron.left")
+                        .font(.jsBody14Semibold)
+                        .foregroundColor(Color.labelNormal)
+                        .frame(width: 36.jsScaled(), height: 36.jsScaled())
+                        .background(
+                            RoundedRectangle(cornerRadius: 12.jsScaled())
+                                .fill(Color(uiColor: .secondarySystemGroupedBackground))
+                                .jsShadow(.small)
+                        )
+                }
+                Button(action: { withAnimation { movePage(by: 1) } }) {
+                    Image(systemName: "chevron.right")
+                        .font(.jsBody14Semibold)
+                        .foregroundColor(Color.labelNormal)
+                        .frame(width: 36.jsScaled(), height: 36.jsScaled())
+                        .background(
+                            RoundedRectangle(cornerRadius: 12.jsScaled())
+                                .fill(Color(uiColor: .secondarySystemGroupedBackground))
+                                .jsShadow(.small)
+                        )
+                }
             }
-            .pickerStyle(.segmented)
         }
-        .padding(.horizontal, .jsLG)
-        .padding(.vertical, .jsSM)
+        .padding(.horizontal, 20.jsScaled())
+        .padding(.vertical, 10.jsScaled())
         .background(Color.backgroundNormal)
     }
 
@@ -121,11 +118,11 @@ public struct JSCalendar: View {
                     .font(.jsLabel13Bold)
                     .foregroundColor(index == 0 ? Color.destructive.opacity(0.8) : (index == 6 ? Color.primaryNormal.opacity(0.8) : .labelNeutral))
                     .frame(maxWidth: .infinity)
-                    .padding(.vertical, .jsMicro)
+                    .padding(.vertical, 4.jsScaled())
             }
         }
-        .padding(.horizontal, .jsMD)
-        .padding(.vertical, .jsXS)
+        .padding(.horizontal, 16.jsScaled())
+        .padding(.vertical, 6.jsScaled())
         .background(Color.clear)
         .zIndex(1)
     }
@@ -136,13 +133,13 @@ public struct JSCalendar: View {
         
         return LazyVGrid(
             columns: Array(repeating: GridItem(.flexible(), spacing: 0), count: 7),
-            spacing: .jsXS
+            spacing: 8.jsScaled()
         ) {
             ForEach(days, id: \.self) { date in
                 dayView(for: date)
             }
         }
-        .padding(.horizontal, .jsXS)
+        .padding(.horizontal, 8.jsScaled())
         .frame(height: CGFloat(rows) * 56.jsScaled())
     }
 
@@ -153,61 +150,55 @@ public struct JSCalendar: View {
         let hasEvent = eventDates.contains { calendar.isDate($0, inSameDayAs: date) }
         let dateColor = dateColors[date] ?? .none
 
-        return Button {
-            withAnimation(JSAnimation.emphasisSpring) {
+        return VStack(spacing: 6.jsScaled()) {
+            ZStack {
+                if isSelected {
+                    RoundedRectangle(cornerRadius: 12.jsScaled())
+                        .fill(Color.primaryNormal)
+                        .jsShadow(.medium)
+                } else if isToday {
+                    RoundedRectangle(cornerRadius: 12.jsScaled())
+                        .stroke(Color.primaryNormal.opacity(0.4), lineWidth: 1.5)
+                        .background(
+                            RoundedRectangle(cornerRadius: 12.jsScaled())
+                                .fill(Color.primaryNormal.opacity(0.08))
+                        )
+                } else if hasEvent && !isSelected {
+                    RoundedRectangle(cornerRadius: 12.jsScaled())
+                        .fill(dateColorBackground(dateColor))
+                } else {
+                    RoundedRectangle(cornerRadius: 12.jsScaled())
+                        .fill(Color.clear)
+                }
+
+                Text("\(calendar.component(.day, from: date))")
+                    .font(.jsHeadline16Bold)
+                    .foregroundColor(isSelected ? .white : (isCurrentMonth ? (isToday ? Color.primaryNormal : Color.labelNormal) : Color.labelAlternative))
+            }
+            .frame(height: 42.jsScaled())
+
+            if hasEvent {
+                Circle()
+                    .fill(isSelected ? Color.backgroundAlternative.opacity(0.9) : dateColorIndicator(dateColor))
+                    .frame(width: 5.jsScaled(), height: 5.jsScaled())
+                    .jsShadow(.small)
+            } else if isToday && !isSelected {
+                Circle()
+                    .fill(Color.primaryNormal.opacity(0.5))
+                    .frame(width: 4.jsScaled(), height: 4.jsScaled())
+            } else {
+                Spacer().frame(height: 5.jsScaled())
+            }
+        }
+        .padding(.horizontal, 6.jsScaled())
+        .frame(height: 58.jsScaled())
+        .contentShape(Rectangle())
+        .onTapGesture {
+            withAnimation(.spring(response: 0.28, dampingFraction: 0.85)) {
                 selectedDate = date
                 viewDate = date
             }
         }
-        label: {
-            VStack(spacing: .jsXS) {
-                ZStack {
-                    if isSelected {
-                        RoundedRectangle(cornerRadius: .jsRadiusMD)
-                            .fill(Color.primaryNormal)
-                            .jsShadow(.medium)
-                    } else if isToday {
-                        RoundedRectangle(cornerRadius: .jsRadiusMD)
-                            .stroke(Color.primaryNormal.opacity(0.4), lineWidth: 1.5)
-                            .background(
-                                RoundedRectangle(cornerRadius: .jsRadiusMD)
-                                    .fill(Color.primaryNormal.opacity(0.08))
-                            )
-                    } else if hasEvent && !isSelected {
-                        RoundedRectangle(cornerRadius: .jsRadiusMD)
-                            .fill(dateColorBackground(dateColor))
-                    } else {
-                        RoundedRectangle(cornerRadius: .jsRadiusMD)
-                            .fill(Color.clear)
-                    }
-
-                    Text("\(calendar.component(.day, from: date))")
-                        .font(.jsHeadline16Bold)
-                        .foregroundColor(isSelected ? .white : (isCurrentMonth ? (isToday ? Color.primaryNormal : Color.labelNormal) : Color.labelAlternative))
-                }
-                .frame(height: 44.jsScaled(.touchTarget))
-
-                if hasEvent {
-                    Circle()
-                        .fill(isSelected ? Color.backgroundAlternative.opacity(0.9) : dateColorIndicator(dateColor))
-                        .frame(width: 5.jsScaled(), height: 5.jsScaled())
-                        .jsShadow(.small)
-                } else if isToday && !isSelected {
-                    Circle()
-                        .fill(Color.primaryNormal.opacity(0.5))
-                        .frame(width: 4.jsScaled(), height: 4.jsScaled())
-                } else {
-                    Spacer().frame(height: 5.jsScaled())
-                }
-            }
-            .padding(.horizontal, .jsXS)
-            .frame(height: 60.jsScaled())
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel(accessibilityLabel(for: date, hasEvent: hasEvent))
-        .accessibilityValue(isSelected ? "선택됨" : (isToday ? "오늘" : ""))
-        .accessibilityHint("이 날짜의 작심 기록을 확인합니다")
     }
 
     private func dateColorBackground(_ color: JSCalendarDateColor) -> Color {
@@ -234,6 +225,34 @@ public struct JSCalendar: View {
         case .high:
             return Color.positive
         }
+    }
+
+    private var gridGesture: some Gesture {
+        DragGesture(minimumDistance: 10)
+            .onEnded { value in
+                let horizontal = value.translation.width
+                let vertical = value.translation.height
+                if abs(horizontal) > abs(vertical) && abs(horizontal) > 28.jsScaled() {
+                    if horizontal < 0 {
+                        movePage(by: 1)
+                    } else {
+                        movePage(by: -1)
+                    }
+                } else if abs(vertical) > 28.jsScaled() {
+                    if vertical < 0 {
+                        switchScope(to: .week)
+                    } else {
+                        switchScope(to: .month)
+                    }
+                }
+            }
+    }
+
+    private var handleBar: some View {
+        Capsule()
+            .fill(Color.labelDisable.opacity(0.3))
+            .frame(width: 44.jsScaled(), height: 4.jsScaled())
+            .padding(.vertical, 10.jsScaled())
     }
 
     private var scopeText: String {
@@ -266,6 +285,14 @@ public struct JSCalendar: View {
         }
     }
 
+    private func switchScope(to newScope: JSCalendarScope) {
+        guard scope != newScope else { return }
+        withAnimation(.spring(response: 0.35, dampingFraction: 0.82)) {
+            scope = newScope
+            alignViewDate(for: newScope)
+        }
+    }
+
     private func moveToToday() {
         let today = Date()
         selectedDate = today
@@ -275,50 +302,13 @@ public struct JSCalendar: View {
         }
     }
 
-    private func alignViewDate(for scope: JSCalendarScope, selectedDate: Date) {
+    private func alignViewDate(for scope: JSCalendarScope) {
         switch scope {
         case .month:
             viewDate = startOfMonth(for: selectedDate)
         case .week:
             viewDate = selectedDate
         }
-    }
-
-    private func calendarPagingButton(
-        systemName: String,
-        accessibilityLabel: String,
-        action: @escaping () -> Void
-    ) -> some View {
-        Button(action: { withAnimation(JSAnimation.navigation) { action() } }) {
-            Image(systemName: systemName)
-                .font(.jsBody14Semibold)
-                .foregroundColor(Color.labelNormal)
-                .frame(width: 44.jsScaled(.touchTarget), height: 44.jsScaled(.touchTarget))
-                .background(
-                    RoundedRectangle(cornerRadius: .jsRadiusMD)
-                        .fill(Color.backgroundAlternative)
-                        .jsShadow(.small)
-                )
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel(accessibilityLabel)
-    }
-
-    private func accessibilityLabel(for date: Date, hasEvent: Bool) -> String {
-        let formatter = DateFormatter()
-        formatter.locale = locale
-        formatter.dateFormat = "M월 d일 EEEE"
-
-        var parts = [formatter.string(from: date)]
-        if calendar.isDateInToday(date) {
-            parts.append("오늘")
-        }
-        if hasEvent {
-            parts.append("기록 있음")
-        } else {
-            parts.append("기록 없음")
-        }
-        return parts.joined(separator: ", ")
     }
 
     private func startOfMonth(for date: Date) -> Date {

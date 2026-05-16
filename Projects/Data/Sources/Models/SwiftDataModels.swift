@@ -7,7 +7,13 @@ public final class UserJacsimModel {
     public var title: String
     public var startDate: Date
     public var endDate: Date
+    public var isDone: Bool
+    public var success: Int
+    public var isSuccess: Bool
     public var alarm: Date?
+    public var statusRaw: String
+    public var resultRaw: String
+    public var currentStageTypeRaw: Int?
     public var isNotificationEnabled: Bool
 
     @Relationship(deleteRule: .cascade)
@@ -21,7 +27,13 @@ public final class UserJacsimModel {
         title: String,
         startDate: Date,
         endDate: Date,
+        isDone: Bool = false,
+        success: Int,
+        isSuccess: Bool = false,
         alarm: Date? = nil,
+        statusRaw: String = "inProgress",
+        resultRaw: String = "none",
+        currentStageTypeRaw: Int? = 3,
         isNotificationEnabled: Bool = false,
         memoList: [CertifiedModel] = [],
         stages: [StageModel] = []
@@ -30,7 +42,13 @@ public final class UserJacsimModel {
         self.title = title
         self.startDate = startDate
         self.endDate = endDate
+        self.isDone = isDone
+        self.success = success
+        self.isSuccess = isSuccess
         self.alarm = alarm
+        self.statusRaw = statusRaw
+        self.resultRaw = resultRaw
+        self.currentStageTypeRaw = currentStageTypeRaw
         self.isNotificationEnabled = isNotificationEnabled || alarm != nil
         self.memoList = memoList
         self.stages = stages
@@ -59,13 +77,17 @@ public final class CertifiedModel {
     @Relationship(inverse: \UserJacsimModel.memoList)
     public var userJacsim: UserJacsimModel?
 
+    @Relationship(inverse: \StageModel.dailyRecords)
+    public var stage: StageModel?
+
     public init(
         id: UUID = UUID(),
         memo: String,
         check: Bool = false,
         date: Date = Date(),
         imagePath: String? = nil,
-        userJacsim: UserJacsimModel? = nil
+        userJacsim: UserJacsimModel? = nil,
+        stage: StageModel? = nil
     ) {
         self.id = id
         self.memo = memo
@@ -73,6 +95,7 @@ public final class CertifiedModel {
         self.date = date
         self.imagePath = imagePath
         self.userJacsim = userJacsim
+        self.stage = stage
     }
 }
 
@@ -89,6 +112,9 @@ public final class StageModel {
     @Relationship(inverse: \UserJacsimModel.stages)
     public var userJacsim: UserJacsimModel?
 
+    @Relationship(deleteRule: .cascade)
+    public var dailyRecords: [CertifiedModel]
+
     public init(
         id: UUID = UUID(),
         stageTypeRaw: Int = 3,
@@ -97,7 +123,8 @@ public final class StageModel {
         durationDays: Int,
         successDays: Int = 0,
         resultRaw: String = "inProgress",
-        userJacsim: UserJacsimModel? = nil
+        userJacsim: UserJacsimModel? = nil,
+        dailyRecords: [CertifiedModel] = []
     ) {
         self.id = id
         self.stageTypeRaw = stageTypeRaw
@@ -107,5 +134,6 @@ public final class StageModel {
         self.successDays = successDays
         self.resultRaw = resultRaw
         self.userJacsim = userJacsim
+        self.dailyRecords = dailyRecords
     }
 }

@@ -22,7 +22,7 @@ public struct JSStageSelector: View {
                     stage: stage,
                     isSelected: selectedStage == stage,
                     onTap: {
-                        withAnimation(JSAnimation.navigation) {
+                        withAnimation(.easeInOut(duration: 0.2)) {
                             selectedStage = stage
                         }
                         onStageSelected?(stage)
@@ -52,11 +52,11 @@ private struct StageButton: View {
             .frame(height: 80.jsScaled())
             .background(
                 RoundedRectangle(cornerRadius: .jsRadiusSM)
-                    .fill(isSelected ? Color.primaryNormal : Color.backgroundAlternative.opacity(0.2))
+                    .fill(isSelected ? Color.v2BrandBlue : Color.v2Surface)
             )
             .overlay(
                 RoundedRectangle(cornerRadius: .jsRadiusSM)
-                    .stroke(isSelected ? Color.primaryNormal : Color.backgroundAlternative.opacity(0.3), lineWidth: isSelected ? 0 : 1)
+                    .stroke(isSelected ? Color.v2BrandBlue : Color.labelAssistive.opacity(0.22), lineWidth: isSelected ? 0 : 1)
             )
         }
         .buttonStyle(PlainButtonStyle())
@@ -107,11 +107,11 @@ public struct JSStageInputView: View {
 
                 Text("총 \(selectedStage)일")
                     .font(.jsHeadline18Bold)
-                    .foregroundColor(Color.primaryNormal)
+                    .foregroundColor(Color.v2BrandBlue)
                     .padding(.jsXS)
                     .background(
                         RoundedRectangle(cornerRadius: 6.jsScaled())
-                            .fill(Color.primaryNormal.opacity(0.1))
+                            .fill(Color.v2BrandBlueSoft)
                     )
 
                 Spacer()
@@ -128,7 +128,7 @@ public struct JSStageInputView: View {
                     .frame(height: 50.jsScaled())
                     .background(
                         RoundedRectangle(cornerRadius: 10.jsScaled())
-                            .fill(Color.primaryNormal)
+                            .fill(Color.v2BrandBlue)
                     )
             }
             .frame(minWidth: 44.jsScaled(.touchTarget), minHeight: 44.jsScaled(.touchTarget))
@@ -151,9 +151,7 @@ struct JSStageSelector_Previews: PreviewProvider {
 
                         JSStageSelector(
                             selectedStage: $selectedStage,
-                            onStageSelected: { stage in
-                                print("Selected: \(stage)")
-                            }
+                            onStageSelected: { _ in }
                         )
                     }
 
@@ -163,9 +161,7 @@ struct JSStageSelector_Previews: PreviewProvider {
 
                         JSStageInputView(
                             selectedStage: $selectedStage,
-                            onConfirm: {
-                                print("Confirmed: \(selectedStage)")
-                            }
+                            onConfirm: {}
                         )
                     }
                     .frame(height: 300)

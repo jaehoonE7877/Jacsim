@@ -1,398 +1,409 @@
-import Foundation
+import Core
 import Domain
-import ComposableArchitecture
+import DSKit
+import ExternalInterface
+import Foundation
+import Observation
 import UIKit
-import DesignSystem
-import JacsimClient
-import Shared
 
-@Reducer
-public struct TaskDetailFeature {
+@MainActor
+@Observable
+public final class TaskDetailModel {
     public enum DeleteFlowStep: Equatable {
         case firstGuard
         case finalConfirmation
     }
 
-    @ObservableState
-    public struct State: Equatable {
-        public var task: Domain.Task
-        public var dayViewData: [DayViewData] = []
-        public var remainingSuccessCount: Int = 0
-        public var isStagePopupPresented: Bool = false
-        public var stagePopupResult: StageResult = .inProgress
-
-        public var challengeState: ChallengeDetailState = .stagePending
-        public var todayStatus: TodayStatus = .notCertified
-        public var currentStage: StageSnapshot?
-        public var stageProgress: Double = 0
-        public var stageProgressText: String = "0/7"
-        public var isDeleteConfirmationPresented: Bool = false
-        public var isDeleteFlowPresented: Bool = false
-        public var deleteFlowStep: DeleteFlowStep = .firstGuard
-        public var deleteConfirmCountdown: Int = DeleteFlowPolicy.confirmDelaySeconds
-        public var isDeleteConfirmEnabled: Bool = false
-        public var todayMemo: String = ""
-        public var shouldScrollToRecords: Bool = false
-        public var coverImage: UIImage? = nil
-
-        @Presents public var editTask: TaskEditFeature.State?
-        @Presents public var deleteFailureAlert: AlertState<Action.DeleteFailureAlert>?
-        
-        public struct DayViewData: Equatable, Identifiable {
-            public var id: Date { date }
-            let date: Date
-            let memo: String
-            let image: UIImage?
-            let isChecked: Bool
-        }
-        
-        public init(task: Domain.Task) {
-            self.task = task
-        }
+    public struct DayViewData: Equatable, Identifiable {
+        public var id: Date { date }
+        let date: Date
+        let memo: String
+        let image: UIImage?
+        let isChecked: Bool
     }
 
-    public enum Action {
-        case onAppear
-        case loadImages
-        case imageLoaded(Date, UIImage?)
-        case coverImageLoaded(UIImage?)
-        case dayTapped(Date)
-        
-        case changePhotoButtonTapped
-        case notificationSettingsButtonTapped
-        case editMemoButtonTapped
-        case deleteButtonTapped
-        case deleteConfirmed
-        case deleteCancelled
-        case deleteFlowStarted
-        case deleteFlowDismissed
-        case deleteFlowProceedToFinal
-        case deleteFlowKeepGoing
-        case deleteFlowCountdownTicked
-        case deleteFlowDeleteConfirmed
-        case deleteTaskSucceeded
-        case deleteTaskFailed
-        case deleteFailureAlert(PresentationAction<DeleteFailureAlert>)
-        
-        case editButtonTapped
-        case editTask(PresentationAction<TaskEditFeature.Action>)
-        
-        case stageResultChecked(StageResult)
-        case stagePopupDismissed
-        
-        case certifyTodayTapped
-        case nextStageButtonTapped
-        case viewSuccessRecordTapped
-        case retryStageButtonTapped
-        case keepAsIsButtonTapped
-        case viewHistoryButtonTapped
-        case scrollToRecordsCompleted
-        
-        case backButtonTapped
+    public var task: Domain.Task
+    public var dayViewData: [DayViewData] = []
+    public var remainingSuccessCount: Int = 0
+    public var isStagePopupPresented: Bool = false
+    public var stagePopupResult: StageResult = .inProgress
+    public var challengeState: ChallengeDetailState = .stagePending
+    public var todayStatus: TodayStatus = .notCertified
+    public var currentStage: StageSnapshot?
+    public var stageProgress: Double = 0
+    public var stageProgressText: String = "0/7"
+    public var isDeleteConfirmationPresented: Bool = false
+    public var isDeleteFlowPresented: Bool = false
+    public var deleteFlowStep: DeleteFlowStep = .firstGuard
+    public var deleteConfirmCountdown: Int = DeleteFlowPolicy.confirmDelaySeconds
+    public var isDeleteConfirmEnabled: Bool = false
+    public var todayMemo: String = ""
+    public var shouldScrollToRecords: Bool = false
+    public var coverImage: UIImage?
+    public var editTask: TaskEditModel?
 
-        case delegate(Delegate)
-        public enum Delegate {
-            case taskDeleted
-            case navigateToUpdate(Domain.Task, Int)
-            case navigateToPhotoChange(Domain.Task)
-            case navigateToNotificationSettings(Domain.Task)
-            case navigateToMemoEdit(Domain.Task)
-            case navigateBack
-        }
-
-        public enum DeleteFailureAlert: Equatable {
-            case dismiss
-        }
-    }
-
-    @Dependency(\.deleteTaskUseCase) var deleteTaskUseCase
-    @Dependency(\.imageStore) var imageStore
-    @Dependency(\.taskReadModelQueries) var taskReadModelQueries
-    @Dependency(\.stageProgressionUseCase) var stageProgressionUseCase
+    @ObservationIgnored private let dependencies: JacsimDependencies
+    @ObservationIgnored private let onTaskDeleted: () -> Void
+    @ObservationIgnored private let onNavigateToUpdate: (Domain.Task, Int) -> Void
+    @ObservationIgnored private let onNavigateBack: () -> Void
+    @ObservationIgnored private var imageLoadTask: _Concurrency.Task<Void, Never>?
+    @ObservationIgnored private var updateTask: _Concurrency.Task<Void, Never>?
+    @ObservationIgnored private var deleteTask: _Concurrency.Task<Void, Never>?
+    @ObservationIgnored private var deleteCountdownTask: _Concurrency.Task<Void, Never>?
+    @ObservationIgnored private var stageTask: _Concurrency.Task<Void, Never>?
 
     private enum DeleteFlowPolicy {
         static let confirmDelaySeconds = 2
         static let countdownTickNanoseconds: UInt64 = 1_000_000_000
     }
 
-    private enum CancelID {
-        case deleteFlowCountdown
+    public init(
+        task: Domain.Task,
+        dependencies: JacsimDependencies,
+        shouldScrollToRecords: Bool = false,
+        onTaskDeleted: @escaping () -> Void = {},
+        onNavigateToUpdate: @escaping (Domain.Task, Int) -> Void = { _, _ in },
+        onNavigateBack: @escaping () -> Void = {}
+    ) {
+        self.task = task
+        self.dependencies = dependencies
+        self.shouldScrollToRecords = shouldScrollToRecords
+        self.onTaskDeleted = onTaskDeleted
+        self.onNavigateToUpdate = onNavigateToUpdate
+        self.onNavigateBack = onNavigateBack
     }
 
-    public var body: some ReducerOf<Self> {
-        Reduce { state, action in
-            switch action {
-            case .onAppear:
-                let summary = taskReadModelQueries.taskDetail(
-                    task: state.task,
-                    referenceDate: Date()
-                )
-                state.challengeState = summary.evaluation.challengeState
-                state.todayStatus = summary.evaluation.todayStatus
-                state.currentStage = summary.evaluation.currentStage
-                state.stageProgress = summary.evaluation.stageProgress
-                state.stageProgressText = summary.evaluation.stageProgressText
-                state.remainingSuccessCount = summary.evaluation.remainingSuccessCount
-                state.todayMemo = summary.evaluation.todayMemo
-                state.dayViewData = summary.evaluation.dayViewData.map {
-                    State.DayViewData(date: $0.date, memo: $0.memo, image: nil, isChecked: $0.isChecked)
+    deinit {
+        imageLoadTask?.cancel()
+        updateTask?.cancel()
+        deleteTask?.cancel()
+        deleteCountdownTask?.cancel()
+        stageTask?.cancel()
+    }
+
+    public func onAppear() {
+        let originalTask = task
+        let evaluation = dependencies.challengeStateService.evaluateChallengeState(
+            for: task,
+            today: Date()
+        )
+        if let refreshedStage = evaluation.currentStage,
+           let stageIndex = task.stages.firstIndex(where: { $0.id == refreshedStage.id }) {
+            task.stages[stageIndex] = refreshedStage
+        }
+        challengeState = evaluation.challengeState
+        todayStatus = evaluation.todayStatus
+        currentStage = evaluation.currentStage
+        stageProgress = evaluation.stageProgress
+        stageProgressText = evaluation.stageProgressText
+        remainingSuccessCount = evaluation.remainingSuccessCount
+        todayMemo = evaluation.todayMemo
+        dayViewData = evaluation.dayViewData.map {
+            DayViewData(date: $0.date, memo: $0.memo, image: nil, isChecked: $0.isChecked)
+        }
+
+        loadImages()
+
+        if task != originalTask {
+            updateTask?.cancel()
+            updateTask = _Concurrency.Task { [dependencies, task] in
+                do {
+                    try await dependencies.taskCommandClient.updateTask(task)
+                } catch {
+                    Logger.certificationFailed(error: error)
                 }
-                return .merge(
-                    .send(.loadImages),
-                    .send(.stageResultChecked(summary.stageResult))
-                )
-                
-            case .loadImages:
-                return .run { [task = state.task, dayDates = state.dayViewData.map(\.date), imageStore] send in
-                    let coverImageData = await imageStore.loadImage(task.mainImageKey)
-                    let coverImage = coverImageData.flatMap { UIImage(data: $0) }
-                    await send(.coverImageLoaded(coverImage))
-
-                    for date in dayDates {
-                        guard let key = task.imageKey(for: task.dayArray.firstIndex(where: { $0 == date }) ?? 0) else { continue }
-                        let imageData = await imageStore.loadImage(key)
-                        let image = imageData.flatMap { UIImage(data: $0) }
-                        await send(.imageLoaded(date, image))
-                    }
-                }
-                
-            case let .coverImageLoaded(image):
-                state.coverImage = image
-                return .none
-
-            case let .imageLoaded(date, image):
-                if let index = state.dayViewData.firstIndex(where: { $0.date == date }) {
-                    state.dayViewData[index] = State.DayViewData(
-                        date: date,
-                        memo: state.dayViewData[index].memo,
-                        image: image,
-                        isChecked: state.dayViewData[index].isChecked
-                    )
-                }
-                return .none
-                
-            case .changePhotoButtonTapped:
-                state.editTask = TaskEditFeature.State(task: state.task)
-                return .none
-                
-            case .notificationSettingsButtonTapped:
-                state.editTask = TaskEditFeature.State(task: state.task)
-                return .none
-                
-            case .editMemoButtonTapped:
-                let today = Calendar.current.startOfDay(for: Date())
-                if let index = state.task.dayArray.firstIndex(where: { Calendar.current.isDate($0, inSameDayAs: today) }) {
-                    return .send(.delegate(.navigateToUpdate(state.task, index)))
-                }
-                return .none
-
-            case .backButtonTapped:
-                return .send(.delegate(.navigateBack))
-
-            case .deleteButtonTapped:
-                state.isDeleteConfirmationPresented = true
-                return .none
-                
-            case .deleteConfirmed:
-                state.isDeleteConfirmationPresented = false
-                let taskId = state.task.id
-                return .merge(
-                    .cancel(id: CancelID.deleteFlowCountdown),
-                    deleteTaskEffect(taskId: taskId)
-                )
-                
-            case .deleteCancelled:
-                resetDeleteFlowState(&state)
-                return .cancel(id: CancelID.deleteFlowCountdown)
-
-            case .deleteFlowStarted:
-                state.isDeleteFlowPresented = true
-                state.deleteFlowStep = .firstGuard
-                state.deleteConfirmCountdown = DeleteFlowPolicy.confirmDelaySeconds
-                state.isDeleteConfirmEnabled = false
-                return .cancel(id: CancelID.deleteFlowCountdown)
-
-            case .deleteFlowDismissed, .deleteFlowKeepGoing:
-                state.isDeleteFlowPresented = false
-                state.deleteFlowStep = .firstGuard
-                state.deleteConfirmCountdown = DeleteFlowPolicy.confirmDelaySeconds
-                state.isDeleteConfirmEnabled = false
-                return .cancel(id: CancelID.deleteFlowCountdown)
-
-            case .deleteFlowProceedToFinal:
-                state.deleteFlowStep = .finalConfirmation
-                state.deleteConfirmCountdown = DeleteFlowPolicy.confirmDelaySeconds
-                state.isDeleteConfirmEnabled = false
-                return .run { send in
-                    for _ in 0..<DeleteFlowPolicy.confirmDelaySeconds {
-                        do {
-                            try await _Concurrency.Task.sleep(
-                                nanoseconds: DeleteFlowPolicy.countdownTickNanoseconds
-                            )
-                        } catch is CancellationError {
-                            return
-                        } catch {
-                            return
-                        }
-                        await send(.deleteFlowCountdownTicked)
-                    }
-                }
-                .cancellable(id: CancelID.deleteFlowCountdown, cancelInFlight: true)
-
-            case .deleteFlowCountdownTicked:
-                guard state.deleteFlowStep == .finalConfirmation else { return .none }
-                guard state.deleteConfirmCountdown > 0 else {
-                    state.isDeleteConfirmEnabled = true
-                    return .none
-                }
-                state.deleteConfirmCountdown -= 1
-                if state.deleteConfirmCountdown <= 0 {
-                    state.isDeleteConfirmEnabled = true
-                }
-                return .none
-
-            case .deleteFlowDeleteConfirmed:
-                guard state.isDeleteConfirmEnabled else { return .none }
-                let taskId = state.task.id
-                return .merge(
-                    .cancel(id: CancelID.deleteFlowCountdown),
-                    deleteTaskEffect(taskId: taskId)
-                )
-
-            case .deleteTaskSucceeded:
-                resetDeleteFlowState(&state)
-                return .send(.delegate(.taskDeleted))
-
-            case .deleteTaskFailed:
-                resetDeleteFlowState(&state)
-                state.deleteFailureAlert = AlertState {
-                    TextState("삭제하지 못했어요")
-                } actions: {
-                    ButtonState(action: .dismiss) {
-                        TextState("확인")
-                    }
-                } message: {
-                    TextState("잠시 후 다시 시도해 주세요.")
-                }
-                return .none
-
-            case .deleteFailureAlert:
-                return .none
-                
-            case let .dayTapped(date):
-                if let index = state.task.dayArray.firstIndex(where: { Calendar.current.isDate($0, inSameDayAs: date) }) {
-                    return .send(.delegate(.navigateToUpdate(state.task, index)))
-                }
-                return .none
-
-            case .editButtonTapped:
-                state.editTask = TaskEditFeature.State(task: state.task)
-                return .none
-
-            case let .editTask(.presented(.delegate(.saved(title, image, isAlarmEnabled, alarmDate)))):
-                state.editTask = nil
-                state.task.title = title
-                state.task.isNotificationEnabled = isAlarmEnabled
-                state.task.alarm = isAlarmEnabled ? alarmDate : nil
-                if let image {
-                    state.coverImage = image
-                }
-                return .none
-
-            case .editTask(.presented(.delegate(.cancelled))):
-                state.editTask = nil
-                return .none
-
-            case .editTask(.dismiss):
-                state.editTask = nil
-                return .none
-
-            case .editTask:
-                return .none
-
-            case let .stageResultChecked(result):
-                if result != .inProgress {
-                    state.stagePopupResult = result
-                    state.isStagePopupPresented = true
-                }
-                return .none
-
-            case .stagePopupDismissed:
-                state.isStagePopupPresented = false
-                return .none
-
-            case .certifyTodayTapped:
-                let today = Calendar.current.startOfDay(for: Date())
-                if let index = state.task.dayArray.firstIndex(where: { Calendar.current.isDate($0, inSameDayAs: today) }) {
-                    return .send(.delegate(.navigateToUpdate(state.task, index)))
-                }
-                return .none
-
-            case .nextStageButtonTapped:
-                let taskId = state.task.id
-                return .run { [stageProgressionUseCase] send in
-                    do {
-                        try await stageProgressionUseCase.createNextStage(for: taskId)
-                    } catch {
-                        Logger.certificationFailed(error: error)
-                    }
-                    await send(.stagePopupDismissed)
-                    await send(.onAppear)
-                }
-
-            case .viewSuccessRecordTapped:
-                state.isStagePopupPresented = false
-                state.shouldScrollToRecords = true
-                return .none
-
-            case .retryStageButtonTapped:
-                return .run { [stageProgressionUseCase, taskId = state.task.id] send in
-                    do {
-                        try await stageProgressionUseCase.resetStageRecords(for: taskId)
-                    } catch {
-                        Logger.certificationFailed(error: error)
-                    }
-                    await send(.onAppear)
-                }
-
-            case .keepAsIsButtonTapped:
-                return .send(.delegate(.navigateBack))
-
-            case .viewHistoryButtonTapped:
-                state.shouldScrollToRecords = true
-                return .none
-
-            case .scrollToRecordsCompleted:
-                state.shouldScrollToRecords = false
-                return .none
-
-            case .delegate:
-                return .none
             }
         }
-        .ifLet(\.$editTask, action: \.editTask) {
-            TaskEditFeature()
+
+        if let result = evaluation.currentStage?.result,
+           result != .inProgress {
+            stageResultChecked(result)
         }
-        .ifLet(\.$deleteFailureAlert, action: \.deleteFailureAlert)
     }
 
-    private func deleteTaskEffect(taskId: TaskID) -> Effect<Action> {
-        .run { [deleteTaskUseCase] send in
+    public func loadImages() {
+        let task = task
+        let dayDates = dayViewData.map(\.date)
+        imageLoadTask?.cancel()
+        imageLoadTask = _Concurrency.Task { [dependencies] in
+            let coverImageData = await dependencies.imageStore.loadImage(task.mainImageKey)
+            let coverImage = coverImageData.flatMap { UIImage(data: $0) }
+            coverImageLoaded(coverImage)
+
+            for date in dayDates {
+                guard let index = task.dayArray.firstIndex(where: { $0 == date }),
+                      let key = task.imageKey(for: index) else { continue }
+                let imageData = await dependencies.imageStore.loadImage(key)
+                let image = imageData.flatMap { UIImage(data: $0) }
+                imageLoaded(date, image)
+            }
+        }
+    }
+
+    public func changePhotoButtonTapped() {
+        presentEditTask()
+    }
+
+    public func notificationSettingsButtonTapped() {
+        presentEditTask()
+    }
+
+    public func editMemoButtonTapped() {
+        let today = Calendar.current.startOfDay(for: Date())
+        if let index = task.dayArray.firstIndex(where: { Calendar.current.isDate($0, inSameDayAs: today) }) {
+            onNavigateToUpdate(task, index)
+        }
+    }
+
+    public func backButtonTapped() {
+        onNavigateBack()
+    }
+
+    public func deleteButtonTapped() {
+        deleteFlowStarted()
+    }
+
+    public func deleteConfirmed() {
+        isDeleteConfirmationPresented = false
+        isDeleteFlowPresented = false
+        performDelete()
+    }
+
+    public func deleteCancelled() {
+        resetDeleteFlow()
+        deleteCountdownTask?.cancel()
+    }
+
+    public func deleteFlowStarted() {
+        isDeleteFlowPresented = true
+        deleteFlowStep = .firstGuard
+        deleteConfirmCountdown = DeleteFlowPolicy.confirmDelaySeconds
+        isDeleteConfirmEnabled = false
+        deleteCountdownTask?.cancel()
+    }
+
+    public func deleteFlowDismissed() {
+        resetDeleteFlow()
+        deleteCountdownTask?.cancel()
+    }
+
+    public func deleteFlowProceedToFinal() {
+        deleteFlowStep = .finalConfirmation
+        deleteConfirmCountdown = DeleteFlowPolicy.confirmDelaySeconds
+        isDeleteConfirmEnabled = false
+        deleteCountdownTask?.cancel()
+        deleteCountdownTask = _Concurrency.Task {
+            for _ in 0..<DeleteFlowPolicy.confirmDelaySeconds {
+                do {
+                    try await _Concurrency.Task.sleep(nanoseconds: DeleteFlowPolicy.countdownTickNanoseconds)
+                } catch {
+                    return
+                }
+                deleteFlowCountdownTicked()
+            }
+        }
+    }
+
+    public func deleteFlowKeepGoing() {
+        resetDeleteFlow()
+        deleteCountdownTask?.cancel()
+    }
+
+    public func deleteFlowDeleteConfirmed() {
+        guard isDeleteConfirmEnabled else { return }
+        isDeleteFlowPresented = false
+        isDeleteConfirmationPresented = false
+        performDelete()
+    }
+
+    public func dayTapped(_ date: Date) {
+        if let index = task.dayArray.firstIndex(where: { Calendar.current.isDate($0, inSameDayAs: date) }) {
+            onNavigateToUpdate(task, index)
+        }
+    }
+
+    public func editButtonTapped() {
+        presentEditTask()
+    }
+
+    public func dismissEditTask() {
+        editTask = nil
+    }
+
+    public func stageResultChecked(_ result: StageResult) {
+        if result != .inProgress {
+            stagePopupResult = result
+            isStagePopupPresented = true
+        }
+    }
+
+    public func stagePopupDismissed() {
+        isStagePopupPresented = false
+    }
+
+    public func certifyTodayTapped() {
+        let today = Calendar.current.startOfDay(for: Date())
+        if let index = task.dayArray.firstIndex(where: { Calendar.current.isDate($0, inSameDayAs: today) }) {
+            onNavigateToUpdate(task, index)
+        }
+    }
+
+    public func nextStageButtonTapped() {
+        let taskId = task.id
+        stageTask?.cancel()
+        stageTask = _Concurrency.Task { [dependencies] in
+            await dependencies.stageFlowClient.createNextStage(taskId)
+            await syncGlobalReminders(dependencies: dependencies)
+            stagePopupDismissed()
+            onAppear()
+        }
+    }
+
+    public func viewSuccessRecordTapped() {
+        isStagePopupPresented = true
+        stagePopupResult = .success
+    }
+
+    public func retryStageButtonTapped() {
+        let taskId = task.id
+        stageTask?.cancel()
+        stageTask = _Concurrency.Task { [dependencies] in
+            await dependencies.stageFlowClient.resetStageRecords(taskId)
+            await syncGlobalReminders(dependencies: dependencies)
+            onAppear()
+        }
+    }
+
+    public func keepAsIsButtonTapped() {
+        onNavigateBack()
+    }
+
+    public func viewHistoryButtonTapped() {
+        shouldScrollToRecords = true
+    }
+
+    public func scrollToRecordsCompleted() {
+        shouldScrollToRecords = false
+    }
+
+    private func coverImageLoaded(_ image: UIImage?) {
+        coverImage = image
+    }
+
+    private func imageLoaded(_ date: Date, _ image: UIImage?) {
+        if let index = dayViewData.firstIndex(where: { $0.date == date }) {
+            let currentData = dayViewData[index]
+            dayViewData[index] = DayViewData(
+                date: date,
+                memo: currentData.memo,
+                image: image,
+                isChecked: currentData.isChecked
+            )
+        }
+    }
+
+    private func deleteFlowCountdownTicked() {
+        guard deleteFlowStep == .finalConfirmation else { return }
+        guard deleteConfirmCountdown > 0 else {
+            isDeleteConfirmEnabled = true
+            return
+        }
+        deleteConfirmCountdown -= 1
+        if deleteConfirmCountdown <= 0 {
+            isDeleteConfirmEnabled = true
+        }
+    }
+
+    private func performDelete() {
+        let task = task
+        let taskId = task.id
+        deleteCountdownTask?.cancel()
+        deleteTask?.cancel()
+        deleteTask = _Concurrency.Task { [dependencies] in
+            await dependencies.notificationScheduler.cancelReminder(taskId)
             do {
-                try await deleteTaskUseCase.execute(taskId)
-                await send(.deleteTaskSucceeded)
+                try await dependencies.taskCommandClient.deleteTask(taskId)
+                await deleteStoredImages(for: task, imageStore: dependencies.imageStore)
             } catch {
                 Logger.certificationFailed(error: error)
-                await send(.deleteTaskFailed)
             }
+            onTaskDeleted()
         }
     }
 
-    private func resetDeleteFlowState(_ state: inout State) {
-        state.isDeleteConfirmationPresented = false
-        state.isDeleteFlowPresented = false
-        state.deleteFlowStep = .firstGuard
-        state.deleteConfirmCountdown = DeleteFlowPolicy.confirmDelaySeconds
-        state.isDeleteConfirmEnabled = false
+    private func resetDeleteFlow() {
+        isDeleteFlowPresented = false
+        deleteFlowStep = .firstGuard
+        deleteConfirmCountdown = DeleteFlowPolicy.confirmDelaySeconds
+        isDeleteConfirmEnabled = false
+    }
+
+    private func presentEditTask() {
+        editTask = TaskEditModel(
+            task: task,
+            dependencies: dependencies,
+            onSaved: { [weak self] title, image, isAlarmEnabled, alarmDate in
+                self?.editTaskSaved(
+                    title: title,
+                    image: image,
+                    isAlarmEnabled: isAlarmEnabled,
+                    alarmDate: alarmDate
+                )
+            },
+            onCancelled: { [weak self] in
+                self?.editTask = nil
+            }
+        )
+    }
+
+    private func editTaskSaved(
+        title: String,
+        image: UIImage?,
+        isAlarmEnabled: Bool,
+        alarmDate: Date
+    ) {
+        let task = task
+        let durationDays = task.currentStage?.durationDays ?? task.stages.last?.durationDays ?? 3
+        editTask = nil
+        updateTask?.cancel()
+        updateTask = _Concurrency.Task { [dependencies] in
+            await dependencies.taskCommandClient.updateTaskInfo(
+                task,
+                title,
+                durationDays,
+                isAlarmEnabled,
+                alarmDate
+            )
+            if let image {
+                do {
+                    let data = try makeImageStoreInputData(from: image)
+                    _ = try await dependencies.imageStore.saveImage(task.mainImageKey, data)
+                } catch {
+                    Logger.certificationFailed(error: error)
+                }
+            }
+            await syncGlobalReminders(dependencies: dependencies)
+            onAppear()
+        }
+    }
+}
+
+private func syncGlobalReminders(dependencies: JacsimDependencies) async {
+    let isGlobalNotificationEnabled = await dependencies.userSettingsRepository.isNotificationEnabled()
+    let reminders = await dependencies.userSettingsRepository.getAllReminders()
+    let reminderUseCase = ReminderSchedulingUseCase()
+    await reminderUseCase.syncGlobalReminders(
+        isEnabled: isGlobalNotificationEnabled,
+        reminders: reminders,
+        notificationScheduler: dependencies.notificationScheduler
+    )
+}
+
+private func deleteStoredImages(for task: Domain.Task, imageStore: ImageStorePort) async {
+    let imageKeys = [task.mainImageKey] + task.records.compactMap(\.imagePath)
+    var deletedKeys = Set<String>()
+
+    for key in imageKeys where deletedKeys.insert(key).inserted {
+        await imageStore.deleteImage(key)
     }
 }

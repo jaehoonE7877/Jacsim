@@ -5,11 +5,18 @@ public struct ReminderInfo: Sendable {
     public let taskId: TaskID
     public let title: String
     public let time: DateComponents
-    
-    public init(taskId: TaskID, title: String, time: DateComponents) {
+    public let shouldSchedule: Bool
+
+    public init(
+        taskId: TaskID,
+        title: String,
+        time: DateComponents,
+        shouldSchedule: Bool = true
+    ) {
         self.taskId = taskId
         self.title = title
         self.time = time
+        self.shouldSchedule = shouldSchedule
     }
 }
 

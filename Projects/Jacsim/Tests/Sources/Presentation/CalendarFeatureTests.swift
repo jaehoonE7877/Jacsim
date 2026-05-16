@@ -1,106 +1,50 @@
 import Foundation
 import Testing
-import ComposableArchitecture
-import Domain
-import JacsimClient
-import Ports
 
 @testable import Jacsim
 
-private struct CalendarFeatureTestError: Error {}
-
-@Test("Calendar onAppear는 taskRepository 결과를 eventDates와 dateColors로 반영한다")
 @MainActor
-func calendarFeatureOnAppearBuildsCalendarState() async {
-    let task = makeCalendarFeatureTestTask()
+@Test("캘린더 날짜 버튼은 현재 선택 날짜로 바텀시트를 연다")
+func calendarDatePickerButtonOpensWithSelectedDate() {
+    let selectedDate = Calendar.current.date(from: DateComponents(year: 2026, month: 5, day: 2)) ?? Date()
+    let model = CalendarModel(dependencies: .test)
+    model.selectedDate = selectedDate
 
-    let store = TestStore(initialState: CalendarFeature.State()) {
-        CalendarFeature()
-    } withDependencies: {
-        $0.taskRepository = TaskRepositoryPort(
-            fetchActiveTasks: { [task] },
-            fetchTask: { _ in nil },
-            addTask: { _ in },
-            updateTask: { _ in },
-            deleteTask: { _ in },
-            fetchTasksByStatus: { _ in [] }
-        )
-    }
+    model.datePickerButtonTapped()
 
-    await store.send(.onAppear) {
-        $0.isLoading = true
-        $0.loadFailed = false
-    }
-    let summary = TaskReadModelQueries.live().calendar(tasks: [task])
-    await store.receive(\.tasksResponse) {
-        $0.tasks = [task]
-        $0.eventDates = summary.eventDates
-        $0.dateColors = summary.dateColors
-        $0.isLoading = false
-        $0.loadFailed = false
-    }
+    #expect(model.datePickerDate == selectedDate)
+    #expect(model.isDatePickerPresented)
 }
 
-@Test("Calendar onAppear 실패는 오류 상태를 반영한다")
 @MainActor
-func calendarFeatureOnAppearFailureSetsErrorState() async {
-    let store = TestStore(initialState: CalendarFeature.State()) {
-        CalendarFeature()
-    } withDependencies: {
-        $0.taskRepository = TaskRepositoryPort(
-            fetchActiveTasks: { throw CalendarFeatureTestError() },
-            fetchTask: { _ in nil },
-            addTask: { _ in },
-            updateTask: { _ in },
-            deleteTask: { _ in },
-            fetchTasksByStatus: { _ in [] }
-        )
-    }
+@Test("캘린더 날짜 선택 확정은 선택 날짜를 갱신하고 바텀시트를 닫는다")
+func calendarDatePickerConfirmUpdatesSelectedDate() {
+    let selectedDate = Calendar.current.date(from: DateComponents(year: 2026, month: 5, day: 2)) ?? Date()
+    let nextDate = Calendar.current.date(from: DateComponents(year: 2026, month: 5, day: 10)) ?? Date()
+    let model = CalendarModel(dependencies: .test)
+    model.selectedDate = selectedDate
+    model.datePickerDate = nextDate
+    model.isDatePickerPresented = true
 
-    await store.send(.onAppear) {
-        $0.isLoading = true
-        $0.loadFailed = false
-    }
-    await store.receive(\.tasksLoadFailed) {
-        $0.isLoading = false
-        $0.loadFailed = true
-    }
+    model.datePickerConfirmed()
+
+    #expect(model.selectedDate == nextDate)
+    #expect(model.isDatePickerPresented == false)
 }
 
-private func makeCalendarFeatureTestTask() -> Task {
-    let calendar = Calendar.current
-    let start = calendar.startOfDay(for: Date())
-    let end = calendar.date(byAdding: .day, value: 2, to: start) ?? start
+@MainActor
+@Test("캘린더 날짜 선택 취소는 기존 선택 날짜를 유지한다")
+func calendarDatePickerDismissKeepsSelectedDate() {
+    let selectedDate = Calendar.current.date(from: DateComponents(year: 2026, month: 5, day: 2)) ?? Date()
+    let draftDate = Calendar.current.date(from: DateComponents(year: 2026, month: 5, day: 10)) ?? Date()
+    let model = CalendarModel(dependencies: .test)
+    model.selectedDate = selectedDate
+    model.datePickerDate = draftDate
+    model.isDatePickerPresented = true
 
-    let stage = StageSnapshot(
-        id: UUID(),
-        stageTypeRaw: StageType.three.rawValue,
-        startDate: start,
-        endDate: end,
-        durationDays: 3,
-        successDays: 1,
-        resultRaw: StageResult.inProgress.rawValue
-    )
+    model.datePickerDismissed()
 
-    let records = [
-        DailyRecordSnapshot(id: UUID(), memo: "", check: true, date: start, imagePath: nil),
-        DailyRecordSnapshot(
-            id: UUID(),
-            memo: "",
-            check: false,
-            date: calendar.date(byAdding: .day, value: 1, to: start) ?? start,
-            imagePath: nil
-        )
-    ]
-
-    return Task(
-        id: TaskID(UUID()),
-        title: "달력 테스트",
-        startDate: start,
-        endDate: end,
-        alarm: nil,
-        isNotificationEnabled: false,
-        stages: [stage],
-        records: records
-    )
+    #expect(model.datePickerDate == selectedDate)
+    #expect(model.selectedDate == selectedDate)
+    #expect(model.isDatePickerPresented == false)
 }

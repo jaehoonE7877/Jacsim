@@ -1,55 +1,117 @@
+import Domain
+import ExternalInterface
 import Foundation
 import Testing
-import ComposableArchitecture
-import Domain
-import JacsimClient
 import UIKit
 
 @testable import Jacsim
 
+private actor TaskEditNotificationRecorder {
+    private(set) var scheduledCountValue = 0
+    private(set) var cancelledCountValue = 0
+
+    func recordSchedule() {
+        scheduledCountValue += 1
+    }
+
+    func recordCancel() {
+        cancelledCountValue += 1
+    }
+
+    func scheduledCount() -> Int { scheduledCountValue }
+    func cancelledCount() -> Int { cancelledCountValue }
+}
+
 @MainActor
-@Test("작심 수정 저장은 delegate(.saved)로 입력값을 전달한다")
-func taskEditSaveSendsDelegateSaved() async {
+@Test("작심 수정 저장은 편집 sheet 안에서 알림 예약을 직접 수행하지 않는다")
+func taskEditSaveSchedulesReminderWhenEnabled() async {
     let task = makeTaskForEditTests()
+    let scheduler = TaskEditNotificationRecorder()
     let alarmDate = Calendar.current.date(from: DateComponents(hour: 8, minute: 30)) ?? Date()
+    var saved: (String, UIImage?, Bool, Date)?
+    let model = TaskEditModel(
+        task: task,
+        dependencies: makeTaskEditDependencies(scheduler: scheduler),
+        onSaved: { saved = ($0, $1, $2, $3) }
+    )
+    model.title = "  새 제목  "
+    model.isAlarmEnabled = true
+    model.alarmDate = alarmDate
 
-    var initialState = TaskEditFeature.State(task: task)
-    initialState.title = "  새 제목  "
-    initialState.lastAcceptedTitle = "  새 제목  "
-    initialState.isAlarmEnabled = true
-    initialState.alarmDate = alarmDate
+    model.saveButtonTapped()
 
-    let store = TestStore(initialState: initialState) {
-        TaskEditFeature()
-    } withDependencies: {
-        $0.updateTaskSettingsUseCase = UpdateTaskSettingsUseCase(
-            execute: { _ in }
-        )
-    }
+    #expect(saved?.0 == "새 제목")
+    #expect(saved?.2 == true)
+    #expect(saved?.3 == alarmDate)
+    #expect(await scheduler.cancelledCount() == 0)
+    #expect(await scheduler.scheduledCount() == 0)
+}
 
-    await store.send(.saveButtonTapped) {
-        $0.isSaving = true
-        $0.saveFailed = false
-    }
-    await store.receive(\.saveCompleted) {
-        $0.isSaving = false
-    }
-    await store.receive(\.delegate)
+@MainActor
+@Test("작심 수정 저장에서 알림을 꺼도 편집 sheet 안에서는 스케줄을 직접 변경하지 않는다")
+func taskEditSaveCancelsOnlyWhenAlarmDisabled() async {
+    let task = makeTaskForEditTests()
+    let scheduler = TaskEditNotificationRecorder()
+    var saved: (String, UIImage?, Bool, Date)?
+    let model = TaskEditModel(
+        task: task,
+        dependencies: makeTaskEditDependencies(scheduler: scheduler),
+        onSaved: { saved = ($0, $1, $2, $3) }
+    )
+    model.title = "수정 제목"
+    model.isAlarmEnabled = false
+
+    model.saveButtonTapped()
+
+    #expect(saved?.0 == "수정 제목")
+    #expect(saved?.2 == false)
+    #expect(await scheduler.cancelledCount() == 0)
+    #expect(await scheduler.scheduledCount() == 0)
+}
+
+@MainActor
+@Test("전역 알림 OFF여도 편집 sheet 안에서는 스케줄을 직접 변경하지 않는다")
+func taskEditSaveSkipsScheduleWhenGlobalNotificationOff() async {
+    let task = makeTaskForEditTests()
+    let scheduler = TaskEditNotificationRecorder()
+    var saved: (String, UIImage?, Bool, Date)?
+    let model = TaskEditModel(
+        task: task,
+        dependencies: makeTaskEditDependencies(scheduler: scheduler),
+        onSaved: { saved = ($0, $1, $2, $3) }
+    )
+    model.title = "수정 제목"
+    model.isAlarmEnabled = true
+
+    model.saveButtonTapped()
+
+    #expect(saved?.0 == "수정 제목")
+    #expect(saved?.2 == true)
+    #expect(await scheduler.cancelledCount() == 0)
+    #expect(await scheduler.scheduledCount() == 0)
 }
 
 @MainActor
 @Test("이미지 선택 액션은 대표 이미지를 갱신한다")
-func taskEditImageSelectedUpdatesState() async {
+func taskEditImageSelectedUpdatesState() {
     let task = makeTaskForEditTests()
     let image = makeSolidTestImage()
+    let model = TaskEditModel(task: task, dependencies: .test)
 
-    let store = TestStore(initialState: TaskEditFeature.State(task: task)) {
-        TaskEditFeature()
-    }
+    model.imageSelected(image)
 
-    await store.send(.imageSelected(image)) {
-        $0.image = image
-    }
+    #expect(model.image === image)
+}
+
+private func makeTaskEditDependencies(scheduler: TaskEditNotificationRecorder) -> JacsimDependencies {
+    var dependencies = JacsimDependencies.test
+    dependencies.notificationScheduler = NotificationSchedulerPort(
+        scheduleDailyReminder: { _, _, _ in await scheduler.recordSchedule() },
+        cancelReminder: { _ in await scheduler.recordCancel() },
+        cancelAllReminders: {},
+        requestAuthorization: { true }
+    )
+    return dependencies
 }
 
 private func makeTaskForEditTests(

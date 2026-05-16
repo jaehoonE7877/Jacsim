@@ -1,201 +1,98 @@
-import Foundation
+import Core
 import Domain
-import ComposableArchitecture
+import Foundation
+import Observation
 import SwiftUI
 import UIKit
-import PhotosUI
-import JacsimClient
 
-@Reducer
-public struct TaskEditFeature {
-    @ObservableState
-    public struct State: Equatable, Identifiable {
-        public var id: TaskID { task.id }
-        public var task: Task
-        public var title: String
-        public var lastAcceptedTitle: String
-        public var image: UIImage?
-        public var photoPickerItem: PhotosPickerItem?
-        public var isAlarmEnabled: Bool
-        public var alarmDate: Date
-        public var isSaving: Bool = false
-        public var saveFailed: Bool = false
-        public var toastMessage: String? = nil
-        @Presents public var alert: AlertState<Action.Alert>?
+@MainActor
+@Observable
+public final class TaskEditModel: Identifiable {
+    public nonisolated let id: TaskID
+    public var task: Task
+    public var title: String {
+        didSet { enforceTitleLimit() }
+    }
+    public var lastAcceptedTitle: String
+    public var image: UIImage?
+    public var isAlarmEnabled: Bool
+    public var alarmDate: Date
+    public var toastMessage: String?
 
-        public init(task: Task) {
-            self.task = task
-            self.title = task.title
-            self.lastAcceptedTitle = task.title
-            self.isAlarmEnabled = task.isNotificationEnabled
-            self.alarmDate = task.alarm ?? Date()
-        }
+    @ObservationIgnored private let dependencies: JacsimDependencies
+    @ObservationIgnored private let onSaved: (String, UIImage?, Bool, Date) -> Void
+    @ObservationIgnored private let onCancelled: () -> Void
+    @ObservationIgnored private var loadImageTask: _Concurrency.Task<Void, Never>?
+    @ObservationIgnored private var isEnforcingTitle = false
 
-        public var trimmedTitle: String {
-            title.trimmingCharacters(in: .whitespacesAndNewlines)
-        }
+    public init(
+        task: Task,
+        dependencies: JacsimDependencies,
+        onSaved: @escaping (String, UIImage?, Bool, Date) -> Void = { _, _, _, _ in },
+        onCancelled: @escaping () -> Void = {}
+    ) {
+        self.id = task.id
+        self.task = task
+        self.title = task.title
+        self.lastAcceptedTitle = task.title
+        self.isAlarmEnabled = task.isNotificationEnabled
+        self.alarmDate = task.alarm ?? Date()
+        self.dependencies = dependencies
+        self.onSaved = onSaved
+        self.onCancelled = onCancelled
+    }
 
-        public var hasUnsavedChanges: Bool {
-            trimmedTitle != task.title.trimmingCharacters(in: .whitespacesAndNewlines)
-                || isAlarmEnabled != task.isNotificationEnabled
-                || normalizedTime(alarmDate) != normalizedTime(task.alarm ?? alarmDate)
-                || photoPickerItem != nil
-        }
+    deinit {
+        loadImageTask?.cancel()
+    }
 
-        private func normalizedTime(_ date: Date) -> DateComponents {
-            Calendar.current.dateComponents([.hour, .minute], from: date)
+    public func onAppear() {
+        let key = task.mainImageKey
+        loadImageTask?.cancel()
+        loadImageTask = _Concurrency.Task { [dependencies] in
+            let imageData = await dependencies.imageStore.loadImage(key)
+            let image = imageData.flatMap { UIImage(data: $0) }
+            imageLoaded(image)
         }
     }
 
-    public enum Action: BindableAction {
-        case binding(BindingAction<State>)
-        case onAppear
-        case imageLoaded(UIImage?)
-        case saveButtonTapped
-        case saveCompleted(Result<Void, Error>)
-        case cancelButtonTapped
-        case imageSelected(UIImage)
-        case photoPickerItemChanged(PhotosPickerItem?)
-        case toastDismissed
-        case alert(PresentationAction<Alert>)
-        case delegate(Delegate)
-
-        public enum Alert: Equatable {
-            case discardChangesConfirmed
-        }
-
-        public enum Delegate {
-            case saved(String, UIImage?, Bool, Date)
-            case cancelled
-        }
+    public func saveButtonTapped() {
+        let title = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        onSaved(title, image, isAlarmEnabled, alarmDate)
     }
 
-    @Dependency(\.imageStore) var imageStore
-    @Dependency(\.updateTaskSettingsUseCase) var updateTaskSettingsUseCase
+    public func cancelButtonTapped() {
+        onCancelled()
+    }
 
-    public var body: some ReducerOf<Self> {
-        BindingReducer()
-        Reduce { state, action in
-            switch action {
-            case .onAppear:
-                let key = state.task.mainImageKey
-                let imageStore = imageStore
-                return .run { send in
-                    let imageData = await imageStore.loadImage(key)
-                    let image = imageData.flatMap { UIImage(data: $0) }
-                    await send(.imageLoaded(image))
-                }
+    public func imageSelected(_ image: UIImage) {
+        self.image = image
+    }
 
-            case let .imageLoaded(image):
-                state.image = image
-                return .none
+    public func toastDismissed() {
+        toastMessage = nil
+    }
 
-            case .saveButtonTapped:
-                let title = state.trimmedTitle
-                guard !title.isEmpty else {
-                    return .none
-                }
+    private func imageLoaded(_ image: UIImage?) {
+        self.image = image
+    }
 
-                state.isSaving = true
-                state.saveFailed = false
-
-                let task = state.task
-                let image = state.image
-                let isAlarmEnabled = state.isAlarmEnabled
-                let alarmDate = state.alarmDate
-                let durationDays = task.currentStage?.durationDays ?? task.stages.last?.durationDays ?? 3
-                let input = UpdateTaskSettingsUseCase.Input(
-                    task: task,
-                    title: title,
-                    durationDays: durationDays,
-                    isAlarmEnabled: isAlarmEnabled,
-                    alarmDate: alarmDate,
-                    mainImageData: image?.jpegData(compressionQuality: 0.4)
-                )
-                return .run { [updateTaskSettingsUseCase] send in
-                    do {
-                        try await updateTaskSettingsUseCase.execute(input)
-                        await send(.saveCompleted(.success(())))
-                    } catch {
-                        await send(.saveCompleted(.failure(error)))
-                    }
-                }
-
-            case .saveCompleted(.success):
-                state.isSaving = false
-                return .send(.delegate(.saved(state.trimmedTitle, state.image, state.isAlarmEnabled, state.alarmDate)))
-
-            case .saveCompleted(.failure):
-                state.isSaving = false
-                state.saveFailed = true
-                return .none
-
-            case .cancelButtonTapped:
-                guard !state.isSaving else { return .none }
-                guard state.hasUnsavedChanges else {
-                    return .send(.delegate(.cancelled))
-                }
-                state.alert = AlertState {
-                    TextState("변경 사항을 버릴까요?")
-                } actions: {
-                    ButtonState(role: .destructive, action: .discardChangesConfirmed) {
-                        TextState("버리기")
-                    }
-                    ButtonState(role: .cancel) {
-                        TextState("계속 수정")
-                    }
-                } message: {
-                    TextState("저장하지 않은 제목, 사진, 알림 설정이 사라집니다.")
-                }
-                return .none
-
-            case let .imageSelected(image):
-                state.image = image
-                state.saveFailed = false
-                return .none
-
-            case let .photoPickerItemChanged(item):
-                return .run { send in
-                    if let image = await PhotoPickerImageLoader.loadImage(from: item) {
-                        await send(.imageSelected(image))
-                    }
-                }
-
-            case .toastDismissed:
-                state.toastMessage = nil
-                return .none
-
-            case .alert(.presented(.discardChangesConfirmed)):
-                state.alert = nil
-                return .send(.delegate(.cancelled))
-
-            case .alert:
-                return .none
-
-            case .binding(\.title):
-                let result = TextInputLimiter.enforce(
-                    previousAcceptedText: state.lastAcceptedTitle,
-                    candidateText: state.title,
-                    policy: .title
-                )
-                switch result {
-                case let .accepted(text):
-                    state.title = text
-                    state.lastAcceptedTitle = text
-                case let .rejected(keep):
-                    state.title = keep
-                    state.toastMessage = TextInputFieldPolicy.title.exceededToastMessage
-                }
-                return .none
-
-            case .binding:
-                state.saveFailed = false
-                return .none
-
-            case .delegate:
-                return .none
-            }
+    private func enforceTitleLimit() {
+        guard !isEnforcingTitle else { return }
+        let result = TextInputLimiter.enforce(
+            previousAcceptedText: lastAcceptedTitle,
+            candidateText: title,
+            policy: .title
+        )
+        isEnforcingTitle = true
+        switch result {
+        case let .accepted(text):
+            title = text
+            lastAcceptedTitle = text
+        case let .rejected(keep):
+            title = keep
+            toastMessage = TextInputFieldPolicy.title.exceededToastMessage
         }
-        .ifLet(\.$alert, action: \.alert)
+        isEnforcingTitle = false
     }
 }

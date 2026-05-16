@@ -1,5 +1,5 @@
 import SwiftUI
-import DesignSystem
+import DSKit
 
 enum TaskStatusChipState {
     case completed

@@ -1,7 +1,7 @@
 import Foundation
 import SwiftData
 import Domain
-import Ports
+import ExternalInterface
 
 public actor UserSettingsRepositoryAdapter {
     private enum GlobalSettings {
@@ -13,16 +13,6 @@ public actor UserSettingsRepositoryAdapter {
     public init(context: ModelContext = SwiftDataStack.shared.makeContext()) {
         self.context = context
     }
-
-    public nonisolated func makePort() -> UserSettingsRepositoryPort {
-        let adapter = self
-
-        return UserSettingsRepositoryPort(
-            isNotificationEnabled: { await adapter.isNotificationEnabled() },
-            getAllReminders: { await adapter.getAllReminders() },
-            updateNotificationEnabled: { await adapter.updateNotificationEnabled($0) }
-        )
-    }
     
     public func isNotificationEnabled() async -> Bool {
         fetchOrCreateGlobalSettings().isNotificationEnabled
@@ -33,11 +23,23 @@ public actor UserSettingsRepositoryAdapter {
             predicate: #Predicate { $0.isNotificationEnabled == true && $0.alarm != nil }
         )
         let results = (try? context.fetch(descriptor)) ?? []
+        let now = Date()
+        let tasks = results.map { mapToDomainModel($0).refreshingStageProgress(now: now) }
+        let focusTaskID = ActiveTaskService()
+            .filterActiveTasks(tasks, referenceDate: now)
+            .first?
+            .id
         
-        return results.compactMap { model in
-            guard let alarm = model.alarm else { return nil }
-            let time = Calendar.current.dateComponents([.hour, .minute], from: alarm)
-            return ReminderInfo(taskId: TaskID(model.id), title: model.title, time: time)
+        return tasks.compactMap { task in
+            guard let alarm = task.alarm else { return nil }
+            let nextReminderTime = nextReminderComponents(for: task, alarm: alarm, now: now)
+            let fallbackTime = Calendar.current.dateComponents([.hour, .minute], from: alarm)
+            return ReminderInfo(
+                taskId: task.id,
+                title: task.title,
+                time: nextReminderTime ?? fallbackTime,
+                shouldSchedule: task.id == focusTaskID && nextReminderTime != nil
+            )
         }
     }
     

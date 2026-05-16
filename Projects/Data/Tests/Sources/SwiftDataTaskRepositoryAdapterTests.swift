@@ -1,7 +1,7 @@
 import Foundation
 import SwiftData
 import Testing
-@testable import Adapters
+@testable import Data
 import Domain
 
 struct SwiftDataTaskRepositoryAdapterTests {
@@ -10,14 +10,15 @@ struct SwiftDataTaskRepositoryAdapterTests {
         let adapter = try SwiftDataTaskRepositoryAdapter(container: makeInMemoryContainer())
         let port = adapter.makePort()
 
-        try await port.addTask(makeTask(title: "진행중", stageResult: .inProgress, startOffset: 0))
-        try await port.addTask(makeTask(title: "성공", stageResult: .success, startOffset: 10))
-        try await port.addTask(makeTask(title: "실패", stageResult: .fail, startOffset: 20))
+        let today = Date()
+        try await port.addTask(makeTask(title: "진행중", stageResult: .inProgress, startOffset: -1, baseDate: today))
+        try await port.addTask(makeTask(title: "성공", stageResult: .success, startOffset: -31, stageType: .thirty, baseDate: today))
+        try await port.addTask(makeTask(title: "실패", stageResult: .fail, startOffset: -10, baseDate: today))
 
         let activeTasks = try await port.fetchActiveTasks()
         let doneTasks = try await port.fetchTasksByStatus(.done)
 
-        #expect(activeTasks.map(\.title) == ["진행중"])
+        #expect(Set(activeTasks.map(\.title)) == Set(["진행중", "실패"]))
         #expect(Set(doneTasks.map(\.title)) == Set(["성공", "실패"]))
     }
 
@@ -40,7 +41,7 @@ struct SwiftDataTaskRepositoryAdapterTests {
                 DailyRecordSnapshot(
                     id: UUID(),
                     memo: "둘째 기록",
-                    check: false,
+                    check: true,
                     date: Date(timeIntervalSince1970: 1_700_086_400),
                     imagePath: nil
                 )
@@ -67,25 +68,19 @@ struct SwiftDataTaskRepositoryAdapterTests {
         do {
             try await port.updateTask(missingTask)
             Issue.record("Expected taskNotFound on update")
-        } catch let error as TaskRepositoryAdapterError {
-            switch error {
-            case let .taskNotFound(taskID):
-                #expect(taskID == missingTask.id)
-            default:
-                Issue.record("Unexpected update error: \(error)")
-            }
+        } catch TaskRepositoryAdapterError.taskNotFound(let taskID) {
+            #expect(taskID == missingTask.id)
+        } catch {
+            Issue.record("Unexpected update error: \(error)")
         }
 
         do {
             try await port.deleteTask(missingTask.id)
             Issue.record("Expected taskNotFound on delete")
-        } catch let error as TaskRepositoryAdapterError {
-            switch error {
-            case let .taskNotFound(taskID):
-                #expect(taskID == missingTask.id)
-            default:
-                Issue.record("Unexpected delete error: \(error)")
-            }
+        } catch TaskRepositoryAdapterError.taskNotFound(let taskID) {
+            #expect(taskID == missingTask.id)
+        } catch {
+            Issue.record("Unexpected delete error: \(error)")
         }
     }
 
@@ -108,12 +103,17 @@ struct SwiftDataTaskRepositoryAdapterTests {
         title: String,
         stageResult: StageResult,
         startOffset: Int,
-        records: [DailyRecordSnapshot]
+        stageType: StageType = .three,
+        baseDate: Date = Date(timeIntervalSince1970: 1_700_000_000),
+        records: [DailyRecordSnapshot] = []
     ) -> Task {
         let calendar = Calendar.current
-        let start = calendar.startOfDay(for: calendar.date(byAdding: .day, value: startOffset, to: Date(timeIntervalSince1970: 1_700_000_000))!)
-        let end = calendar.date(byAdding: .day, value: 2, to: start) ?? start
-        let successDays = stageResult == .success ? 2 : 1
+        let start = calendar.startOfDay(for: calendar.date(byAdding: .day, value: startOffset, to: baseDate)!)
+        let end = calendar.date(byAdding: .day, value: stageType.durationDays - 1, to: start) ?? start
+        let seededRecords = records.isEmpty
+            ? makeRecords(stageResult: stageResult, start: start, durationDays: stageType.durationDays)
+            : records
+        let successDays = seededRecords.filter(\.check).count
 
         return Task(
             id: TaskID(UUID()),
@@ -123,15 +123,41 @@ struct SwiftDataTaskRepositoryAdapterTests {
             stages: [
                 StageSnapshot(
                     id: UUID(),
-                    stageTypeRaw: StageType.three.rawValue,
+                    stageTypeRaw: stageType.rawValue,
                     startDate: start,
                     endDate: end,
-                    durationDays: 3,
+                    durationDays: stageType.durationDays,
                     successDays: successDays,
                     resultRaw: stageResult.rawValue
                 )
             ],
-            records: records
+            records: seededRecords
         )
+    }
+
+    private func makeRecords(
+        stageResult: StageResult,
+        start: Date,
+        durationDays: Int
+    ) -> [DailyRecordSnapshot] {
+        let checkedCount: Int
+        switch stageResult {
+        case .success:
+            checkedCount = minimumSuccessDays(durationDays: durationDays)
+        case .fail:
+            checkedCount = max(0, minimumSuccessDays(durationDays: durationDays) - 1)
+        case .inProgress:
+            checkedCount = 0
+        }
+
+        return (0..<durationDays).map { offset in
+            DailyRecordSnapshot(
+                id: UUID(),
+                memo: "",
+                check: offset < checkedCount,
+                date: Calendar.current.date(byAdding: .day, value: offset, to: start) ?? start,
+                imagePath: nil
+            )
+        }
     }
 }

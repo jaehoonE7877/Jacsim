@@ -1,96 +1,91 @@
 import Foundation
-import ComposableArchitecture
-import JacsimClient
-import SwiftUI
+import Observation
 
-@Reducer
-public struct AppFeature {
-    @ObservableState
-    public struct State: Equatable {
-        public var onboarding: WalkThroughFeature.State?
-        public var home: HomeFeature.State?
-        public var themeRaw: String
-        
-        public init() {
-            self.onboarding = WalkThroughFeature.State(fromSetting: false)
-            self.home = nil
-            self.themeRaw = ThemeMode.system.rawValue
+public enum AppScreen {
+    case onboarding(WalkThroughModel)
+    case main(MainModel)
+}
+
+public enum AppScreenKind: Equatable {
+    case onboarding
+    case main
+}
+
+@MainActor
+@Observable
+public final class AppModel {
+    public var screen: AppScreen
+
+    @ObservationIgnored public let dependencies: JacsimDependencies
+    @ObservationIgnored private var reminderSyncTask: _Concurrency.Task<Void, Never>?
+
+    public init(dependencies: JacsimDependencies = .live) {
+        self.dependencies = dependencies
+        self.screen = .onboarding(
+            WalkThroughModel(fromSetting: false, dependencies: dependencies)
+        )
+        self.screen = .onboarding(makeOnboardingModel())
+    }
+
+    deinit {
+        reminderSyncTask?.cancel()
+    }
+
+    public var screenKind: AppScreenKind {
+        switch screen {
+        case .onboarding:
+            return .onboarding
+        case .main:
+            return .main
         }
     }
 
-    public enum Action {
-        case onAppear
-        case scenePhaseChanged(ScenePhase)
-        case themePreferenceRefreshRequested
-        case onboarding(WalkThroughFeature.Action)
-        case home(HomeFeature.Action)
+    public var homeIsFetching: Bool {
+        guard case let .main(mainModel) = screen else { return false }
+        return mainModel.home.isFetching
     }
 
-    @Dependency(\.appPreferences) var appPreferences
-    @Dependency(\.reminderSchedulingUseCase) var reminderSchedulingUseCase
+    public func onAppear() {
+        let isOnboardingCompleted = dependencies.appPreferences.isOnboardingCompleted()
 
-    private func resolvedThemeRaw() -> String {
-        guard let raw = appPreferences.getThemeModeRaw(),
-              ThemeMode(rawValue: raw) != nil else {
-            return ThemeMode.system.rawValue
+        switch (isOnboardingCompleted, screen) {
+        case (true, .main), (false, .onboarding):
+            break
+        case (true, _):
+            screen = .main(MainModel(dependencies: dependencies))
+        case (false, _):
+            screen = .onboarding(makeOnboardingModel())
         }
-        return raw
+
+        appBecameActive()
     }
 
-    public var body: some ReducerOf<Self> {
-        Reduce { state, action in
-            switch action {
-            case .onAppear:
-                let isOnboardingCompleted = appPreferences.isOnboardingCompleted()
-                state.themeRaw = resolvedThemeRaw()
+    public func appBecameActive() {
+        reminderSyncTask?.cancel()
+        reminderSyncTask = _Concurrency.Task { [dependencies] in
+            let isNotificationEnabled = await dependencies.userSettingsRepository.isNotificationEnabled()
+            let reminders = await dependencies.userSettingsRepository.getAllReminders()
+            let reminderUseCase = ReminderSchedulingUseCase()
+            await reminderUseCase.syncGlobalReminders(
+                isEnabled: isNotificationEnabled,
+                reminders: reminders,
+                notificationScheduler: dependencies.notificationScheduler
+            )
+        }
+    }
 
-                if isOnboardingCompleted, state.home != nil {
-                    return .none
-                }
-                if !isOnboardingCompleted, state.onboarding != nil {
-                    return .none
-                }
+    private func completeOnboarding() {
+        dependencies.appPreferences.setOnboardingCompleted(true)
+        screen = .main(MainModel(dependencies: dependencies))
+    }
 
-                if isOnboardingCompleted {
-                    state.home = HomeFeature.State()
-                    state.onboarding = nil
-                    return .run { [reminderSchedulingUseCase] _ in
-                        await reminderSchedulingUseCase.resyncRepresentativeReminder()
-                    }
-                } else {
-                    state.onboarding = WalkThroughFeature.State(fromSetting: false)
-                    state.home = nil
-                    return .none
-                }
-
-            case .themePreferenceRefreshRequested:
-                state.themeRaw = resolvedThemeRaw()
-                return .none
-
-            case let .scenePhaseChanged(phase):
-                guard phase == .active, state.home != nil else { return .none }
-                return .run { [reminderSchedulingUseCase] _ in
-                    await reminderSchedulingUseCase.resyncRepresentativeReminder()
-                }
-
-            case .onboarding(.delegate(.completeOnboarding)):
-                appPreferences.setOnboardingCompleted(true)
-                state.home = HomeFeature.State()
-                state.onboarding = nil
-                state.themeRaw = resolvedThemeRaw()
-                return .run { [reminderSchedulingUseCase] _ in
-                    await reminderSchedulingUseCase.resyncRepresentativeReminder()
-                }
-                
-            case .onboarding, .home:
-                return .none
+    private func makeOnboardingModel() -> WalkThroughModel {
+        WalkThroughModel(
+            fromSetting: false,
+            dependencies: dependencies,
+            onCompleteOnboarding: { [weak self] in
+                self?.completeOnboarding()
             }
-        }
-        .ifLet(\.onboarding, action: \.onboarding) {
-            WalkThroughFeature()
-        }
-        .ifLet(\.home, action: \.home) {
-            HomeFeature()
-        }
+        )
     }
 }

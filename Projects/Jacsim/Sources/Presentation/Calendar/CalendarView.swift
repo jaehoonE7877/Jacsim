@@ -1,86 +1,85 @@
 import SwiftUI
-import ComposableArchitecture
-import DesignSystem
+import DSKit
 import Domain
 
 public struct CalendarView: View {
-    @Bindable var store: StoreOf<CalendarFeature>
+    @Bindable var model: CalendarModel
 
-    public init(store: StoreOf<CalendarFeature>) {
-        self.store = store
+    public init(model: CalendarModel) {
+        self.model = model
     }
 
     public var body: some View {
-        let context = selectedDateContext
-
         RedesignScreenScaffold(
-            title: "캘린더",
-            subtitle: "날짜를 고르면 그날의 작심 흐름을 바로 살펴볼 수 있어요",
+            title: "탐색",
             state: screenState
         ) {
-            RedesignSectionCard(
-                title: context.formattedSelectedDate,
-                subtitle: context.selectionSubtitle
-            ) {
-                VStack(spacing: .jsSM) {
-                    JSCalendar(
-                        selectedDate: $store.selectedDate,
-                        scope: $store.calendarScope,
-                        eventDates: store.eventDates,
-                        dateColors: convertDateColors(store.dateColors)
-                    )
-                    .onChange(of: store.selectedDate) { _, newValue in
-                        handleDateSelection(newValue)
-                    }
+            RedesignSectionCard(title: "날짜") {
+                selectedDateButton
 
-                    selectedDateSummary(context: context)
+                JSCalendar(
+                    selectedDate: $model.selectedDate,
+                    scope: model.calendarScope,
+                    eventDates: model.eventDates,
+                    dateColors: convertDateColors(model.dateColors)
+                )
+                .onChange(of: model.selectedDate) {
+                    model.dateSelected(model.selectedDate)
                 }
             }
 
-            RedesignSectionCard(
-                title: "선택한 날짜 리뷰",
-                subtitle: context.reviewSubtitle
-            ) {
-                if context.tasks.isEmpty {
+            RedesignSectionCard(title: "인증 피드") {
+                let tasksForDate = tasksForSelectedDate
+
+                if tasksForDate.isEmpty {
                     emptyStateView
                 } else {
-                    VStack(alignment: .leading, spacing: .jsSM) {
-                        Text(context.reviewNarrative)
-                            .font(.jsLabelLarge)
-                            .foregroundColor(.labelStrong)
-
-                        ForEach(context.tasks) { task in
-                            taskRow(task: task, selectedDate: context.selectedDate)
+                    VStack(spacing: .jsSM) {
+                        ForEach(tasksForDate) { task in
+                            taskRow(task: task)
                         }
                     }
                 }
             }
         }
-        .onAppear { store.send(.onAppear) }
+        .onAppear { model.loadTasks() }
+        .overlay {
+            JSDatePickerBottomSheet(
+                selectedDate: $model.datePickerDate,
+                isPresented: $model.isDatePickerPresented,
+                title: "날짜 선택",
+                onConfirm: {
+                    model.datePickerConfirmed()
+                },
+                onDismiss: {
+                    model.datePickerDismissed()
+                }
+            )
+        }
     }
 
     private var screenState: RedesignScreenState {
-        if store.isLoading {
-            return .loading(message: "캘린더 기록을 준비하는 중이에요")
+        if model.isLoading {
+            return .loading(message: "기록을 불러오는 중")
         }
 
-        if store.loadFailed {
+        if model.loadFailed {
             return .error(
                 RedesignErrorStateModel(
-                    title: "캘린더를 불러오지 못했어요",
-                    message: "잠시 후 다시 시도해 주세요",
+                    title: "기록을 불러오지 못했어요",
+                    message: "다시 시도해 주세요",
                     retry: RetryActionModel {
-                        store.send(.onAppear)
+                        model.loadTasks()
                     }
                 )
             )
         }
 
-        if store.tasks.isEmpty {
+        if model.tasks.isEmpty {
             return .empty(
                 RedesignEmptyStateModel(
-                    title: "표시할 작심이 없어요",
-                    message: "작심을 시작하면 날짜별 인증 상태를 볼 수 있어요",
+                    title: "아직 작심이 없어요",
+                    message: "첫 작심을 시작해 보세요",
                     icon: "calendar.badge.plus"
                 )
             )
@@ -89,94 +88,123 @@ public struct CalendarView: View {
         return .content
     }
     
-    private func selectedDateSummary(context: SelectedDateContext) -> some View {
-        VStack(alignment: .leading, spacing: .jsSM) {
-            summaryChip(
-                icon: "calendar",
-                text: context.formattedSelectedDate,
-                tint: .primaryNormal
-            )
-
-            HStack(spacing: .jsXS) {
-                summaryChip(
-                    icon: "checkmark.circle.fill",
-                    text: "\(context.completedTasksCount) 완료",
-                    tint: .positive
-                )
-
-                if context.pendingTasksCount > 0 {
-                    summaryChip(
-                        icon: "clock.fill",
-                        text: "\(context.pendingTasksCount) 남음",
-                        tint: .cautionary
-                    )
-                }
-            }
-
-            Text(context.tasks.isEmpty ? "날짜를 바꾸면 해당 날짜의 작심과 인증 상태를 이어서 볼 수 있어요." : context.reviewNarrative)
-                .font(.jsBodySmall)
-                .foregroundColor(.labelNeutral)
+    private var tasksForSelectedDate: [Domain.Task] {
+        let calendar = Calendar.current
+        let targetDate = calendar.startOfDay(for: model.selectedDate)
+        
+        return model.tasks.filter { task in
+            let start = calendar.startOfDay(for: task.startDate)
+            let end = calendar.startOfDay(for: task.endDate)
+            return targetDate >= start && targetDate <= end
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, .jsSM)
-        .padding(.vertical, .jsSM)
-        .background(
-            RoundedRectangle(cornerRadius: .jsRadiusMD, style: .continuous)
-                .fill(Color.backgroundAlternative)
-        )
     }
     
     private var emptyStateView: some View {
         VStack(spacing: .jsMD) {
             Image(systemName: "calendar.badge.exclamationmark")
                 .font(.jsDisplayScaledSemiBold(size: 48))
-                .foregroundColor(.labelAlternative)
-            Text("선택한 날짜에는 진행 중인 작심이 없어요")
+                .foregroundColor(.labelAssistive)
+            Text("이 날은 비어 있어요")
                 .font(.jsBodyMedium)
-                .foregroundColor(.labelStrong)
-            Text("다른 날짜를 고르거나 새 작심을 시작하면 여기에서 바로 기록을 살펴볼 수 있어요.")
-                .font(.jsBodySmall)
-                .foregroundColor(.labelNeutral)
-                .multilineTextAlignment(.center)
+                .foregroundColor(.labelAlternative)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, .jsXL)
     }
-    
-    private func taskRow(task: Domain.Task, selectedDate: Date) -> some View {
-        let isCompleted = isTaskCompleted(task, on: selectedDate)
-        
-        return JSListItem(
-            title: task.title,
-            icon: isCompleted ? "checkmark.circle.fill" : "circle",
-            iconColor: isCompleted ? .primaryNormal : .labelDisable,
-            accessory: isCompleted ? .checkmark(isSelected: true) : .none
-        )
-        .padding(.vertical, .jsXS)
-        .background(
-            RoundedRectangle(cornerRadius: .jsRadiusMD)
-                .fill(Color.backgroundAlternative)
-                .jsShadow(JSShadow.small)
-        )
-    }
 
-    private func summaryChip(icon: String, text: String, tint: Color) -> some View {
-        HStack(spacing: .jsMicro) {
-            Image(systemName: icon)
-                .font(.jsLabelMedium)
-            Text(text)
-                .font(.jsLabelMedium)
-                .lineLimit(1)
+    private var selectedDateButton: some View {
+        Button {
+            model.datePickerButtonTapped()
+        } label: {
+            HStack(spacing: .jsSM) {
+                Image(systemName: "calendar")
+                    .font(.jsHeadlineSmall)
+                    .foregroundColor(.v2BrandBlue)
+                    .frame(width: 36.jsScaled(), height: 36.jsScaled())
+                    .background(
+                        Circle()
+                            .fill(Color.v2BrandBlueSoft)
+                    )
+
+                VStack(alignment: .leading, spacing: .jsMicro) {
+                    Text(formattedSelectedDate)
+                        .font(.jsBodyMedium)
+                        .foregroundColor(.labelStrong)
+
+                    Text("\(tasksForSelectedDate.count)개 작심")
+                        .font(.jsLabelMedium)
+                        .foregroundColor(.labelAlternative)
+                }
+
+                Spacer(minLength: .jsXS)
+
+                Image(systemName: "chevron.up.chevron.down")
+                    .font(.jsLabelMedium)
+                    .foregroundColor(.labelAlternative)
+            }
+            .padding(.jsSM)
+            .background(
+                RoundedRectangle(cornerRadius: .jsRadiusMD, style: .continuous)
+                    .fill(Color.v2Surface)
+            )
         }
-        .foregroundColor(tint)
-        .padding(.horizontal, .jsXS)
-        .padding(.vertical, .jsMicro)
-        .background(
-            Capsule()
-                .fill(tint.opacity(0.12))
-        )
+        .buttonStyle(.plain)
+        .accessibilityHint("날짜 선택 화면을 엽니다")
+    }
+    
+    private func taskRow(task: Domain.Task) -> some View {
+        let isCompleted = isTaskCompleted(task, on: model.selectedDate)
+        
+        return HStack(spacing: .jsSM) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 18.jsScaled(), style: .continuous)
+                    .fill(
+                        LinearGradient(
+                            colors: isCompleted
+                                ? [Color.v2BrandBlue.opacity(0.86), Color.positive.opacity(0.82)]
+                                : [Color.v2Surface, Color.v2BrandBlueSoft],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+
+                Image(systemName: isCompleted ? "checkmark.circle.fill" : "camera.fill")
+                    .font(.jsHeadlineLarge)
+                    .foregroundColor(isCompleted ? .white : .v2BrandBlue)
+            }
+            .frame(width: 74.jsScaled(), height: 74.jsScaled())
+            .accessibilityHidden(true)
+
+            VStack(alignment: .leading, spacing: .jsXS) {
+                Text(task.title)
+                    .font(.jsHeadlineSmall)
+                    .foregroundColor(.labelStrong)
+                    .lineLimit(2)
+
+                Text(taskDateRange(task))
+                    .font(.jsLabelMedium)
+                    .foregroundColor(.labelAlternative)
+                    .lineLimit(1)
+
+                JSV2StatusChip(
+                    isCompleted ? "인증 완료" : "인증 전",
+                    systemImage: isCompleted ? "checkmark.circle.fill" : "circle",
+                    style: isCompleted ? .success : .neutral
+                )
+            }
+
+            Spacer(minLength: .jsXS)
+        }
+        .padding(.jsSM)
+        .jsv2CardSurface(cornerRadius: 20.jsScaled(), shadowOpacity: 0.05)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("\(task.title), \(formattedSelectedDate), \(isCompleted ? "인증 완료" : "인증 전")")
     }
 
+    private var formattedSelectedDate: String {
+        DateFormatType.toString(model.selectedDate, to: .fullWithoutYear)
+    }
+    
     private func isTaskCompleted(_ task: Domain.Task, on date: Date) -> Bool {
         let calendar = Calendar.current
         let targetDate = calendar.startOfDay(for: date)
@@ -189,27 +217,10 @@ public struct CalendarView: View {
         return false
     }
 
-    private func handleDateSelection(_ date: Date) {
-        store.send(.dateSelected(date))
-    }
-
-    private var selectedDateContext: SelectedDateContext {
-        SelectedDateContext(
-            selectedDate: store.selectedDate,
-            tasks: tasksForSelectedDate,
-            formattedSelectedDate: DateFormatType.toString(store.selectedDate, to: .fullWithoutYear)
-        )
-    }
-
-    private var tasksForSelectedDate: [Domain.Task] {
-        let calendar = Calendar.current
-        let targetDate = calendar.startOfDay(for: store.selectedDate)
-
-        return store.tasks.filter { task in
-            let start = calendar.startOfDay(for: task.startDate)
-            let end = calendar.startOfDay(for: task.endDate)
-            return targetDate >= start && targetDate <= end
-        }
+    private func taskDateRange(_ task: Domain.Task) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "M.d"
+        return "\(formatter.string(from: task.startDate)) - \(formatter.string(from: task.endDate))"
     }
 
     private func convertDateColors(_ colors: [Date: Domain.TaskSuccessRate]) -> [Date: JSCalendarDateColor] {
@@ -227,59 +238,5 @@ public struct CalendarView: View {
             }
         }
         return result
-    }
-}
-
-private struct SelectedDateContext {
-    let selectedDate: Date
-    let tasks: [Domain.Task]
-    let formattedSelectedDate: String
-    let completedTasksCount: Int
-
-    init(selectedDate: Date, tasks: [Domain.Task], formattedSelectedDate: String) {
-        self.selectedDate = selectedDate
-        self.tasks = tasks
-        self.formattedSelectedDate = formattedSelectedDate
-        self.completedTasksCount = tasks.filter { Self.isTaskCompleted($0, on: selectedDate) }.count
-    }
-
-    var pendingTasksCount: Int {
-        max(tasks.count - completedTasksCount, 0)
-    }
-
-    var selectionSubtitle: String {
-        if tasks.isEmpty {
-            return "진행 중인 작심이 없어요"
-        }
-        return "\(completedTasksCount)개 완료 · \(pendingTasksCount)개 남음"
-    }
-
-    var reviewSubtitle: String {
-        if tasks.isEmpty {
-            return "다른 날짜를 선택해 기록을 확인해 보세요"
-        }
-        return "\(tasks.count)개의 작심을 한 번에 확인해요"
-    }
-
-    var reviewNarrative: String {
-        if pendingTasksCount == 0 {
-            return "선택한 날짜의 작심을 모두 마쳤어요."
-        }
-        if completedTasksCount == 0 {
-            return "아직 남아 있는 작심이 있어요. 한 항목씩 상태를 확인해 보세요."
-        }
-        return "\(completedTasksCount)개를 완료했고 \(pendingTasksCount)개가 남아 있어요."
-    }
-
-    private static func isTaskCompleted(_ task: Domain.Task, on date: Date) -> Bool {
-        let calendar = Calendar.current
-        let targetDate = calendar.startOfDay(for: date)
-
-        if let dailyRecord = task.records.first(where: {
-            calendar.isDate($0.date, inSameDayAs: targetDate)
-        }) {
-            return dailyRecord.check
-        }
-        return false
     }
 }

@@ -2,11 +2,9 @@ import ProjectDescription
 import ProjectDescriptionHelpers
 import DependencyPlugin
 
-let project = Project.makeFrameworkProject(
-    name: "Shared",
+let project = Project.makeModule(
+    name: "Core",
     swiftLanguageVersion: .v6,
-    internalDependencies: [
-        .Modules.thirdPartyLibs
-    ],
-    tags: ["module", "shared"]
+    targets: [.unitTest, .staticFramework],
+    tags: ["module", "core"]
 )

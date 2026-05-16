@@ -2,13 +2,10 @@ import ProjectDescription
 import ProjectDescriptionHelpers
 import DependencyPlugin
 
-let project = Project.makeFrameworkProject(
-    name: "DesignSystem",
+let project = Project.makeModule(
+    name: "DSKit",
     swiftLanguageVersion: .v6,
-    internalDependencies: [
-        .Modules.shared
-    ],
+    targets: [.staticFramework],
     hasResources: true,
-    includeTests: false,
     tags: ["module", "design-system"]
 )

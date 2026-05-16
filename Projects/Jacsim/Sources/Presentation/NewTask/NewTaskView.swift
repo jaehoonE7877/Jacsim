@@ -1,244 +1,288 @@
 import SwiftUI
-import ComposableArchitecture
-import DesignSystem
+import DSKit
 import Domain
-import PhotosUI
 import _Concurrency
+import Combine
+import UIKit
 
-@MainActor
 public struct NewTaskView: View {
-    private enum ScrollTarget: Hashable {
-        case titleSection
-    }
-
-    @Bindable var store: StoreOf<NewTaskFeature>
+    @Bindable var model: NewTaskModel
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @StateObject private var keyboardObserver = KeyboardObserver()
-    @FocusState private var isTitleFieldFocused: Bool
-    @State private var scrollTargetID: ScrollTarget?
-    @State private var scrollRequestToken = 0
-    @State private var scrollAnimation: Animation? = JSAnimation.navigation
+    @State private var isKeyboardVisible = false
+    @State private var scrollTargetID: AnyHashable?
 
     private enum FooterLayout {
-        static let expandedContentBottomInset: CGFloat = 132.jsScaled()
-        static let compactContentBottomInset: CGFloat = 84.jsScaled()
-        static let expandedToastBottomPadding: CGFloat = 120.jsScaled()
-        static let compactToastBottomPadding: CGFloat = 84.jsScaled()
+        static let contentBottomInset: CGFloat = 108.jsScaled()
+        static let compactContentBottomInset: CGFloat = 72.jsScaled()
+        static let toastBottomPadding: CGFloat = 104.jsScaled()
+        static let compactToastBottomPadding: CGFloat = 72.jsScaled()
+        static let secondaryActionSpacing: CGFloat = 18.jsScaled()
+        static let buttonActionSpacing: CGFloat = 6.jsScaled()
+        static let horizontalPadding: CGFloat = .jsMD
+        static let topPadding: CGFloat = .jsXS
+        static let compactTopPadding: CGFloat = .jsMicro
+        static let bottomPadding: CGFloat = .jsXS
+        static let compactBottomPadding: CGFloat = .jsXS
+        static let topFadeHeight: CGFloat = 14.jsScaled()
+        static let compactTopFadeHeight: CGFloat = 12.jsScaled()
     }
 
-    public init(store: StoreOf<NewTaskFeature>) {
-        self.store = store
+    private enum ScrollTarget {
+        static let alarmPicker = "newTask.alarmPicker"
+    }
+
+    private enum AlarmScrollPolicy {
+        static let expandedDelayNanoseconds: UInt64 = 360_000_000
+        static let reducedMotionDelayNanoseconds: UInt64 = 120_000_000
+        static let settleDelayNanoseconds: UInt64 = 120_000_000
+    }
+
+    public init(model: NewTaskModel) {
+        self.model = model
     }
 
     public var body: some View {
         RedesignScreenScaffold(
-            title: "새 작심 만들기",
-            subtitle: screenSubtitle,
+            title: "새 작심",
             contentBottomInset: contentBottomInset,
             scrollToID: scrollTargetID,
             scrollAnchor: .center,
-            scrollRequestToken: scrollRequestToken,
-            scrollAnimation: scrollAnimation,
             stickyFooter: {
                 buttonSection
             }
         ) {
             stepProgressSection
+            challengePreviewCard
 
-            if store.saveFailed && store.currentStep == .alarmConfirm {
+            if model.saveFailed && model.currentStep == .alarmConfirm {
                 saveFailedBanner
             }
 
-            if let validationError = store.stepValidationError {
+            if let validationError = model.stepValidationError {
                 RedesignInlineErrorView(
                     model: InlineErrorModel(message: validationError.message)
                 )
             }
 
-            switch store.currentStep {
+            switch model.currentStep {
             case .basicInfo:
                 titleSection
                 stageSection
             case .photo:
-                photoSection
+                if PresentationRedesignFlags.isSectionEnabled(.taskFormPhoto) {
+                    photoSection
+                }
             case .alarmConfirm:
                 challengeSummarySection
-                alarmSection
+                if PresentationRedesignFlags.isSectionEnabled(.taskFormAlarm) {
+                    alarmSection
+                }
             }
         }
         .navigationBarTitleDisplayMode(.inline)
-        .interactiveDismissDisabled(store.hasUnsavedChanges || store.isSaving)
-        .alert($store.scope(state: \.alert, action: \.alert))
         .overlay(alignment: .bottom) {
-            if let message = store.toastMessage {
+            if let message = model.toastMessage {
                 RedesignToastView(
                     message: message,
                     style: .error,
-                    bottomPadding: toastBottomPadding,
-                    dismissAction: toastDismissed
+                    bottomPadding: toastBottomPadding
                 )
-                .transition(.move(edge: .bottom).combined(with: .opacity))
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
                     .task(id: message) {
                         try? await _Concurrency.Task.sleep(
                             nanoseconds: RedesignToastView.defaultDismissNanoseconds
                         )
-                        toastDismissed()
+                        model.toastDismissed()
                     }
             }
         }
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
-                Button("취소", action: cancelButtonTapped)
+                Button("취소") {
+                    model.cancelButtonTapped()
+                }
                 .font(.jsButtonMedium)
-                .foregroundColor(.labelNeutral)
-                .disabled(store.isSaving)
+                .foregroundColor(.labelAlternative)
+                .disabled(model.isSaving)
             }
 
-            if isFooterCompacted, store.currentStep.previous != nil {
+            if isFooterCompacted, model.currentStep.previous != nil {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("이전", action: previousButtonTapped)
+                    Button("이전") {
+                        model.previousStepTapped()
+                    }
                     .font(.jsButtonMedium)
-                    .foregroundColor(.labelNeutral)
-                    .disabled(store.isSaving)
+                    .foregroundColor(.labelAlternative)
+                    .disabled(model.isSaving)
                 }
             }
         }
-        .onChange(of: isTitleFieldFocused) { _, isFocused in
-            guard store.currentStep == .basicInfo else { return }
-
-            if isFocused {
-                requestScroll(to: .titleSection, duration: keyboardObserver.context.animationDuration)
-            } else {
-                clearInputScrollRequest()
+        .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillChangeFrameNotification)) { notification in
+            guard let frame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect else {
+                return
             }
+            let visible = frame.minY < UIScreen.main.bounds.height - 8
+            updateKeyboardVisibility(visible)
         }
-        .onChange(of: keyboardObserver.context) { _, context in
-            guard store.currentStep == .basicInfo else { return }
-            guard isTitleFieldFocused, context.isVisible else { return }
-
-            requestScroll(to: .titleSection, duration: context.animationDuration)
+        .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillHideNotification)) { _ in
+            updateKeyboardVisibility(false)
         }
-        .onChange(of: store.currentStep) { _, step in
-            guard step != .basicInfo else { return }
-            isTitleFieldFocused = false
-            clearInputScrollRequest()
+        .onChange(of: model.isAlarmEnabled) { _, isEnabled in
+            guard isEnabled, model.currentStep == .alarmConfirm else { return }
+            let delay = reduceMotion
+                ? AlarmScrollPolicy.reducedMotionDelayNanoseconds
+                : AlarmScrollPolicy.expandedDelayNanoseconds
+            requestAlarmPickerScroll(delayNanoseconds: delay)
         }
-        .animation(reduceMotion ? .none : JSAnimation.toast, value: store.toastMessage)
-        .animation(
-            reduceMotion ? .none : .easeInOut(duration: keyboardObserver.context.animationDuration),
-            value: keyboardObserver.context.isVisible
-        )
+        .alert("작심 만들기를 그만둘까요?", isPresented: $model.isDiscardAlertPresented) {
+            Button("계속 작성", role: .cancel) {}
+            Button("그만두기", role: .destructive) {
+                model.confirmDiscardDraft()
+            }
+        } message: {
+            Text("입력한 제목과 사진은 저장되지 않아요.")
+        }
+        .animation(reduceMotion ? .none : .easeInOut(duration: 0.25), value: model.toastMessage)
     }
 
     private var stepProgressSection: some View {
-        let steps = NewTaskFeature.CreateChallengeStep.allCases
-        let currentIndex = store.currentStep.rawValue + 1
+        let steps = NewTaskModel.CreateChallengeStep.allCases
+        let currentIndex = model.currentStep.rawValue + 1
 
-        return RedesignSectionCard(
-            title: "진행 \(currentIndex)/\(steps.count)",
-            subtitle: store.currentStep.title
-        ) {
-            VStack(alignment: .leading, spacing: .jsSM) {
-                HStack(spacing: .jsXS) {
-                    ForEach(steps, id: \.rawValue) { step in
-                        Capsule()
-                            .fill(step.rawValue <= store.currentStep.rawValue ? Color.primaryNormal : Color.backgroundStrong)
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 6.jsScaled())
-                    }
-                }
+        return VStack(alignment: .leading, spacing: .jsSM) {
+            HStack {
+                JSV2StatusChip("단계 \(currentIndex)/\(steps.count)", systemImage: "sparkles", style: .accent)
+                Spacer()
+                Text(model.currentStep.title)
+                    .font(.jsButtonSmall)
+                    .foregroundColor(.labelAlternative)
+            }
 
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: .jsXS) {
-                        ForEach(steps, id: \.rawValue) { step in
-                            stepBadge(step)
-                        }
-                    }
-                }
-
-                HStack(spacing: .jsMicro) {
-                    Image(systemName: store.currentStep.next == nil ? "checkmark.circle.fill" : "arrow.right.circle.fill")
-                        .font(.jsLabelMedium)
-                        .foregroundColor(store.currentStep.next == nil ? .positive : .primaryNormal)
-
-                    Text(stepProgressCaption)
-                        .font(.jsLabelLarge)
-                        .foregroundColor(.labelNeutral)
+            HStack(spacing: .jsXS) {
+                ForEach(steps, id: \.rawValue) { step in
+                    Capsule()
+                        .fill(step.rawValue <= model.currentStep.rawValue ? Color.v2BrandBlue : Color.v2Surface)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 7.jsScaled())
                 }
             }
         }
+        .padding(.horizontal, .jsMD)
+    }
+
+    private var challengePreviewCard: some View {
+        ZStack(alignment: .bottomLeading) {
+            if let image = model.image {
+                Image(uiImage: image)
+                    .resizable()
+                    .scaledToFill()
+            } else {
+                LinearGradient(
+                    colors: [.v2BrandBlue.opacity(0.76), .v2BrandBlueStrong.opacity(0.92)],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                Image(systemName: "camera.fill")
+                    .font(.jsDisplayMedium)
+                    .foregroundColor(.white.opacity(0.72))
+            }
+
+            LinearGradient(
+                colors: [.clear, Color.black.opacity(0.68)],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+
+            VStack(alignment: .leading, spacing: .jsSM) {
+                HStack(spacing: .jsXS) {
+                    JSV2StatusChip("\(model.stageType.durationDays)일", systemImage: "calendar", style: .neutral)
+                    JSV2StatusChip(model.isAlarmEnabled ? "알림" : "알림 없음", systemImage: "bell.fill", style: model.isAlarmEnabled ? .accent : .neutral)
+                }
+
+                Text(model.trimmedTitle.isEmpty ? "오늘 시작할 작심" : model.trimmedTitle)
+                    .font(.jsDisplay26Bold)
+                    .foregroundColor(.white)
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.82)
+            }
+            .padding(.jsLG)
+        }
+        .frame(height: 240.jsScaled())
+        .frame(maxWidth: .infinity)
+        .clipShape(RoundedRectangle(cornerRadius: 28.jsScaled(), style: .continuous))
+        .padding(.horizontal, .jsMD)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("새 작심 미리보기, \(model.trimmedTitle.isEmpty ? "제목 미입력" : model.trimmedTitle), \(model.stageType.durationDays)일")
     }
 
     private var titleSection: some View {
-        RedesignSectionCard(
-            title: "제목",
-            subtitle: "짧고 분명하게 적어 주세요"
-        ) {
+        RedesignSectionCard(title: "무엇을 이어갈까요?") {
             VStack(alignment: .trailing, spacing: .jsXS) {
                 JSInputField(
-                    title: "작심 제목",
+                    title: "",
                     placeholder: "예: 매일 10분 독서",
-                    text: $store.title,
-                    accessibilityLabel: "작심 제목",
-                    focus: $isTitleFieldFocused
+                    text: $model.title
                 )
 
-                Text("\(store.title.count)/\(TextInputFieldPolicy.title.maxLength)")
+                Text("\(model.title.count)/\(TextInputFieldPolicy.title.maxLength)")
                     .font(.jsLabelMedium)
-                    .foregroundColor(.labelNeutral)
-
-                Text(titleHelperText)
-                    .font(.jsLabelSmall)
-                    .foregroundColor(.labelNeutral)
+                    .foregroundColor(.labelAssistive)
             }
         }
-        .id(ScrollTarget.titleSection)
     }
 
     private var stageSection: some View {
-        RedesignSectionCard(
-            title: "스테이지",
-            subtitle: "이어갈 기간을 고르세요"
-        ) {
+        RedesignSectionCard(title: "기간") {
             JSStageSelector(
                 selectedStage: stageDayBinding,
                 stages: [3, 7, 15, 30]
             ) { selected in
-                handleStageSelection(selected)
+                if !reduceMotion {
+                    withAnimation(.easeInOut(duration: JSAnimation.durationNormal)) {
+                        model.stageType = stageType(for: selected)
+                    }
+                } else {
+                    model.stageType = stageType(for: selected)
+                }
             }
 
-            Text("총 \(store.stageType.durationDays)일 동안 진행")
-                .font(.jsBodySmall)
-                .foregroundColor(.labelNeutral)
-                .frame(maxWidth: .infinity, alignment: .trailing)
+            HStack {
+                Spacer()
+                JSV2StatusChip("\(model.stageType.durationDays)일", systemImage: "calendar", style: .accent)
+            }
         }
     }
 
     private var photoSection: some View {
-        NewTaskPhotoSection(
-            image: store.image,
-            photoPickerItem: $store.photoPickerItem,
-            onPhotoPickerItemChanged: photoPickerItemChanged
-        )
+        RedesignSectionCard(title: "대표 사진") {
+            ImageAttachmentPicker(
+                image: model.image,
+                emptyTitle: "카드 사진",
+                emptySubtitle: "작심이 한눈에 보이게",
+                selectedBadgeTitle: "대표",
+                cameraButtonTitle: "촬영",
+                libraryButtonTitle: "앨범",
+                height: 232.jsScaled()
+            ) { image in
+                model.imageSelected(image)
+            }
+        }
     }
 
     private var challengeSummarySection: some View {
-        RedesignSectionCard(
-            title: "시작 전 확인",
-            subtitle: "입력한 내용만 빠르게 확인해요"
-        ) {
+        RedesignSectionCard(title: "카드 확인") {
             VStack(spacing: .jsSM) {
                 summaryRow(
                     title: "제목",
-                    value: store.trimmedTitle.isEmpty ? "미입력" : store.trimmedTitle
+                    value: model.trimmedTitle.isEmpty ? "미입력" : model.trimmedTitle
                 )
                 summaryRow(
                     title: "기간",
-                    value: "\(store.stageType.durationDays)일"
+                    value: "\(model.stageType.durationDays)일"
                 )
                 summaryRow(
                     title: "대표사진",
-                    value: store.image == nil ? "미선택" : "선택 완료"
+                    value: model.image == nil ? "미선택" : "선택됨"
                 )
             }
         }
@@ -248,7 +292,7 @@ public struct NewTaskView: View {
         HStack(alignment: .top, spacing: .jsSM) {
             Text(title)
                 .font(.jsLabelMedium)
-                .foregroundColor(.labelNeutral)
+                .foregroundColor(.labelAlternative)
                 .frame(width: 68.jsScaled(), alignment: .leading)
 
             Text(value)
@@ -261,110 +305,122 @@ public struct NewTaskView: View {
     }
 
     private var alarmSection: some View {
-        RedesignSectionCard(
-            title: "알림",
-            subtitle: "선택한 시간에 오늘 포커스 작심 한 개를 리마인드해요"
-        ) {
-            Toggle("리마인드 받기", isOn: $store.isAlarmEnabled)
+        RedesignSectionCard(title: "알림") {
+            Toggle("작심 알림", isOn: $model.isAlarmEnabled)
                 .font(.jsBodyMedium)
-                .accessibilityHint("매일 같은 시간에 인증 알림을 받도록 설정합니다")
 
-            if store.isAlarmEnabled {
+            if model.isAlarmEnabled {
                 DatePicker(
-                    "리마인드 시간",
-                    selection: $store.alarmDate,
+                    "시간 선택",
+                    selection: $model.alarmDate,
                     displayedComponents: .hourAndMinute
                 )
-                .datePickerStyle(.compact)
+                .datePickerStyle(.wheel)
                 .transition(.opacity.combined(with: .move(edge: .bottom)))
-                .accessibilityHint("받고 싶은 알림 시간을 고릅니다")
-
-                Text("권한이 허용되면 가장 먼저 챙길 작심 기준으로 하루 1건만 보내드려요")
-                    .font(.jsLabelSmall)
-                    .foregroundColor(.labelAlternative)
+                .id(ScrollTarget.alarmPicker)
             }
         }
-        .animation(reduceMotion ? .none : JSAnimation.navigation, value: store.isAlarmEnabled)
+        .animation(reduceMotion ? .none : .easeInOut(duration: 0.24), value: model.isAlarmEnabled)
     }
 
     private var buttonSection: some View {
-        NewTaskFooterSection(
-            isFooterCompacted: isFooterCompacted,
-            disabledReason: primaryButtonDisabledReason,
-            primaryButtonTitle: primaryButtonTitle,
-            isPrimaryButtonEnabled: isPrimaryButtonEnabled,
-            isSaving: store.isSaving,
-            isCurrentStepAlarmConfirm: store.currentStep == .alarmConfirm,
-            hasPreviousStep: store.currentStep.previous != nil,
-            onPrimaryButtonTap: primaryButtonTapped,
-            onPreviousButtonTap: previousButtonTapped
-        )
+        VStack(spacing: FooterLayout.buttonActionSpacing) {
+            ZStack {
+                JSButton(
+                    title: primaryButtonTitle,
+                    systemImage: primaryButtonIcon,
+                    style: .primary,
+                    size: .medium,
+                    isEnabled: isPrimaryButtonEnabled
+                ) {
+                    primaryButtonTapped()
+                }
+
+                if model.isSaving && model.currentStep == .alarmConfirm {
+                    JSProgressIndicator(size: .small, tintColor: .white)
+                }
+            }
+
+            if !isFooterCompacted {
+                secondaryFooterActions
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
+        }
+        .padding(.horizontal, FooterLayout.horizontalPadding)
+        .padding(.top, isFooterCompacted ? FooterLayout.compactTopPadding : FooterLayout.topPadding)
+        .padding(.bottom, isFooterCompacted ? FooterLayout.compactBottomPadding : FooterLayout.bottomPadding)
+        .background(Color.v2Background)
+        .background(alignment: .top) {
+            LinearGradient(
+                colors: [
+                    Color.v2Background.opacity(0),
+                    Color.v2Background.opacity(0.9),
+                    Color.v2Background
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .frame(height: isFooterCompacted ? FooterLayout.compactTopFadeHeight : FooterLayout.topFadeHeight)
+            .offset(y: -(isFooterCompacted ? FooterLayout.compactTopFadeHeight : FooterLayout.topFadeHeight))
+        }
+        .overlay(alignment: .top) {
+            Rectangle()
+                .fill(Color.labelAssistive.opacity(0.2))
+                .frame(height: 1)
+        }
     }
 
     private var isFooterCompacted: Bool {
-        keyboardObserver.context.isVisible
+        isKeyboardVisible
     }
 
     private var contentBottomInset: CGFloat {
-        isFooterCompacted ? FooterLayout.compactContentBottomInset : FooterLayout.expandedContentBottomInset
+        let baseInset = isFooterCompacted ? FooterLayout.compactContentBottomInset : FooterLayout.contentBottomInset
+        guard model.currentStep == .alarmConfirm, model.isAlarmEnabled else { return baseInset }
+        // Extra inset so DatePicker can settle fully above sticky footer.
+        return baseInset + 96.jsScaled()
     }
 
     private var toastBottomPadding: CGFloat {
-        isFooterCompacted ? FooterLayout.compactToastBottomPadding : FooterLayout.expandedToastBottomPadding
+        isFooterCompacted ? FooterLayout.compactToastBottomPadding : FooterLayout.toastBottomPadding
     }
 
     private var primaryButtonTitle: String {
-        switch store.currentStep {
+        switch model.currentStep {
         case .basicInfo, .photo:
             return "다음"
         case .alarmConfirm:
-            return "챌린지 시작"
+            return "시작하기"
+        }
+    }
+
+    private var primaryButtonIcon: String {
+        switch model.currentStep {
+        case .basicInfo, .photo:
+            return "arrow.right"
+        case .alarmConfirm:
+            return "sparkles"
         }
     }
 
     private var isPrimaryButtonEnabled: Bool {
-        guard !store.isSaving else { return false }
+        guard !model.isSaving else { return false }
 
-        switch store.currentStep {
+        switch model.currentStep {
         case .basicInfo, .photo:
-            return store.canProceedCurrentStep
+            return model.canProceedCurrentStep
         case .alarmConfirm:
-            return store.canSubmit
-        }
-    }
-
-    private var primaryButtonDisabledReason: String? {
-        guard !store.isSaving, !isPrimaryButtonEnabled else { return nil }
-
-        switch store.currentStep {
-        case .basicInfo:
-            return "제목을 입력해 주세요."
-        case .photo:
-            return "대표 사진을 선택해 주세요."
-        case .alarmConfirm:
-            return "제목과 대표 사진을 확인해 주세요."
+            return model.canSubmit
         }
     }
 
     private func primaryButtonTapped() {
-        switch store.currentStep {
+        switch model.currentStep {
         case .basicInfo, .photo:
-            store.send(.nextStepTapped)
+            model.nextStepTapped()
         case .alarmConfirm:
-            store.send(.saveButtonTapped)
+            model.saveButtonTapped()
         }
-    }
-
-    private func cancelButtonTapped() {
-        store.send(.cancelButtonTapped)
-    }
-
-    private func previousButtonTapped() {
-        store.send(.previousStepTapped)
-    }
-
-    private func toastDismissed() {
-        store.send(.toastDismissed)
     }
 
     private var saveFailedBanner: some View {
@@ -377,9 +433,9 @@ public struct NewTaskView: View {
 
     private var stageDayBinding: Binding<Int> {
         Binding(
-            get: { store.stageType.durationDays },
+            get: { model.stageType.durationDays },
             set: { day in
-                store.stageType = stageType(for: day)
+                model.stageType = stageType(for: day)
             }
         )
     }
@@ -399,283 +455,48 @@ public struct NewTaskView: View {
         }
     }
 
-    private func requestScroll(to target: ScrollTarget, duration: Double) {
-        scrollTargetID = target
-        scrollAnimation = reduceMotion ? nil : .easeInOut(duration: max(duration, 0.18))
-        scrollRequestToken += 1
-    }
+    private func updateKeyboardVisibility(_ visible: Bool) {
+        guard isKeyboardVisible != visible else { return }
 
-    private func clearInputScrollRequest() {
-        scrollTargetID = nil
-    }
-
-    private func photoPickerItemChanged(_ newItem: PhotosPickerItem?) {
-        store.send(.photoPickerItemChanged(newItem))
-    }
-
-    private func handleStageSelection(_ selected: Int) {
-        if !reduceMotion {
-            withAnimation(JSAnimation.navigation) {
-                store.stageType = stageType(for: selected)
-            }
+        if reduceMotion {
+            isKeyboardVisible = visible
         } else {
-            store.stageType = stageType(for: selected)
-        }
-    }
-
-    private var screenSubtitle: String {
-        switch store.currentStep {
-        case .basicInfo:
-            return "핵심 정보만 정하면 바로 다음 단계로 넘어가요"
-        case .photo:
-            return "대표 사진 한 장만 고르면 준비가 거의 끝나요"
-        case .alarmConfirm:
-            return "마지막 설정을 확인하고 바로 시작해요"
-        }
-    }
-
-    private var stepProgressCaption: String {
-        if let nextStep = store.currentStep.next {
-            return "다음은 \(nextStep.title) 단계예요"
-        }
-        return "이제 시작만 남았어요"
-    }
-
-    private var titleHelperText: String {
-        if store.trimmedTitle.isEmpty {
-            return "저장 후에는 제목을 바꿀 수 없어요"
-        }
-        return "앞뒤 공백은 자동으로 정리돼요"
-    }
-
-    private func stepBadge(_ step: NewTaskFeature.CreateChallengeStep) -> some View {
-        let isCurrent = step == store.currentStep
-        let isComplete = step.rawValue < store.currentStep.rawValue
-
-        return HStack(spacing: .jsMicro) {
-            Image(systemName: isComplete ? "checkmark.circle.fill" : (isCurrent ? "circle.fill" : "circle"))
-                .font(.jsLabelMedium)
-
-            Text(step.title)
-                .font(.jsLabelMedium)
-                .lineLimit(1)
-        }
-        .foregroundColor(isCurrent || isComplete ? .labelStrong : .labelAlternative)
-        .padding(.horizontal, .jsXS)
-        .padding(.vertical, .jsMicro)
-        .background(
-            Capsule()
-                .fill(isCurrent ? Color.primaryNormal.opacity(0.14) : Color.backgroundStrong)
-        )
-    }
-}
-
-private struct NewTaskPhotoSection: View {
-    let image: UIImage?
-    @Binding var photoPickerItem: PhotosPickerItem?
-    let onPhotoPickerItemChanged: (PhotosPickerItem?) -> Void
-
-    private let photoHeight: CGFloat = 232.jsScaled()
-    private let cardShape = RoundedRectangle(cornerRadius: .jsRadiusLG, style: .continuous)
-
-    var body: some View {
-        RedesignSectionCard(
-            title: "대표 사진",
-            subtitle: "카드에 보일 사진 한 장"
-        ) {
-            VStack(spacing: .jsSM) {
-                photoPreview
-                photoPicker
+            withAnimation(.easeInOut(duration: 0.22)) {
+                isKeyboardVisible = visible
             }
         }
     }
 
-    private var hasImage: Bool {
-        image != nil
-    }
-
-    private var photoPreview: some View {
-        ZStack {
-            if let image {
-                Image(uiImage: image)
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-            } else {
-                VStack(spacing: .jsXS) {
-                    Image(systemName: "photo.on.rectangle.angled")
-                        .font(.jsDisplayMedium)
-                        .foregroundColor(.labelAlternative)
-
-                    Text("대표 사진을 추가해 주세요")
-                        .font(.jsBodyMedium)
-                        .foregroundColor(.labelStrong)
-
-                    Text("비율은 자동으로 조정돼요")
-                        .font(.jsLabelMedium)
-                        .foregroundColor(.labelNeutral)
+    private var secondaryFooterActions: some View {
+        HStack(spacing: FooterLayout.secondaryActionSpacing) {
+            if model.currentStep.previous != nil {
+                Button("이전") {
+                    model.previousStepTapped()
                 }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(Color.backgroundStrong)
+                .disabled(model.isSaving)
             }
-        }
-        .frame(maxWidth: .infinity, minHeight: photoHeight, maxHeight: photoHeight)
-        .clipShape(cardShape)
-        .overlay {
-            cardShape
-                .stroke(
-                    hasImage ? Color.labelDisable.opacity(0.24) : Color.primaryNormal.opacity(0.35),
-                    style: StrokeStyle(
-                        lineWidth: 1,
-                        dash: hasImage ? [] : [8, 6]
-                    )
-                )
-        }
-        .overlay(alignment: .topTrailing) {
-            if hasImage {
-                HStack(spacing: .jsMicro) {
-                    Image(systemName: "checkmark.circle.fill")
-                        .foregroundColor(.positive)
 
-                    Text("선택 완료")
-                        .font(.jsLabelMedium)
-                        .foregroundColor(.labelStrong)
-                }
-                .padding(.horizontal, .jsXS)
-                .padding(.vertical, .jsMicro)
-                .background(Color.backgroundNormal.opacity(0.92))
-                .clipShape(Capsule())
-                .padding(.jsSM)
+            Button("취소") {
+                model.cancelButtonTapped()
             }
+            .disabled(model.isSaving)
         }
-    }
-
-    private var photoPicker: some View {
-        let hasImage = image != nil
-
-        return PhotosPicker(selection: $photoPickerItem, matching: .images) {
-            HStack(spacing: .jsXS) {
-                Image(systemName: hasImage ? "arrow.triangle.2.circlepath" : "photo.badge.plus")
-                    .font(.jsHeadlineSmall)
-                    .foregroundColor(.primaryNormal)
-
-                Text(hasImage ? "대표 사진 변경" : "대표 사진 선택")
-                    .font(.jsButtonMedium)
-                    .foregroundColor(.labelStrong)
-
-                Spacer(minLength: .jsXS)
-
-                Image(systemName: "chevron.right")
-                    .font(.jsButtonSmall)
-                    .foregroundColor(.labelNeutral)
-            }
-            .padding(.horizontal, .jsMD)
-            .padding(.vertical, .jsSM)
-            .background(
-                RoundedRectangle(cornerRadius: .jsRadiusMD, style: .continuous)
-                    .fill(Color.backgroundStrong)
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: .jsRadiusMD, style: .continuous)
-                    .stroke(Color.labelDisable.opacity(0.24), lineWidth: 1)
-            )
-        }
+        .font(.jsButtonSmall)
+        .foregroundColor(.labelAlternative)
         .buttonStyle(.plain)
-        .accessibilityLabel(hasImage ? "대표 사진 변경" : "대표 사진 선택")
-        .accessibilityHint("사진 보관함에서 작심 대표 사진을 고릅니다")
-        .onChange(of: photoPickerItem) { _, newItem in
-            onPhotoPickerItemChanged(newItem)
-        }
-    }
-}
-
-private struct NewTaskFooterSection: View {
-    let isFooterCompacted: Bool
-    let disabledReason: String?
-    let primaryButtonTitle: String
-    let isPrimaryButtonEnabled: Bool
-    let isSaving: Bool
-    let isCurrentStepAlarmConfirm: Bool
-    let hasPreviousStep: Bool
-    let onPrimaryButtonTap: () -> Void
-    let onPreviousButtonTap: () -> Void
-
-    private enum FooterLayout {
-        static let primarySecondarySpacing: CGFloat = 8.jsScaled()
-        static let secondarySpacing: CGFloat = 8.jsScaled()
-        static let horizontalPadding: CGFloat = .jsMD
-        static let expandedTopPadding: CGFloat = .jsXS
-        static let compactTopPadding: CGFloat = .jsMicro
-        static let expandedBottomPadding: CGFloat = .jsSM
-        static let compactBottomPadding: CGFloat = .jsXS
-        static let expandedTopFadeHeight: CGFloat = 20.jsScaled()
-        static let compactTopFadeHeight: CGFloat = 12.jsScaled()
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, .jsMicro)
     }
 
-    var body: some View {
-        VStack(spacing: FooterLayout.primarySecondarySpacing) {
-            if let disabledReason {
-                RedesignStateBanner(
-                    text: disabledReason,
-                    icon: "info.circle.fill",
-                    tintColor: .primaryNormal
-                )
-                .accessibilityLabel(disabledReason)
-                .transition(.move(edge: .bottom).combined(with: .opacity))
-            }
-
-            ZStack {
-                JSButton(
-                    title: primaryButtonTitle,
-                    style: .primary,
-                    size: .large,
-                    isEnabled: isPrimaryButtonEnabled
-                ) {
-                    onPrimaryButtonTap()
-                }
-
-                if isSaving && isCurrentStepAlarmConfirm {
-                    JSProgressIndicator(size: .small, tintColor: .white)
-                }
-            }
-
-            if !isFooterCompacted {
-                HStack(spacing: FooterLayout.secondarySpacing) {
-                    if hasPreviousStep {
-                        JSButton(
-                            title: "이전",
-                            style: .secondary,
-                            size: .medium,
-                            isEnabled: !isSaving
-                        ) {
-                            onPreviousButtonTap()
-                        }
-                    }
-                }
-                .transition(.move(edge: .bottom).combined(with: .opacity))
-            }
-        }
-        .padding(.horizontal, FooterLayout.horizontalPadding)
-        .padding(.top, isFooterCompacted ? FooterLayout.compactTopPadding : FooterLayout.expandedTopPadding)
-        .padding(.bottom, isFooterCompacted ? FooterLayout.compactBottomPadding : FooterLayout.expandedBottomPadding)
-        .background(Color.backgroundNormal)
-        .background(alignment: .top) {
-            LinearGradient(
-                colors: [
-                    Color.backgroundNormal.opacity(0),
-                    Color.backgroundNormal.opacity(0.9),
-                    Color.backgroundNormal
-                ],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-            .frame(height: isFooterCompacted ? FooterLayout.compactTopFadeHeight : FooterLayout.expandedTopFadeHeight)
-            .offset(y: -(isFooterCompacted ? FooterLayout.compactTopFadeHeight : FooterLayout.expandedTopFadeHeight))
-        }
-        .overlay(alignment: .top) {
-            Rectangle()
-                .fill(Color.labelAssistive.opacity(0.2))
-                .frame(height: 1)
+    private func requestAlarmPickerScroll(delayNanoseconds: UInt64) {
+        scrollTargetID = nil
+        _Concurrency.Task { @MainActor in
+            try? await _Concurrency.Task.sleep(nanoseconds: delayNanoseconds)
+            scrollTargetID = ScrollTarget.alarmPicker
+            try? await _Concurrency.Task.sleep(nanoseconds: AlarmScrollPolicy.settleDelayNanoseconds)
+            // Nudge once more after layout settles to guarantee full DatePicker visibility.
+            scrollTargetID = nil
+            scrollTargetID = ScrollTarget.alarmPicker
         }
     }
 }

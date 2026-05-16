@@ -1,28 +1,20 @@
 import SwiftUI
-import ComposableArchitecture
 
 @main
 struct JacsimApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
-    
-    let store = Store(initialState: AppFeature.State()) {
-        AppFeature()
-    }
+    @State private var model = AppModel()
 
     var body: some Scene {
         WindowGroup {
-            if let captureScreen = OnboardingCaptureScreen.current {
-                OnboardingCaptureRootView(screen: captureScreen)
-            } else {
-                AppView(store: store)
-                    .onOpenURL { url in
-                        NotificationCenter.default.post(
-                            name: .jacsimDeepLinkReceived,
-                            object: nil,
-                            userInfo: ["url": url]
-                        )
-                    }
-            }
+            AppView(model: model)
+                .onOpenURL { url in
+                    NotificationCenter.default.post(
+                        name: .jacsimDeepLinkReceived,
+                        object: nil,
+                        userInfo: ["url": url]
+                    )
+                }
         }
     }
 }

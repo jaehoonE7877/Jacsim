@@ -13,8 +13,6 @@ public extension TargetDependency {
 
 public extension TargetDependency.SPM {
     //MARK: - Firebase
-    static let FirebaseMessaging = TargetDependency.external(name: "FirebaseMessaging", condition: .none)
-    static let FirebaseAnalytics = TargetDependency.external(name: "FirebaseAnalytics", condition: .none)
     static let FirebaseCrashlytics = TargetDependency.external(name: "FirebaseCrashlytics", condition: .none)
     static let Promises = TargetDependency.external(name: "Promises", condition: .none)
     //MARK: - UI
@@ -22,6 +20,5 @@ public extension TargetDependency.SPM {
     static let Kingfisher = TargetDependency.external(name: "Kingfisher", condition: .none)
     static let AcknowList = TargetDependency.external(name: "AcknowList", condition: .none)
     static let CropViewController = TargetDependency.external(name: "CropViewController", condition: .none)
-    static let ComposableArchitecture = TargetDependency.external(name: "ComposableArchitecture", condition: .none)
     //MARK: - Test (Swift Testing 사용, 외부 테스트 라이브러리 없음)
 }

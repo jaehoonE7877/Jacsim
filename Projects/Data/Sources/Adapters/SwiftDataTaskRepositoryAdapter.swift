@@ -1,12 +1,10 @@
 import Foundation
 import SwiftData
 import Domain
-import Ports
+import ExternalInterface
 
 public enum TaskRepositoryAdapterError: Error {
     case taskNotFound(TaskID)
-    case fetchFailed(String)
-    case saveFailed(String)
 }
 
 public actor SwiftDataTaskRepositoryAdapter {
@@ -20,118 +18,149 @@ public actor SwiftDataTaskRepositoryAdapter {
         let adapter = self
 
         return TaskRepositoryPort(
-            fetchActiveTasks: { try await adapter.fetchActiveTasks() },
-            fetchTask: { try await adapter.fetchTask(id: $0) },
+            fetchActiveTasks: { await adapter.fetchActiveTasks() },
+            fetchTask: { await adapter.fetchTask(id: $0) },
             addTask: { try await adapter.addTask($0) },
             updateTask: { try await adapter.updateTask($0) },
             deleteTask: { try await adapter.deleteTask(id: $0) },
-            fetchTasksByStatus: { try await adapter.fetchTasksByStatus($0) }
+            fetchTasksByStatus: { await adapter.fetchTasksByStatus($0) }
         )
     }
     
-    public func fetchActiveTasks() async throws -> [Domain.Task] {
-        let tasks = try await fetchMappedTasks()
-        return sortTasks(tasks.filter(isActiveTask))
+    public func fetchActiveTasks() async -> [Domain.Task] {
+        let context = ModelContext(container)
+        let descriptor = FetchDescriptor<UserJacsimModel>()
+        let results = (try? context.fetch(descriptor)) ?? []
+        let now = Date()
+        let tasks = refreshTasks(from: results, in: context, now: now)
+        return ActiveTaskService()
+            .filterActiveTasks(tasks, referenceDate: now)
+            .sorted { $0.startDate < $1.startDate }
     }
     
-    public func fetchTask(id: TaskID) async throws -> Domain.Task? {
+    public func fetchTask(id: TaskID) async -> Domain.Task? {
         let context = ModelContext(container)
-        return try fetchPersistedTasks(in: context)
+        let descriptor = FetchDescriptor<UserJacsimModel>()
+        guard let model = (try? context.fetch(descriptor))?
             .first(where: { $0.id == id.rawValue })
-            .map(mapToDomainModel)
+        else { return nil }
+
+        return refreshTask(from: model, in: context, now: Date())
     }
     
     public func addTask(_ task: Domain.Task) async throws {
         let context = ModelContext(container)
         let model = mapToSwiftDataModel(task)
         context.insert(model)
-        do {
-            try context.save()
-        } catch {
-            throw TaskRepositoryAdapterError.saveFailed(error.localizedDescription)
-        }
+        try context.save()
     }
     
     public func updateTask(_ task: Domain.Task) async throws {
         let context = ModelContext(container)
         let descriptor = FetchDescriptor<UserJacsimModel>()
-        let fetched: [UserJacsimModel]
-        do {
-            fetched = try context.fetch(descriptor)
-        } catch {
-            throw TaskRepositoryAdapterError.fetchFailed(error.localizedDescription)
-        }
-        guard let existing = fetched.first(where: { $0.id == task.id.rawValue }) else {
+        guard let existing = (try? context.fetch(descriptor))?
+            .first(where: { $0.id == task.id.rawValue }) else {
             throw TaskRepositoryAdapterError.taskNotFound(task.id)
         }
-        let _ = mapToSwiftDataModel(task, existing: existing)
-        do {
-            try context.save()
-        } catch {
-            throw TaskRepositoryAdapterError.saveFailed(error.localizedDescription)
+        let previousRecords = existing.memoList
+        let updated = mapToSwiftDataModel(task, existing: existing)
+        let retainedRecordIDs = Set(updated.memoList.map(\.id))
+        for record in previousRecords where !retainedRecordIDs.contains(record.id) {
+            context.delete(record)
         }
+        try context.save()
     }
     
     public func deleteTask(id: TaskID) async throws {
         let context = ModelContext(container)
         let descriptor = FetchDescriptor<UserJacsimModel>()
-        let fetched: [UserJacsimModel]
-        do {
-            fetched = try context.fetch(descriptor)
-        } catch {
-            throw TaskRepositoryAdapterError.fetchFailed(error.localizedDescription)
-        }
-        guard let model = fetched.first(where: { $0.id == id.rawValue }) else {
+        guard let model = (try? context.fetch(descriptor))?
+            .first(where: { $0.id == id.rawValue }) else {
             throw TaskRepositoryAdapterError.taskNotFound(id)
         }
         context.delete(model)
-        do {
-            try context.save()
-        } catch {
-            throw TaskRepositoryAdapterError.saveFailed(error.localizedDescription)
-        }
+        try context.save()
     }
     
-    public func fetchTasksByStatus(_ status: ChallengeStatus) async throws -> [Domain.Task] {
+    public func fetchTasksByStatus(_ status: ChallengeStatus) async -> [Domain.Task] {
+        let context = ModelContext(container)
         switch status {
         case .inProgress:
-            return try await fetchActiveTasks()
+            return await fetchActiveTasks()
         case .done:
-            let tasks = try await fetchMappedTasks()
-            return sortTasks(tasks.filter(isDoneTask))
-        }
-    }
-}
-
-private extension SwiftDataTaskRepositoryAdapter {
-    func fetchPersistedTasks(in context: ModelContext) throws -> [UserJacsimModel] {
-        let descriptor = FetchDescriptor<UserJacsimModel>()
-        do {
-            return try context.fetch(descriptor)
-        } catch {
-            throw TaskRepositoryAdapterError.fetchFailed(error.localizedDescription)
+            let descriptor = FetchDescriptor<UserJacsimModel>()
+            let results = (try? context.fetch(descriptor)) ?? []
+            return refreshTasks(from: results, in: context, now: Date())
+                .filter(\.isTerminallyDone)
+                .sorted { $0.startDate < $1.startDate }
         }
     }
 
-    func fetchMappedTasks() async throws -> [Domain.Task] {
-        let context = ModelContext(container)
-        return try fetchPersistedTasks(in: context).map(mapToDomainModel)
+    private func refreshTasks(
+        from models: [UserJacsimModel],
+        in context: ModelContext,
+        now: Date
+    ) -> [Domain.Task] {
+        var didUpdate = false
+        let tasks = models.map { model in
+            let refreshedTask = refreshTask(from: model, now: now)
+            didUpdate = didUpdate || shouldPersistRefresh(refreshedTask, over: model)
+            _ = mapToSwiftDataModel(refreshedTask, existing: model)
+            return refreshedTask
+        }
+
+        if didUpdate {
+            try? context.save()
+        }
+
+        return tasks
     }
 
-    func sortTasks(_ tasks: [Domain.Task]) -> [Domain.Task] {
-        tasks.sorted { $0.startDate < $1.startDate }
+    private func refreshTask(
+        from model: UserJacsimModel,
+        in context: ModelContext,
+        now: Date
+    ) -> Domain.Task {
+        let refreshedTask = refreshTask(from: model, now: now)
+        if shouldPersistRefresh(refreshedTask, over: model) {
+            _ = mapToSwiftDataModel(refreshedTask, existing: model)
+            try? context.save()
+        }
+        return refreshedTask
     }
 
-    func isActiveTask(_ task: Domain.Task) -> Bool {
-        task.stages.last?.result == .inProgress
+    private nonisolated func refreshTask(
+        from model: UserJacsimModel,
+        now: Date
+    ) -> Domain.Task {
+        mapToDomainModel(model).refreshingStageProgress(now: now)
     }
 
-    func isDoneTask(_ task: Domain.Task) -> Bool {
-        switch task.stages.last?.result {
-        case .success, .fail:
-            return true
-        case .inProgress, .none:
-            return false
+    private nonisolated func shouldPersistRefresh(
+        _ task: Domain.Task,
+        over model: UserJacsimModel
+    ) -> Bool {
+        model.isDone != task.isTerminallyDone ||
+            model.isSuccess != task.isTerminallySuccessful ||
+            model.statusRaw != (
+                task.isTerminallyDone
+                    ? Domain.ChallengeStatus.done.rawValue
+                    : Domain.ChallengeStatus.inProgress.rawValue
+            ) ||
+            model.resultRaw != resultRaw(for: task) ||
+            model.currentStageTypeRaw != task.stages.last?.stageTypeRaw ||
+            model.stages.map(\.successDays) != task.stages.map(\.successDays) ||
+            model.stages.map(\.resultRaw) != task.stages.map(\.resultRaw)
+    }
+
+    private nonisolated func resultRaw(for task: Domain.Task) -> String {
+        switch task.stages.last?.result ?? .inProgress {
+        case .inProgress:
+            return Domain.ChallengeResult.none.rawValue
+        case .success:
+            return Domain.ChallengeResult.success.rawValue
+        case .fail:
+            return Domain.ChallengeResult.fail.rawValue
         }
     }
 }
