@@ -51,8 +51,9 @@ public extension Project {
             "UIInterfaceOrientationLandscapeLeft",
             "UIInterfaceOrientationLandscapeRight"
         ],
-        "NSCameraUsageDescription": "작심 하기, 작심 인증을 위해 카메라 접근 권한이 필요합니다.",
-        "NSPhotoLibraryUsageDescription": "작심 하기, 작심 인증을 위해 앨범 접근 권한이 필요합니다."
+        "NSCameraUsageDescription": "작심 인증 사진을 촬영하기 위해 카메라 접근 권한이 필요합니다.",
+        "NSPhotoLibraryUsageDescription": "작심 인증 사진을 선택하기 위해 사진 보관함 접근 권한이 필요합니다.",
+        "NSUserNotificationsUsageDescription": "작심 인증 알림과 친구 활동 알림을 보내기 위해 알림 권한이 필요합니다."
     ]
     
     static let demoInfoPlist: [String: Plist.Value] = [
@@ -92,7 +93,8 @@ public extension Project {
             "UIInterfaceOrientationLandscapeLeft",
             "UIInterfaceOrientationLandscapeRight"
         ],
-        "NSCameraUsageDescription": "작심 인증을 위해 카메라 접근 권한이 필요합니다.",
-        "NSPhotoLibraryUsageDescription": "작심 하기, 작심 인증을 위해 앨범 접근 권한이 필요합니다."
+        "NSCameraUsageDescription": "작심 인증 사진을 촬영하기 위해 카메라 접근 권한이 필요합니다.",
+        "NSPhotoLibraryUsageDescription": "작심 인증 사진을 선택하기 위해 사진 보관함 접근 권한이 필요합니다.",
+        "NSUserNotificationsUsageDescription": "작심 인증 알림과 친구 활동 알림을 보내기 위해 알림 권한이 필요합니다."
     ]
 }

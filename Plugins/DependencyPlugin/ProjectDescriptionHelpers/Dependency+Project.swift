@@ -22,6 +22,8 @@ public extension Dep {
     static let domain = Dep.project(target: "Domain", path: .domain)
 
     static let externalInterface = Dep.project(target: "ExternalInterface", path: .externalInterface)
+
+    static let jacsimWidget = Dep.project(target: "JacsimWidget", path: .relativeToRoot("Projects/JacsimWidget"))
 }
 
 //MARK: -- Modules

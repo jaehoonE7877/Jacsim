@@ -187,10 +187,10 @@ public final class HomeModel {
     }
 
     public func deepLinkReceived(_ url: URL) {
-        guard url.scheme == "jacsim",
-              url.host == "challenge" else {
+        guard url.scheme == "jacsim" else {
             return
         }
+        guard url.host == "challenge" || url.host == "task" else { return }
         let idString = url.path.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
         guard let id = UUID(uuidString: idString) else { return }
         _Concurrency.Task { [dependencies] in

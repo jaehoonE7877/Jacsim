@@ -3,6 +3,7 @@ import Data
 import Domain
 import ExternalInterface
 import Foundation
+import WidgetKit
 
 public struct JacsimDependencies: Sendable {
     public var appPreferences: AppPreferencesPort
@@ -192,6 +193,8 @@ public extension JacsimDependencies {
                     Logger.certificationSavedToSwiftData(
                         duration: Date().timeIntervalSince(startTime)
                     )
+                    WidgetCenter.shared.reloadTimelines(ofKind: "TodayJacsimWidget")
+                    WidgetCenter.shared.reloadTimelines(ofKind: "StreakWidget")
                     if let beforeTask,
                        var afterTask = await taskRepositoryAdapter.fetchTask(id: taskId),
                        let graduation = StageGraduationDetector().graduationContext(before: beforeTask, after: afterTask) {
