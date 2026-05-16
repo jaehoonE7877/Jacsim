@@ -29,8 +29,11 @@ public struct FeedView: View {
                     } label: {
                         Image(systemName: "square.and.pencil")
                             .font(.jsBodyMedium)
+                            .accessibilityHidden(true)
                     }
+                    .jsTouchTarget()
                     .accessibilityLabel("자랑 글 쓰기")
+                    .accessibilityHint("자랑 글 작성 화면을 엽니다")
                 }
             }
             .jsGlassNavBar()

@@ -93,6 +93,7 @@ private struct PlusActionCardButton: View {
         }
         .buttonStyle(.plain)
         .disabled(false)
+        .jsTouchTarget()
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(title)
         .accessibilityHint(accessibilityHint)
@@ -105,6 +106,7 @@ private struct PlusActionCardButton: View {
                     .font(.jsHeadline20Bold)
                     .foregroundStyle(iconColor)
                     .frame(width: 40.jsScaled(), height: 40.jsScaled())
+                    .accessibilityHidden(true)
                     .background(
                         Circle()
                             .fill(iconColor.opacity(isEnabled ? 0.14 : 0.08))
@@ -126,6 +128,7 @@ private struct PlusActionCardButton: View {
                 Image(systemName: isEnabled ? "chevron.right" : "clock.fill")
                     .font(.jsBodySmall)
                     .foregroundStyle(Color.labelAssistive)
+                    .accessibilityHidden(true)
             }
         }
         .accessibilityHidden(true)

@@ -31,7 +31,9 @@ public struct CoachView: View {
                 }
                 .font(.jsButtonMedium)
                 .foregroundStyle(Color.labelAlternative)
+                .jsTouchTarget()
                 .accessibilityLabel("AI 코치 닫기")
+                .accessibilityHint("AI 코치 화면을 닫습니다")
             }
 
             ToolbarItem(placement: .topBarTrailing) {
@@ -41,7 +43,9 @@ public struct CoachView: View {
                 .font(.jsButtonMedium)
                 .foregroundStyle(Color.forestAccent)
                 .disabled(model.isSending)
+                .jsTouchTarget()
                 .accessibilityLabel("주간 회고 받기")
+                .accessibilityHint("현재 작심을 바탕으로 주간 회고 메시지를 요청합니다")
             }
         }
         .jsGlassNavBar()

@@ -41,6 +41,8 @@ public struct BragComposerView: View {
                 }
                 .font(.jsButtonMedium)
                 .foregroundStyle(Color.labelAlternative)
+                .jsTouchTarget()
+                .accessibilityLabel("자랑 글 쓰기 닫기")
             }
         }
         .onAppear { model.onAppear() }
@@ -95,7 +97,9 @@ public struct BragComposerView: View {
                                 )
                         }
                         .buttonStyle(.plain)
+                        .jsTouchTarget()
                         .accessibilityLabel("\(task.title) 작심 선택")
+                        .accessibilityHint("자랑 글에 연결할 작심을 선택합니다")
                     }
                 }
                 .padding(.vertical, .jsMicro)

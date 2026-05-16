@@ -153,7 +153,10 @@ public struct TaskDetailView: View {
                         .font(.jsHeadlineMedium)
                         .foregroundColor(.labelStrong)
                         .frame(width: 44.jsScaled(.touchTarget), height: 44.jsScaled(.touchTarget))
+                        .accessibilityHidden(true)
                 }
+                .accessibilityLabel("뒤로 가기")
+                .accessibilityHint("이전 화면으로 돌아갑니다")
             }
 
             ToolbarItem(placement: .principal) {
@@ -200,7 +203,10 @@ public struct TaskDetailView: View {
                         .font(.jsHeadlineMedium)
                         .foregroundColor(.labelStrong)
                         .frame(width: 44.jsScaled(.touchTarget), height: 44.jsScaled(.touchTarget))
+                        .accessibilityHidden(true)
                 }
+                .accessibilityLabel("작심 더보기")
+                .accessibilityHint("공개 범위, 알림, 삭제 메뉴를 엽니다")
             }
         }
         .background(InteractivePopGestureEnabler())

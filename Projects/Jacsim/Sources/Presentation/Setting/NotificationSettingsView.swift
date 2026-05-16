@@ -41,6 +41,7 @@ public struct NotificationSettingsView: View {
                 Image(systemName: "bell.slash.fill")
                     .font(.jsHeadline20Bold)
                     .foregroundStyle(Color.cautionary)
+                    .accessibilityHidden(true)
 
                 VStack(alignment: .leading, spacing: .jsXS) {
                     Text("알림 권한이 꺼져 있어요")
@@ -56,7 +57,9 @@ public struct NotificationSettingsView: View {
                     }
                     .font(.jsButtonMedium)
                     .foregroundStyle(Color.forestAccent)
+                    .jsTouchTarget()
                     .accessibilityLabel("iOS 설정 열기")
+                    .accessibilityHint("시스템 설정 앱의 Jacsim 알림 설정으로 이동합니다")
                 }
 
                 Spacer(minLength: .jsXS)

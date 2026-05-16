@@ -36,8 +36,11 @@ public struct FriendProfileView: View {
                         }
                     } label: {
                         Image(systemName: "ellipsis.circle")
+                            .frame(width: 44, height: 44)
+                            .accessibilityHidden(true)
                     }
                     .accessibilityLabel("친구 프로필 메뉴")
+                    .accessibilityHint("언팔로우 또는 차단 메뉴를 엽니다")
                 }
             }
     }
@@ -88,15 +91,21 @@ public struct ProfileView: View {
                         FriendsSearchView(model: FriendsSearchModel(dependencies: model.dependencies))
                     } label: {
                         Image(systemName: "person.badge.plus")
+                            .frame(width: 44, height: 44)
+                            .accessibilityHidden(true)
                     }
                     .accessibilityLabel("친구 찾기")
+                    .accessibilityHint("친구 검색 화면으로 이동합니다")
 
                     NavigationLink {
                         SettingView(model: SettingScreenModel(dependencies: model.dependencies))
                     } label: {
                         Image(systemName: "gearshape")
+                            .frame(width: 44, height: 44)
+                            .accessibilityHidden(true)
                     }
                     .accessibilityLabel("설정")
+                    .accessibilityHint("설정 화면으로 이동합니다")
                 }
             }
         }

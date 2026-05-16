@@ -61,12 +61,15 @@ struct ImageAttachmentPicker: View {
                             HStack(spacing: .jsXS) {
                                 Image(systemName: "gearshape.fill")
                                     .font(.jsLabelLarge)
+                                    .accessibilityHidden(true)
                                 Text("설정에서 허용하기")
                                     .font(.jsButtonSmall)
                             }
                             .foregroundColor(.primaryNormal)
                         }
                         .buttonStyle(.plain)
+                        .jsTouchTarget()
+                        .accessibilityLabel("설정에서 허용하기")
                         .accessibilityHint("iOS 설정 앱을 열어 사진 또는 카메라 권한을 변경합니다")
                     }
                 }
@@ -95,11 +98,13 @@ struct ImageAttachmentPicker: View {
                     .resizable()
                     .aspectRatio(contentMode: .fill)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .accessibilityLabel("선택한 사진 미리보기")
             } else {
                 VStack(spacing: .jsXS) {
                     Image(systemName: "photo.on.rectangle.angled")
                         .font(.jsDisplayMedium)
                         .foregroundColor(.labelAlternative)
+                        .accessibilityHidden(true)
 
                     Text(emptyTitle)
                         .font(.jsBodyMedium)
@@ -130,6 +135,7 @@ struct ImageAttachmentPicker: View {
                 HStack(spacing: .jsMicro) {
                     Image(systemName: "checkmark.circle.fill")
                         .foregroundColor(.positive)
+                        .accessibilityHidden(true)
 
                     Text(selectedBadgeTitle)
                         .font(.jsLabelMedium)
@@ -149,6 +155,8 @@ struct ImageAttachmentPicker: View {
             ImageAttachmentActionLabel(systemName: "camera.fill", title: cameraButtonTitle)
         }
         .buttonStyle(.plain)
+        .jsTouchTarget()
+        .accessibilityLabel(cameraButtonTitle)
         .accessibilityHint("카메라를 열어 사진을 촬영합니다")
     }
 
@@ -157,6 +165,8 @@ struct ImageAttachmentPicker: View {
             ImageAttachmentActionLabel(systemName: "photo.on.rectangle", title: libraryButtonTitle)
         }
         .buttonStyle(.plain)
+        .jsTouchTarget()
+        .accessibilityLabel(libraryButtonTitle)
         .accessibilityHint("앨범에서 사진을 선택합니다")
     }
 

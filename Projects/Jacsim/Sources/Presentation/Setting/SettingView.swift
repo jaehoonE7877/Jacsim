@@ -55,6 +55,9 @@ public struct SettingView: View {
                         Button("닫기") {
                             isWalkThroughPresented = false
                         }
+                        .jsTouchTarget()
+                        .accessibilityLabel("온보딩 닫기")
+                        .accessibilityHint("온보딩 화면을 닫고 설정으로 돌아갑니다")
                     }
                 }
             }

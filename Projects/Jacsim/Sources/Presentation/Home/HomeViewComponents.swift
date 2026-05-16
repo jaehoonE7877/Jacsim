@@ -33,8 +33,11 @@ struct HomeHeaderSection: View {
                     .font(.jsHeadlineLarge)
                     .foregroundColor(.labelAlternative)
                     .frame(width: 44.jsScaled(.touchTarget), height: 44.jsScaled(.touchTarget))
+                    .accessibilityHidden(true)
             }
             .buttonStyle(.plain)
+            .accessibilityLabel("설정")
+            .accessibilityHint("설정 화면으로 이동합니다")
             .zIndex(10)
         }
         .padding(.horizontal, .jsXL)
@@ -121,7 +124,9 @@ struct HomeHeroTaskSection: View {
                                 )
                         }
                         .buttonStyle(.plain)
+                        .jsTouchTarget()
                         .accessibilityLabel(task.isCompleted(on: Date()) ? "오늘 기록 보기" : "오늘 인증하기")
+                        .accessibilityHint(task.isCompleted(on: Date()) ? "오늘 인증 기록 영역으로 이동합니다" : "오늘 인증 화면으로 이동합니다")
                     }
                 }
             }
@@ -246,6 +251,10 @@ struct HomeMiniCardsSection: View {
                         .font(.jsButtonSmall)
                         .foregroundColor(.labelAlternative)
                 }
+                .buttonStyle(.plain)
+                .jsTouchTarget()
+                .accessibilityLabel("진행 중인 작심 전체보기")
+                .accessibilityHint("전체 작심 목록으로 이동합니다")
             }
             .padding(.horizontal, .jsXL)
 

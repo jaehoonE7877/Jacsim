@@ -65,6 +65,9 @@ public struct NewTaskView: View {
                 .font(.jsButtonMedium)
                 .foregroundColor(.labelAlternative)
                 .disabled(model.isSaving)
+                .jsTouchTarget()
+                .accessibilityLabel("작심 만들기 취소")
+                .accessibilityHint("작심 만들기를 닫습니다")
             }
         }
         .alert("작심 만들기를 그만둘까요?", isPresented: $model.isDiscardAlertPresented) {
