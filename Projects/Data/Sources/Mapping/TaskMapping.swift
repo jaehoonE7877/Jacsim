@@ -150,7 +150,7 @@ func mapToDomainModel(_ userJacsim: UserJacsimModel) -> Domain.Task {
         isNotificationEnabled: userJacsim.isNotificationEnabled,
         stages: stages,
         records: records,
-        visibility: Domain.TaskVisibility(rawValue: userJacsim.visibilityRaw) ?? .private,
+        visibility: Domain.TaskVisibility(rawValue: userJacsim.visibilityRaw ?? "private") ?? .private,
         isDeleted: false,
         createdAt: createdAt,
         updatedAt: updatedAt

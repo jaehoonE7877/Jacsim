@@ -74,6 +74,56 @@ func userJacsimModelRestoresWhenCurrentStageTypeRawIsMissing() {
     #expect(task.currentStage?.stageType == .three)
 }
 
+@Test("SwiftData V1→V2 마이그레이션은 기존 작심 visibility를 private으로 채운다")
+func swiftDataMigrationSetsExistingTaskVisibilityPrivate() throws {
+    let directory = FileManager.default.temporaryDirectory
+        .appendingPathComponent("SwiftDataMigrationTests")
+        .appendingPathComponent(UUID().uuidString)
+    try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+    defer {
+        try? FileManager.default.removeItem(at: directory)
+    }
+
+    let storeURL = directory.appendingPathComponent("Jacsim.store")
+    let taskID = UUID()
+    let startDate = Calendar.current.startOfDay(for: Date())
+    let endDate = Calendar.current.date(byAdding: .day, value: 2, to: startDate) ?? startDate
+
+    do {
+        let schema = Schema(versionedSchema: JacsimSchemaV1.self)
+        let config = ModelConfiguration(schema: schema, url: storeURL)
+        let container = try ModelContainer(for: schema, configurations: [config])
+        let context = ModelContext(container)
+        let model = JacsimSchemaV1.UserJacsimModel(
+            id: taskID,
+            title: "V1 저장소 작심",
+            startDate: startDate,
+            endDate: endDate,
+            success: 0
+        )
+        context.insert(model)
+        try context.save()
+    }
+
+    do {
+        let schema = Schema(versionedSchema: JacsimSchemaV2.self)
+        let config = ModelConfiguration(schema: schema, url: storeURL)
+        let container = try ModelContainer(
+            for: schema,
+            migrationPlan: JacsimMigrationPlan.self,
+            configurations: [config]
+        )
+        let context = ModelContext(container)
+        let tasks = try context.fetch(FetchDescriptor<UserJacsimModel>())
+        let migrated = try #require(tasks.first)
+
+        #expect(tasks.count == 1)
+        #expect(migrated.id == taskID)
+        #expect(migrated.visibilityRaw == TaskVisibility.private.rawValue)
+        #expect(mapToDomainModel(migrated).visibility == .private)
+    }
+}
+
 @Test("DocumentImageStoreAdapter는 이미지를 리사이즈/재압축해서 안전하게 저장하고 로드한다")
 func documentImageStoreCompressesAndLoadsImages() async throws {
     let directory = FileManager.default.temporaryDirectory
@@ -330,14 +380,7 @@ private func makeTestImage(size: CGSize) -> UIImage {
 }
 
 private func makeInMemoryContainer() throws -> ModelContainer {
-    let schema = Schema([
-        UserJacsimModel.self,
-        AppSettingsModel.self,
-        CertifiedModel.self,
-        StageModel.self
-    ])
-    let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
-    return try ModelContainer(for: schema, configurations: [config])
+    try SwiftDataStack.makeContainer(isStoredInMemoryOnly: true)
 }
 
 private func makeReminderModel(

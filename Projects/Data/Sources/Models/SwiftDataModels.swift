@@ -187,7 +187,7 @@ public enum JacsimSchemaV2: VersionedSchema {
         public var resultRaw: String
         public var currentStageTypeRaw: Int?
         public var isNotificationEnabled: Bool
-        public var visibilityRaw: String
+        public var visibilityRaw: String?
 
         @Relationship(deleteRule: .cascade)
         public var memoList: [CertifiedModel]
