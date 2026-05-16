@@ -15,6 +15,7 @@ public final class SettingScreenModel {
     public var isLoading: Bool = false
     public var notificationPermissionDenied: Bool = false
     public var theme: ThemeMode = .system
+    public var wallpaperRaw: String = "morning"
 
     @ObservationIgnored public let dependencies: JacsimDependencies
     @ObservationIgnored private var settingsTask: _Concurrency.Task<Void, Never>?
@@ -40,6 +41,8 @@ public final class SettingScreenModel {
         settingsTask?.cancel()
         settingsTask = _Concurrency.Task { [dependencies] in
             let isEnabled = await dependencies.userSettingsRepository.isNotificationEnabled()
+            let wallpaper = await dependencies.userSettingsRepository.wallpaperRaw()
+            wallpaperSettingsResponse(wallpaper)
             notificationSettingsResponse(isEnabled)
         }
     }
@@ -83,6 +86,14 @@ public final class SettingScreenModel {
         NotificationCenter.default.post(name: .jacsimThemeChanged, object: nil)
     }
 
+    public func wallpaperChanged(_ rawValue: String) {
+        wallpaperRaw = rawValue
+        settingsTask?.cancel()
+        settingsTask = _Concurrency.Task { [dependencies] in
+            await dependencies.userSettingsRepository.updateWallpaperRaw(rawValue)
+        }
+    }
+
     private func notificationSettingsResponse(_ isEnabled: Bool) {
         isNotificationEnabled = isEnabled
         isLoading = false
@@ -92,5 +103,9 @@ public final class SettingScreenModel {
         isNotificationEnabled = false
         isLoading = false
         notificationPermissionDenied = true
+    }
+
+    private func wallpaperSettingsResponse(_ rawValue: String) {
+        wallpaperRaw = rawValue
     }
 }
