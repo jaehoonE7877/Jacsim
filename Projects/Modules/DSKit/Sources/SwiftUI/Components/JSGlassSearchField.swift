@@ -24,6 +24,7 @@ public struct JSGlassSearchField: View {
                 .font(.jsBodyMedium)
                 .foregroundStyle(Color.labelNormal)
                 .textInputAutocapitalization(.never)
+                .accessibilityLabel(accessibilityLabel)
             if !text.isEmpty {
                 Button {
                     text = ""
@@ -38,9 +39,6 @@ public struct JSGlassSearchField: View {
         .frame(height: 44)
         .padding(.horizontal, .jsMD)
         .background(.ultraThinMaterial, in: Capsule())
-        .searchable(text: $text, prompt: Text(placeholder))
-        .accessibilityElement(children: .contain)
-        .accessibilityLabel(accessibilityLabel)
     }
 }
 

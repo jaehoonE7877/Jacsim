@@ -105,9 +105,16 @@ public final class NewTaskModel {
         self.onTaskCreated = onTaskCreated
         self.onCancelled = onCancelled
         self.alarmDate = Self.defaultAlarmDate()
-        if let prefillTitle, !prefillTitle.isEmpty {
-            self.title = prefillTitle
-            self.lastAcceptedTitle = prefillTitle
+        if let prefillTitle {
+            let title = String(
+                prefillTitle
+                    .trimmingCharacters(in: .whitespacesAndNewlines)
+                    .prefix(TextInputFieldPolicy.title.maxLength)
+            )
+            if !title.isEmpty {
+                self.title = title
+                self.lastAcceptedTitle = title
+            }
         }
     }
 

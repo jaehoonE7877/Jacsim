@@ -30,12 +30,7 @@ public struct FriendsSearchView: View {
                 ScrollView {
                     LazyVStack(spacing: .jsSM) {
                         ForEach(model.rows) { row in
-                            NavigationLink {
-                                FriendProfileView(userID: row.user.id, dependencies: model.dependencies)
-                            } label: {
-                                friendRow(row)
-                            }
-                            .buttonStyle(.plain)
+                            friendRow(row)
                         }
                     }
                     .padding(.horizontal, .jsMD)
@@ -46,6 +41,9 @@ public struct FriendsSearchView: View {
         .navigationTitle("친구 찾기")
         .navigationBarTitleDisplayMode(.inline)
         .jsGlassNavBar()
+        .onAppear {
+            model.queryChanged()
+        }
         .onChange(of: model.toastMessage) { _, message in
             toastPresented = message != nil
         }
@@ -55,23 +53,31 @@ public struct FriendsSearchView: View {
     private func friendRow(_ row: FriendSearchRow) -> some View {
         JSGlassCard(accessibilityLabel: "\(row.user.displayName) 친구 행") {
             HStack(spacing: .jsMD) {
-                Circle()
-                    .fill(Color.forestAccent.opacity(0.18))
-                    .frame(width: 44.jsScaled(), height: 44.jsScaled())
-                    .overlay {
-                        Text(String(row.user.displayName.prefix(1)))
-                            .font(.jsSerifTitle)
-                            .foregroundStyle(Color.forestAccent)
-                    }
+                NavigationLink {
+                    FriendProfileView(userID: row.user.id, dependencies: model.dependencies)
+                } label: {
+                    HStack(spacing: .jsMD) {
+                        Circle()
+                            .fill(Color.forestAccent.opacity(0.18))
+                            .frame(width: 44.jsScaled(), height: 44.jsScaled())
+                            .overlay {
+                                Text(String(row.user.displayName.prefix(1)))
+                                    .font(.jsSerifTitle)
+                                    .foregroundStyle(Color.forestAccent)
+                            }
 
-                VStack(alignment: .leading, spacing: .jsMicro) {
-                    Text(row.user.displayName)
-                        .font(.jsBodyMedium)
-                        .foregroundStyle(Color.labelStrong)
-                    Text("@\(row.user.handle)")
-                        .font(.jsMonoSmall)
-                        .foregroundStyle(Color.labelAlternative)
+                        VStack(alignment: .leading, spacing: .jsMicro) {
+                            Text(row.user.displayName)
+                                .font(.jsBodyMedium)
+                                .foregroundStyle(Color.labelStrong)
+                            Text("@\(row.user.handle)")
+                                .font(.jsMonoSmall)
+                                .foregroundStyle(Color.labelAlternative)
+                        }
+                    }
                 }
+                .buttonStyle(.plain)
+                .accessibilityLabel("\(row.user.displayName) 프로필 열기")
 
                 Spacer(minLength: .jsXS)
 

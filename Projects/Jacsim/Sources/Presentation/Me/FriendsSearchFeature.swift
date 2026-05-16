@@ -53,9 +53,9 @@ public final class FriendsSearchModel {
     public func queryChanged() {
         searchTask?.cancel()
         let query = query
+        isLoading = true
         searchTask = _Concurrency.Task { [dependencies, currentUserID] in
             do {
-                try await _Concurrency.Task.sleep(nanoseconds: 220_000_000)
                 let users = try await dependencies.socialUserRepository.searchUsers(query)
                     .filter { $0.id != currentUserID }
                 let follows = try await dependencies.followRepository.fetchAll(currentUserID)
@@ -63,6 +63,7 @@ public final class FriendsSearchModel {
             } catch is CancellationError {
                 return
             } catch {
+                isLoading = false
                 rows = []
             }
         }

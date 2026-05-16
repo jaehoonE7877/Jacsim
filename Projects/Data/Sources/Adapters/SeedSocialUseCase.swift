@@ -17,16 +17,21 @@ public actor SeedSocialUseCase {
     public func seedIfNeeded() async throws {
         let context = ModelContext(container)
         let settings = try fetchOrCreateSettings(in: context)
-        guard settings.seededSocialV1 != true else { return }
 
         let users = seedUsers()
         let existingUsers = try context.fetch(FetchDescriptor<UserModel>())
+        let posts = seedPosts()
+        let existingPosts = try context.fetch(FetchDescriptor<BragPostModel>())
+        if settings.seededSocialV1 == true,
+           existingUsers.count >= users.count,
+           existingPosts.count >= posts.count {
+            return
+        }
+
         for user in users where !existingUsers.contains(where: { $0.id == user.id.rawValue }) {
             context.insert(mapToSwiftDataModel(user))
         }
 
-        let posts = seedPosts()
-        let existingPosts = try context.fetch(FetchDescriptor<BragPostModel>())
         for post in posts where !existingPosts.contains(where: { $0.id == post.id.rawValue }) {
             context.insert(mapToSwiftDataModel(post))
         }
