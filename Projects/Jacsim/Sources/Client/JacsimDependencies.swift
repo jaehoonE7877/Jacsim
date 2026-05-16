@@ -10,6 +10,12 @@ public struct JacsimDependencies: Sendable {
     public var imageStore: ImageStorePort
     public var taskRepository: TaskRepositoryPort
     public var userSettingsRepository: UserSettingsRepositoryPort
+    public var socialUserRepository: SocialUserRepositoryPort
+    public var followRepository: FollowRepositoryPort
+    public var bragPostRepository: BragPostRepositoryPort
+    public var cheerRepository: CheerRepositoryPort
+    public var commentRepository: CommentRepositoryPort
+    public var followChallengeRepository: FollowChallengeRepositoryPort
     public var taskQueryClient: TaskQueryClientPort
     public var taskCommandClient: TaskCommandClientPort
     public var stageFlowClient: StageFlowClientPort
@@ -24,6 +30,12 @@ public struct JacsimDependencies: Sendable {
         imageStore: ImageStorePort,
         taskRepository: TaskRepositoryPort,
         userSettingsRepository: UserSettingsRepositoryPort,
+        socialUserRepository: SocialUserRepositoryPort,
+        followRepository: FollowRepositoryPort,
+        bragPostRepository: BragPostRepositoryPort,
+        cheerRepository: CheerRepositoryPort,
+        commentRepository: CommentRepositoryPort,
+        followChallengeRepository: FollowChallengeRepositoryPort,
         taskQueryClient: TaskQueryClientPort,
         taskCommandClient: TaskCommandClientPort,
         stageFlowClient: StageFlowClientPort,
@@ -37,6 +49,12 @@ public struct JacsimDependencies: Sendable {
         self.imageStore = imageStore
         self.taskRepository = taskRepository
         self.userSettingsRepository = userSettingsRepository
+        self.socialUserRepository = socialUserRepository
+        self.followRepository = followRepository
+        self.bragPostRepository = bragPostRepository
+        self.cheerRepository = cheerRepository
+        self.commentRepository = commentRepository
+        self.followChallengeRepository = followChallengeRepository
         self.taskQueryClient = taskQueryClient
         self.taskCommandClient = taskCommandClient
         self.stageFlowClient = stageFlowClient
@@ -209,12 +227,58 @@ public extension JacsimDependencies {
             updateNotificationEnabled: { await userSettingsAdapter.updateNotificationEnabled($0) }
         )
 
+        let socialUserRepositoryAdapter = SocialUserRepositoryAdapter()
+        let socialUserRepository = SocialUserRepositoryPort(
+            fetchUser: { try await socialUserRepositoryAdapter.fetchUser(id: $0) },
+            fetchUserByHandle: { try await socialUserRepositoryAdapter.fetchUserByHandle($0) },
+            upsertUser: { try await socialUserRepositoryAdapter.upsertUser($0) }
+        )
+
+        let followRepositoryAdapter = FollowRepositoryAdapter()
+        let followRepository = FollowRepositoryPort(
+            fetchPendingRequests: { try await followRepositoryAdapter.fetchPendingRequests(for: $0) },
+            fetchAccepted: { try await followRepositoryAdapter.fetchAccepted(for: $0) },
+            upsertFollow: { try await followRepositoryAdapter.upsertFollow($0) }
+        )
+
+        let bragPostRepositoryAdapter = BragPostRepositoryAdapter()
+        let bragPostRepository = BragPostRepositoryPort(
+            fetchFeed: { try await bragPostRepositoryAdapter.fetchFeed(for: $0, follow: $1) },
+            createPost: { try await bragPostRepositoryAdapter.createPost($0) },
+            deletePost: { try await bragPostRepositoryAdapter.deletePost(id: $0) }
+        )
+
+        let cheerRepositoryAdapter = CheerRepositoryAdapter()
+        let cheerRepository = CheerRepositoryPort(
+            addUnique: { try await cheerRepositoryAdapter.addUnique(postId: $0, userId: $1) },
+            fetchCheers: { try await cheerRepositoryAdapter.fetchCheers(postId: $0) }
+        )
+
+        let commentRepositoryAdapter = CommentRepositoryAdapter()
+        let commentRepository = CommentRepositoryPort(
+            addComment: { try await commentRepositoryAdapter.addComment($0) },
+            fetchComments: { try await commentRepositoryAdapter.fetchComments(postId: $0) },
+            deleteComment: { try await commentRepositoryAdapter.deleteComment(id: $0) }
+        )
+
+        let followChallengeRepositoryAdapter = FollowChallengeRepositoryAdapter()
+        let followChallengeRepository = FollowChallengeRepositoryPort(
+            recordFollowChallenge: { try await followChallengeRepositoryAdapter.recordFollowChallenge($0) },
+            fetchByCopier: { try await followChallengeRepositoryAdapter.fetchByCopier($0) }
+        )
+
         return JacsimDependencies(
             appPreferences: UserDefaultsAppPreferencesAdapter().makePort(),
             notificationScheduler: notificationScheduler,
             imageStore: imageStore,
             taskRepository: taskRepository,
             userSettingsRepository: userSettingsRepository,
+            socialUserRepository: socialUserRepository,
+            followRepository: followRepository,
+            bragPostRepository: bragPostRepository,
+            cheerRepository: cheerRepository,
+            commentRepository: commentRepository,
+            followChallengeRepository: followChallengeRepository,
             taskQueryClient: taskQueryClient,
             taskCommandClient: taskCommandClient,
             stageFlowClient: stageFlowClient,
@@ -251,6 +315,34 @@ public extension JacsimDependencies {
             isNotificationEnabled: { false },
             getAllReminders: { [] },
             updateNotificationEnabled: { _ in }
+        ),
+        socialUserRepository: SocialUserRepositoryPort(
+            fetchUser: { _ in nil },
+            fetchUserByHandle: { _ in nil },
+            upsertUser: { _ in }
+        ),
+        followRepository: FollowRepositoryPort(
+            fetchPendingRequests: { _ in [] },
+            fetchAccepted: { _ in [] },
+            upsertFollow: { _ in }
+        ),
+        bragPostRepository: BragPostRepositoryPort(
+            fetchFeed: { _, _ in [] },
+            createPost: { _ in },
+            deletePost: { _ in }
+        ),
+        cheerRepository: CheerRepositoryPort(
+            addUnique: { _, _ in },
+            fetchCheers: { _ in [] }
+        ),
+        commentRepository: CommentRepositoryPort(
+            addComment: { _ in },
+            fetchComments: { _ in [] },
+            deleteComment: { _ in }
+        ),
+        followChallengeRepository: FollowChallengeRepositoryPort(
+            recordFollowChallenge: { _ in },
+            fetchByCopier: { _ in [] }
         ),
         taskQueryClient: TaskQueryClientPort(
             fetchActiveTasks: { [] },
