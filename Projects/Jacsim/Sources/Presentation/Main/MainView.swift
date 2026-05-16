@@ -21,9 +21,9 @@ public struct MainView: View {
                 case .calendar:
                     CalendarView(model: model.calendar)
                 case .feed:
-                    FeedPlaceholderView(model: model.feed)
+                    FeedView(model: model.feed)
                 case .me:
-                    MePlaceholderView(model: model.me)
+                    MeView(model: model.me)
                 case .plus:
                     EmptyView()
                 default:
@@ -56,6 +56,9 @@ public struct MainView: View {
                     onCreateTask: {
                         model.createTaskActionTapped()
                     },
+                    onCreateBrag: {
+                        model.createBragActionTapped()
+                    },
                     onComingSoon: {
                         model.comingSoonActionTapped()
                     }
@@ -79,67 +82,5 @@ public struct MainView: View {
             guard !Task.isCancelled else { return }
             model.plusToastDismissed()
         }
-    }
-}
-
-private struct FeedPlaceholderView: View {
-    let model: FeedPlaceholderModel
-
-    var body: some View {
-        MainPlaceholderTabView(
-            title: "피드",
-            subtitle: "친구들의 기록은 곧 채워질 예정이에요",
-            icon: "person.2.fill",
-            accessibilityLabel: "피드 탭 준비 중"
-        )
-    }
-}
-
-private struct MePlaceholderView: View {
-    let model: MePlaceholderModel
-
-    var body: some View {
-        MainPlaceholderTabView(
-            title: "나",
-            subtitle: "내 기록과 설정은 다음 단계에서 정리해요",
-            icon: "person.crop.circle.fill",
-            accessibilityLabel: "나 탭 준비 중"
-        )
-    }
-}
-
-private struct MainPlaceholderTabView: View {
-    let title: String
-    let subtitle: String
-    let icon: String
-    let accessibilityLabel: String
-
-    var body: some View {
-        VStack(spacing: .jsLG) {
-            Image(systemName: icon)
-                .font(.jsDisplayScaledSemiBold(size: 44))
-                .foregroundStyle(Color.forestAccent)
-                .frame(width: 72.jsScaled(), height: 72.jsScaled())
-                .background(
-                    Circle()
-                        .fill(Color.surfaceSelected.opacity(0.44))
-                )
-
-            VStack(spacing: .jsXS) {
-                Text(title)
-                    .font(.jsSerifDisplay)
-                    .foregroundStyle(Color.labelStrong)
-
-                Text(subtitle)
-                    .font(.jsBodyMedium)
-                    .foregroundStyle(Color.labelAlternative)
-                    .multilineTextAlignment(.center)
-            }
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .padding(.horizontal, .jsXL)
-        .background(LinearGradient.wallpaperMorning.ignoresSafeArea())
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel(accessibilityLabel)
     }
 }

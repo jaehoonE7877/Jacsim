@@ -9,13 +9,13 @@ public actor CheerRepositoryAdapter {
         self.container = container
     }
 
-    public func addUnique(postId: BragPostID, userId: UserID) async throws {
+    public func addUnique(postId: BragPostID, userId: UserID) async throws -> Bool {
         let context = ModelContext(container)
         let cheers = try context.fetch(FetchDescriptor<CheerModel>())
         let exists = cheers.contains {
             $0.postId == postId.rawValue && $0.userId == userId.rawValue
         }
-        guard !exists else { return }
+        guard !exists else { return false }
 
         let cheer = CheerModel(postId: postId.rawValue, userId: userId.rawValue)
         if let post = try context.fetch(FetchDescriptor<BragPostModel>())
@@ -24,6 +24,7 @@ public actor CheerRepositoryAdapter {
         }
         context.insert(cheer)
         try context.save()
+        return true
     }
 
     public func fetchCheers(postId: BragPostID) async throws -> [Domain.Cheer] {

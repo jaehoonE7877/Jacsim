@@ -46,6 +46,10 @@ public final class AppModel {
     }
 
     public func onAppear() {
+        _Concurrency.Task { [dependencies] in
+            await dependencies.seedSocialIfNeeded()
+        }
+
         let isOnboardingCompleted = dependencies.appPreferences.isOnboardingCompleted()
 
         switch (isOnboardingCompleted, screen) {

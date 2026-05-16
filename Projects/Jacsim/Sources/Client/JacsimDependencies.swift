@@ -16,6 +16,7 @@ public struct JacsimDependencies: Sendable {
     public var cheerRepository: CheerRepositoryPort
     public var commentRepository: CommentRepositoryPort
     public var followChallengeRepository: FollowChallengeRepositoryPort
+    public var seedSocialIfNeeded: @Sendable () async -> Void
     public var taskQueryClient: TaskQueryClientPort
     public var taskCommandClient: TaskCommandClientPort
     public var stageFlowClient: StageFlowClientPort
@@ -36,6 +37,7 @@ public struct JacsimDependencies: Sendable {
         cheerRepository: CheerRepositoryPort,
         commentRepository: CommentRepositoryPort,
         followChallengeRepository: FollowChallengeRepositoryPort,
+        seedSocialIfNeeded: @escaping @Sendable () async -> Void,
         taskQueryClient: TaskQueryClientPort,
         taskCommandClient: TaskCommandClientPort,
         stageFlowClient: StageFlowClientPort,
@@ -55,6 +57,7 @@ public struct JacsimDependencies: Sendable {
         self.cheerRepository = cheerRepository
         self.commentRepository = commentRepository
         self.followChallengeRepository = followChallengeRepository
+        self.seedSocialIfNeeded = seedSocialIfNeeded
         self.taskQueryClient = taskQueryClient
         self.taskCommandClient = taskCommandClient
         self.stageFlowClient = stageFlowClient
@@ -238,6 +241,7 @@ public extension JacsimDependencies {
         let socialUserRepository = SocialUserRepositoryPort(
             fetchUser: { try await socialUserRepositoryAdapter.fetchUser(id: $0) },
             fetchUserByHandle: { try await socialUserRepositoryAdapter.fetchUserByHandle($0) },
+            searchUsers: { try await socialUserRepositoryAdapter.searchUsers(query: $0) },
             upsertUser: { try await socialUserRepositoryAdapter.upsertUser($0) }
         )
 
@@ -245,12 +249,14 @@ public extension JacsimDependencies {
         let followRepository = FollowRepositoryPort(
             fetchPendingRequests: { try await followRepositoryAdapter.fetchPendingRequests(for: $0) },
             fetchAccepted: { try await followRepositoryAdapter.fetchAccepted(for: $0) },
+            fetchAll: { try await followRepositoryAdapter.fetchAll(for: $0) },
             upsertFollow: { try await followRepositoryAdapter.upsertFollow($0) }
         )
 
         let bragPostRepositoryAdapter = BragPostRepositoryAdapter()
         let bragPostRepository = BragPostRepositoryPort(
             fetchFeed: { try await bragPostRepositoryAdapter.fetchFeed(for: $0, follow: $1) },
+            fetchPosts: { try await bragPostRepositoryAdapter.fetchPosts(authorID: $0) },
             createPost: { try await bragPostRepositoryAdapter.createPost($0) },
             deletePost: { try await bragPostRepositoryAdapter.deletePost(id: $0) }
         )
@@ -274,6 +280,8 @@ public extension JacsimDependencies {
             fetchByCopier: { try await followChallengeRepositoryAdapter.fetchByCopier($0) }
         )
 
+        let seedSocialUseCase = SeedSocialUseCase()
+
         return JacsimDependencies(
             appPreferences: UserDefaultsAppPreferencesAdapter().makePort(),
             notificationScheduler: notificationScheduler,
@@ -286,6 +294,13 @@ public extension JacsimDependencies {
             cheerRepository: cheerRepository,
             commentRepository: commentRepository,
             followChallengeRepository: followChallengeRepository,
+            seedSocialIfNeeded: {
+                do {
+                    try await seedSocialUseCase.seedIfNeeded()
+                } catch {
+                    Logger.certificationFailed(error: error)
+                }
+            },
             taskQueryClient: taskQueryClient,
             taskCommandClient: taskCommandClient,
             stageFlowClient: stageFlowClient,
@@ -326,20 +341,23 @@ public extension JacsimDependencies {
         socialUserRepository: SocialUserRepositoryPort(
             fetchUser: { _ in nil },
             fetchUserByHandle: { _ in nil },
+            searchUsers: { _ in [] },
             upsertUser: { _ in }
         ),
         followRepository: FollowRepositoryPort(
             fetchPendingRequests: { _ in [] },
             fetchAccepted: { _ in [] },
+            fetchAll: { _ in [] },
             upsertFollow: { _ in }
         ),
         bragPostRepository: BragPostRepositoryPort(
             fetchFeed: { _, _ in [] },
+            fetchPosts: { _ in [] },
             createPost: { _ in },
             deletePost: { _ in }
         ),
         cheerRepository: CheerRepositoryPort(
-            addUnique: { _, _ in },
+            addUnique: { _, _ in true },
             fetchCheers: { _ in [] }
         ),
         commentRepository: CommentRepositoryPort(
@@ -351,6 +369,7 @@ public extension JacsimDependencies {
             recordFollowChallenge: { _ in },
             fetchByCopier: { _ in [] }
         ),
+        seedSocialIfNeeded: {},
         taskQueryClient: TaskQueryClientPort(
             fetchActiveTasks: { [] },
             fetchTask: { _ in nil },

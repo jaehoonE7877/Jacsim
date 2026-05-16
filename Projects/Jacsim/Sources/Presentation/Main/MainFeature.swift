@@ -9,8 +9,8 @@ public final class MainModel {
     public var plusToastText: String?
     public let home: HomeModel
     public let calendar: CalendarModel
-    public let feed: FeedPlaceholderModel
-    public let me: MePlaceholderModel
+    public let feed: FeedModel
+    public let me: MeModel
 
     @ObservationIgnored private let dependencies: JacsimDependencies
 
@@ -18,8 +18,11 @@ public final class MainModel {
         self.dependencies = dependencies
         self.home = HomeModel(dependencies: dependencies)
         self.calendar = CalendarModel(dependencies: dependencies)
-        self.feed = FeedPlaceholderModel()
-        self.me = MePlaceholderModel()
+        self.feed = FeedModel(dependencies: dependencies)
+        self.me = MeModel(dependencies: dependencies)
+        self.feed.onFollowChallengePrefill = { [weak self] title in
+            self?.createTaskFromFollowChallenge(title: title)
+        }
     }
 
     public var isRootTabBarVisible: Bool {
@@ -63,12 +66,35 @@ public final class MainModel {
         home.path.append(.newTask)
     }
 
+    public func createBragActionTapped() {
+        isPlusSheetPresented = false
+        plusToastText = nil
+        selectedTab = .feed
+        feed.composerButtonTapped()
+    }
+
     private func newTaskCreated() {
         popHomeNewTaskRoute()
         home.newTask = nil
         selectedTab = .today
         home.onAppear()
         calendar.loadTasks()
+    }
+
+    private func createTaskFromFollowChallenge(title: String) {
+        isPlusSheetPresented = false
+        selectedTab = .today
+        home.newTask = NewTaskModel(
+            dependencies: dependencies,
+            prefillTitle: title,
+            onTaskCreated: { [weak self] in
+                self?.newTaskCreated()
+            },
+            onCancelled: { [weak self] in
+                self?.newTaskCancelled()
+            }
+        )
+        home.path.append(.newTask)
     }
 
     private func newTaskCancelled() {
@@ -83,16 +109,4 @@ public final class MainModel {
             home.path.removeAll { $0 == .newTask }
         }
     }
-}
-
-@MainActor
-@Observable
-public final class FeedPlaceholderModel {
-    public init() {}
-}
-
-@MainActor
-@Observable
-public final class MePlaceholderModel {
-    public init() {}
 }

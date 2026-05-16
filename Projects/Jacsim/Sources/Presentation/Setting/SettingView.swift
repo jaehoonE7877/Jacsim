@@ -24,6 +24,7 @@ public struct SettingView: View {
                     header
                     appearanceSection
                     notificationSection
+                    socialSection
                     helpSection
                     appInfoSection
                 }
@@ -109,6 +110,51 @@ public struct SettingView: View {
                     icon: "bell.slash.fill",
                     tintColor: .cautionary
                 )
+            }
+        }
+    }
+
+    private var socialSection: some View {
+        settingsGroup(title: "소셜") {
+            JSListItem(
+                title: "친구 요청",
+                subtitle: model.pendingFollowRequests.isEmpty ? "대기 중인 요청 없음" : "\(model.pendingFollowRequests.count)개 대기 중",
+                icon: "person.crop.circle.badge.questionmark",
+                accessory: .detail("\(model.pendingFollowRequests.count)")
+            )
+
+            ForEach(model.pendingFollowRequests) { row in
+                HStack(spacing: .jsSM) {
+                    VStack(alignment: .leading, spacing: .jsMicro) {
+                        Text(row.user.displayName)
+                            .font(.jsBodyMedium)
+                            .foregroundColor(.labelStrong)
+                        Text("@\(row.user.handle)")
+                            .font(.jsMonoSmall)
+                            .foregroundColor(.labelAlternative)
+                    }
+                    Spacer()
+                    Button("거절") {
+                        model.rejectFollowRequest(row)
+                    }
+                    .font(.jsLabelMedium)
+                    .foregroundColor(.labelAlternative)
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("\(row.user.displayName) 친구 요청 거절")
+
+                    Button("수락") {
+                        model.acceptFollowRequest(row)
+                    }
+                    .font(.jsLabelMedium)
+                    .foregroundColor(.backgroundNormal)
+                    .padding(.horizontal, .jsSM)
+                    .padding(.vertical, .jsXS)
+                    .background(Color.forestAccent, in: Capsule())
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("\(row.user.displayName) 친구 요청 수락")
+                }
+                .padding(.horizontal, .jsMD)
+                .padding(.vertical, .jsXS)
             }
         }
     }

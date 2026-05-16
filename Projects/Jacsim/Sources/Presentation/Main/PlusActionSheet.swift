@@ -4,15 +4,18 @@ import SwiftUI
 public struct PlusActionSheet: View {
     @Binding private var isPresented: Bool
     private let onCreateTask: () -> Void
+    private let onCreateBrag: () -> Void
     private let onComingSoon: () -> Void
 
     public init(
         isPresented: Binding<Bool>,
         onCreateTask: @escaping () -> Void,
+        onCreateBrag: @escaping () -> Void = {},
         onComingSoon: @escaping () -> Void
     ) {
         self._isPresented = isPresented
         self.onCreateTask = onCreateTask
+        self.onCreateBrag = onCreateBrag
         self.onComingSoon = onComingSoon
     }
 
@@ -43,9 +46,8 @@ public struct PlusActionSheet: View {
                     title: "자랑 글 쓰기",
                     subtitle: "완주와 연속 기록을 친구들에게 공유해요",
                     icon: "megaphone.fill",
-                    isEnabled: false,
-                    accessibilityHint: "아직 사용할 수 없습니다. 탭하면 출시 예정 안내가 표시됩니다",
-                    action: onComingSoon
+                    accessibilityHint: "자랑 글 쓰기 화면으로 이동합니다",
+                    action: onCreateBrag
                 )
 
                 PlusActionCardButton(

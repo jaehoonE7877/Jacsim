@@ -30,6 +30,15 @@ public actor FollowRepositoryAdapter {
             .sorted { $0.requestedAt < $1.requestedAt }
     }
 
+    public func fetchAll(for userID: UserID) async throws -> [Domain.Follow] {
+        let context = ModelContext(container)
+        let follows = try context.fetch(FetchDescriptor<FollowModel>())
+        return follows
+            .filter { $0.fromUserId == userID.rawValue || $0.toUserId == userID.rawValue }
+            .map { mapToDomainModel($0, allFollows: follows) }
+            .sorted { $0.requestedAt < $1.requestedAt }
+    }
+
     public func upsertFollow(_ follow: Domain.Follow) async throws {
         let context = ModelContext(container)
         let follows = try context.fetch(FetchDescriptor<FollowModel>())

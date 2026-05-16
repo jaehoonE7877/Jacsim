@@ -33,6 +33,18 @@ public actor BragPostRepositoryAdapter {
         try context.save()
     }
 
+    public func fetchPosts(authorID: UserID) async throws -> [Domain.BragPost] {
+        let context = ModelContext(container)
+        let posts = try context.fetch(FetchDescriptor<BragPostModel>())
+        let cheers = try context.fetch(FetchDescriptor<CheerModel>())
+        let comments = try context.fetch(FetchDescriptor<CommentModel>())
+
+        return posts
+            .filter { $0.authorId == authorID.rawValue }
+            .map { mapToDomainModel($0, cheers: cheers, comments: comments) }
+            .sorted { $0.createdAt > $1.createdAt }
+    }
+
     public func deletePost(id: BragPostID) async throws {
         let context = ModelContext(container)
         let posts = try context.fetch(FetchDescriptor<BragPostModel>())

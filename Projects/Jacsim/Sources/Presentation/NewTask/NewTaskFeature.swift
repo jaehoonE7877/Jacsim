@@ -97,6 +97,7 @@ public final class NewTaskModel {
 
     public init(
         dependencies: JacsimDependencies,
+        prefillTitle: String? = nil,
         onTaskCreated: @escaping () -> Void = {},
         onCancelled: @escaping () -> Void = {}
     ) {
@@ -104,6 +105,10 @@ public final class NewTaskModel {
         self.onTaskCreated = onTaskCreated
         self.onCancelled = onCancelled
         self.alarmDate = Self.defaultAlarmDate()
+        if let prefillTitle, !prefillTitle.isEmpty {
+            self.title = prefillTitle
+            self.lastAcceptedTitle = prefillTitle
+        }
     }
 
     public var trimmedTitle: String {

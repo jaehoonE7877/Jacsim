@@ -235,15 +235,18 @@ public enum JacsimSchemaV2: VersionedSchema {
         @Attribute(.unique) public var id: String
         public var isNotificationEnabled: Bool
         public var wallpaperRaw: String?
+        public var seededSocialV1: Bool?
 
         public init(
             id: String = "global",
             isNotificationEnabled: Bool = false,
-            wallpaperRaw: String? = "morning"
+            wallpaperRaw: String? = "morning",
+            seededSocialV1: Bool? = false
         ) {
             self.id = id
             self.isNotificationEnabled = isNotificationEnabled
             self.wallpaperRaw = wallpaperRaw
+            self.seededSocialV1 = seededSocialV1
         }
     }
 

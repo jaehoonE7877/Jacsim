@@ -21,6 +21,21 @@ public actor SocialUserRepositoryAdapter {
         return users.first { $0.handle == handle }.map(mapToDomainModel(_:))
     }
 
+    public func searchUsers(query: String) async throws -> [Domain.User] {
+        let normalizedQuery = query.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        guard !normalizedQuery.isEmpty else { return [] }
+
+        let context = ModelContext(container)
+        let users = try context.fetch(FetchDescriptor<UserModel>())
+        return users
+            .filter {
+                $0.handle.lowercased().contains(normalizedQuery) ||
+                    $0.displayName.lowercased().contains(normalizedQuery)
+            }
+            .map(mapToDomainModel(_:))
+            .sorted { $0.displayName < $1.displayName }
+    }
+
     public func upsertUser(_ user: Domain.User) async throws {
         let context = ModelContext(container)
         let users = try context.fetch(FetchDescriptor<UserModel>())

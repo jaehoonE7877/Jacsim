@@ -14,6 +14,9 @@ public struct JSBragCardModel: Identifiable, Sendable {
     public let cheerCount: Int
     public let commentCount: Int
     public let isOwn: Bool
+    public let authorName: String?
+    public let taskTitle: String?
+    public let hasCheered: Bool
 
     public init(
         id: UUID = UUID(),
@@ -22,7 +25,10 @@ public struct JSBragCardModel: Identifiable, Sendable {
         imagePaths: [String] = [],
         cheerCount: Int,
         commentCount: Int,
-        isOwn: Bool
+        isOwn: Bool,
+        authorName: String? = nil,
+        taskTitle: String? = nil,
+        hasCheered: Bool = false
     ) {
         self.id = id
         self.type = type
@@ -31,16 +37,31 @@ public struct JSBragCardModel: Identifiable, Sendable {
         self.cheerCount = cheerCount
         self.commentCount = commentCount
         self.isOwn = isOwn
+        self.authorName = authorName
+        self.taskTitle = taskTitle
+        self.hasCheered = hasCheered
     }
 }
 
 public struct JSBragCard: View {
     private let post: JSBragCardModel
     private let onDelete: () -> Void
+    private let onCheer: () -> Void
+    private let onComment: () -> Void
+    private let onFollowChallenge: () -> Void
 
-    public init(post: JSBragCardModel, onDelete: @escaping () -> Void = {}) {
+    public init(
+        post: JSBragCardModel,
+        onDelete: @escaping () -> Void = {},
+        onCheer: @escaping () -> Void = {},
+        onComment: @escaping () -> Void = {},
+        onFollowChallenge: @escaping () -> Void = {}
+    ) {
         self.post = post
         self.onDelete = onDelete
+        self.onCheer = onCheer
+        self.onComment = onComment
+        self.onFollowChallenge = onFollowChallenge
     }
 
     public var body: some View {
@@ -74,7 +95,7 @@ public struct JSBragCard: View {
                 Text(post.type.title)
                     .font(.jsSerifTitle)
                     .foregroundStyle(Color.labelStrong)
-                Text(post.type.subtitle)
+                Text(headerSubtitle)
                     .font(.jsLabelMedium)
                     .foregroundStyle(Color.labelNeutral)
             }
@@ -115,12 +136,36 @@ public struct JSBragCard: View {
 
     private var footer: some View {
         HStack(spacing: .jsLG) {
-            Label("\(post.cheerCount)", systemImage: "hands.clap")
-            Label("\(post.commentCount)", systemImage: "bubble.left")
+            Button(action: onCheer) {
+                Label("\(post.cheerCount)", systemImage: post.hasCheered ? "hands.clap.fill" : "hands.clap")
+            }
+            .accessibilityLabel("응원 \(post.cheerCount)개")
+
+            Button(action: onComment) {
+                Label("\(post.commentCount)", systemImage: "bubble.left")
+            }
+            .accessibilityLabel("댓글 \(post.commentCount)개")
+
+            Button(action: onFollowChallenge) {
+                Label("따라하기", systemImage: "arrow.triangle.branch")
+            }
+            .font(.jsBodySmall)
+            .accessibilityLabel("이 작심 따라하기")
+
             Spacer()
         }
         .font(.jsMonoSmall)
         .foregroundStyle(Color.labelNeutral)
+        .buttonStyle(.plain)
+    }
+
+    private var headerSubtitle: String {
+        let parts: [String] = [post.authorName, post.taskTitle].compactMap { value in
+            guard let value, !value.isEmpty else { return nil }
+            return value
+        }
+        guard !parts.isEmpty else { return post.type.subtitle }
+        return parts.joined(separator: " · ")
     }
 }
 
@@ -167,7 +212,10 @@ private struct JSBragCardPreview: View {
                 imagePaths: ["morning.png", "forest.png", "dusk.png"],
                 cheerCount: 24,
                 commentCount: 6,
-                isOwn: true
+                isOwn: true,
+                authorName: "태양",
+                taskTitle: "매일 10분 독서",
+                hasCheered: true
             )
         )
         .padding(.jsLG)
