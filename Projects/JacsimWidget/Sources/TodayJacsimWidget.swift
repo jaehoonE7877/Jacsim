@@ -29,28 +29,76 @@ struct TodayJacsimWidgetView: View {
 
     var body: some View {
         JSWidgetSurface(size: family == .systemSmall ? .small : .medium, accessibilityLabel: "오늘의 작심 위젯") {
-            VStack(alignment: .leading, spacing: .jsSM) {
-                Text("오늘의 작심")
-                    .font(.jsSerifTitle)
-                    .foregroundStyle(Color.labelStrong)
-
-                if entry.tasks.isEmpty {
-                    emptyState
-                } else {
-                    ForEach(entry.tasks.prefix(family == .systemSmall ? 1 : 3)) { task in
-                        Link(destination: task.url) {
-                            taskRow(task)
-                        }
-                        .accessibilityLabel("\(task.title), \(task.dDay)일 남음")
-                        .accessibilityHint("앱에서 작심 상세를 엽니다")
-                    }
-                }
+            if family == .systemSmall {
+                smallContent
+            } else {
+                mediumContent
             }
         }
         .containerBackground(for: .widget) {
             LinearGradient.wallpaperMorning
         }
         .widgetURL(entry.tasks.first?.url ?? URL(string: "jacsim://home")!)
+    }
+
+    private var smallContent: some View {
+        VStack(alignment: .leading, spacing: .jsXS) {
+            header
+
+            if let task = entry.tasks.first {
+                Spacer(minLength: 0)
+                HStack(alignment: .center, spacing: .jsXS) {
+                    WidgetMiniStageRing(
+                        currentDays: task.currentDays,
+                        targetDays: task.targetDays,
+                        dDay: task.dDay,
+                        size: 54
+                    )
+
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(task.title)
+                            .font(.jsLabelMedium)
+                            .foregroundStyle(Color.labelStrong)
+                            .lineLimit(2)
+                            .minimumScaleFactor(0.82)
+                        Text("D-\(task.dDay)")
+                            .font(.jsMonoSmall)
+                            .foregroundStyle(Color.forestAccent)
+                            .lineLimit(1)
+                    }
+                }
+                .accessibilityElement(children: .combine)
+                .accessibilityLabel("\(task.title), \(task.dDay)일 남음")
+            } else {
+                emptyState
+            }
+        }
+    }
+
+    private var mediumContent: some View {
+        VStack(alignment: .leading, spacing: .jsSM) {
+            header
+
+            if entry.tasks.isEmpty {
+                emptyState
+            } else {
+                ForEach(entry.tasks.prefix(3)) { task in
+                    Link(destination: task.url) {
+                        taskRow(task)
+                    }
+                    .accessibilityLabel("\(task.title), \(task.dDay)일 남음")
+                    .accessibilityHint("앱에서 작심 상세를 엽니다")
+                }
+            }
+        }
+    }
+
+    private var header: some View {
+        Text("오늘의 작심")
+            .font(family == .systemSmall ? .jsBodyMedium : .jsSerifTitle)
+            .foregroundStyle(Color.labelStrong)
+            .lineLimit(1)
+            .minimumScaleFactor(0.75)
     }
 
     private var emptyState: some View {
@@ -67,13 +115,12 @@ struct TodayJacsimWidgetView: View {
 
     private func taskRow(_ task: WidgetTask) -> some View {
         HStack(spacing: .jsSM) {
-            JSStageRing(
+            WidgetMiniStageRing(
                 currentDays: task.currentDays,
                 targetDays: task.targetDays,
-                stageType: task.stageType,
-                accessibilityLabel: "\(task.currentDays)일 완료"
+                dDay: task.dDay,
+                size: 38
             )
-            .frame(width: 36, height: 36)
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(task.title)
@@ -89,6 +136,40 @@ struct TodayJacsimWidgetView: View {
         }
         .frame(minHeight: 44)
         .contentShape(Rectangle())
+    }
+}
+
+private struct WidgetMiniStageRing: View {
+    let currentDays: Int
+    let targetDays: Int
+    let dDay: Int
+    let size: CGFloat
+
+    var body: some View {
+        ZStack {
+            Circle()
+                .stroke(Color.labelAssistive.opacity(0.22), lineWidth: max(size * 0.08, 3))
+            Circle()
+                .trim(from: 0, to: progress)
+                .stroke(
+                    Color.forestAccent,
+                    style: StrokeStyle(lineWidth: max(size * 0.08, 3), lineCap: .round)
+                )
+                .rotationEffect(.degrees(-90))
+
+            Text("D-\(dDay)")
+                .font(size > 44 ? .jsMonoSmall : .jsMonoSmall)
+                .foregroundStyle(Color.labelStrong)
+                .minimumScaleFactor(0.72)
+                .lineLimit(1)
+                .padding(.horizontal, 4)
+        }
+        .frame(width: size, height: size)
+        .accessibilityHidden(true)
+    }
+
+    private var progress: CGFloat {
+        CGFloat(min(Double(max(currentDays, 0)) / Double(max(targetDays, 1)), 1))
     }
 }
 
