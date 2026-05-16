@@ -4,25 +4,27 @@ import DSKit
 
 struct HomeHeaderSection: View {
     let todayLabel: String
+    let displayName: String
     let onSettingsTap: () -> Void
 
     var body: some View {
-        HStack {
-            Text("작심")
-                .font(.jsDisplayMedium)
-                .foregroundColor(.labelStrong)
+        HStack(alignment: .top) {
+            VStack(alignment: .leading, spacing: .jsXS) {
+                Text("안녕하세요, \(displayName)")
+                    .font(.jsSerifDisplay)
+                    .foregroundColor(.labelStrong)
+                    .lineLimit(2)
 
-            Spacer(minLength: .jsXS)
-
-            Text(todayLabel)
-                .font(.jsLabelMedium)
-                .foregroundColor(.labelAlternative)
-                .padding(.horizontal, .jsSM)
-                .padding(.vertical, .jsMicro)
-                .background(
-                    Capsule()
-                        .fill(Color.backgroundAlternative)
-                )
+                Text(todayLabel)
+                    .font(.jsMonoSmall)
+                    .foregroundColor(.labelAlternative)
+                    .padding(.horizontal, .jsSM)
+                    .padding(.vertical, .jsMicro)
+                    .background(
+                        Capsule()
+                            .fill(Color.surfaceElevated.opacity(0.34))
+                    )
+            }
 
             Spacer()
 
@@ -74,32 +76,101 @@ struct HomeSummaryCardSection: View {
 
 struct HomeHeroTaskSection: View {
     let task: Domain.Task
-    let imageData: Data?
     let onTap: () -> Void
+    let onPrimaryTap: () -> Void
 
-    private var heroImage: Image? {
-        imageData.flatMap { UIImage(data: $0) }.map { Image(uiImage: $0) }
-    }
-
-    private var subtitle: String {
+    private var dateRange: String {
         "\(task.startDate.formatted(.dateTime.month().day())) ~ \(task.endDate.formatted(.dateTime.month().day()))"
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: .jsMD) {
-            JSUnifiedHeroCard(
-                title: task.title,
-                subtitle: subtitle,
-                progress: task.progress,
-                totalDays: task.dayArray.count,
-                completedDays: task.completedDays,
-                image: heroImage,
-                isTodayCertified: task.isCompleted(on: Date()),
-                onTap: onTap
-            )
-            .frame(maxWidth: .infinity)
+        JSGlassCard(accessibilityLabel: "오늘의 작심 \(task.title)") {
+            VStack(alignment: .leading, spacing: .jsLG) {
+                HStack(alignment: .center, spacing: .jsLG) {
+                    JSStageRing(
+                        currentDays: task.completedDays,
+                        targetDays: max(task.dayArray.count, 1),
+                        stageType: jsStageType(for: task),
+                        accessibilityLabel: "\(task.completedDays)일 완료, 전체 \(task.dayArray.count)일"
+                    )
+                    .frame(width: 132.jsScaled(), height: 132.jsScaled())
+
+                    VStack(alignment: .leading, spacing: .jsSM) {
+                        Text("오늘의 작심")
+                            .font(.jsBodySmall)
+                            .foregroundColor(.labelAlternative)
+
+                        Text(task.title)
+                            .font(.jsSerifTitle)
+                            .foregroundColor(.labelStrong)
+                            .lineLimit(2)
+
+                        Text(dateRange)
+                            .font(.jsMonoSmall)
+                            .foregroundColor(.labelNeutral)
+
+                        Button(action: onPrimaryTap) {
+                            Text(task.isCompleted(on: Date()) ? "오늘 기록 보기 →" : "오늘 인증하기 →")
+                                .font(.jsButtonMedium)
+                                .foregroundColor(.backgroundNormal)
+                                .padding(.horizontal, .jsMD)
+                                .padding(.vertical, .jsXS)
+                                .background(
+                                    Capsule()
+                                        .fill(Color.forestAccent)
+                                )
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel(task.isCompleted(on: Date()) ? "오늘 기록 보기" : "오늘 인증하기")
+                    }
+                }
+            }
         }
+        .onTapGesture(perform: onTap)
         .frame(maxWidth: .infinity)
+    }
+
+    private func jsStageType(for task: Domain.Task) -> JSStageRing.StageType {
+        let days = task.currentStage?.durationDays ?? task.stages.last?.durationDays ?? task.dayArray.count
+        return JSStageRing.StageType(rawValue: days) ?? .seven
+    }
+}
+
+struct HomeStreakHeatmapSection: View {
+    let task: Domain.Task
+
+    var body: some View {
+        JSGlassCard(accessibilityLabel: "최근 84일 작심 히트맵") {
+            VStack(alignment: .leading, spacing: .jsMD) {
+                HStack {
+                    VStack(alignment: .leading, spacing: .jsMicro) {
+                        Text("이어온 기록")
+                            .font(.jsSerifTitle)
+                            .foregroundColor(.labelStrong)
+
+                        Text("최근 84일 인증 흐름")
+                            .font(.jsBodySmall)
+                            .foregroundColor(.labelAlternative)
+                    }
+
+                    Spacer()
+
+                    Text("\(task.completedDays)")
+                        .font(.jsMonoMedium)
+                        .foregroundColor(.forestAccent)
+                }
+
+                JSStreakHeatmap(states: heatmapStates)
+            }
+        }
+    }
+
+    private var heatmapStates: [Date: StreakState] {
+        let calendar = Calendar.current
+        return Dictionary(uniqueKeysWithValues: task.records.map { record in
+            let state: StreakState = record.check ? .completed : .empty
+            return (calendar.startOfDay(for: record.date), state)
+        })
     }
 }
 
@@ -190,16 +261,16 @@ struct HomeMiniCardsSection: View {
 struct HomeEmptyStateSection: View {
     var body: some View {
         VStack(spacing: .jsXL) {
-            Image(systemName: "square.text.square.fill")
-                .font(.jsDisplayScaledBold(size: 64))
-                .foregroundColor(Color.labelAssistive)
+            Image(systemName: "arrow.down.circle.fill")
+                .font(.jsDisplayScaledBold(size: 56))
+                .foregroundColor(Color.forestAccent)
 
             VStack(spacing: .jsXS) {
-                Text("진행 중인 작심이 없어요")
-                    .font(.jsHeadlineMedium)
+                Text("첫 작심을 만들어보세요")
+                    .font(.jsSerifTitle)
                     .foregroundColor(.labelStrong)
 
-                Text("새로운 작심을 시작해보세요!")
+                Text("아래 가운데 + 버튼에서 작게 시작할 수 있어요")
                     .font(.jsBodySmall)
                     .foregroundColor(.labelAlternative)
             }
@@ -208,7 +279,7 @@ struct HomeEmptyStateSection: View {
         .padding(.vertical, 40.jsScaled())
         .background(
             RoundedRectangle(cornerRadius: 24.jsScaled())
-                .fill(Color.backgroundStrong)
+                .fill(Color.surfaceElevated.opacity(0.3))
                 .shadow(color: Color.labelStrong.opacity(0.05), radius: 10.jsScaled(), x: 0, y: 4.jsScaled())
         )
     }
@@ -270,7 +341,7 @@ private struct HomeSummaryMetricView: View {
                 .font(.jsLabelSmall)
                 .foregroundColor(.labelAlternative)
             Text(value)
-                .font(.jsHeadlineSmall)
+                .font(.jsMonoSmall)
                 .foregroundColor(color)
         }
         .frame(maxWidth: .infinity, minHeight: 72.jsScaled())

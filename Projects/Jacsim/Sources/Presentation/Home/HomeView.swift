@@ -30,6 +30,16 @@ public struct HomeView: View {
     private var todayLabel: String {
         DateFormatType.toString(Date(), to: .fullWithoutYear)
     }
+    private var wallpaperGradient: LinearGradient {
+        switch model.wallpaperRaw {
+        case "forest":
+            return .wallpaperForest
+        case "dusk":
+            return .wallpaperDusk
+        default:
+            return .wallpaperMorning
+        }
+    }
 
     public init(model: HomeModel) {
         self.model = model
@@ -85,7 +95,8 @@ public struct HomeView: View {
 
     private var mainContent: some View {
         ZStack {
-            Color.backgroundNormal.ignoresSafeArea()
+            wallpaperGradient.ignoresSafeArea()
+            Color.backgroundNormal.opacity(0.18).ignoresSafeArea()
 
             scrollContent
         }
@@ -111,6 +122,7 @@ public struct HomeView: View {
             VStack(alignment: .leading, spacing: .jsXXL) {
                 HomeHeaderSection(
                     todayLabel: todayLabel,
+                    displayName: "작심러",
                     onSettingsTap: handleSettingsButtonTap
                 )
 
@@ -155,17 +167,13 @@ public struct HomeView: View {
 
         HomeHeroTaskSection(
             task: heroTask,
-            imageData: model.heroTaskImageData,
-            onTap: { handleTaskTap(heroTask) }
+            onTap: { handleTaskTap(heroTask) },
+            onPrimaryTap: { handleFocusPrimaryAction(heroTask) }
         )
         .padding(.horizontal, .jsXL)
 
-        HomeFocusActionRow(
-            state: focusActionState(for: heroTask),
-            onPrimaryTap: { handleFocusPrimaryAction(heroTask) },
-            onSecondaryTap: { handleFocusSecondaryAction(heroTask) }
-        )
-        .padding(.horizontal, .jsXL)
+        HomeStreakHeatmapSection(task: heroTask)
+            .padding(.horizontal, .jsXL)
 
         if shouldShowMiniCardsSection && model.activeTasks.count > 1 {
             HomeMiniCardsSection(

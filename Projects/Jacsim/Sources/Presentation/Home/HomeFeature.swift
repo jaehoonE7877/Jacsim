@@ -56,6 +56,7 @@ public final class HomeModel {
     public var hasStartedNotificationListener = false
     public var toastMessage: String?
     public var heroTaskImageData: Data?
+    public var wallpaperRaw: String = "morning"
     public var loadingStartTime: Date?
     public var path: [Route] = []
     public var newTask: NewTaskModel?
@@ -63,6 +64,7 @@ public final class HomeModel {
     @ObservationIgnored public let dependencies: JacsimDependencies
     @ObservationIgnored private var fetchTask: _Concurrency.Task<Void, Never>?
     @ObservationIgnored private var imageLoadingTask: _Concurrency.Task<Void, Never>?
+    @ObservationIgnored private var settingsTask: _Concurrency.Task<Void, Never>?
     @ObservationIgnored private var notificationListenerTask: _Concurrency.Task<Void, Never>?
     @ObservationIgnored private var deepLinkListenerTask: _Concurrency.Task<Void, Never>?
 
@@ -77,6 +79,7 @@ public final class HomeModel {
     deinit {
         fetchTask?.cancel()
         imageLoadingTask?.cancel()
+        settingsTask?.cancel()
         notificationListenerTask?.cancel()
         deepLinkListenerTask?.cancel()
     }
@@ -91,6 +94,10 @@ public final class HomeModel {
         Logger.homeFetchingTasks()
         let fetchStartTime = Date()
         fetchTask?.cancel()
+        settingsTask?.cancel()
+        settingsTask = _Concurrency.Task { [dependencies] in
+            wallpaperLoaded(await dependencies.userSettingsRepository.wallpaperRaw())
+        }
         fetchTask = _Concurrency.Task { [dependencies] in
             do {
                 let tasks = try await dependencies.taskQueryClient.fetchActiveTasks()
@@ -242,6 +249,10 @@ public final class HomeModel {
 
     public func toastDismissed() {
         toastMessage = nil
+    }
+
+    public func wallpaperLoaded(_ rawValue: String) {
+        wallpaperRaw = rawValue
     }
 
     private func startListenersIfNeeded() {
