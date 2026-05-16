@@ -82,7 +82,7 @@ public struct CalendarView: View {
                 }
             }
         } else if model.displayMode == .month {
-            JSCalendarV2(selectedDate: $model.selectedDate, eventStates: eventStates)
+            JSCalendarV2(selectedDate: $model.selectedDate, eventStates: eventStates, showsModePicker: false)
                 .onChange(of: model.selectedDate) { _, newDate in
                     model.dateSelected(newDate)
                 }

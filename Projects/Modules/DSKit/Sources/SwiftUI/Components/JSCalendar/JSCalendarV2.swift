@@ -11,28 +11,33 @@ public struct JSCalendarV2: View {
     @State private var mode: Mode = .month
     private let eventStates: [Date: StreakState]
     private let calendar: Calendar
+    private let showsModePicker: Bool
 
     public init(
         selectedDate: Binding<Date>,
         eventStates: [Date: StreakState] = [:],
-        calendar: Calendar = .current
+        calendar: Calendar = .current,
+        showsModePicker: Bool = true
     ) {
         self._selectedDate = selectedDate
         self._viewDate = State(initialValue: selectedDate.wrappedValue)
         self.eventStates = eventStates
         self.calendar = calendar
+        self.showsModePicker = showsModePicker
     }
 
     public var body: some View {
         VStack(alignment: .leading, spacing: .jsMD) {
             header
-            Picker("Calendar mode", selection: $mode) {
-                ForEach(Mode.allCases, id: \.self) { mode in
-                    Text(mode.rawValue).tag(mode)
+            if showsModePicker {
+                Picker("Calendar mode", selection: $mode) {
+                    ForEach(Mode.allCases, id: \.self) { mode in
+                        Text(mode.rawValue).tag(mode)
+                    }
                 }
+                .pickerStyle(.segmented)
+                .accessibilityLabel("Calendar view mode")
             }
-            .pickerStyle(.segmented)
-            .accessibilityLabel("Calendar view mode")
 
             if mode == .month {
                 weekdayHeader
