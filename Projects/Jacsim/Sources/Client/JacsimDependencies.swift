@@ -16,6 +16,7 @@ public struct JacsimDependencies: Sendable {
     public var cheerRepository: CheerRepositoryPort
     public var commentRepository: CommentRepositoryPort
     public var followChallengeRepository: FollowChallengeRepositoryPort
+    public var aiCoachClient: any AICoachClientPort
     public var seedSocialIfNeeded: @Sendable () async -> Void
     public var taskQueryClient: TaskQueryClientPort
     public var taskCommandClient: TaskCommandClientPort
@@ -37,6 +38,7 @@ public struct JacsimDependencies: Sendable {
         cheerRepository: CheerRepositoryPort,
         commentRepository: CommentRepositoryPort,
         followChallengeRepository: FollowChallengeRepositoryPort,
+        aiCoachClient: any AICoachClientPort,
         seedSocialIfNeeded: @escaping @Sendable () async -> Void,
         taskQueryClient: TaskQueryClientPort,
         taskCommandClient: TaskCommandClientPort,
@@ -57,6 +59,7 @@ public struct JacsimDependencies: Sendable {
         self.cheerRepository = cheerRepository
         self.commentRepository = commentRepository
         self.followChallengeRepository = followChallengeRepository
+        self.aiCoachClient = aiCoachClient
         self.seedSocialIfNeeded = seedSocialIfNeeded
         self.taskQueryClient = taskQueryClient
         self.taskCommandClient = taskCommandClient
@@ -90,6 +93,16 @@ public extension JacsimDependencies {
         let certificationUseCase = CertificationUseCase(
             fetchTask: { await taskRepositoryAdapter.fetchTask(id: $0) },
             updateTask: { try await taskRepositoryAdapter.updateTask($0) }
+        )
+
+        let notificationAdapter = LocalNotificationSchedulerAdapter()
+        let notificationScheduler = NotificationSchedulerPort(
+            scheduleDailyReminder: { try await notificationAdapter.scheduleReminder(taskId: $0, title: $1, time: $2) },
+            cancelReminder: { await notificationAdapter.cancelReminder(taskId: $0) },
+            cancelAllReminders: { await notificationAdapter.cancelAllReminders() },
+            requestAuthorization: { try await notificationAdapter.requestAuthorization() },
+            scheduleSocial: { try await notificationAdapter.scheduleSocial(trigger: $0, context: $1) },
+            cancelSocial: { try await notificationAdapter.cancelSocial(matching: $0) }
         )
 
         let jacsimClient = JacsimClientPort(
@@ -162,6 +175,7 @@ public extension JacsimDependencies {
             },
             certifyToday: { taskId, index, memo, imagePath in
                 let startTime = Date()
+                let beforeTask = await taskRepositoryAdapter.fetchTask(id: taskId)
                 Logger.certificationSaving(
                     taskId: taskId.rawValue.uuidString,
                     index: index,
@@ -178,6 +192,24 @@ public extension JacsimDependencies {
                     Logger.certificationSavedToSwiftData(
                         duration: Date().timeIntervalSince(startTime)
                     )
+                    if let beforeTask,
+                       var afterTask = await taskRepositoryAdapter.fetchTask(id: taskId),
+                       let graduation = StageGraduationDetector().graduationContext(before: beforeTask, after: afterTask) {
+                        if let lastIndex = afterTask.stages.indices.last {
+                            afterTask.stages[lastIndex].result = .success
+                            try? await taskRepositoryAdapter.updateTask(afterTask)
+                        }
+                        NotificationCenter.default.post(name: .jacsimStageGraduated, object: graduation)
+                        try? await notificationScheduler.scheduleSocial(
+                            .friendGraduated,
+                            SocialNotificationContext(
+                                sourceUserId: SocialLocalSession.currentUserID,
+                                taskId: graduation.taskId,
+                                title: "친구의 스테이지 졸업",
+                                body: "\(graduation.taskTitle) \(graduation.durationDays)일 스테이지를 완주했어요"
+                            )
+                        )
+                    }
                 } catch {
                     Logger.certificationFailed(error: error)
                 }
@@ -212,14 +244,6 @@ public extension JacsimDependencies {
             certifyToday: { await jacsimClient.certifyToday($0, $1, $2, $3) }
         )
 
-        let notificationAdapter = LocalNotificationSchedulerAdapter()
-        let notificationScheduler = NotificationSchedulerPort(
-            scheduleDailyReminder: { try await notificationAdapter.scheduleReminder(taskId: $0, title: $1, time: $2) },
-            cancelReminder: { await notificationAdapter.cancelReminder(taskId: $0) },
-            cancelAllReminders: { await notificationAdapter.cancelAllReminders() },
-            requestAuthorization: { try await notificationAdapter.requestAuthorization() }
-        )
-
         let imageStoreAdapter = DocumentImageStoreAdapter()
         let imageStore = ImageStorePort(
             saveImage: { try await imageStoreAdapter.saveImage(key: $0, data: $1) },
@@ -234,7 +258,9 @@ public extension JacsimDependencies {
             getAllReminders: { await userSettingsAdapter.getAllReminders() },
             updateNotificationEnabled: { await userSettingsAdapter.updateNotificationEnabled($0) },
             wallpaperRaw: { await userSettingsAdapter.wallpaperRaw() },
-            updateWallpaperRaw: { await userSettingsAdapter.updateWallpaperRaw($0) }
+            updateWallpaperRaw: { await userSettingsAdapter.updateWallpaperRaw($0) },
+            socialNotificationSettings: { await userSettingsAdapter.socialNotificationSettings() },
+            updateSocialNotificationSettings: { await userSettingsAdapter.updateSocialNotificationSettings($0) }
         )
 
         let socialUserRepositoryAdapter = SocialUserRepositoryAdapter()
@@ -294,6 +320,7 @@ public extension JacsimDependencies {
             cheerRepository: cheerRepository,
             commentRepository: commentRepository,
             followChallengeRepository: followChallengeRepository,
+            aiCoachClient: MockAICoachClientAdapter(),
             seedSocialIfNeeded: {
                 do {
                     try await seedSocialUseCase.seedIfNeeded()
@@ -369,6 +396,7 @@ public extension JacsimDependencies {
             recordFollowChallenge: { _ in },
             fetchByCopier: { _ in [] }
         ),
+        aiCoachClient: MockAICoachClientAdapter(),
         seedSocialIfNeeded: {},
         taskQueryClient: TaskQueryClientPort(
             fetchActiveTasks: { [] },

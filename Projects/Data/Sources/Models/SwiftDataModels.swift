@@ -321,6 +321,6 @@ public enum JacsimSchemaV2: VersionedSchema {
 }
 
 public typealias UserJacsimModel = JacsimSchemaV3.UserJacsimModel
-public typealias AppSettingsModel = JacsimSchemaV3.AppSettingsModel
+public typealias AppSettingsModel = JacsimSchemaV4.AppSettingsModel
 public typealias CertifiedModel = JacsimSchemaV3.CertifiedModel
 public typealias StageModel = JacsimSchemaV3.StageModel
