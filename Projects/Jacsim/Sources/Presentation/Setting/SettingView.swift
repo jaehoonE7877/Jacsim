@@ -4,7 +4,7 @@ import AcknowList
 import StoreKit
 
 public struct SettingView: View {
-     var model: SettingScreenModel
+    var model: SettingScreenModel
     @Environment(\.requestReview) private var requestReview
     @Environment(\.openURL) private var openURL
     @State private var isWalkThroughPresented = false
@@ -16,8 +16,7 @@ public struct SettingView: View {
 
     public var body: some View {
         RedesignScreenScaffold(
-            title: "설정",
-            subtitle: "테마와 알림, 앱 정보를 관리해요"
+            title: "설정"
         ) {
             RedesignSectionCard(title: "테마") {
                 Picker("테마", selection: Binding(
@@ -31,12 +30,9 @@ public struct SettingView: View {
                 .pickerStyle(.segmented)
             }
 
-            RedesignSectionCard(
-                title: "알림",
-                subtitle: "매일 작심 알림을 받을 수 있어요"
-            ) {
+            RedesignSectionCard(title: "알림") {
                 Toggle(
-                    "알림 설정",
+                    "작심 알림",
                     isOn: Binding(
                         get: { model.isNotificationEnabled },
                         set: { model.notificationToggleChanged($0) }
@@ -47,15 +43,15 @@ public struct SettingView: View {
 
                 if model.isLoading {
                     RedesignStateBanner(
-                        text: "알림 설정을 반영하는 중이에요",
+                        text: "알림 반영 중",
                         icon: "clock.arrow.circlepath",
-                        tintColor: .primaryNormal
+                        tintColor: .v2BrandBlue
                     )
                 }
 
                 if model.notificationPermissionDenied {
                     RedesignStateBanner(
-                        text: "알림 권한이 꺼져 있어요. iOS 설정에서 알림을 허용한 뒤 다시 켜 주세요.",
+                        text: "iOS 설정에서 알림을 허용해 주세요",
                         icon: "bell.slash.fill",
                         tintColor: .cautionary
                     )
@@ -140,11 +136,11 @@ public struct SettingView: View {
         Button(action: action) {
             HStack(spacing: .jsSM) {
                 Image(systemName: systemImage)
-                    .foregroundColor(.primaryNormal)
+                    .foregroundColor(.v2BrandBlue)
                     .frame(width: .jsTouchTarget, height: .jsTouchTarget)
                     .background(
                         Circle()
-                            .fill(Color.primaryNormal.opacity(0.1))
+                            .fill(Color.v2BrandBlueSoft)
                     )
 
                 Text(title)

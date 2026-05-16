@@ -64,7 +64,7 @@ struct ImageAttachmentPicker: View {
                                 Text("설정에서 허용하기")
                                     .font(.jsButtonSmall)
                             }
-                            .foregroundColor(.primaryNormal)
+                            .foregroundColor(.v2BrandBlue)
                         }
                         .buttonStyle(.plain)
                         .accessibilityHint("iOS 설정 앱을 열어 사진 또는 카메라 권한을 변경합니다")
@@ -99,7 +99,7 @@ struct ImageAttachmentPicker: View {
                 VStack(spacing: .jsXS) {
                     Image(systemName: "photo.on.rectangle.angled")
                         .font(.jsDisplayMedium)
-                        .foregroundColor(.labelAlternative)
+                        .foregroundColor(.v2BrandBlue)
 
                     Text(emptyTitle)
                         .font(.jsBodyMedium)
@@ -110,7 +110,7 @@ struct ImageAttachmentPicker: View {
                         .foregroundColor(.labelAlternative)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(Color.backgroundStrong)
+                .background(Color.v2Surface)
             }
         }
         .frame(maxWidth: .infinity, minHeight: height, maxHeight: height)
@@ -118,7 +118,7 @@ struct ImageAttachmentPicker: View {
         .overlay {
             cardShape
                 .stroke(
-                    image == nil ? Color.primaryNormal.opacity(0.35) : Color.labelDisable.opacity(0.24),
+                    image == nil ? Color.v2BrandBlue.opacity(0.35) : Color.labelDisable.opacity(0.24),
                     style: StrokeStyle(
                         lineWidth: 1,
                         dash: image == nil ? [8, 6] : []
@@ -137,7 +137,7 @@ struct ImageAttachmentPicker: View {
                 }
                 .padding(.horizontal, .jsXS)
                 .padding(.vertical, .jsMicro)
-                .background(Color.backgroundNormal.opacity(0.92))
+                .background(Color.v2SurfaceElevated.opacity(0.94))
                 .clipShape(Capsule())
                 .padding(.jsSM)
             }
@@ -262,7 +262,7 @@ private struct ImageAttachmentActionLabel: View {
         HStack(spacing: .jsXS) {
             Image(systemName: systemName)
                 .font(.jsHeadlineSmall)
-                .foregroundColor(.primaryNormal)
+                .foregroundColor(.v2BrandBlue)
 
             Text(title)
                 .font(.jsButtonMedium)
@@ -275,7 +275,7 @@ private struct ImageAttachmentActionLabel: View {
         .padding(.horizontal, .jsSM)
         .background(
             RoundedRectangle(cornerRadius: .jsRadiusMD, style: .continuous)
-                .fill(Color.backgroundStrong)
+                .fill(Color.v2Surface)
         )
         .overlay(
             RoundedRectangle(cornerRadius: .jsRadiusMD, style: .continuous)

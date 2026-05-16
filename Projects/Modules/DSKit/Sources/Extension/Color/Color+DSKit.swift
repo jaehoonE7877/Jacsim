@@ -33,4 +33,11 @@ public extension Color {
     static var surfaceElevated: Color { Color(uiColor: .surfaceElevated) }
     static var surfaceOverlay: Color { Color(uiColor: .surfaceOverlay) }
     static var surfaceSelected: Color { Color(uiColor: .surfaceSelected) }
+
+    static var v2BrandBlue: Color { Color(uiColor: .v2BrandBlue) }
+    static var v2BrandBlueStrong: Color { Color(uiColor: .v2BrandBlueStrong) }
+    static var v2BrandBlueSoft: Color { Color(uiColor: .v2BrandBlueSoft) }
+    static var v2Background: Color { Color(uiColor: .v2Background) }
+    static var v2Surface: Color { Color(uiColor: .v2Surface) }
+    static var v2SurfaceElevated: Color { Color(uiColor: .v2SurfaceElevated) }
 }

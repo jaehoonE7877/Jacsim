@@ -122,7 +122,7 @@ public struct TaskDetailView: View {
             .onAppear {
                 isHeaderMinimized = shouldMinimizeHeaderTitle
             }
-            .background(Color.backgroundNormal)
+            .background(Color.v2Background)
             .ignoresSafeArea(edges: .top)
         }
         .onAppear { model.onAppear() }
@@ -229,7 +229,7 @@ public struct TaskDetailView: View {
                 Rectangle()
                     .fill(
                         LinearGradient(
-                            colors: [Color.primaryNormal, Color.primaryStrong],
+                            colors: [Color.v2BrandBlue, Color.v2BrandBlueStrong],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         )
@@ -272,7 +272,7 @@ public struct TaskDetailView: View {
                 Rectangle()
                     .fill(
                         LinearGradient(
-                            colors: [Color.primaryNormal, Color.primaryStrong],
+                            colors: [Color.v2BrandBlue, Color.v2BrandBlueStrong],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         )
@@ -303,41 +303,43 @@ public struct TaskDetailView: View {
     }
     
     private var stageInfoSection: some View {
-        JSCard(style: .elevated) {
-            VStack(alignment: .leading, spacing: .jsMD) {
-                HStack {
-                    VStack(alignment: .leading, spacing: .jsMicro) {
-                        Text("\(model.currentStage?.stageType.durationDays ?? 7)일 스테이지")
-                            .font(.jsHeadlineSmall)
-                            .foregroundColor(.labelStrong)
-                        
-                        Text(stageDateRange)
-                            .font(.jsBodySmall)
-                            .foregroundColor(.labelAlternative)
-                    }
-                    
-                    Spacer()
-                    
-                    stageStatusChip
-                }
-                
-                VStack(alignment: .leading, spacing: .jsXS) {
-                    JSProgress(
-                        progress: model.stageProgress,
-                        style: .linear,
-                        size: .medium,
-                        tintColor: progressColor
-                    )
-                    
-                    HStack {
-                        Spacer()
-                        Text(model.stageProgressText)
-                            .font(.jsLabelMedium)
-                            .foregroundColor(.labelAlternative)
-                    }
-                }
+        VStack(alignment: .leading, spacing: .jsSM) {
+            HStack(alignment: .center) {
+                JSV2SectionHeader("작심 프로필")
+                stageStatusChip
             }
+
+            HStack(spacing: .jsSM) {
+                JSV2MetricPill(
+                    title: "진행",
+                    value: "\(Int(model.stageProgress * 100))%",
+                    systemImage: "chart.line.uptrend.xyaxis",
+                    style: statusStyle
+                )
+                JSV2MetricPill(
+                    title: "인증",
+                    value: model.stageProgressText,
+                    systemImage: "checkmark.circle.fill",
+                    style: .success
+                )
+                JSV2MetricPill(
+                    title: "기간",
+                    value: stageDateRange,
+                    systemImage: "calendar",
+                    style: .neutral
+                )
+            }
+
+            JSProgress(
+                progress: model.stageProgress,
+                style: .linear,
+                size: .medium,
+                tintColor: progressColor
+            )
+            .accessibilityLabel("스테이지 진행률 \(Int(model.stageProgress * 100))퍼센트")
         }
+        .padding(.jsMD)
+        .jsv2CardSurface()
     }
 
     private var stageDateRange: String {
@@ -365,13 +367,33 @@ public struct TaskDetailView: View {
             state = .completed
         }
         
-        return JSStatusChip(state: state)
+        switch state {
+        case .completed:
+            return JSV2StatusChip("완료", systemImage: "checkmark.circle.fill", style: .success)
+        case .pending:
+            return JSV2StatusChip("진행 중", systemImage: "clock.fill", style: .accent)
+        case .failed:
+            return JSV2StatusChip("재도전", systemImage: "arrow.counterclockwise", style: .danger)
+        case .notStarted:
+            return JSV2StatusChip("시작 전", systemImage: "circle", style: .neutral)
+        }
+    }
+
+    private var statusStyle: JSV2StatusStyle {
+        switch model.challengeState {
+        case .stagePending:
+            return .accent
+        case .stageSuccess, .habitCompleted:
+            return .success
+        case .stageFail:
+            return .danger
+        }
     }
     
     private var progressColor: Color {
         switch model.challengeState {
         case .stagePending:
-            return .primaryNormal
+            return .v2BrandBlue
         case .stageSuccess, .habitCompleted:
             return .positive
         case .stageFail:
@@ -380,37 +402,38 @@ public struct TaskDetailView: View {
     }
     
     private var todayStatusSection: some View {
-        RedesignSectionCard(title: "오늘 상태") {
-            HStack {
-                Text(model.todayStatus == .certified ? "오늘 인증을 마쳤어요" : "인증을 완료하면 연속 기록이 이어져요")
-                    .font(.jsBodySmall)
+        HStack(spacing: .jsSM) {
+            VStack(alignment: .leading, spacing: .jsMicro) {
+                Text("오늘")
+                    .font(.jsHeadlineSmall)
+                    .foregroundColor(.labelStrong)
+
+                Text(model.todayStatus == .certified ? "인증 완료" : "바로 인증 가능")
+                    .font(.jsLabelMedium)
                     .foregroundColor(.labelAlternative)
-
-                Spacer()
-
-                JSStatusChip(state: todayStatusChipState)
             }
-        }
-    }
 
-    private var todayStatusChipState: JSStatusChipState {
-        switch model.todayStatus {
-        case .notCertified:
-            return .pending
-        case .certified:
-            return .completed
+            Spacer()
+
+            JSV2StatusChip(
+                model.todayStatus == .certified ? "완료" : "인증 전",
+                systemImage: model.todayStatus == .certified ? "checkmark.circle.fill" : "camera.fill",
+                style: model.todayStatus == .certified ? .success : .accent,
+                isProminent: model.todayStatus != .certified
+            )
         }
+        .padding(.jsMD)
+        .jsv2CardSurface()
+        .accessibilityElement(children: .combine)
     }
     
     private var recordListSection: some View {
         VStack(alignment: .leading, spacing: .jsMD) {
-            Text("인증 기록")
-                .font(.jsHeadlineSmall)
-                .foregroundColor(.labelStrong)
+            JSV2SectionHeader("기록 피드")
 
             if model.dayViewData.isEmpty {
                 RedesignStateBanner(
-                    text: "아직 인증 기록이 없어요",
+                    text: "아직 기록이 없어요",
                     icon: "tray",
                     tintColor: .labelAlternative
                 )
@@ -493,7 +516,8 @@ public struct TaskDetailView: View {
     private var stagePendingCTA: some View {
         if isTodayInChallengeRange && model.todayStatus == .notCertified {
             JSButton(
-                title: "오늘 작심 인증하러 가기",
+                title: "인증하기",
+                systemImage: "camera.fill",
                 style: .primary,
                 size: .large
             ) {
@@ -507,16 +531,18 @@ public struct TaskDetailView: View {
     private var stageSuccessCTA: some View {
         VStack(spacing: .jsSM) {
             JSButton(
-                title: "다음 스테이지로 넘어가기",
+                title: "다음 단계",
+                systemImage: "arrow.forward.circle.fill",
                 style: .primary,
                 size: .large
             ) {
                 model.nextStageButtonTapped()
             }
-            
+
             JSButton(
-                title: "성공 기록 보기",
-                style: .secondary,
+                title: "기록 보기",
+                systemImage: "list.bullet.rectangle",
+                style: .ghost,
                 size: .large
             ) {
                 model.viewSuccessRecordTapped()
@@ -532,7 +558,8 @@ public struct TaskDetailView: View {
                 .frame(maxWidth: .infinity, alignment: .center)
             
             JSButton(
-                title: "스테이지 재도전",
+                title: "재도전",
+                systemImage: "arrow.counterclockwise.circle.fill",
                 style: .primary,
                 size: .large
             ) {
@@ -541,7 +568,7 @@ public struct TaskDetailView: View {
             
             JSButton(
                 title: "그대로 두기",
-                style: .secondary,
+                style: .ghost,
                 size: .large
             ) {
                 model.keepAsIsButtonTapped()
@@ -557,8 +584,9 @@ public struct TaskDetailView: View {
                 .frame(maxWidth: .infinity, alignment: .center)
             
             JSButton(
-                title: "기록 돌아보기",
-                style: .secondary,
+                title: "기록 보기",
+                systemImage: "list.bullet.rectangle",
+                style: .ghost,
                 size: .large
             ) {
                 model.viewHistoryButtonTapped()
@@ -609,47 +637,48 @@ private struct DailyRecordRow: View {
                         .resizable()
                         .scaledToFill()
                 } else {
-                    Rectangle()
-                        .fill(Color.backgroundAlternative)
+                    RoundedRectangle(cornerRadius: .jsRadiusLG, style: .continuous)
+                        .fill(Color.v2Surface)
                         .overlay(
                             Image(systemName: "photo")
+                                .font(.jsHeadlineMedium)
                                 .foregroundColor(.labelAlternative)
                         )
                 }
             }
-            .frame(width: 64.jsScaled(), height: 64.jsScaled())
-            .cornerRadius(.jsRadiusSM)
+            .frame(width: 92.jsScaled(), height: 92.jsScaled())
+            .clipShape(RoundedRectangle(cornerRadius: .jsRadiusLG, style: .continuous))
             .overlay(
-                RoundedRectangle(cornerRadius: .jsRadiusSM)
-                    .stroke(data.isChecked ? Color.primaryNormal : Color.clear, lineWidth: 2)
+                RoundedRectangle(cornerRadius: .jsRadiusLG, style: .continuous)
+                    .stroke(data.isChecked ? Color.v2BrandBlue.opacity(0.35) : Color.labelAssistive.opacity(0.16), lineWidth: 1)
             )
             
-            VStack(alignment: .leading, spacing: .jsMicro) {
+            VStack(alignment: .leading, spacing: .jsXS) {
+                JSV2StatusChip(
+                    data.isChecked ? "인증" : "대기",
+                    systemImage: data.isChecked ? "checkmark.circle.fill" : "circle",
+                    style: data.isChecked ? .success : .neutral
+                )
+
                 Text(formattedDate(data.date))
                     .font(.jsBodyMedium)
                     .foregroundColor(.labelStrong)
-                
-                Text(data.memo)
-                    .font(.jsLabelMedium)
-                    .foregroundColor(.labelAlternative)
                     .lineLimit(1)
+
+                if !data.memo.isEmpty {
+                    Text(data.memo)
+                        .font(.jsLabelMedium)
+                        .foregroundColor(.labelAlternative)
+                        .lineLimit(2)
+                }
             }
             
             Spacer()
-            
-            if data.isChecked {
-                Image(systemName: "checkmark.circle.fill")
-                    .foregroundColor(.positive)
-                    .font(.jsDisplaySmall)
-            } else {
-                Image(systemName: "circle")
-                    .foregroundColor(.labelDisable)
-                    .font(.jsDisplaySmall)
-            }
         }
         .padding(.jsSM)
-        .background(Color.backgroundStrong)
-        .cornerRadius(.jsRadiusMD)
+        .jsv2CardSurface(cornerRadius: .jsRadiusLG, shadowOpacity: 0.04)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("\(formattedDate(data.date)), \(data.isChecked ? "인증 완료" : "인증 전")")
     }
     
     private func formattedDate(_ date: Date) -> String {
@@ -916,7 +945,7 @@ private struct SparkleAnimationView: View {
         ZStack {
             ForEach(0..<8, id: \.self) { index in
                 Circle()
-                    .fill(Color.primaryNormal.opacity(0.8))
+                    .fill(Color.v2BrandBlue.opacity(0.8))
                     .frame(width: 10.jsScaled(), height: 10.jsScaled())
                     .offset(sparkleOffset(for: index))
                     .opacity(animate ? 0 : 1)
