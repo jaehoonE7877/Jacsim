@@ -77,9 +77,18 @@ public final class FriendsSearchModel {
             toUserId: currentUserID,
             state: .pending
         )
-        _Concurrency.Task { [dependencies] in
+        _Concurrency.Task { [dependencies, currentUserID] in
             do {
                 try await dependencies.followRepository.upsertFollow(follow)
+                try? await dependencies.notificationScheduler.scheduleSocial(
+                    .followRequested,
+                    SocialNotificationContext(
+                        sourceUserId: row.user.id,
+                        targetUserId: currentUserID,
+                        title: "새 친구 요청",
+                        body: "\(row.user.displayName)님이 친구 요청을 보냈어요"
+                    )
+                )
                 toastMessage = "요청됨"
                 queryChanged()
             } catch {

@@ -1,3 +1,4 @@
+import Domain
 import DSKit
 import SwiftUI
 
@@ -59,8 +60,8 @@ public struct MainView: View {
                     onCreateBrag: {
                         model.createBragActionTapped()
                     },
-                    onComingSoon: {
-                        model.comingSoonActionTapped()
+                    onCoach: {
+                        model.coachActionTapped()
                     }
                 )
             }
@@ -78,9 +79,32 @@ public struct MainView: View {
         .sensoryFeedback(.impact(weight: .light), trigger: model.plusToastText)
         .task(id: model.plusToastText) {
             guard model.plusToastText != nil else { return }
-            try? await Task.sleep(nanoseconds: 3_000_000_000)
-            guard !Task.isCancelled else { return }
+            try? await _Concurrency.Task.sleep(nanoseconds: 3_000_000_000)
+            guard !_Concurrency.Task.isCancelled else { return }
             model.plusToastDismissed()
+        }
+        .sheet(isPresented: $model.isCoachPresented) {
+            NavigationStack {
+                CoachView(model: model.coach)
+            }
+        }
+        .fullScreenCover(item: $model.presentedGraduation) { context in
+            StageGraduationView(
+                context: context,
+                onNextStage: {
+                    model.graduationNextStageTapped()
+                },
+                onFinish: {
+                    model.graduationFinishTapped()
+                },
+                onBrag: {
+                    model.graduationBragTapped()
+                }
+            )
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .jacsimStageGraduated)) { notification in
+            guard let context = notification.object as? GraduationContext else { return }
+            model.graduationPresented(context)
         }
     }
 }

@@ -3,6 +3,25 @@ import Foundation
 import Observation
 import UIKit
 
+public struct BragComposerPrefill: Sendable {
+    public let taskId: TaskID?
+    public let taskTitle: String?
+    public let type: Domain.BragType
+    public let body: String
+
+    public init(
+        taskId: TaskID?,
+        taskTitle: String?,
+        type: Domain.BragType,
+        body: String
+    ) {
+        self.taskId = taskId
+        self.taskTitle = taskTitle
+        self.type = type
+        self.body = body
+    }
+}
+
 @MainActor
 @Observable
 public final class BragComposerModel {
@@ -17,16 +36,23 @@ public final class BragComposerModel {
 
     @ObservationIgnored private let dependencies: JacsimDependencies
     @ObservationIgnored private let onCompleted: () -> Void
+    @ObservationIgnored private let prefill: BragComposerPrefill?
     @ObservationIgnored private var loadTask: _Concurrency.Task<Void, Never>?
 
     private let currentUserID = SocialLocalSession.currentUserID
 
     public init(
         dependencies: JacsimDependencies,
+        prefill: BragComposerPrefill? = nil,
         onCompleted: @escaping () -> Void = {}
     ) {
         self.dependencies = dependencies
+        self.prefill = prefill
         self.onCompleted = onCompleted
+        if let prefill {
+            self.body = prefill.body
+            self.selectedTaskID = prefill.taskId
+        }
     }
 
     deinit {
@@ -46,6 +72,9 @@ public final class BragComposerModel {
     }
 
     public var suggestedType: Domain.BragType {
+        if let prefill {
+            return prefill.type
+        }
         guard let selectedTask else { return .completion }
         if selectedTask.stages.last?.result == .success {
             return .graduation
@@ -59,11 +88,17 @@ public final class BragComposerModel {
     public func onAppear() {
         guard tasks.isEmpty else { return }
         loadTask?.cancel()
-        loadTask = _Concurrency.Task { [dependencies] in
+        loadTask = _Concurrency.Task { [dependencies, prefill] in
             do {
                 let active = try await dependencies.taskQueryClient.fetchActiveTasks()
                 let done = try await dependencies.taskQueryClient.fetchTasksByStatus(.done)
-                tasksResponse(active + done)
+                var allTasks = active + done
+                if let taskId = prefill?.taskId,
+                   !allTasks.contains(where: { $0.id == taskId }),
+                   let task = try await dependencies.taskQueryClient.fetchTask(taskId) {
+                    allTasks.append(task)
+                }
+                tasksResponse(allTasks)
             } catch {
                 tasksResponse([])
             }
@@ -99,10 +134,21 @@ public final class BragComposerModel {
             body: trimmedBody,
             recordImagePaths: imagePaths
         )
+        let notificationContext = SocialNotificationContext(
+            sourceUserId: currentUserID,
+            postId: post.id,
+            taskId: selectedTaskID,
+            title: "친구의 새 자랑",
+            body: trimmedBody
+        )
 
         _Concurrency.Task { [dependencies] in
             do {
                 try await dependencies.bragPostRepository.createPost(post)
+                try? await dependencies.notificationScheduler.scheduleSocial(
+                    .friendPosted,
+                    notificationContext
+                )
                 isSaving = false
                 onCompleted()
             } catch {
@@ -126,7 +172,10 @@ public final class BragComposerModel {
 
     private func tasksResponse(_ tasks: [Domain.Task]) {
         self.tasks = tasks
-        if selectedTaskID == nil, let first = tasks.first {
+        if let selectedTaskID,
+           let task = tasks.first(where: { $0.id == selectedTaskID }) {
+            taskSelected(task)
+        } else if selectedTaskID == nil, let first = tasks.first {
             taskSelected(first)
         }
     }

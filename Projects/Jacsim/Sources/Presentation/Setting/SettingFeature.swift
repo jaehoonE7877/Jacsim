@@ -123,10 +123,22 @@ public final class SettingScreenModel {
         var follow = row.follow
         follow.state = state
         follow.respondedAt = .now
+        let acceptedContext = SocialNotificationContext(
+            sourceUserId: SocialLocalSession.currentUserID,
+            targetUserId: row.follow.fromUserId,
+            title: "친구 요청 수락",
+            body: "친구 요청이 수락되었어요"
+        )
         settingsTask?.cancel()
         settingsTask = _Concurrency.Task { [dependencies] in
             do {
                 try await dependencies.followRepository.upsertFollow(follow)
+                if state == .accepted {
+                    try? await dependencies.notificationScheduler.scheduleSocial(
+                        .followAccepted,
+                        acceptedContext
+                    )
+                }
                 loadNotificationSettings()
             } catch {
                 pendingFollowRequests.removeAll { $0.id == row.id }

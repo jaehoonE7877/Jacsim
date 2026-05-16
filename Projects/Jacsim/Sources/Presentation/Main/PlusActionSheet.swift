@@ -5,18 +5,18 @@ public struct PlusActionSheet: View {
     @Binding private var isPresented: Bool
     private let onCreateTask: () -> Void
     private let onCreateBrag: () -> Void
-    private let onComingSoon: () -> Void
+    private let onCoach: () -> Void
 
     public init(
         isPresented: Binding<Bool>,
         onCreateTask: @escaping () -> Void,
         onCreateBrag: @escaping () -> Void = {},
-        onComingSoon: @escaping () -> Void
+        onCoach: @escaping () -> Void
     ) {
         self._isPresented = isPresented
         self.onCreateTask = onCreateTask
         self.onCreateBrag = onCreateBrag
-        self.onComingSoon = onComingSoon
+        self.onCoach = onCoach
     }
 
     public var body: some View {
@@ -54,9 +54,8 @@ public struct PlusActionSheet: View {
                     title: "AI 코치 열기",
                     subtitle: "작심 흐름을 보고 다음 행동을 제안받아요",
                     icon: "sparkles",
-                    isEnabled: false,
-                    accessibilityHint: "아직 사용할 수 없습니다. 탭하면 출시 예정 안내가 표시됩니다",
-                    action: onComingSoon
+                    accessibilityHint: "AI 코치 화면으로 이동합니다",
+                    action: onCoach
                 )
             }
             .padding(.horizontal, .jsLG)
@@ -142,5 +141,5 @@ private struct PlusActionCardButton: View {
 }
 
 #Preview("PlusActionSheet") {
-    PlusActionSheet(isPresented: .constant(true), onCreateTask: {}, onComingSoon: {})
+    PlusActionSheet(isPresented: .constant(true), onCreateTask: {}, onCoach: {})
 }

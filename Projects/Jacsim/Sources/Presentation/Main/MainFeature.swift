@@ -1,3 +1,4 @@
+import Domain
 import DSKit
 import Observation
 
@@ -6,11 +7,14 @@ import Observation
 public final class MainModel {
     public var selectedTab: JSTabItem = .today
     public var isPlusSheetPresented: Bool = false
+    public var isCoachPresented: Bool = false
+    public var presentedGraduation: GraduationContext?
     public var plusToastText: String?
     public let home: HomeModel
     public let calendar: CalendarModel
     public let feed: FeedModel
     public let me: MeModel
+    public let coach: CoachModel
 
     @ObservationIgnored private let dependencies: JacsimDependencies
 
@@ -20,6 +24,7 @@ public final class MainModel {
         self.calendar = CalendarModel(dependencies: dependencies)
         self.feed = FeedModel(dependencies: dependencies)
         self.me = MeModel(dependencies: dependencies)
+        self.coach = CoachModel(dependencies: dependencies)
         self.feed.onFollowChallengePrefill = { [weak self] title in
             self?.createTaskFromFollowChallenge(title: title)
         }
@@ -71,6 +76,46 @@ public final class MainModel {
         plusToastText = nil
         selectedTab = .feed
         feed.composerButtonTapped()
+    }
+
+    public func coachActionTapped() {
+        isPlusSheetPresented = false
+        plusToastText = nil
+        isCoachPresented = true
+    }
+
+    public func graduationPresented(_ context: GraduationContext) {
+        presentedGraduation = context
+    }
+
+    public func graduationNextStageTapped() {
+        guard let context = presentedGraduation else { return }
+        let taskId = context.taskId
+        presentedGraduation = nil
+        let dependencies = dependencies
+        _Concurrency.Task { [weak self] in
+            await dependencies.stageFlowClient.createNextStage(taskId)
+            await MainActor.run {
+                self?.home.onAppear()
+                self?.calendar.loadTasks()
+            }
+        }
+    }
+
+    public func graduationFinishTapped() {
+        presentedGraduation = nil
+        home.onAppear()
+        calendar.loadTasks()
+    }
+
+    public func graduationBragTapped() {
+        guard let context = presentedGraduation else { return }
+        presentedGraduation = nil
+        selectedTab = .feed
+        feed.presentGraduationComposer(
+            taskId: context.taskId,
+            taskTitle: context.taskTitle
+        )
     }
 
     private func newTaskCreated() {

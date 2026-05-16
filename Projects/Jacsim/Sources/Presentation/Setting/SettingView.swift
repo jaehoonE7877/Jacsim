@@ -93,7 +93,7 @@ public struct SettingView: View {
     private var notificationSection: some View {
         settingsGroup(title: "알림") {
             JSListItem(
-                title: "알림 설정",
+                title: "매일 리마인드",
                 subtitle: model.isLoading ? "설정을 반영하는 중" : "매일 작심 리마인드",
                 icon: "bell.badge",
                 accessory: .toggle(
@@ -103,6 +103,21 @@ public struct SettingView: View {
                     )
                 )
             )
+
+            NavigationLink {
+                NotificationSettingsView(
+                    model: NotificationSettingsModel(dependencies: model.dependencies)
+                )
+            } label: {
+                JSListItem(
+                    title: "알림 설정",
+                    subtitle: "소셜 알림과 AI 코치 회고",
+                    icon: "bell.and.waves.left.and.right",
+                    accessory: .disclosure
+                )
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("알림 설정")
 
             if model.notificationPermissionDenied {
                 RedesignStateBanner(

@@ -39,6 +39,7 @@ public struct FeedView: View {
                     BragComposerView(
                         model: BragComposerModel(
                             dependencies: model.dependencies,
+                            prefill: model.composerPrefill,
                             onCompleted: {
                                 model.composerCompleted()
                             }

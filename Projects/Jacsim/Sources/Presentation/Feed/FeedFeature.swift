@@ -42,6 +42,7 @@ public final class FeedModel {
     public var loadFailed: Bool = false
     public var toastMessage: String?
     public var isComposerPresented: Bool = false
+    public var composerPrefill: BragComposerPrefill?
     public var selectedCommentPost: FeedPostItem?
     public var commentDraft: String = ""
 
@@ -132,13 +133,25 @@ public final class FeedModel {
     }
 
     public func composerButtonTapped() {
+        composerPrefill = nil
         isComposerPresented = true
     }
 
     public func composerCompleted() {
         isComposerPresented = false
+        composerPrefill = nil
         toastMessage = "공유되었어요"
         load()
+    }
+
+    public func presentGraduationComposer(taskId: TaskID, taskTitle: String) {
+        composerPrefill = BragComposerPrefill(
+            taskId: taskId,
+            taskTitle: taskTitle,
+            type: .graduation,
+            body: "\(taskTitle) 졸업을 완주했어요."
+        )
+        isComposerPresented = true
     }
 
     public func cheerTapped(_ item: FeedPostItem) {
@@ -146,6 +159,16 @@ public final class FeedModel {
             do {
                 let inserted = try await dependencies.cheerRepository.addUnique(item.post.id, currentUserID)
                 if inserted {
+                    try? await dependencies.notificationScheduler.scheduleSocial(
+                        .postCheered,
+                        SocialNotificationContext(
+                            sourceUserId: currentUserID,
+                            targetUserId: item.post.authorId,
+                            postId: item.post.id,
+                            title: "새 응원",
+                            body: "\(item.author.displayName)의 기록에 응원이 쌓였어요"
+                        )
+                    )
                     load()
                 } else {
                     toastMessage = "이미 응원했어요"
@@ -180,6 +203,16 @@ public final class FeedModel {
                         body: body
                     )
                 )
+                try? await dependencies.notificationScheduler.scheduleSocial(
+                    .postCommented,
+                    SocialNotificationContext(
+                        sourceUserId: currentUserID,
+                        targetUserId: item.post.authorId,
+                        postId: item.post.id,
+                        title: "새 댓글",
+                        body: "내 자랑 글에 새 댓글이 달렸어요"
+                    )
+                )
                 commentDraft = ""
                 load()
             } catch {
@@ -199,6 +232,17 @@ public final class FeedModel {
                         originalTaskId: originalTaskID,
                         copierUserId: currentUserID,
                         copiedTaskId: copiedTaskID
+                    )
+                )
+                try? await dependencies.notificationScheduler.scheduleSocial(
+                    .postFollowed,
+                    SocialNotificationContext(
+                        sourceUserId: currentUserID,
+                        targetUserId: item.post.authorId,
+                        postId: item.post.id,
+                        taskId: originalTaskID,
+                        title: "따라하기 시작",
+                        body: "누군가 내 기록을 따라 시작했어요"
                     )
                 )
                 onFollowChallengePrefill(item.taskTitle ?? item.post.body)
