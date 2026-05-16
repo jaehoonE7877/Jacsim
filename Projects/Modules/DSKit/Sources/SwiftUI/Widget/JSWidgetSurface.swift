@@ -30,12 +30,16 @@ public struct JSWidgetSurface<Content: View>: View {
     }
 
     public var body: some View {
-        content
-            .padding(size == .small ? .jsMD : .jsLG)
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-            .background(Color.surfaceElevated.opacity(0.22))
-            .glassEffect(.regular, in: .rect(cornerRadius: size.cornerRadius))
-            .clipShape(RoundedRectangle(cornerRadius: size.cornerRadius, style: .continuous))
+        ZStack(alignment: .topLeading) {
+            RoundedRectangle(cornerRadius: size.cornerRadius, style: .continuous)
+                .fill(Color.surfaceElevated.opacity(0.22))
+                .glassEffect(.regular, in: .rect(cornerRadius: size.cornerRadius))
+
+            content
+                .padding(size == .small ? .jsMD : .jsLG)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        }
+        .clipShape(RoundedRectangle(cornerRadius: size.cornerRadius, style: .continuous))
             .accessibilityElement(children: .combine)
             .accessibilityLabel(accessibilityLabel)
     }
