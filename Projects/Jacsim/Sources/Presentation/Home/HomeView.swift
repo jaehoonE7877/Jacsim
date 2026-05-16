@@ -74,6 +74,12 @@ public struct HomeView: View {
             AllTaskView(model: AllTaskModel(dependencies: model.dependencies))
         case .setting:
             SettingView(model: SettingScreenModel(dependencies: model.dependencies))
+        case .newTask:
+            if let newTask = model.newTask {
+                NewTaskView(model: newTask)
+            } else {
+                EmptyView()
+            }
         }
     }
 

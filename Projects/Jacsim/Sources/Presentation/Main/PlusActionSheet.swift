@@ -4,21 +4,26 @@ import SwiftUI
 public struct PlusActionSheet: View {
     @Binding private var isPresented: Bool
     private let onCreateTask: () -> Void
-    @State private var toastText: String?
-    @State private var isToastPresented = false
+    private let onComingSoon: () -> Void
 
     public init(
         isPresented: Binding<Bool>,
-        onCreateTask: @escaping () -> Void
+        onCreateTask: @escaping () -> Void,
+        onComingSoon: @escaping () -> Void
     ) {
         self._isPresented = isPresented
         self.onCreateTask = onCreateTask
+        self.onComingSoon = onComingSoon
     }
 
     public var body: some View {
+        bottomSheet
+    }
+
+    private var bottomSheet: some View {
         JSBottomSheet(
             isPresented: $isPresented,
-            style: .contentHeight,
+            style: .fixed(height: 390.jsScaled()),
             showDragIndicator: true,
             allowsInteractiveDismiss: true,
             glass: true
@@ -40,7 +45,7 @@ public struct PlusActionSheet: View {
                     icon: "megaphone.fill",
                     isEnabled: false,
                     accessibilityHint: "아직 사용할 수 없습니다. 탭하면 출시 예정 안내가 표시됩니다",
-                    action: showComingSoonToast
+                    action: onComingSoon
                 )
 
                 PlusActionCardButton(
@@ -49,14 +54,13 @@ public struct PlusActionSheet: View {
                     icon: "sparkles",
                     isEnabled: false,
                     accessibilityHint: "아직 사용할 수 없습니다. 탭하면 출시 예정 안내가 표시됩니다",
-                    action: showComingSoonToast
+                    action: onComingSoon
                 )
             }
             .padding(.horizontal, .jsLG)
             .padding(.top, .jsXS)
             .padding(.bottom, .jsXL)
         }
-        .jsGlassToast(text: $toastText, isPresented: $isToastPresented)
     }
 
     private var header: some View {
@@ -72,11 +76,6 @@ public struct PlusActionSheet: View {
         .accessibilityElement(children: .combine)
         .accessibilityLabel("추가 작업 선택")
     }
-
-    private func showComingSoonToast() {
-        toastText = "곧 출시"
-        isToastPresented = true
-    }
 }
 
 private struct PlusActionCardButton: View {
@@ -89,50 +88,46 @@ private struct PlusActionCardButton: View {
 
     var body: some View {
         Button(action: action) {
-            JSGlassCard(cornerRadius: 20, accessibilityLabel: title) {
-                HStack(spacing: .jsMD) {
-                    Image(systemName: icon)
-                        .font(.jsHeadline20Bold)
-                        .foregroundStyle(iconColor)
-                        .frame(width: 40.jsScaled(), height: 40.jsScaled())
-                        .background(
-                            Circle()
-                                .fill(iconColor.opacity(isEnabled ? 0.14 : 0.08))
-                        )
-
-                    VStack(alignment: .leading, spacing: .jsMicro) {
-                        Text(title)
-                            .font(.jsBodyLarge)
-                            .foregroundStyle(titleColor)
-
-                        Text(subtitle)
-                            .font(.jsBodySmall)
-                            .foregroundStyle(Color.labelAlternative)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-
-                    Spacer(minLength: .jsXS)
-
-                    Image(systemName: isEnabled ? "chevron.right" : "clock.fill")
-                        .font(.jsBodySmall)
-                        .foregroundStyle(Color.labelAssistive)
-                }
-            }
+            cardContent
         }
         .buttonStyle(.plain)
-        .disabled(!isEnabled)
-        .overlay {
-            if !isEnabled {
-                RoundedRectangle(cornerRadius: 20, style: .continuous)
-                    .fill(Color.clear)
-                    .contentShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
-                    .onTapGesture(perform: action)
-            }
-        }
-        .opacity(isEnabled ? 1 : 0.62)
+        .disabled(false)
+        .accessibilityElement(children: .ignore)
         .accessibilityLabel(title)
         .accessibilityHint(accessibilityHint)
-        .accessibilityValue(isEnabled ? "" : "비활성")
+    }
+
+    private var cardContent: some View {
+        JSGlassCard(cornerRadius: 20, accessibilityLabel: title) {
+            HStack(spacing: .jsMD) {
+                Image(systemName: icon)
+                    .font(.jsHeadline20Bold)
+                    .foregroundStyle(iconColor)
+                    .frame(width: 40.jsScaled(), height: 40.jsScaled())
+                    .background(
+                        Circle()
+                            .fill(iconColor.opacity(isEnabled ? 0.14 : 0.08))
+                    )
+
+                VStack(alignment: .leading, spacing: .jsMicro) {
+                    Text(title)
+                        .font(.jsBodyLarge)
+                        .foregroundStyle(titleColor)
+
+                    Text(subtitle)
+                        .font(.jsBodySmall)
+                        .foregroundStyle(Color.labelAlternative)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                Spacer(minLength: .jsXS)
+
+                Image(systemName: isEnabled ? "chevron.right" : "clock.fill")
+                    .font(.jsBodySmall)
+                    .foregroundStyle(Color.labelAssistive)
+            }
+        }
+        .accessibilityHidden(true)
     }
 
     private var iconColor: Color {
@@ -145,5 +140,5 @@ private struct PlusActionCardButton: View {
 }
 
 #Preview("PlusActionSheet") {
-    PlusActionSheet(isPresented: .constant(true), onCreateTask: {})
+    PlusActionSheet(isPresented: .constant(true), onCreateTask: {}, onComingSoon: {})
 }

@@ -12,6 +12,7 @@ public final class HomeModel {
         case update(Domain.Task, index: Int)
         case allTasks
         case setting
+        case newTask
     }
 
     public struct MiniCardDisplayData: Equatable, Identifiable {
@@ -57,6 +58,7 @@ public final class HomeModel {
     public var heroTaskImageData: Data?
     public var loadingStartTime: Date?
     public var path: [Route] = []
+    public var newTask: NewTaskModel?
 
     @ObservationIgnored public let dependencies: JacsimDependencies
     @ObservationIgnored private var fetchTask: _Concurrency.Task<Void, Never>?

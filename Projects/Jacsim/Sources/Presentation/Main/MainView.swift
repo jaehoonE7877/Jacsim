@@ -10,32 +10,32 @@ public struct MainView: View {
     }
 
     public var body: some View {
-        NavigationStack(path: $model.path) {
-            ZStack {
-                Color.backgroundNormal
-                    .ignoresSafeArea()
+        ZStack {
+            Color.backgroundNormal
+                .ignoresSafeArea()
 
-                Group {
-                    switch model.selectedTab {
-                    case .today:
-                        HomeView(model: model.home)
-                    case .calendar:
-                        CalendarView(model: model.calendar)
-                    case .feed:
-                        FeedPlaceholderView(model: model.feed)
-                    case .me:
-                        MePlaceholderView(model: model.me)
-                    case .plus:
-                        EmptyView()
-                    default:
-                        HomeView(model: model.home)
-                    }
+            Group {
+                switch model.selectedTab {
+                case .today:
+                    HomeView(model: model.home)
+                case .calendar:
+                    CalendarView(model: model.calendar)
+                case .feed:
+                    FeedPlaceholderView(model: model.feed)
+                case .me:
+                    MePlaceholderView(model: model.me)
+                case .plus:
+                    EmptyView()
+                default:
+                    HomeView(model: model.home)
                 }
-                .id(model.selectedTab)
-                .transition(reduceMotion ? .identity : .opacity)
             }
-            .animation(reduceMotion ? .none : .easeInOut(duration: 0.18), value: model.selectedTab)
-            .safeAreaInset(edge: .bottom) {
+            .id(model.selectedTab)
+            .transition(reduceMotion ? .identity : .opacity)
+        }
+        .animation(reduceMotion ? .none : .easeInOut(duration: 0.18), value: model.selectedTab)
+        .safeAreaInset(edge: .bottom) {
+            if model.isRootTabBarVisible {
                 JSGlassFloatingTabBar(
                     selection: $model.selectedTab,
                     onSelect: { tab in
@@ -48,24 +48,36 @@ public struct MainView: View {
                 .padding(.top, .jsXS)
                 .padding(.bottom, .jsXS)
             }
-            .overlay {
+        }
+        .overlay {
+            if model.isRootTabBarVisible {
                 PlusActionSheet(
                     isPresented: $model.isPlusSheetPresented,
                     onCreateTask: {
                         model.createTaskActionTapped()
+                    },
+                    onComingSoon: {
+                        model.comingSoonActionTapped()
                     }
                 )
             }
-            .navigationDestination(for: MainModel.Route.self) { route in
-                switch route {
-                case .newTask:
-                    if let newTask = model.newTask {
-                        NewTaskView(model: newTask)
-                    } else {
-                        EmptyView()
-                    }
-                }
+        }
+        .overlay(alignment: .top) {
+            if let toastText = model.plusToastText {
+                JSGlassToast(text: toastText)
+                    .padding(.top, .jsXL)
+                    .padding(.horizontal, .jsXL)
+                    .transition(.move(edge: .top).combined(with: .opacity))
+                    .accessibilityLabel(toastText)
             }
+        }
+        .animation(JSAnimation.spring, value: model.plusToastText)
+        .sensoryFeedback(.impact(weight: .light), trigger: model.plusToastText)
+        .task(id: model.plusToastText) {
+            guard model.plusToastText != nil else { return }
+            try? await Task.sleep(nanoseconds: 3_000_000_000)
+            guard !Task.isCancelled else { return }
+            model.plusToastDismissed()
         }
     }
 }

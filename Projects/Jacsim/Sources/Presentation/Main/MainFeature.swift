@@ -4,14 +4,9 @@ import Observation
 @MainActor
 @Observable
 public final class MainModel {
-    public enum Route: Hashable {
-        case newTask
-    }
-
     public var selectedTab: JSTabItem = .today
     public var isPlusSheetPresented: Bool = false
-    public var path: [Route] = []
-    public var newTask: NewTaskModel?
+    public var plusToastText: String?
     public let home: HomeModel
     public let calendar: CalendarModel
     public let feed: FeedPlaceholderModel
@@ -27,6 +22,10 @@ public final class MainModel {
         self.me = MePlaceholderModel()
     }
 
+    public var isRootTabBarVisible: Bool {
+        home.path.isEmpty
+    }
+
     public func tabSelected(_ tab: JSTabItem) {
         guard tab != .plus else {
             plusButtonTapped()
@@ -36,12 +35,23 @@ public final class MainModel {
     }
 
     public func plusButtonTapped() {
+        plusToastText = nil
         isPlusSheetPresented = true
+    }
+
+    public func comingSoonActionTapped() {
+        plusToastText = "곧 출시"
+    }
+
+    public func plusToastDismissed() {
+        plusToastText = nil
     }
 
     public func createTaskActionTapped() {
         isPlusSheetPresented = false
-        newTask = NewTaskModel(
+        plusToastText = nil
+        selectedTab = .today
+        home.newTask = NewTaskModel(
             dependencies: dependencies,
             onTaskCreated: { [weak self] in
                 self?.newTaskCreated()
@@ -50,27 +60,27 @@ public final class MainModel {
                 self?.newTaskCancelled()
             }
         )
-        path.append(.newTask)
+        home.path.append(.newTask)
     }
 
     private func newTaskCreated() {
-        popNewTaskRoute()
-        newTask = nil
+        popHomeNewTaskRoute()
+        home.newTask = nil
         selectedTab = .today
         home.onAppear()
         calendar.loadTasks()
     }
 
     private func newTaskCancelled() {
-        popNewTaskRoute()
-        newTask = nil
+        popHomeNewTaskRoute()
+        home.newTask = nil
     }
 
-    private func popNewTaskRoute() {
-        if path.last == .newTask {
-            path.removeLast()
+    private func popHomeNewTaskRoute() {
+        if home.path.last == .newTask {
+            home.path.removeLast()
         } else {
-            path.removeAll { $0 == .newTask }
+            home.path.removeAll { $0 == .newTask }
         }
     }
 }
