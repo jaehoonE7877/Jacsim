@@ -1,5 +1,24 @@
 import SwiftUI
 
+public struct JSGlassToast: View {
+    private let text: String
+
+    public init(text: String) {
+        self.text = text
+    }
+
+    public var body: some View {
+        Text(text)
+            .font(.jsBodyMedium)
+            .foregroundStyle(Color.labelStrong)
+            .padding(.horizontal, .jsLG)
+            .padding(.vertical, .jsSM)
+            .background(Color.surfaceElevated.opacity(0.34))
+            .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 22))
+            .accessibilityLabel(text)
+    }
+}
+
 public struct JSGlassToastTextModifier: ViewModifier {
     @Binding private var text: String?
     @Binding private var isPresented: Bool
@@ -19,16 +38,9 @@ public struct JSGlassToastTextModifier: ViewModifier {
         content
             .overlay(alignment: .top) {
                 if isPresented, let text {
-                    Text(text)
-                        .font(.jsBodyMedium)
-                        .foregroundStyle(Color.labelStrong)
-                        .padding(.horizontal, .jsLG)
-                        .padding(.vertical, .jsSM)
-                        .background(Color.surfaceElevated.opacity(0.34))
-                        .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 22))
+                    JSGlassToast(text: text)
                         .padding(.top, .jsLG)
                         .transition(.move(edge: .top).combined(with: .opacity))
-                        .accessibilityLabel(text)
                 }
             }
             .sensoryFeedback(.impact(weight: .light), trigger: isPresented)
