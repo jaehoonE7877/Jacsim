@@ -113,8 +113,8 @@ public struct JSGlassHeroCard: View {
     }
 }
 
-struct JSGlassHeroCard_Previews: PreviewProvider {
-    static var previews: some View {
+private struct JSGlassHeroCardPreview: View {
+    var body: some View {
         ScrollView {
             VStack {
                 JSGlassHeroCard(
@@ -127,18 +127,23 @@ struct JSGlassHeroCard_Previews: PreviewProvider {
                     onTap: {}
                 )
                 .padding()
-
-                JSGlassHeroCard(
-                    title: "물 2L 마시기",
-                    progress: 0.3,
-                    totalDays: 7,
-                    completedDays: 2,
-                    isTodayCertified: true,
-                    onTap: {}
-                )
-                .padding()
             }
         }
         .background(Color.backgroundAlternative)
     }
+}
+
+#Preview("JSGlassHeroCard - Light") {
+    JSGlassHeroCardPreview()
+        .preferredColorScheme(.light)
+}
+
+#Preview("JSGlassHeroCard - Dark") {
+    JSGlassHeroCardPreview()
+        .preferredColorScheme(.dark)
+}
+
+#Preview("JSGlassHeroCard - Accessibility") {
+    JSGlassHeroCardPreview()
+        .dynamicTypeSize(.accessibility3)
 }

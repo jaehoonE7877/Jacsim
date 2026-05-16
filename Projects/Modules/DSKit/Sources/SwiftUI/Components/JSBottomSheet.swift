@@ -257,40 +257,41 @@ public struct JSDatePickerBottomSheet: View {
     }
 }
 
-struct JSBottomSheet_Previews: PreviewProvider {
-    struct PreviewContainer: View {
-        @State private var showSheet = false
-        @State private var selectedDate = Date()
+private struct JSBottomSheetPreview: View {
+    @State private var showSheet = true
+    @State private var selectedDate = Date()
 
-        var body: some View {
-            ZStack {
-                VStack {
-                    Button(action: { showSheet = true }) {
-                        Text("Show Bottom Sheet")
-                            .font(.jsHeadline17Bold)
-                            .foregroundColor(.white)
-                            .padding()
-                            .background(
-                                RoundedRectangle(cornerRadius: 10)
-                                    .fill(Color.primaryNormal)
-                            )
-                    }
-                    .padding()
-
-                    Spacer()
-                }
-
-                JSDatePickerBottomSheet(
-                    selectedDate: $selectedDate,
-                    isPresented: $showSheet,
-                    title: "날짜 선택",
-                    onConfirm: {}
-                )
+    var body: some View {
+        ZStack {
+            LinearGradient.wallpaperMorning
+                .ignoresSafeArea()
+            Button("Show Bottom Sheet") {
+                showSheet = true
             }
+            .font(.jsButtonMedium)
+            .buttonStyle(.glassProminent)
+            .accessibilityLabel("Show glass bottom sheet")
+            JSDatePickerBottomSheet(
+                selectedDate: $selectedDate,
+                isPresented: $showSheet,
+                title: "날짜 선택",
+                onConfirm: {}
+            )
         }
     }
+}
 
-    static var previews: some View {
-        PreviewContainer()
-    }
+#Preview("JSBottomSheet - Light") {
+    JSBottomSheetPreview()
+        .preferredColorScheme(.light)
+}
+
+#Preview("JSBottomSheet - Dark") {
+    JSBottomSheetPreview()
+        .preferredColorScheme(.dark)
+}
+
+#Preview("JSBottomSheet - Accessibility") {
+    JSBottomSheetPreview()
+        .dynamicTypeSize(.accessibility3)
 }
