@@ -59,6 +59,8 @@ public struct JSInputField: View {
             .disabled(!isEnabled)
             .opacity(isEnabled ? 1.0 : 0.5)
             .frame(minHeight: 44.jsScaled(.touchTarget))
+            .accessibilityLabel(accessibilityTitle)
+            .accessibilityHint(errorMessage ?? "")
 
             if let error = errorMessage {
                 Text(error)
@@ -73,6 +75,10 @@ public struct JSInputField: View {
             return .destructive
         }
         return .labelAlternative
+    }
+
+    private var accessibilityTitle: String {
+        title.isEmpty ? placeholder : title
     }
 }
 

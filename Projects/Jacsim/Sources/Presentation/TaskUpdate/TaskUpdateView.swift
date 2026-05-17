@@ -13,11 +13,12 @@ public struct TaskUpdateView: View {
     public var body: some View {
         RedesignScreenScaffold(
             title: "오늘 인증",
-            subtitle: model.dateText,
             stickyFooter: {
                 bottomCTASection
             }
         ) {
+            checkInHeroCard
+
             if model.isOverwriteMode {
                 overwriteBanner
             }
@@ -58,22 +59,74 @@ public struct TaskUpdateView: View {
     
     private var overwriteBanner: some View {
         RedesignStateBanner(
-            text: "오늘 인증은 다시 저장하면 덮어써져요",
+            text: "다시 저장하면 오늘 기록이 바뀌어요",
             icon: "info.circle.fill",
-            tintColor: .primaryNormal
+            tintColor: .v2BrandBlue
         )
+    }
+
+    private var checkInHeroCard: some View {
+        ZStack(alignment: .bottomLeading) {
+            LinearGradient(
+                colors: [
+                    Color.v2BrandBlue.opacity(0.86),
+                    Color.v2BrandBlueStrong.opacity(0.92)
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+
+            Circle()
+                .fill(Color.white.opacity(0.16))
+                .frame(width: 132.jsScaled(), height: 132.jsScaled())
+                .offset(x: 220.jsScaled(), y: -72.jsScaled())
+                .accessibilityHidden(true)
+
+            VStack(alignment: .leading, spacing: .jsMD) {
+                HStack(spacing: .jsXS) {
+                    JSV2StatusChip(model.dateText, systemImage: "calendar", style: .neutral)
+                    JSV2StatusChip(
+                        model.image == nil ? "사진 필요" : "사진 준비",
+                        systemImage: model.image == nil ? "camera.fill" : "checkmark.circle.fill",
+                        style: model.image == nil ? .warning : .success
+                    )
+                    Spacer(minLength: .jsXS)
+                }
+
+                Spacer(minLength: .jsMD)
+
+                VStack(alignment: .leading, spacing: .jsXS) {
+                    Text(model.task.title)
+                        .font(.jsDisplay26Bold)
+                        .foregroundColor(.white)
+                        .lineLimit(2)
+                        .minimumScaleFactor(0.82)
+
+                    Text("\(model.task.completedDays)일 인증 · \(Int(model.task.progress * 100))%")
+                        .font(.jsBodySmall)
+                        .foregroundColor(.white.opacity(0.84))
+                        .lineLimit(1)
+                }
+            }
+            .padding(.jsLG)
+        }
+        .frame(height: 220.jsScaled())
+        .frame(maxWidth: .infinity)
+        .clipShape(RoundedRectangle(cornerRadius: 28.jsScaled(), style: .continuous))
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("오늘 인증, \(model.task.title), \(model.dateText), \(model.image == nil ? "사진 미선택" : "사진 선택됨")")
     }
     
     private var photoPickerSection: some View {
-        RedesignSectionCard(
-            title: "인증 사진",
-            subtitle: "오늘의 진행 상황을 남겨요"
-        ) {
+        RedesignSectionCard(title: "사진으로 인증") {
             ImageAttachmentPicker(
                 image: model.image,
-                emptyTitle: "인증 사진을 추가해 주세요",
-                emptySubtitle: "가로·세로 비율은 자동으로 맞춰져요",
-                height: 300.jsScaled()
+                emptyTitle: "오늘 사진",
+                emptySubtitle: "한 장이면 충분해요",
+                selectedBadgeTitle: "준비됨",
+                cameraButtonTitle: "촬영",
+                libraryButtonTitle: "앨범",
+                height: 336.jsScaled()
             ) { image in
                 model.imageSelected(image)
             }
@@ -81,28 +134,22 @@ public struct TaskUpdateView: View {
     }
     
     private var memoInputSection: some View {
-        RedesignSectionCard(
-            title: "한 줄 메모",
-            subtitle: "선택사항 · 최대 30자"
-        ) {
+        RedesignSectionCard(title: "메모") {
             VStack(alignment: .trailing, spacing: .jsXS) {
-                TextField("짧게 기록해요 (선택)", text: $model.memo, axis: .vertical)
+                TextField("한 줄만 남겨요", text: $model.memo, axis: .vertical)
                     .font(.jsBodyMedium)
                     .padding()
-                    .background(Color.backgroundStrong)
+                    .background(Color.v2Surface)
                     .cornerRadius(.jsRadiusMD)
                     .overlay(
                         RoundedRectangle(cornerRadius: .jsRadiusMD)
-                            .stroke(Color.primaryNormal.opacity(0.5), lineWidth: 1)
+                            .stroke(Color.labelAssistive.opacity(0.22), lineWidth: 1)
                     )
                     .lineLimit(2...4)
+                    .accessibilityHint("선택 사항입니다")
                 
                 Text("\(model.memo.count)/\(TextInputFieldPolicy.memo.maxLength)")
                     .font(.jsLabelMedium)
-                    .foregroundColor(.labelAssistive)
-
-                Text("공백 포함 · 저장 시 앞뒤 공백은 자동 정리돼요")
-                    .font(.jsLabelSmall)
                     .foregroundColor(.labelAssistive)
             }
         }
@@ -119,7 +166,8 @@ public struct TaskUpdateView: View {
     private var bottomCTASection: some View {
         VStack(spacing: 0) {
             JSButton(
-                title: "오늘 작심 완료했어요",
+                title: "인증 완료",
+                systemImage: "checkmark.circle.fill",
                 style: .primary,
                 size: .large,
                 isEnabled: isButtonEnabled && !model.isSaving
@@ -132,9 +180,9 @@ public struct TaskUpdateView: View {
         .background(
             LinearGradient(
                 colors: [
-                    Color.backgroundNormal.opacity(0),
-                    Color.backgroundNormal,
-                    Color.backgroundNormal
+                    Color.v2Background.opacity(0),
+                    Color.v2Background,
+                    Color.v2Background
                 ],
                 startPoint: .top,
                 endPoint: .bottom
@@ -150,10 +198,10 @@ public struct TaskUpdateView: View {
             
             VStack(spacing: .jsSM) {
                 ProgressView()
-                    .progressViewStyle(CircularProgressViewStyle(tint: .primaryNormal))
+                    .progressViewStyle(CircularProgressViewStyle(tint: .v2BrandBlue))
                     .scaleEffect(1.5)
                 
-                Text("저장 중...")
+                Text("저장 중")
                     .font(.jsButtonSmall)
                     .foregroundColor(.labelStrong)
             }

@@ -1,51 +1,78 @@
 # Jacsim
 
-[![iOS](https://img.shields.io/badge/iOS-18%2B-0A84FF)](https://developer.apple.com/ios/)
+[![iOS](https://img.shields.io/badge/iOS-26%2B-0A84FF)](https://developer.apple.com/ios/)
 [![Swift](https://img.shields.io/badge/Swift-6-F05138)](https://swift.org)
 [![Tuist](https://img.shields.io/badge/Tuist-4.x-6E56CF)](https://tuist.dev)
-[![Architecture](https://img.shields.io/badge/Architecture-Port%20%26%20Adapter-1F9D55)](#아키텍처)
+[![Architecture](https://img.shields.io/badge/Architecture-Port%20%26%20Adapter-1F9D55)](#architecture-at-a-glance)
 
-SwiftUI + TCA 기반 iOS 앱입니다.  
-멀티모듈 구조와 Port & Adapter 아키텍처를 적용해, UI/도메인/인프라 관심사를 분리합니다.
+작심(Jacsim)은 오늘의 목표를 만들고, 사진과 메모로 매일 인증하며, 캘린더와 위젯으로 흐름을 돌아보는 iOS 앱입니다.
+`홈 -> 생성 -> 기록 -> 회고` 흐름을 SwiftUI + @Observable로 구현하고, Port & Adapter와 Tuist 멀티모듈 구조로 UI, 도메인, 인프라 관심사를 분리합니다.
 
-## 핵심 포인트
-- **SwiftUI + TCA**: 화면 상태와 액션 흐름을 예측 가능하게 관리
-- **Port & Adapter**: 도메인/애플리케이션이 인프라 구현체에 직접 의존하지 않도록 분리
-- **Tuist 멀티모듈**: 빌드·의존성·설정을 모듈 단위로 관리
+## Key Highlights
 
-## 아키텍처
+- **SwiftUI + @Observable**: 화면 상태, 액션, 비동기 효과를 명시적인 모델 흐름으로 관리합니다.
+- **Port & Adapter**: Presentation, Use case, Domain, Adapter 경계를 분리해 변경 영향을 줄입니다.
+- **Tuist 멀티모듈**: 앱, 조립 레이어, 도메인, 포트, 어댑터, 디자인 시스템을 모듈 단위로 관리합니다.
+
+## Product Overview
+
+- **홈**: 오늘 가장 중요한 작심과 진행 중인 작심을 한 화면에서 확인합니다.
+- **생성**: 제목, 기간, 사진, 알림을 단계별로 설정하며 새 작심을 만듭니다.
+- **기록**: 인증 사진과 한 줄 메모로 오늘의 진행 상황을 남깁니다.
+- **회고**: 캘린더와 전체 목록에서 진행, 성공, 실패 흐름을 돌아봅니다.
+- **설정**: 알림, 테마, 사용 안내, 오픈소스 라이선스 정보를 관리합니다.
+
+## Architecture At A Glance
+
+<p align="center">
+  <img src="architecture.svg" width="900" alt="Jacsim architecture (Port & Adapter)" />
+</p>
+
+<details>
+<summary>텍스트 버전</summary>
+
 ```text
-Presentation(App) ──▶ Application UseCases ──▶ ExternalInterface(Ports)
-      ▲                                                   │
-      │                                                   ▼
-      └────────────── Domain Rules ◀────────────── Data Adapters
+Presentation(App) ──▶ Client/Application orchestration ──▶ ExternalInterface ports
+      │                                                               ▲
+      └──────────────────────────── Domain rules ─────────────────────┘
+                                      │
+                                      ▼
+                               Data adapters
 ```
 
-### 모듈 책임
-| Module | Responsibility |
-|---|---|
-| `Projects/Jacsim` | App entry, Presentation(TCA), Application use case orchestration |
-| `Projects/Domain` | 비즈니스 규칙, 엔티티, 도메인 서비스 |
-| `Projects/ExternalInterface` | Port(프로토콜) 계약 정의 |
-| `Projects/Data` | SwiftData/UserDefaults/알림 등 외부 I/O Adapter 구현 |
-| `Projects/Modules/Core` | 공통 유틸/확장 |
-| `Projects/Modules/DSKit` | 디자인 토큰/공통 UI 컴포넌트 |
-| `Projects/Modules/ThirdPartyLibs` | 외부 라이브러리 집약 |
+</details>
 
-## 빠른 시작
-### 요구사항
+### 모듈 책임
+
+| 모듈 | 책임 |
+|---|---|
+| `Projects/Jacsim` | 앱 진입점, Presentation 화면, Application orchestration |
+| `Projects/JacsimWidget` | Today/Streak WidgetKit extension |
+| `Projects/Domain` | 비즈니스 규칙, 엔티티, 도메인 서비스 |
+| `Projects/ExternalInterface` | `Ports`: 계약과 경계 인터페이스 |
+| `Projects/Data` | `Adapters`: SwiftData, UserDefaults, 알림 등 외부 I/O 구현 |
+| `Projects/Modules/Core` | 공통 유틸리티와 익스텐션 |
+| `Projects/Modules/DSKit` | 디자인 토큰과 공용 UI 컴포넌트 |
+| `Projects/Modules/ThirdPartyLibs` | 외부 라이브러리 집합과 의존성 정리 |
+
+## Getting Started
+
+### Requirements
+
 - Xcode
 - Tuist
 - iOS 26+ 시뮬레이터 또는 디바이스
 
-### 로컬 빌드
+### Local Build
+
 ```bash
 tuist install
 tuist generate
 tuist build Jacsim
 ```
 
-### 테스트
+### Tests
+
 ```bash
 tuist test Jacsim
 tuist test Domain
@@ -53,25 +80,15 @@ tuist test Data
 tuist test ExternalInterface
 ```
 
-## CI/CD 운영
-- **배포 경로 단일화**: TestFlight 배포는 **Xcode Cloud**만 사용
-- **GitHub Actions 역할**: 보조 CI(`lint/test`) 전용
-- **Xcode Cloud 트리거 기본값**: `develop` 브랜치 변경 시 자동 실행
-- **배포 스킴**: `Jacsim-Release`
-- **TestFlight 대상**: Internal Tester
-- **빌드 번호**: Xcode Cloud 자동 증가
+> `DesignSystem`에는 전용 unit test target이 없습니다. DSKit 변경은 `tuist build Jacsim`과 영향받는 downstream scheme 테스트로 검증합니다.
 
-### Xcode Cloud/App Store Connect 콘솔 설정값
-1. App Store Connect > 앱 > Xcode Cloud에서 워크플로를 생성하고, 스킴은 `Jacsim-Release`를 선택
-2. Start Condition은 `Branch Changes`, 브랜치는 `develop`으로 설정 (Develop 머지 시 자동 실행)
-3. Action은 `Archive - iOS App` + `Distribute to TestFlight`를 사용하고 Internal Tester로 배포
-4. Environment Variables/Secrets에 `GOOGLE_SERVICE_INFO_PLIST_BASE64`를 등록
-5. Custom Build Script의 Post-clone 경로를 `ci_scripts/ci_post_clone.sh`로 등록
+## Development Guide
 
-### Xcode Cloud 자동 빌드 번호 동작
-- Xcode Cloud의 `CI_BUILD_NUMBER`를 Post-clone에서 `TUIST_APP_BUILD_NUMBER`로 전달
-- Tuist 생성 시 `CURRENT_PROJECT_VERSION`이 `TUIST_APP_BUILD_NUMBER`로 설정
-- `CFBundleVersion`은 `$(CURRENT_PROJECT_VERSION)`를 사용하므로 매 빌드마다 자동 증가
+- 새 화면은 `*Feature.swift` + `*View.swift` 쌍으로 구성합니다.
+- Presentation은 `JacsimDependencies`가 노출하는 port, query, use case dependency를 사용하고 concrete adapter를 직접 참조하지 않습니다.
+- read-only 화면 조립은 query surface를 우선 사용하고, multi-step 비즈니스 흐름은 use case로 호출합니다.
+- trivial wrapper use case를 늘리지 않고, 단순 I/O는 기존 port dependency를 우선 사용합니다.
+- 상세 규칙, 작업 경계, 테스트 기준은 [AGENTS.md](AGENTS.md)를 기준으로 따릅니다.
 
 ## 로컬 Firebase 설정
 - `Projects/Jacsim/Resources/GoogleService-Info.plist`는 `.gitignore` 대상이며 커밋하지 않습니다.
@@ -86,34 +103,18 @@ tuist test ExternalInterface
 - Xcode Cloud environment variables: https://developer.apple.com/documentation/xcode/environment-variable-reference
 - TestFlight internal testers: https://developer.apple.com/help/app-store-connect/test-a-beta-version/invite-internal-testers
 
-### Tuist Cache (CAS) 트러블슈팅
-- 기본값은 Xcode cache 비활성화(`TUIST_XCODE_CACHE` 미설정)
-- 필요할 때만 `TUIST_XCODE_CACHE=1`로 활성화하고 `tuist setup cache`를 실행
-- 캐시 소켓 이슈가 발생하면 `TUIST_XCODE_CACHE`를 비워 다시 생성하면 됨
+## Documentation Map
 
-## 프로젝트 구조
-```text
-Projects/
-├── Jacsim/              # App(Presentation/Application)
-├── Domain/              # Domain logic
-├── ExternalInterface/   # Port contracts
-├── Data/                # Adapter implementations
-└── Modules/
-    ├── Core/
-    ├── DSKit/
-    └── ThirdPartyLibs/
-```
-
-## 개발 원칙
-- 신규 화면은 **SwiftUI + TCA**로 구현
-- Domain은 UI/인프라 구현에 의존하지 않음
-- Data는 Port 구현 중심, 비즈니스 규칙은 Domain에 배치
-- 생성 산출물(`Derived`, `.build`, `build`) 직접 수정 금지
+- [AGENTS.md](AGENTS.md): 저장소 전체 작업 규칙, 테스트 기준, 모듈 가이드 진입점
+- [Projects/Jacsim/AGENTS.md](Projects/Jacsim/AGENTS.md): app presentation과 dependency wiring 규칙
+- [design-system/jacsim/MASTER.md](design-system/jacsim/MASTER.md): 디자인 시스템 규칙과 UI 원칙
+- [Docs/design/CLAUDE_DESIGN_SSOT.md](Docs/design/CLAUDE_DESIGN_SSOT.md): Claude Design 기반 SSoT
+- [Docs/design/VISIBILITY_MATRIX.md](Docs/design/VISIBILITY_MATRIX.md): Social visibility matrix
+- [Docs/migration/tca-to-swiftui-async-await/PLAN.md](Docs/migration/tca-to-swiftui-async-await/PLAN.md): SwiftUI/async-await migration plan
 
 ## Contributing
-- 브랜치/PR/커밋 규칙은 `AGENTS.md`의 컨벤션을 따릅니다.
-- 커밋 타입: `Feat`, `Fix`, `Docs`, `Style`, `Refactor`, `Test`, `Chore`
 
-## 공개 저장소 문서 정책
-- README와 AGENTS에는 **비밀값, 인증 키, 개인 식별자, 내부 운영 절차**를 기재하지 않습니다.
-- 실행에 필요한 민감 설정은 로컬/CI의 비밀 저장소에서 관리합니다.
+- 브랜치는 `develop`에서 `feature/*`, `fix/*`, `refactor/*`를 사용합니다.
+- 커밋 prefix는 `Feat:`, `Fix:`, `Refactor:`, `Chore:`, `Docs:`를 사용합니다.
+- PR 전에는 `tuist generate`, `tuist build Jacsim`, 변경 모듈 테스트를 실행합니다.
+- 세부 절차와 컨벤션은 [AGENTS.md](AGENTS.md)에 정리되어 있습니다.

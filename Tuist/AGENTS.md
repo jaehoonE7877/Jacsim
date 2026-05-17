@@ -1,20 +1,41 @@
 # Tuist
 
-## Overview
-- 프로젝트/타깃/템플릿을 코드로 생성하는 기준 레이어
-- 모듈 구조와 빌드 구성을 선언적으로 유지
+**Purpose**: Tuist 기반 선언형 project/target/template 생성 계층으로, module 구조와 build config의 source of truth 역할을 합니다.
 
-## Where to Find
-| Task | Location |
+## Key Paths
+
+| Task | Path |
 |---|---|
-| 모듈 생성 템플릿 | `Tuist/ProjectDescriptionHelpers/Project+Templates.swift` |
-| 타깃 종류 정의 | `Tuist/ProjectDescriptionHelpers/FeatureTarget.swift` |
-| 템플릿 파일 | `Tuist/Templates/**` |
-| 워크스페이스 구성 | `Workspace.swift` |
+| Project builders | `ProjectDescriptionHelpers/Project+Templates.swift` |
+| Swift language version | `ProjectDescriptionHelpers/FeatureTarget.swift` |
+| Scaffold templates | `Templates/**` |
+| Workspace config | `../Workspace.swift` |
 
-## Conventions
-- 타깃 구조 변경은 템플릿/헬퍼에 먼저 반영
-- xcconfig 매핑과 함께 변경해 드리프트 방지
+## Verify
 
-## Anti-Patterns
-- Xcode UI에서만 설정 수정 후 Tuist 정의 미반영
+```bash
+tuist generate
+tuist build Jacsim
+```
+
+> 템플릿 또는 helper 변경으로 영향받는 module이 있으면 해당 scheme의 `tuist test <affected-scheme>`도 실행합니다.
+
+## Rules
+
+### ✅ Do
+
+- 템플릿과 helper에 target/structure 변경을 우선 반영
+- 앱 target은 `makeAppProject(...)`, 프레임워크/모듈 target은 `makeFrameworkProject(...)` 기준으로 유지한다
+- 새 모듈 스캐폴드는 `Templates/**`와 두 builder 규칙을 함께 갱신한다
+- build configuration 수정 시 xcconfig mapping을 반드시 동기화
+- 테스트 설정 변경 시 `XCConfig.tests`와 `includeTests` 동작을 함께 검토한다
+
+### ⚠️ Ask First
+
+- `Tuist.swift`, `Workspace.swift`, plugin reference 변경은 전체 module에 영향을 주므로 사전 확인 필요
+
+### 🚫 Do Not
+
+- Tuist definitions를 갱신하지 않고 Xcode UI로만 settings 수정 금지
+- 범용 flag surface를 다시 늘리기 위해 generic builder를 재도입하지 않는다
+- `FeatureTarget.swift`를 target-type 정의 파일로 다시 확장하지 않는다. 현재 역할은 Swift language version 보조에 한정한다

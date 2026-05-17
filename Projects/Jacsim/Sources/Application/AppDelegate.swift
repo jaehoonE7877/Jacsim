@@ -17,8 +17,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate{
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         
-        FirebaseApp.configure()
-        Crashlytics.crashlytics().setCrashlyticsCollectionEnabled(true)
+        configureFirebaseIfAvailable()
 
         UNUserNotificationCenter.current().delegate = notificationDelegate
 
@@ -28,6 +27,14 @@ class AppDelegate: UIResponder, UIApplicationDelegate{
        
         
         return true
+    }
+
+    private func configureFirebaseIfAvailable() {
+        guard FirebaseApp.app() == nil else { return }
+        guard Bundle.main.path(forResource: "GoogleService-Info", ofType: "plist") != nil else { return }
+
+        FirebaseApp.configure()
+        Crashlytics.crashlytics().setCrashlyticsCollectionEnabled(true)
     }
 
     func application(

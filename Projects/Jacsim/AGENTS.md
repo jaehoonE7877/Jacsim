@@ -5,22 +5,33 @@
 - Presentation 레이어와 Application 오케스트레이션 레이어 포함
 - 앱 라이프사이클 초기화는 `AppDelegate`에서 처리
 
-## Where to Find
-| Task | Location |
+`*Feature.swift` files define `@Observable` screen models, state, and user-action methods. Matching `*View.swift` files render SwiftUI and bind to those models.
+
+## Key Paths
+| Task | Path |
 |---|---|
-| App entry | `Projects/Jacsim/Sources/Application/JacsimApp.swift` |
-| App lifecycle | `Projects/Jacsim/Sources/Application/AppDelegate.swift` |
-| Root app model | `Projects/Jacsim/Sources/Presentation/App/AppFeature.swift` |
-| Home flow | `Projects/Jacsim/Sources/Presentation/Home/**` |
-| App use cases | `Projects/Jacsim/Sources/Application/UseCases/**` |
-| DI client wiring | `Projects/Jacsim/Sources/Client/**` |
+| App entry | `Sources/Application/JacsimApp.swift` |
+| App lifecycle | `Sources/Application/AppDelegate.swift` |
+| App use cases | `Sources/Application/UseCases/**` |
+| Dependency/client wiring | `Sources/Client/**` |
+| Root app model | `Sources/Presentation/App/AppFeature.swift` |
+| Home flow | `Sources/Presentation/Home/**` |
+| Shared presentation helpers | `Sources/Presentation/Common/**` |
+
+## Test
+```bash
+tuist test Jacsim
+```
 
 ## Conventions
-- Presentation은 포트 클라이언트(`taskQueryClient`, `taskCommandClient` 등) 중심으로 사용
-- 구체 인프라 접근은 `Client`/`Application` 계층으로 제한
-- 화면 단위는 `@Observable` `*Feature.swift` + SwiftUI `*View.swift` 쌍으로 유지
+- Presentation accesses data/settings through injected client ports and `JacsimDependencies`.
+- Concrete infrastructure access stays in `Client`/`Application` wiring, not in SwiftUI views.
+- Screen state and user-action methods live in `@Observable` `*Model` types.
+- UI composition stays in `*View.swift`; keep business rules in `Domain` and orchestration in Application use cases.
+- New screens should follow the existing `*Feature.swift` + `*View.swift` pairing.
 
 ## Anti-Patterns
-- Presentation에서 Data adapter 직접 참조
-- Feature model 내부에 UserDefaults/SwiftData 구현 세부 하드코딩
-- 신규 UIKit 기반 화면 추가
+- Importing `Data` or referencing adapters directly from Presentation.
+- Hardcoding `UserDefaults`, SwiftData, or notification implementation details inside screen models.
+- Adding new UIKit-based screens.
+- Adding new ComposableArchitecture/TCA reducers, stores, or `TestStore` tests.

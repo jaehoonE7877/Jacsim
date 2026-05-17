@@ -1,24 +1,24 @@
 import SwiftUI
 
 public enum JSCornerRadius {
-    /// 8pt - Small radius (buttons, small cards)
+    /// 8pt - 작은 반경 (버튼, 작은 카드)
     public static var small: CGFloat { 8.jsScaled() }
     
-    /// 12pt - Medium radius (cards, inputs)
+    /// 12pt - 중간 반경 (카드, 입력 필드)
     public static var medium: CGFloat { 12.jsScaled() }
     
-    /// 16pt - Large radius (modals, sheets)
+    /// 16pt - 큰 반경 (모달, 시트)
     public static var large: CGFloat { 16.jsScaled() }
     
-    /// 20pt - Extra large radius (bottom sheets)
+    /// 20pt - 특대 반경 (하단 시트)
     public static var extraLarge: CGFloat { 20.jsScaled() }
     
-    /// 9999pt - Circular radius (pills, avatars)
+    /// 9999pt - 원형 반경 (필 및 아바타)
     public static let circular: CGFloat = 9999
 }
 
 public enum JSShadow {
-    /// Small shadow - subtle elevation
+    /// 작은 그림자 - 은은한 입체감
     public static var small: ShadowStyle {
         ShadowStyle(
             color: Color.surfaceOverlay.opacity(0.16),
@@ -28,7 +28,7 @@ public enum JSShadow {
         )
     }
     
-    /// Medium shadow - standard elevation
+    /// 중간 그림자 - 기본 입체감
     public static var medium: ShadowStyle {
         ShadowStyle(
             color: Color.surfaceOverlay.opacity(0.24),
@@ -38,7 +38,7 @@ public enum JSShadow {
         )
     }
     
-    /// Large shadow - prominent elevation
+    /// 큰 그림자 - 강조된 입체감
     public static var large: ShadowStyle {
         ShadowStyle(
             color: Color.surfaceOverlay.opacity(0.32),
@@ -91,7 +91,7 @@ public extension CGFloat {
     static var jsCornerExtraLarge: CGFloat { JSCornerRadius.extraLarge }
     static var jsCornerCircular: CGFloat { JSCornerRadius.circular }
     
-    // Legacy aliases for backward compatibility
+    // 레거시 별칭 (하위 호환성 유지)
     static var jsRadiusSM: CGFloat { JSCornerRadius.small }
     static var jsRadiusMD: CGFloat { JSCornerRadius.medium }
     static var jsRadiusLG: CGFloat { JSCornerRadius.large }

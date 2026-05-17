@@ -39,6 +39,63 @@ public extension UIColor {
     }
 }
 
+// MARK: - V2 Brand
+public extension UIColor {
+
+    static var v2BrandBlue: UIColor {
+        UIColor { traits -> UIColor in
+            if traits.accessibilityContrast == .high {
+                return traits.userInterfaceStyle == .dark
+                    ? UIColor(hexString: "#5AA2FF")
+                    : UIColor(hexString: "#0057D8")
+            }
+            return traits.userInterfaceStyle == .dark
+                ? UIColor(hexString: "#4D9BFF")
+                : UIColor(hexString: "#0077FF")
+        }
+    }
+
+    static var v2BrandBlueStrong: UIColor {
+        UIColor { traits -> UIColor in
+            traits.userInterfaceStyle == .dark
+                ? UIColor(hexString: "#1677FF")
+                : UIColor(hexString: "#005EEB")
+        }
+    }
+
+    static var v2BrandBlueSoft: UIColor {
+        UIColor { traits -> UIColor in
+            traits.userInterfaceStyle == .dark
+                ? UIColor(hexString: "#0B3A6B", alpha: 0.72)
+                : UIColor(hexString: "#EAF3FF")
+        }
+    }
+
+    static var v2Background: UIColor {
+        UIColor { traits -> UIColor in
+            traits.userInterfaceStyle == .dark
+                ? UIColor(hexString: "#111316")
+                : UIColor(hexString: "#FFFFFF")
+        }
+    }
+
+    static var v2Surface: UIColor {
+        UIColor { traits -> UIColor in
+            traits.userInterfaceStyle == .dark
+                ? UIColor(hexString: "#1B1E23")
+                : UIColor(hexString: "#F5F8FC")
+        }
+    }
+
+    static var v2SurfaceElevated: UIColor {
+        UIColor { traits -> UIColor in
+            traits.userInterfaceStyle == .dark
+                ? UIColor(hexString: "#242830")
+                : UIColor(hexString: "#FFFFFF")
+        }
+    }
+}
+
 //MARK: - Label
 public extension UIColor {
     

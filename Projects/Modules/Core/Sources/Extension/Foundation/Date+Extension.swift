@@ -31,28 +31,28 @@ public extension Date {
     
     var calendar: Calendar { Calendar.current }
     
-    /// SwifterSwift: Week of year.
+    /// 연중 주차.
     ///
-    ///        Date().weekOfYear -> 2 // second week in the year.
+    ///        Date().weekOfYear -> 2 // 연중 두 번째 주.
     ///
     var weekOfYear: Int {
         return calendar.component(.weekOfYear, from: self)
     }
     
-    /// SwifterSwift: Week of month.
+    /// 월간 주차.
     ///
-    ///        Date().weekOfMonth -> 3 // date is in third week of the month.
+    ///        Date().weekOfMonth -> 3 // 이번 달 세 번째 주.
     ///
     var weekOfMonth: Int {
         return calendar.component(.weekOfMonth, from: self)
     }
 
-    /// SwifterSwift: Year.
+    /// 연도.
     ///
     ///        Date().year -> 2017
     ///
     ///        var someDate = Date()
-    ///        someDate.year = 2000 // sets someDate's year to 2000
+    ///        someDate.year = 2000 // someDate의 연도를 2000으로 변경합니다.
     ///
     var year: Int {
         get {
@@ -67,12 +67,12 @@ public extension Date {
             }
         }
     }
-    /// SwifterSwift: Month.
+    /// 월.
     ///
     ///     Date().month -> 1
     ///
     ///     var someDate = Date()
-    ///     someDate.month = 10 // sets someDate's month to 10.
+    ///     someDate.month = 10 // someDate의 월을 10월로 변경합니다.
     ///
     var month: Int {
         get {
@@ -90,12 +90,12 @@ public extension Date {
         }
     }
     
-    /// SwifterSwift: Day.
+    /// 일.
     ///
     ///     Date().day -> 12
     ///
     ///     var someDate = Date()
-    ///     someDate.day = 1 // sets someDate's day of month to 1.
+    ///     someDate.day = 1 // someDate의 일을 1일로 변경합니다.
     ///
     var day: Int {
         get {
@@ -113,20 +113,20 @@ public extension Date {
         }
     }
     
-    /// SwifterSwift: Weekday.
+    /// 요일.
     ///
-    ///     Date().weekday -> 5 // fifth day in the current week.
+    ///     Date().weekday -> 5 // 현재 주의 다섯 번째 요일.
     ///
     var weekday: Int {
         return calendar.component(.weekday, from: self)
     }
 
-    /// SwifterSwift: Hour.
+    /// 시각.
     ///
-    ///     Date().hour -> 17 // 5 pm
+    ///     Date().hour -> 17 // 오후 5시
     ///
     ///     var someDate = Date()
-    ///     someDate.hour = 13 // sets someDate's hour to 1 pm.
+    ///     someDate.hour = 13 // someDate의 시간을 오후 1시(13시)로 변경합니다.
     ///
     var hour: Int {
         get {
@@ -144,12 +144,12 @@ public extension Date {
         }
     }
 
-    /// SwifterSwift: Minutes.
+    /// 분.
     ///
     ///     Date().minute -> 39
     ///
     ///     var someDate = Date()
-    ///     someDate.minute = 10 // sets someDate's minutes to 10.
+    ///     someDate.minute = 10 // someDate의 분을 10으로 변경합니다.
     ///
     var minute: Int {
         get {
@@ -167,7 +167,7 @@ public extension Date {
         }
     }
     
-    /// SwifterSwift: Check if date is in future.
+    /// 미래 시각인지 확인합니다.
     ///
     ///     Date(timeInterval: 100, since: Date()).isInFuture -> true
     ///
@@ -175,7 +175,7 @@ public extension Date {
         return self > Date()
     }
     
-    /// SwifterSwift: Check if date is in past.
+    /// 과거 시각인지 확인합니다.
     ///
     ///     Date(timeInterval: -100, since: Date()).isInPast -> true
     ///
@@ -183,7 +183,7 @@ public extension Date {
         return self < Date()
     }
     
-    /// SwifterSwift: Check if date is within today.
+    /// 오늘 범위인지 확인합니다.
     ///
     ///     Date().isInToday -> true
     ///
@@ -191,7 +191,7 @@ public extension Date {
         return calendar.isDateInToday(self)
     }
     
-    /// SwifterSwift: Check if date is within yesterday.
+    /// 어제 범위인지 확인합니다.
     ///
     ///     Date().isInYesterday -> false
     ///
@@ -199,31 +199,31 @@ public extension Date {
         return calendar.isDateInYesterday(self)
     }
     
-    /// SwifterSwift: Yesterday date.
+    /// 어제 날짜.
     ///
-    ///     let date = Date() // "Oct 3, 2018, 10:57:11"
-    ///     let yesterday = date.yesterday // "Oct 2, 2018, 10:57:11"
+    ///     let date = Date() // "2018년 10월 3일, 10:57:11"
+    ///     let yesterday = date.yesterday // "2018년 10월 2일 10:57:11"
     ///
     var yesterday: Date {
         return calendar.date(byAdding: .day, value: -1, to: self) ?? Date()
     }
     
-    /// SwifterSwift: Tomorrow's date.
+    /// 내일 날짜.
     ///
-    ///     let date = Date() // "Oct 3, 2018, 10:57:11"
-    ///     let tomorrow = date.tomorrow // "Oct 4, 2018, 10:57:11"
+    ///     let date = Date() // "2018년 10월 3일, 10:57:11"
+    ///     let tomorrow = date.tomorrow // "2018년 10월 4일 10:57:11"
     ///
     var tomorrow: Date {
         return calendar.date(byAdding: .day, value: 1, to: self) ?? Date()
     }
     
-    /// SwifterSwift: check if a date is between two other dates.
+    /// 두 날짜 사이에 있는지 확인합니다.
     ///
     /// - Parameters:
-    ///   - startDate: start date to compare self to.
-    ///   - endDate: endDate date to compare self to.
-    ///   - includeBounds: true if the start and end date should be included (default is false).
-    /// - Returns: true if the date is between the two given dates.
+    ///   - startDate: 비교 기준 시작 날짜입니다.
+    ///   - endDate: 비교 기준 종료 날짜입니다.
+    ///   - includeBounds: 시작/종료 날짜를 포함할지 여부를 지정합니다. 기본값은 false입니다.
+    /// - Returns: 두 날짜 사이에 위치하면 true를 반환합니다.
     func isBetween(_ startDate: Date, _ endDate: Date, includeBounds: Bool = false) -> Bool {
         if includeBounds {
             return startDate.compare(self).rawValue * compare(endDate).rawValue >= 0
@@ -246,7 +246,7 @@ public extension TimeZone {
 }
 
 public extension Locale {
-    /// Tag: #KR
+    /// 태그: #KR
     static var KR: Locale {
         return Locale(identifier: "ko_kr")
     }

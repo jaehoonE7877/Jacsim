@@ -1,20 +1,35 @@
-# Projects/Modules/DSKit
+# Projects/Modules/DSKit (DesignSystem)
 
-## Overview
-- 디자인 토큰 + 공통 SwiftUI 컴포넌트 모듈
-- 화면 로직이 아닌 UI 표현 계층만 담당
+**목적**: Design system — 토큰 기반의 일관된 UI를 제공하는 `Component`, `Token`, 공통 `SwiftUI` 구성요소를 관리합니다. 비즈니스 로직은 포함하지 않습니다.
 
-## Where to Find
-| Task | Location |
+## 주요 경로
+
+| 항목 | 경로 |
 |---|---|
-| Design assets | `Projects/Modules/DSKit/Resources/**` |
-| 공통 UI 컴포넌트 | `Projects/Modules/DSKit/Sources/SwiftUI/Components/**` |
-| 디자인 확장 유틸 | `Projects/Modules/DSKit/Sources/Extension/**` |
+| 디자인 자산 | `Resources/**` |
+| 공통 UI Component | `Sources/SwiftUI/Components/**` |
+| UI extensions | `Sources/Extension/**` |
 
-## Conventions
-- UI 스타일/재사용성 중심, 비즈니스 규칙 배치 금지
-- 화면 상태 전이는 Jacsim Presentation에서 처리
+## Verify
 
-## Anti-Patterns
-- 네트워크/DB/도메인 로직 추가
-- 앱 개별 화면을 DSKit에 직접 구현
+```bash
+tuist build Jacsim
+```
+
+- DSKit 변경 후에는 영향받는 downstream scheme 테스트도 함께 실행합니다.
+
+## 규칙
+
+### ✅ 수행
+
+- 재사용 가능한, 스타일 중심의 `Component` 중심으로 작성
+- `State` 변경/전환 로직은 DSKit이 아닌 Jacsim `Presentation`에 둡니다
+
+### ⚠️ 먼저 확인
+
+- 디자인 토큰, 공통 component API, resource contract 변경은 앱 전체 UI에 영향을 주므로 사전 확인합니다.
+
+### 🚫 금지
+
+- 네트워킹, 데이터베이스, 도메인 로직 추가 금지
+- 앱 전용 화면(`View`)을 DSKit에서 직접 구현하지 않음

@@ -1,0 +1,255 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="700" viewBox="0 0 1200 700" role="img" aria-label="Jacsim Hexagonal Architecture Diagram">
+  <defs>
+    <!-- Sophisticated Color Palette - Muted Professional Tones -->
+    <linearGradient id="grad-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FAFAF9;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#F5F5F4;stop-opacity:1" />
+    </linearGradient>
+
+    <linearGradient id="grad-outer" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#E7E5E4;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#D6D3D1;stop-opacity:1" />
+    </linearGradient>
+
+    <linearGradient id="grad-middle" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#DDD6FE;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#C4B5FD;stop-opacity:1" />
+    </linearGradient>
+
+    <linearGradient id="grad-inner" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FEF3C7;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#FDE68A;stop-opacity:1" />
+    </linearGradient>
+
+    <linearGradient id="grad-left" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#BFDBFE;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#93C5FD;stop-opacity:1" />
+    </linearGradient>
+
+    <linearGradient id="grad-right" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FECACA;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#FCA5A5;stop-opacity:1" />
+    </linearGradient>
+
+    <linearGradient id="grad-ports" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FED7AA;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#FDBA74;stop-opacity:1" />
+    </linearGradient>
+
+    <!-- Typography -->
+    <style>
+      .font-base { font-family: "Inter", "SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+
+      .title-main { font-weight: 600; font-size: 22px; fill: #1C1917; }
+      .title-sub { font-weight: 500; font-size: 15px; fill: #44403C; }
+      .title-small { font-weight: 400; font-size: 13px; fill: #57534E; }
+      .title-ports { font-weight: 700; font-size: 14px; fill: #7C2D12; letter-spacing: 1px; }
+
+      .label-side { font-weight: 600; font-size: 12px; fill: #78716C; letter-spacing: 1.5px; }
+      .label-connect { font-weight: 500; font-size: 11px; fill: #78716C; letter-spacing: 0.5px; }
+
+      .shadow-soft { filter: drop-shadow(0px 2px 8px rgba(0, 0, 0, 0.06)); }
+      .shadow-medium { filter: drop-shadow(0px 4px 12px rgba(0, 0, 0, 0.08)); }
+      .shadow-strong { filter: drop-shadow(0px 8px 24px rgba(0, 0, 0, 0.12)); }
+    </style>
+
+    <!-- Markers -->
+    <marker id="arrow-gray" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#A8A29E" />
+    </marker>
+
+    <marker id="arrow-blue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#60A5FA" />
+    </marker>
+
+    <marker id="arrow-red" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#F87171" />
+    </marker>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="700" fill="url(#grad-bg)" />
+
+  <!-- OUTER HEXAGON: Application Core -->
+  <path d="M 600 100 L 860 250 L 860 550 L 600 700 L 340 550 L 340 250 Z"
+        fill="url(#grad-outer)"
+        stroke="#D6D3D1"
+        stroke-width="1"
+        class="shadow-soft" />
+
+  <text x="600" y="130"
+        text-anchor="middle"
+        class="font-base label-side">애플리케이션 코어 (Application Core)</text>
+
+
+  <!-- MIDDLE HEXAGON: Workflows -->
+  <path d="M 600 160 L 805 280 L 805 520 L 600 640 L 395 520 L 395 280 Z"
+        fill="url(#grad-middle)"
+        stroke="#A78BFA"
+        stroke-width="1.5"
+        class="shadow-medium" />
+
+  <text x="600" y="220"
+        text-anchor="middle"
+        class="font-base title-main"
+        fill="#5B21B6">워크플로우</text>
+
+  <text x="600" y="245"
+        text-anchor="middle"
+        class="font-base title-sub"
+        fill="#7C3AED">Use Cases / Orchestration</text>
+
+
+  <!-- INNER HEXAGON: Domain -->
+  <path d="M 600 300 L 710 370 L 710 490 L 600 560 L 490 490 L 490 370 Z"
+        fill="url(#grad-inner)"
+        stroke="#F59E0B"
+        stroke-width="2"
+        class="shadow-strong" />
+
+  <text x="600" y="415"
+        text-anchor="middle"
+        class="font-base title-main"
+        fill="#92400E">도메인 (Domain)</text>
+
+  <text x="600" y="440"
+        text-anchor="middle"
+        class="font-base title-sub"
+        fill="#B45309">Entities &amp; Business Rules</text>
+
+
+  <!-- LEFT RECTANGLE: Presentation -->
+  <rect x="50" y="275"
+        width="240" height="180"
+        rx="16"
+        fill="url(#grad-left)"
+        stroke="#60A5FA"
+        stroke-width="1"
+        class="shadow-strong" />
+
+  <text x="170" y="345"
+        text-anchor="middle"
+        class="font-base title-main"
+        fill="#1E40AF">프레젠테이션</text>
+
+  <text x="170" y="370"
+        text-anchor="middle"
+        class="font-base title-sub"
+        fill="#2563EB">SwiftUI + TCA</text>
+
+  <text x="170" y="240"
+        text-anchor="middle"
+        class="font-base label-side"
+        fill="#3B82F6">◀ DRIVING SIDE</text>
+
+
+  <!-- RIGHT RECTANGLE: Adapters -->
+  <rect x="910" y="275"
+        width="240" height="180"
+        rx="16"
+        fill="url(#grad-right)"
+        stroke="#F87171"
+        stroke-width="1"
+        class="shadow-strong" />
+
+  <text x="1030" y="345"
+        text-anchor="middle"
+        class="font-base title-main"
+        fill="#991B1B">어댑터 (Adapters)</text>
+
+  <text x="1030" y="370"
+        text-anchor="middle"
+        class="font-base title-sub"
+        fill="#B91C1C">Data / Infrastructure</text>
+
+  <text x="1030" y="240"
+        text-anchor="middle"
+        class="font-base label-side"
+        fill="#EF4444">DRIVEN SIDE ▶</text>
+
+
+  <!-- PORTS SLIDER (Redesigned - Vertical Text Fixed) -->
+  <g transform="translate(800, 315)" class="shadow-medium">
+    <!-- Wider rectangle for PORTS -->
+    <rect x="0" y="0"
+          width="70" height="100"
+          rx="12"
+          fill="url(#grad-ports)"
+          stroke="#EA580C"
+          stroke-width="1.5" />
+
+    <!-- Individual letters properly spaced -->
+    <text x="35" y="28"
+          text-anchor="middle"
+          class="font-base title-ports">P</text>
+
+    <text x="35" y="46"
+          text-anchor="middle"
+          class="font-base title-ports">O</text>
+
+    <text x="35" y="64"
+          text-anchor="middle"
+          class="font-base title-ports">R</text>
+
+    <text x="35" y="82"
+          text-anchor="middle"
+          class="font-base title-ports">T</text>
+
+    <text x="35" y="98"
+          text-anchor="middle"
+          class="font-base title-ports"
+          font-size="12px">S</text>
+  </g>
+
+
+  <!-- CONNECTION LINES -->
+
+  <!-- Presentation -> Workflows -->
+  <line x1="290" y1="365" x2="395" y2="365"
+        stroke="#60A5FA"
+        stroke-width="2"
+        marker-end="url(#arrow-blue)" />
+
+  <text x="342" y="355"
+        text-anchor="middle"
+        class="font-base label-connect"
+        fill="#3B82F6">CALLS</text>
+
+
+  <!-- Adapters -> Ports -->
+  <line x1="910" y1="365" x2="870" y2="365"
+        stroke="#F87171"
+        stroke-width="2"
+        marker-end="url(#arrow-red)" />
+
+  <text x="890" y="355"
+        text-anchor="middle"
+        class="font-base label-connect"
+        fill="#EF4444">IMPLEMENTS</text>
+
+
+  <!-- Workflows -> Domain -->
+  <line x1="600" y1="280" x2="600" y2="300"
+        stroke="#A8A29E"
+        stroke-width="1.5"
+        stroke-dasharray="5 3"
+        marker-end="url(#arrow-gray)" />
+
+  <text x="620" y="290"
+        class="font-base label-connect"
+        fill="#78716C">uses</text>
+
+
+  <!-- Workflows -> Ports -->
+  <path d="M 710 400 Q 760 380 800 365"
+        fill="none"
+        stroke="#A8A29E"
+        stroke-width="1.5"
+        stroke-dasharray="5 3"
+        marker-end="url(#arrow-gray)" />
+
+  <text x="755" y="395"
+        class="font-base label-connect"
+        fill="#78716C">uses</text>
+
+</svg>

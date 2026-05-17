@@ -133,7 +133,7 @@ struct RedesignScreenScaffold<Content: View>: View {
                     .padding(.top, .jsLG)
                     .padding(.bottom, contentBottomInset)
                 }
-                .background(Color.backgroundNormal)
+                .background(Color.v2Background)
                 .onChange(of: scrollToID) { _, newValue in
                     guard let newValue else { return }
                     withAnimation(.easeInOut(duration: 0.24)) {
@@ -141,6 +141,7 @@ struct RedesignScreenScaffold<Content: View>: View {
                     }
                 }
             }
+            .background(Color.v2Background)
 
             if let stickyFooter {
                 stickyFooter
@@ -158,7 +159,7 @@ struct RedesignScreenScaffold<Content: View>: View {
             RedesignSectionCard(title: "불러오는 중") {
                 HStack(spacing: .jsSM) {
                     ProgressView()
-                        .tint(.primaryNormal)
+                        .tint(.v2BrandBlue)
                     Text(message)
                         .font(.jsBodyMedium)
                         .foregroundColor(.labelAlternative)

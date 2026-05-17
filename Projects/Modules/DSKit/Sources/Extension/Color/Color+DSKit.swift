@@ -47,4 +47,11 @@ public extension Color {
     static var wallpaperDusk: Color { Color(uiColor: .wallpaperDusk) }
     static var wallpaperDuskTop: Color { Color(uiColor: .wallpaperDuskTop) }
     static var wallpaperDuskBottom: Color { Color(uiColor: .wallpaperDuskBottom) }
+
+    static var v2BrandBlue: Color { Color(uiColor: .v2BrandBlue) }
+    static var v2BrandBlueStrong: Color { Color(uiColor: .v2BrandBlueStrong) }
+    static var v2BrandBlueSoft: Color { Color(uiColor: .v2BrandBlueSoft) }
+    static var v2Background: Color { Color(uiColor: .v2Background) }
+    static var v2Surface: Color { Color(uiColor: .v2Surface) }
+    static var v2SurfaceElevated: Color { Color(uiColor: .v2SurfaceElevated) }
 }
