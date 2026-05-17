@@ -29,8 +29,8 @@ public final class MainModel {
         self.feed = FeedModel(dependencies: dependencies)
         self.me = MeModel(dependencies: dependencies)
         self.coach = CoachModel(dependencies: dependencies)
-        self.feed.onFollowChallengePrefill = { [weak self] title in
-            self?.createTaskFromFollowChallenge(title: title)
+        self.feed.onFollowChallengePrefill = { [weak self] draft in
+            self?.createTaskFromFollowChallenge(draft: draft)
         }
     }
 
@@ -147,13 +147,14 @@ public final class MainModel {
         calendar.loadTasks()
     }
 
-    private func createTaskFromFollowChallenge(title: String) {
+    private func createTaskFromFollowChallenge(draft: FollowChallengeDraft) {
         isPlusSheetPresented = false
         selectedTab = .today
         home.newTask = NewTaskModel(
             dependencies: dependencies,
-            prefillTitle: title,
-            onTaskCreated: { [weak self] in
+            prefillTitle: draft.title,
+            onTaskCreatedWithTask: { [weak self] task in
+                self?.feed.followChallengeCreated(draft, copiedTask: task)
                 self?.newTaskCreated()
             },
             onCancelled: { [weak self] in

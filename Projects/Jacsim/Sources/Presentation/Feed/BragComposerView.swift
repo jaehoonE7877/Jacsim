@@ -121,15 +121,6 @@ public struct BragComposerView: View {
                     model.imageSelected(image)
                 }
 
-                Button {
-                    model.sampleImageTapped()
-                } label: {
-                    Label("샘플 사진 추가", systemImage: "photo.badge.plus")
-                        .font(.jsBodySmall)
-                }
-                .buttonStyle(.glass)
-                .accessibilityLabel("샘플 사진 추가")
-
                 LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: .jsXS) {
                     ForEach(model.imagePaths, id: \.self) { path in
                         HStack(spacing: .jsXS) {

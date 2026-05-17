@@ -90,18 +90,23 @@ public final class ProfileModel {
                     tasks = []
                 }
                 let rawPosts = try await dependencies.bragPostRepository.fetchPosts(userID)
-                let posts = rawPosts
-                    .filter { _ in canView(.bragPost, relation: relation, taskVisibility: nil) }
-                    .map {
+                var posts: [FeedPostItem] = []
+                for post in rawPosts where canView(.bragPost, relation: relation, taskVisibility: post.visibility) {
+                    posts.append(
                         FeedPostItem(
-                            post: $0,
+                            post: post,
                             author: user,
                             relation: relation,
                             taskTitle: nil,
                             taskVisibility: nil,
+                            imageDataItems: await imageDataItems(
+                                for: post.recordImagePaths,
+                                dependencies: dependencies
+                            ),
                             currentUserID: currentUserID
                         )
-                    }
+                    )
+                }
 
                 profileResponse(
                     user: user,
@@ -175,5 +180,18 @@ public final class ProfileModel {
 
     private nonisolated func fallbackUser(for userID: UserID) -> Domain.User {
         Domain.User(id: userID, handle: "local", displayName: "작심러")
+    }
+
+    private nonisolated func imageDataItems(
+        for paths: [String],
+        dependencies: JacsimDependencies
+    ) async -> [Data] {
+        var items: [Data] = []
+        for path in paths.prefix(4) {
+            if let data = await dependencies.imageStore.loadImage(path) {
+                items.append(data)
+            }
+        }
+        return items
     }
 }

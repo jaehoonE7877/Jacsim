@@ -112,43 +112,47 @@ public final class BragComposerModel {
 
     public func imageSelected(_ image: UIImage) {
         selectedImage = image
-        appendImagePath("photo-\(imagePaths.count + 1).jpg")
-    }
-
-    public func sampleImageTapped() {
-        appendImagePath("sample-\(imagePaths.count + 1).jpg")
+        imagePaths = ["선택한 사진"]
     }
 
     public func removeImage(_ path: String) {
         imagePaths.removeAll { $0 == path }
+        if imagePaths.isEmpty {
+            selectedImage = nil
+        }
     }
 
     public func submitTapped() {
         guard canSubmit else { return }
         isSaving = true
-        let post = Domain.BragPost(
-            id: BragPostID(UUID()),
-            authorId: currentUserID,
-            taskId: selectedTaskID,
-            type: suggestedType,
-            body: trimmedBody,
-            recordImagePaths: imagePaths
-        )
-        let notificationContext = SocialNotificationContext(
-            sourceUserId: currentUserID,
-            postId: post.id,
-            taskId: selectedTaskID,
-            title: "친구의 새 자랑",
-            body: trimmedBody
-        )
+        let postID = BragPostID(UUID())
+        let selectedTaskID = selectedTaskID
+        let selectedVisibility = selectedVisibility
+        let selectedImage = selectedImage
+        let body = trimmedBody
+        let type = suggestedType
+        let currentUserID = currentUserID
 
         _Concurrency.Task { [dependencies] in
             do {
-                try await dependencies.bragPostRepository.createPost(post)
-                try? await dependencies.notificationScheduler.scheduleSocial(
-                    .friendPosted,
-                    notificationContext
+                let storedImagePaths: [String]
+                if let selectedImage {
+                    let data = try makeImageStoreInputData(from: selectedImage)
+                    let key = "brag-\(postID.rawValue.uuidString)-1.jpg"
+                    storedImagePaths = [try await dependencies.imageStore.saveImage(key, data)]
+                } else {
+                    storedImagePaths = []
+                }
+                let post = Domain.BragPost(
+                    id: postID,
+                    authorId: currentUserID,
+                    taskId: selectedTaskID,
+                    type: type,
+                    body: body,
+                    recordImagePaths: storedImagePaths,
+                    visibility: selectedVisibility
                 )
+                try await dependencies.bragPostRepository.createPost(post)
                 isSaving = false
                 onCompleted()
             } catch {
@@ -160,14 +164,6 @@ public final class BragComposerModel {
 
     public func dismissToast() {
         toastMessage = nil
-    }
-
-    private func appendImagePath(_ path: String) {
-        guard imagePaths.count < 4 else {
-            toastMessage = "사진은 최대 4장까지"
-            return
-        }
-        imagePaths.append(path)
     }
 
     private func tasksResponse(_ tasks: [Domain.Task]) {

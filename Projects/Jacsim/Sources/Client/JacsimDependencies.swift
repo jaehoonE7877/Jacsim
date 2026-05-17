@@ -96,7 +96,7 @@ public extension JacsimDependencies {
             updateTask: { try await taskRepositoryAdapter.updateTask($0) }
         )
 
-        let notificationAdapter = LocalNotificationSchedulerAdapter()
+        let notificationAdapter = LocalNotificationSchedulerAdapter(localUserId: SocialLocalSession.currentUserID)
         let notificationScheduler = NotificationSchedulerPort(
             scheduleDailyReminder: { try await notificationAdapter.scheduleReminder(taskId: $0, title: $1, time: $2) },
             cancelReminder: { await notificationAdapter.cancelReminder(taskId: $0) },
@@ -203,15 +203,6 @@ public extension JacsimDependencies {
                             try? await taskRepositoryAdapter.updateTask(afterTask)
                         }
                         NotificationCenter.default.post(name: .jacsimStageGraduated, object: graduation)
-                        try? await notificationScheduler.scheduleSocial(
-                            .friendGraduated,
-                            SocialNotificationContext(
-                                sourceUserId: SocialLocalSession.currentUserID,
-                                taskId: graduation.taskId,
-                                title: "친구의 스테이지 졸업",
-                                body: "\(graduation.taskTitle) \(graduation.durationDays)일 스테이지를 완주했어요"
-                            )
-                        )
                     }
                 } catch {
                     Logger.certificationFailed(error: error)
@@ -323,7 +314,7 @@ public extension JacsimDependencies {
             cheerRepository: cheerRepository,
             commentRepository: commentRepository,
             followChallengeRepository: followChallengeRepository,
-            aiCoachClient: MockAICoachClientAdapter(),
+            aiCoachClient: RealAICoachClientAdapter(),
             seedSocialIfNeeded: {
                 do {
                     try await seedSocialUseCase.seedIfNeeded()

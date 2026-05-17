@@ -128,77 +128,77 @@ func visibilityRecordBlocked() {
 
 @Test("bragPost owner")
 func visibilityBragPostOwner() {
-    expectAlways(.bragPost, .owner, true)
+    expectTaskScoped(.bragPost, .owner, private: true, followers: true, public: true, nilVisibility: true)
 }
 
 @Test("bragPost mutual")
 func visibilityBragPostMutual() {
-    expectAlways(.bragPost, .mutual, true)
+    expectTaskScoped(.bragPost, .mutual, private: false, followers: true, public: true)
 }
 
 @Test("bragPost oneWay")
 func visibilityBragPostOneWay() {
-    expectAlways(.bragPost, .oneWay, true)
+    expectTaskScoped(.bragPost, .oneWay, private: false, followers: true, public: true)
 }
 
 @Test("bragPost stranger")
 func visibilityBragPostStranger() {
-    expectAlways(.bragPost, .stranger, true)
+    expectTaskScoped(.bragPost, .stranger, private: false, followers: false, public: true)
 }
 
 @Test("bragPost blocked")
 func visibilityBragPostBlocked() {
-    expectAlways(.bragPost, .blocked, false)
+    expectTaskScoped(.bragPost, .blocked, private: false, followers: false, public: false)
 }
 
 @Test("cheerCount owner")
 func visibilityCheerCountOwner() {
-    expectAlways(.cheerCount, .owner, true)
+    expectTaskScoped(.cheerCount, .owner, private: true, followers: true, public: true, nilVisibility: true)
 }
 
 @Test("cheerCount mutual")
 func visibilityCheerCountMutual() {
-    expectAlways(.cheerCount, .mutual, true)
+    expectTaskScoped(.cheerCount, .mutual, private: false, followers: true, public: true)
 }
 
 @Test("cheerCount oneWay")
 func visibilityCheerCountOneWay() {
-    expectAlways(.cheerCount, .oneWay, true)
+    expectTaskScoped(.cheerCount, .oneWay, private: false, followers: true, public: true)
 }
 
 @Test("cheerCount stranger")
 func visibilityCheerCountStranger() {
-    expectAlways(.cheerCount, .stranger, true)
+    expectTaskScoped(.cheerCount, .stranger, private: false, followers: false, public: true)
 }
 
 @Test("cheerCount blocked")
 func visibilityCheerCountBlocked() {
-    expectAlways(.cheerCount, .blocked, false)
+    expectTaskScoped(.cheerCount, .blocked, private: false, followers: false, public: false)
 }
 
 @Test("commentList owner")
 func visibilityCommentListOwner() {
-    expectAlways(.commentList, .owner, true)
+    expectTaskScoped(.commentList, .owner, private: true, followers: true, public: true, nilVisibility: true)
 }
 
 @Test("commentList mutual")
 func visibilityCommentListMutual() {
-    expectAlways(.commentList, .mutual, true)
+    expectTaskScoped(.commentList, .mutual, private: false, followers: true, public: true)
 }
 
 @Test("commentList oneWay")
 func visibilityCommentListOneWay() {
-    expectAlways(.commentList, .oneWay, true)
+    expectTaskScoped(.commentList, .oneWay, private: false, followers: true, public: true)
 }
 
 @Test("commentList stranger")
 func visibilityCommentListStranger() {
-    expectAlways(.commentList, .stranger, true)
+    expectTaskScoped(.commentList, .stranger, private: false, followers: false, public: true)
 }
 
 @Test("commentList blocked")
 func visibilityCommentListBlocked() {
-    expectAlways(.commentList, .blocked, false)
+    expectTaskScoped(.commentList, .blocked, private: false, followers: false, public: false)
 }
 
 private func expectAlways(

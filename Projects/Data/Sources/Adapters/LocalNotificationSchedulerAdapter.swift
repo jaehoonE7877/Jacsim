@@ -7,13 +7,16 @@ import SwiftData
 public actor LocalNotificationSchedulerAdapter {
     private let notificationCenter: UNUserNotificationCenter
     private let container: ModelContainer
+    private let localUserId: UserID?
     
     public init(
         notificationCenter: UNUserNotificationCenter = .current(),
-        container: ModelContainer = SwiftDataStack.shared.container
+        container: ModelContainer = SwiftDataStack.shared.container,
+        localUserId: UserID? = nil
     ) {
         self.notificationCenter = notificationCenter
         self.container = container
+        self.localUserId = localUserId
     }
     
     public func scheduleReminder(taskId: TaskID, title: String, time: DateComponents) async throws {
@@ -48,6 +51,14 @@ public actor LocalNotificationSchedulerAdapter {
         trigger: SocialNotificationTrigger,
         context: SocialNotificationContext
     ) async throws {
+        if let targetUserId = context.targetUserId {
+            guard let localUserId,
+                  targetUserId == localUserId,
+                  context.sourceUserId != localUserId else {
+                return
+            }
+        }
+
         let settings = socialNotificationSettings()
         guard settings.isEnabled(trigger) else { return }
 

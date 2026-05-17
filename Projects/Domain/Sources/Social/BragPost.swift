@@ -23,6 +23,7 @@ public struct BragPost: Codable, Sendable, Identifiable, Hashable {
     public var type: BragType
     public var body: String
     public var recordImagePaths: [String]
+    public var visibility: TaskVisibility
     public var createdAt: Date
     public var cheers: [Cheer]
     public var comments: [Comment]
@@ -34,6 +35,7 @@ public struct BragPost: Codable, Sendable, Identifiable, Hashable {
         type: BragType,
         body: String,
         recordImagePaths: [String] = [],
+        visibility: TaskVisibility = .private,
         createdAt: Date = .now,
         cheers: [Cheer] = [],
         comments: [Comment] = []
@@ -44,6 +46,7 @@ public struct BragPost: Codable, Sendable, Identifiable, Hashable {
         self.type = type
         self.body = body
         self.recordImagePaths = Array(recordImagePaths.prefix(4))
+        self.visibility = visibility
         self.createdAt = createdAt
         self.cheers = cheers
         self.comments = comments

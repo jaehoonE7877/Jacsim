@@ -14,11 +14,21 @@ public actor BragPostRepositoryAdapter {
         let posts = try context.fetch(FetchDescriptor<BragPostModel>())
         let cheers = try context.fetch(FetchDescriptor<CheerModel>())
         let comments = try context.fetch(FetchDescriptor<CommentModel>())
-        let visibleAuthorIDs = feedAuthorIDs(for: userID, follow: follow)
+        let visibilityByPostID = try fetchVisibilityByPostID(in: context)
 
         return posts
-            .filter { visibleAuthorIDs.contains($0.authorId) }
-            .map { mapToDomainModel($0, cheers: cheers, comments: comments) }
+            .map { post in
+                mapToDomainModel(
+                    post,
+                    cheers: cheers,
+                    comments: comments,
+                    visibility: visibilityByPostID[post.id] ?? .private
+                )
+            }
+            .filter { post in
+                let relation = viewerRelation(viewerID: userID, ownerID: post.authorId, follows: follow)
+                return canView(.bragPost, relation: relation, taskVisibility: post.visibility)
+            }
             .sorted { $0.createdAt > $1.createdAt }
     }
 
@@ -30,6 +40,7 @@ public actor BragPostRepositoryAdapter {
         if existing == nil {
             context.insert(model)
         }
+        try upsertVisibility(postID: post.id.rawValue, visibility: post.visibility, in: context)
         try context.save()
     }
 
@@ -38,10 +49,18 @@ public actor BragPostRepositoryAdapter {
         let posts = try context.fetch(FetchDescriptor<BragPostModel>())
         let cheers = try context.fetch(FetchDescriptor<CheerModel>())
         let comments = try context.fetch(FetchDescriptor<CommentModel>())
+        let visibilityByPostID = try fetchVisibilityByPostID(in: context)
 
         return posts
             .filter { $0.authorId == authorID.rawValue }
-            .map { mapToDomainModel($0, cheers: cheers, comments: comments) }
+            .map { post in
+                mapToDomainModel(
+                    post,
+                    cheers: cheers,
+                    comments: comments,
+                    visibility: visibilityByPostID[post.id] ?? .private
+                )
+            }
             .sorted { $0.createdAt > $1.createdAt }
     }
 
@@ -50,22 +69,60 @@ public actor BragPostRepositoryAdapter {
         let posts = try context.fetch(FetchDescriptor<BragPostModel>())
         guard let post = posts.first(where: { $0.id == id.rawValue }) else { return }
         context.delete(post)
+        let visibilities = try context.fetch(FetchDescriptor<BragPostVisibilityModel>())
+        for visibility in visibilities where visibility.postId == id.rawValue {
+            context.delete(visibility)
+        }
         try context.save()
     }
 
-    private nonisolated func feedAuthorIDs(
-        for userID: UserID,
-        follow: [Domain.Follow]
-    ) -> Set<UUID> {
-        var authorIDs = Set([userID.rawValue])
-        for relation in follow where relation.state == .accepted {
-            if relation.fromUserId == userID {
-                authorIDs.insert(relation.toUserId.rawValue)
+    private func fetchVisibilityByPostID(in context: ModelContext) throws -> [UUID: TaskVisibility] {
+        let visibilities = try context.fetch(FetchDescriptor<BragPostVisibilityModel>())
+        return Dictionary(
+            uniqueKeysWithValues: visibilities.map {
+                ($0.postId, TaskVisibility(rawValue: $0.visibilityRaw) ?? .private)
             }
-            if relation.toUserId == userID {
-                authorIDs.insert(relation.fromUserId.rawValue)
-            }
+        )
+    }
+
+    private func upsertVisibility(
+        postID: UUID,
+        visibility: TaskVisibility,
+        in context: ModelContext
+    ) throws {
+        let visibilities = try context.fetch(FetchDescriptor<BragPostVisibilityModel>())
+        if let existing = visibilities.first(where: { $0.postId == postID }) {
+            existing.visibilityRaw = visibility.rawValue
+        } else {
+            context.insert(BragPostVisibilityModel(postId: postID, visibilityRaw: visibility.rawValue))
         }
-        return authorIDs
+    }
+
+    private nonisolated func viewerRelation(
+        viewerID: UserID,
+        ownerID: UserID,
+        follows: [Domain.Follow]
+    ) -> ViewerRelation {
+        if viewerID == ownerID {
+            return .owner
+        }
+
+        let pair = follows.filter { follow in
+            (follow.fromUserId == viewerID && follow.toUserId == ownerID) ||
+                (follow.fromUserId == ownerID && follow.toUserId == viewerID)
+        }
+
+        if pair.contains(where: { $0.state == .blocked }) {
+            return .blocked
+        }
+
+        let accepted = pair.filter { $0.state == .accepted }
+        guard !accepted.isEmpty else {
+            return .stranger
+        }
+
+        let hasForward = accepted.contains { $0.fromUserId == viewerID && $0.toUserId == ownerID }
+        let hasReverse = accepted.contains { $0.fromUserId == ownerID && $0.toUserId == viewerID }
+        return hasForward && hasReverse || accepted.contains(where: \.isMutual) ? .mutual : .oneWay
     }
 }

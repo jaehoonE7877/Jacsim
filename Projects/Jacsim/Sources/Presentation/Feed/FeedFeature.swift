@@ -24,11 +24,31 @@ public struct FeedPostItem: Identifiable {
     public let relation: ViewerRelation
     public let taskTitle: String?
     public let taskVisibility: TaskVisibility?
+    public let imageDataItems: [Data]
     public let currentUserID: UserID
 
     public var id: UUID { post.id.rawValue }
     public var isOwn: Bool { post.authorId == currentUserID }
     public var hasCheered: Bool { post.cheers.contains { $0.userId == currentUserID } }
+}
+
+public struct FollowChallengeDraft: Sendable, Equatable {
+    public let title: String
+    public let originalTaskID: TaskID
+    public let postID: BragPostID
+    public let authorID: UserID
+
+    public init(
+        title: String,
+        originalTaskID: TaskID,
+        postID: BragPostID,
+        authorID: UserID
+    ) {
+        self.title = title
+        self.originalTaskID = originalTaskID
+        self.postID = postID
+        self.authorID = authorID
+    }
 }
 
 @MainActor
@@ -47,7 +67,7 @@ public final class FeedModel {
     public var commentDraft: String = ""
 
     @ObservationIgnored public let dependencies: JacsimDependencies
-    @ObservationIgnored public var onFollowChallengePrefill: (String) -> Void = { _ in }
+    @ObservationIgnored public var onFollowChallengePrefill: (FollowChallengeDraft) -> Void = { _ in }
     @ObservationIgnored private var loadTask: _Concurrency.Task<Void, Never>?
 
     private let currentUserID = SocialLocalSession.currentUserID
@@ -83,9 +103,8 @@ public final class FeedModel {
         loadTask?.cancel()
         loadTask = _Concurrency.Task { [dependencies, currentUserID] in
             do {
-                let accepted = try await dependencies.followRepository.fetchAccepted(currentUserID)
                 let allFollows = try await dependencies.followRepository.fetchAll(currentUserID)
-                let feedPosts = try await dependencies.bragPostRepository.fetchFeed(currentUserID, accepted)
+                let feedPosts = try await dependencies.bragPostRepository.fetchFeed(currentUserID, allFollows)
                 var items: [FeedPostItem] = []
 
                 for post in feedPosts {
@@ -94,7 +113,7 @@ public final class FeedModel {
                         ownerID: post.authorId,
                         follows: allFollows
                     )
-                    guard canView(.bragPost, relation: relation, taskVisibility: nil) else { continue }
+                    guard canView(.bragPost, relation: relation, taskVisibility: post.visibility) else { continue }
                     guard let author = try await dependencies.socialUserRepository.fetchUser(post.authorId) else { continue }
                     let task: Domain.Task?
                     if let taskID = post.taskId {
@@ -109,6 +128,10 @@ public final class FeedModel {
                             relation: relation,
                             taskTitle: task?.title,
                             taskVisibility: task?.visibility,
+                            imageDataItems: await imageDataItems(
+                                for: post.recordImagePaths,
+                                dependencies: dependencies
+                            ),
                             currentUserID: currentUserID
                         )
                     )
@@ -159,16 +182,22 @@ public final class FeedModel {
             do {
                 let inserted = try await dependencies.cheerRepository.addUnique(item.post.id, currentUserID)
                 if inserted {
-                    try? await dependencies.notificationScheduler.scheduleSocial(
-                        .postCheered,
-                        SocialNotificationContext(
-                            sourceUserId: currentUserID,
-                            targetUserId: item.post.authorId,
-                            postId: item.post.id,
-                            title: "새 응원",
-                            body: "\(item.author.displayName)의 기록에 응원이 쌓였어요"
-                        )
+                    let notificationContext = SocialNotificationContext(
+                        sourceUserId: currentUserID,
+                        targetUserId: item.post.authorId,
+                        postId: item.post.id,
+                        title: "새 응원",
+                        body: "\(item.author.displayName)의 기록에 응원이 쌓였어요"
                     )
+                    if SocialLocalSession.shouldScheduleLocalNotification(
+                        sourceUserID: notificationContext.sourceUserId,
+                        targetUserID: notificationContext.targetUserId
+                    ) {
+                        try? await dependencies.notificationScheduler.scheduleSocial(
+                            .postCheered,
+                            notificationContext
+                        )
+                    }
                     load()
                 } else {
                     toastMessage = "이미 응원했어요"
@@ -180,7 +209,7 @@ public final class FeedModel {
     }
 
     public func commentTapped(_ item: FeedPostItem) {
-        guard canView(.commentList, relation: item.relation, taskVisibility: item.taskVisibility) else {
+        guard canView(.commentList, relation: item.relation, taskVisibility: item.post.visibility) else {
             toastMessage = "댓글을 볼 수 없어요"
             return
         }
@@ -203,16 +232,22 @@ public final class FeedModel {
                         body: body
                     )
                 )
-                try? await dependencies.notificationScheduler.scheduleSocial(
-                    .postCommented,
-                    SocialNotificationContext(
-                        sourceUserId: currentUserID,
-                        targetUserId: item.post.authorId,
-                        postId: item.post.id,
-                        title: "새 댓글",
-                        body: "내 자랑 글에 새 댓글이 달렸어요"
-                    )
+                let notificationContext = SocialNotificationContext(
+                    sourceUserId: currentUserID,
+                    targetUserId: item.post.authorId,
+                    postId: item.post.id,
+                    title: "새 댓글",
+                    body: "내 자랑 글에 새 댓글이 달렸어요"
                 )
+                if SocialLocalSession.shouldScheduleLocalNotification(
+                    sourceUserID: notificationContext.sourceUserId,
+                    targetUserID: notificationContext.targetUserId
+                ) {
+                    try? await dependencies.notificationScheduler.scheduleSocial(
+                        .postCommented,
+                        notificationContext
+                    )
+                }
                 commentDraft = ""
                 load()
             } catch {
@@ -223,31 +258,45 @@ public final class FeedModel {
 
     public func followChallengeTapped(_ item: FeedPostItem) {
         let originalTaskID = item.post.taskId ?? TaskID(item.post.id.rawValue)
-        let copiedTaskID = TaskID(UUID())
+        let draft = FollowChallengeDraft(
+            title: item.taskTitle ?? item.post.body,
+            originalTaskID: originalTaskID,
+            postID: item.post.id,
+            authorID: item.post.authorId
+        )
+        onFollowChallengePrefill(draft)
+    }
+
+    public func followChallengeCreated(_ draft: FollowChallengeDraft, copiedTask: Domain.Task) {
         _Concurrency.Task { [dependencies, currentUserID] in
             do {
                 try await dependencies.followChallengeRepository.recordFollowChallenge(
                     FollowChallenge(
                         id: FollowChallengeID(UUID()),
-                        originalTaskId: originalTaskID,
+                        originalTaskId: draft.originalTaskID,
                         copierUserId: currentUserID,
-                        copiedTaskId: copiedTaskID
+                        copiedTaskId: copiedTask.id
                     )
                 )
-                try? await dependencies.notificationScheduler.scheduleSocial(
-                    .postFollowed,
-                    SocialNotificationContext(
-                        sourceUserId: currentUserID,
-                        targetUserId: item.post.authorId,
-                        postId: item.post.id,
-                        taskId: originalTaskID,
-                        title: "따라하기 시작",
-                        body: "누군가 내 기록을 따라 시작했어요"
-                    )
+                let notificationContext = SocialNotificationContext(
+                    sourceUserId: currentUserID,
+                    targetUserId: draft.authorID,
+                    postId: draft.postID,
+                    taskId: draft.originalTaskID,
+                    title: "따라하기 시작",
+                    body: "누군가 내 기록을 따라 시작했어요"
                 )
-                onFollowChallengePrefill(item.taskTitle ?? item.post.body)
+                if SocialLocalSession.shouldScheduleLocalNotification(
+                    sourceUserID: notificationContext.sourceUserId,
+                    targetUserID: notificationContext.targetUserId
+                ) {
+                    try? await dependencies.notificationScheduler.scheduleSocial(
+                        .postFollowed,
+                        notificationContext
+                    )
+                }
             } catch {
-                toastMessage = "따라하기를 시작하지 못했어요"
+                toastMessage = "따라하기 기록을 저장하지 못했어요"
             }
         }
     }
@@ -270,6 +319,10 @@ public final class FeedModel {
 
     private func feedResponse(_ items: [FeedPostItem]) {
         posts = items
+        if let selectedCommentPost,
+           let refreshed = items.first(where: { $0.id == selectedCommentPost.id }) {
+            self.selectedCommentPost = refreshed
+        }
         isLoading = false
         isRefreshing = false
         loadFailed = false
@@ -279,5 +332,18 @@ public final class FeedModel {
         isLoading = false
         isRefreshing = false
         loadFailed = true
+    }
+
+    private nonisolated func imageDataItems(
+        for paths: [String],
+        dependencies: JacsimDependencies
+    ) async -> [Data] {
+        var items: [Data] = []
+        for path in paths.prefix(4) {
+            if let data = await dependencies.imageStore.loadImage(path) {
+                items.append(data)
+            }
+        }
+        return items
     }
 }

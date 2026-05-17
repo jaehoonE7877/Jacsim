@@ -135,7 +135,11 @@ public final class SettingScreenModel {
         settingsTask = _Concurrency.Task { [dependencies] in
             do {
                 try await dependencies.followRepository.upsertFollow(follow)
-                if state == .accepted {
+                if state == .accepted,
+                   SocialLocalSession.shouldScheduleLocalNotification(
+                    sourceUserID: acceptedContext.sourceUserId,
+                    targetUserID: acceptedContext.targetUserId
+                   ) {
                     try? await dependencies.notificationScheduler.scheduleSocial(
                         .followAccepted,
                         acceptedContext
