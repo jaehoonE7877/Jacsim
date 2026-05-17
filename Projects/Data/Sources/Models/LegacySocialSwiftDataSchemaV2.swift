@@ -1,7 +1,8 @@
 import Foundation
 import SwiftData
 
-extension JacsimSchemaV3 {
+// Historical social schema kept for existing-install SwiftData migration.
+extension JacsimSchemaV2 {
     @Model
     public final class UserModel {
         @Attribute(.unique) public var id: UUID

@@ -214,6 +214,7 @@ public struct ProfileView: View {
             type: dsBragType(from: item.post.type),
             body: item.post.body,
             imagePaths: item.post.recordImagePaths,
+            imageDataItems: item.imageDataItems,
             cheerCount: item.post.cheers.count,
             commentCount: item.post.comments.count,
             isOwn: item.isOwn,

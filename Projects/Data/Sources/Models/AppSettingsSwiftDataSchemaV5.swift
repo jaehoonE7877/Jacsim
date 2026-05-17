@@ -1,6 +1,7 @@
 import Foundation
 import SwiftData
 
+// Current app settings model. The schema version stays V5 for migration compatibility.
 public enum JacsimSchemaV5: VersionedSchema {
     public static var versionIdentifier: Schema.Version {
         Schema.Version(5, 0, 0)

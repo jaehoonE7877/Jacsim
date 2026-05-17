@@ -1,6 +1,7 @@
 import Foundation
 import SwiftData
 
+// Historical settings schema kept for existing-install SwiftData migration.
 public enum JacsimSchemaV4: VersionedSchema {
     public static var versionIdentifier: Schema.Version {
         Schema.Version(4, 0, 0)
@@ -74,4 +75,3 @@ public enum JacsimSchemaV4: VersionedSchema {
         }
     }
 }
-

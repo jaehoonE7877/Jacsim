@@ -58,7 +58,8 @@ func mapToSwiftDataModel(_ follow: Domain.Follow, existing: FollowModel? = nil) 
 func mapToDomainModel(
     _ post: BragPostModel,
     cheers: [CheerModel],
-    comments: [CommentModel]
+    comments: [CommentModel],
+    visibility: TaskVisibility = .private
 ) -> Domain.BragPost {
     Domain.BragPost(
         id: BragPostID(post.id),
@@ -67,6 +68,7 @@ func mapToDomainModel(
         type: BragType(rawValue: post.typeRaw) ?? .completion,
         body: post.body,
         recordImagePaths: post.recordImagePaths,
+        visibility: visibility,
         createdAt: post.createdAt,
         cheers: cheers
             .filter { $0.postId == post.id }

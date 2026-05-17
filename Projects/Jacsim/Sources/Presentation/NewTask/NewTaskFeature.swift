@@ -92,6 +92,7 @@ public final class NewTaskModel {
 
     @ObservationIgnored private let dependencies: JacsimDependencies
     @ObservationIgnored private let onTaskCreated: () -> Void
+    @ObservationIgnored private let onTaskCreatedWithTask: (Domain.Task) -> Void
     @ObservationIgnored private let onCancelled: () -> Void
     @ObservationIgnored private var isEnforcingTitle = false
 
@@ -99,10 +100,12 @@ public final class NewTaskModel {
         dependencies: JacsimDependencies,
         prefillTitle: String? = nil,
         onTaskCreated: @escaping () -> Void = {},
+        onTaskCreatedWithTask: @escaping (Domain.Task) -> Void = { _ in },
         onCancelled: @escaping () -> Void = {}
     ) {
         self.dependencies = dependencies
         self.onTaskCreated = onTaskCreated
+        self.onTaskCreatedWithTask = onTaskCreatedWithTask
         self.onCancelled = onCancelled
         self.alarmDate = Self.defaultAlarmDate()
         if let prefillTitle {
@@ -210,7 +213,7 @@ public final class NewTaskModel {
                     reminders: reminders,
                     notificationScheduler: dependencies.notificationScheduler
                 )
-                saveCompleted(.success(()))
+                saveCompleted(.success(taskToSave))
             } catch {
                 saveCompleted(.failure(error))
             }
@@ -281,11 +284,12 @@ public final class NewTaskModel {
         return Calendar.current.date(from: components) ?? Date()
     }
 
-    private func saveCompleted(_ result: Result<Void, Error>) {
+    private func saveCompleted(_ result: Result<Domain.Task, Error>) {
         switch result {
-        case .success:
+        case let .success(task):
             isSaving = false
             onTaskCreated()
+            onTaskCreatedWithTask(task)
         case .failure:
             isSaving = false
             saveFailed = true

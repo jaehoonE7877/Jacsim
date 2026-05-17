@@ -73,22 +73,28 @@ public final class FriendsSearchModel {
         guard row.state == .follow else { return }
         let follow = Follow(
             id: FollowID(UUID()),
-            fromUserId: row.user.id,
-            toUserId: currentUserID,
+            fromUserId: currentUserID,
+            toUserId: row.user.id,
             state: .pending
         )
         _Concurrency.Task { [dependencies, currentUserID] in
             do {
                 try await dependencies.followRepository.upsertFollow(follow)
-                try? await dependencies.notificationScheduler.scheduleSocial(
-                    .followRequested,
-                    SocialNotificationContext(
-                        sourceUserId: row.user.id,
-                        targetUserId: currentUserID,
-                        title: "새 친구 요청",
-                        body: "\(row.user.displayName)님이 친구 요청을 보냈어요"
-                    )
+                let notificationContext = SocialNotificationContext(
+                    sourceUserId: currentUserID,
+                    targetUserId: row.user.id,
+                    title: "새 친구 요청",
+                    body: "친구 요청을 받았어요"
                 )
+                if SocialLocalSession.shouldScheduleLocalNotification(
+                    sourceUserID: notificationContext.sourceUserId,
+                    targetUserID: notificationContext.targetUserId
+                ) {
+                    try? await dependencies.notificationScheduler.scheduleSocial(
+                        .followRequested,
+                        notificationContext
+                    )
+                }
                 toastMessage = "요청됨"
                 queryChanged()
             } catch {

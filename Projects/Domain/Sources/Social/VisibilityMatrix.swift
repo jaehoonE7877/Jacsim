@@ -30,8 +30,10 @@ public func canView(
     }
 
     switch resource {
-    case .profile, .bragPost, .cheerCount, .commentList:
+    case .profile:
         return true
+    case .bragPost, .cheerCount, .commentList:
+        return canViewTaskScopedResource(relation: relation, taskVisibility: taskVisibility)
     case .taskList, .taskDetail, .streak:
         return canViewTaskScopedResource(relation: relation, taskVisibility: taskVisibility)
     case .record:

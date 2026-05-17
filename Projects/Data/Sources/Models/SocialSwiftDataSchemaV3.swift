@@ -1,7 +1,8 @@
 import Foundation
 import SwiftData
 
-extension JacsimSchemaV2 {
+// Current social graph/post models. The schema version stays V3 for migration compatibility.
+extension JacsimSchemaV3 {
     @Model
     public final class UserModel {
         @Attribute(.unique) public var id: UUID
@@ -175,10 +176,3 @@ extension JacsimSchemaV2 {
         }
     }
 }
-
-public typealias UserModel = JacsimSchemaV3.UserModel
-public typealias FollowModel = JacsimSchemaV3.FollowModel
-public typealias BragPostModel = JacsimSchemaV3.BragPostModel
-public typealias CheerModel = JacsimSchemaV3.CheerModel
-public typealias CommentModel = JacsimSchemaV3.CommentModel
-public typealias FollowChallengeModel = JacsimSchemaV3.FollowChallengeModel

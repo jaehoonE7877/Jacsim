@@ -1,6 +1,7 @@
 import Foundation
 import SwiftData
 
+// Current task/certification models. The schema version stays V3 for migration compatibility.
 public enum JacsimSchemaV3: VersionedSchema {
     public static var versionIdentifier: Schema.Version {
         Schema.Version(3, 0, 0)

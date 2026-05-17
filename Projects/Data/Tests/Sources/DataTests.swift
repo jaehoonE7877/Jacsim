@@ -74,39 +74,31 @@ func userJacsimModelRestoresWhenCurrentStageTypeRawIsMissing() {
     #expect(task.currentStage?.stageType == .three)
 }
 
-@Test("SwiftData V1→V3 마이그레이션은 기존 작심 visibility를 private으로 채운다")
-func swiftDataMigrationSetsExistingTaskVisibilityPrivate() throws {
-    let directory = FileManager.default.temporaryDirectory
-        .appendingPathComponent("SwiftDataMigrationTests")
-        .appendingPathComponent(UUID().uuidString)
-    try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-    defer {
-        try? FileManager.default.removeItem(at: directory)
-    }
+@Suite(.serialized)
+struct SwiftDataMigrationTests {
+    @Test("SwiftData V1→current 마이그레이션은 기존 작심 visibility를 private으로 채운다")
+    func swiftDataMigrationSetsExistingTaskVisibilityPrivate() throws {
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("SwiftDataMigrationTests")
+            .appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        defer {
+            try? FileManager.default.removeItem(at: directory)
+        }
 
-    let storeURL = directory.appendingPathComponent("Jacsim.store")
-    let taskID = UUID()
-    let startDate = Calendar.current.startOfDay(for: Date())
-    let endDate = Calendar.current.date(byAdding: .day, value: 2, to: startDate) ?? startDate
+        let storeURL = directory.appendingPathComponent("Jacsim.store")
+        let taskID = UUID()
+        let startDate = Calendar.current.startOfDay(for: Date())
+        let endDate = Calendar.current.date(byAdding: .day, value: 2, to: startDate) ?? startDate
 
-    do {
-        let schema = Schema(versionedSchema: JacsimSchemaV1.self)
-        let config = ModelConfiguration(schema: schema, url: storeURL)
-        let container = try ModelContainer(for: schema, configurations: [config])
-        let context = ModelContext(container)
-        let model = JacsimSchemaV1.UserJacsimModel(
-            id: taskID,
-            title: "V1 저장소 작심",
+        try createV1Store(
+            storeURL: storeURL,
+            taskID: taskID,
             startDate: startDate,
-            endDate: endDate,
-            success: 0
+            endDate: endDate
         )
-        context.insert(model)
-        try context.save()
-    }
 
-    do {
-        let schema = Schema(versionedSchema: JacsimSchemaV3.self)
+        let schema = Schema(versionedSchema: CurrentSwiftDataSchema.self)
         let config = ModelConfiguration(schema: schema, url: storeURL)
         let container = try ModelContainer(
             for: schema,
@@ -121,6 +113,27 @@ func swiftDataMigrationSetsExistingTaskVisibilityPrivate() throws {
         #expect(migrated.id == taskID)
         #expect(migrated.visibilityRaw == TaskVisibility.private.rawValue)
         #expect(mapToDomainModel(migrated).visibility == .private)
+    }
+
+    private func createV1Store(
+        storeURL: URL,
+        taskID: UUID,
+        startDate: Date,
+        endDate: Date
+    ) throws {
+        let schema = Schema(versionedSchema: JacsimSchemaV1.self)
+        let config = ModelConfiguration(schema: schema, url: storeURL)
+        let container = try ModelContainer(for: schema, configurations: [config])
+        let context = ModelContext(container)
+        let model = JacsimSchemaV1.UserJacsimModel(
+            id: taskID,
+            title: "V1 저장소 작심",
+            startDate: startDate,
+            endDate: endDate,
+            success: 0
+        )
+        context.insert(model)
+        try context.save()
     }
 }
 

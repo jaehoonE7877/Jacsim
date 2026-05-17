@@ -22,9 +22,14 @@ public actor SeedSocialUseCase {
         let existingUsers = try context.fetch(FetchDescriptor<UserModel>())
         let posts = seedPosts()
         let existingPosts = try context.fetch(FetchDescriptor<BragPostModel>())
+        let existingVisibilities = try context.fetch(FetchDescriptor<BragPostVisibilityModel>())
+        let seedVisibilitiesComplete = posts.allSatisfy { post in
+            existingVisibilities.contains { $0.postId == post.id.rawValue }
+        }
         if settings.seededSocialV1 == true,
            existingUsers.count >= users.count,
-           existingPosts.count >= posts.count {
+           existingPosts.count >= posts.count,
+           seedVisibilitiesComplete {
             return
         }
 
@@ -34,6 +39,15 @@ public actor SeedSocialUseCase {
 
         for post in posts where !existingPosts.contains(where: { $0.id == post.id.rawValue }) {
             context.insert(mapToSwiftDataModel(post))
+        }
+
+        for post in posts where !existingVisibilities.contains(where: { $0.postId == post.id.rawValue }) {
+            context.insert(
+                BragPostVisibilityModel(
+                    postId: post.id.rawValue,
+                    visibilityRaw: post.visibility.rawValue
+                )
+            )
         }
 
         settings.seededSocialV1 = true
@@ -110,6 +124,7 @@ public actor SeedSocialUseCase {
             type: type,
             body: body,
             recordImagePaths: [image],
+            visibility: .public,
             createdAt: createdAt
         )
     }

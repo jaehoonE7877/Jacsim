@@ -1,4 +1,6 @@
+import Foundation
 import SwiftUI
+import UIKit
 
 public enum BragType: Sendable {
     case graduation
@@ -11,6 +13,7 @@ public struct JSBragCardModel: Identifiable, Sendable {
     public let type: BragType
     public let body: String
     public let imagePaths: [String]
+    public let imageDataItems: [Data]
     public let cheerCount: Int
     public let commentCount: Int
     public let isOwn: Bool
@@ -23,6 +26,7 @@ public struct JSBragCardModel: Identifiable, Sendable {
         type: BragType,
         body: String,
         imagePaths: [String] = [],
+        imageDataItems: [Data] = [],
         cheerCount: Int,
         commentCount: Int,
         isOwn: Bool,
@@ -34,6 +38,7 @@ public struct JSBragCardModel: Identifiable, Sendable {
         self.type = type
         self.body = body
         self.imagePaths = Array(imagePaths.prefix(4))
+        self.imageDataItems = Array(imageDataItems.prefix(4))
         self.cheerCount = cheerCount
         self.commentCount = commentCount
         self.isOwn = isOwn
@@ -72,7 +77,7 @@ public struct JSBragCard: View {
                 .foregroundStyle(Color.labelStrong)
                 .fixedSize(horizontal: false, vertical: true)
 
-            if !post.imagePaths.isEmpty {
+            if post.imageCount > 0 {
                 imageGrid
             }
             footer
@@ -118,19 +123,32 @@ public struct JSBragCard: View {
 
     private var imageGrid: some View {
         LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: .jsXS), count: 2), spacing: .jsXS) {
-            ForEach(Array(post.imagePaths.enumerated()), id: \.offset) { index, path in
-                RoundedRectangle(cornerRadius: .jsCornerSmall, style: .continuous)
-                    .fill(LinearGradient.wallpaperDusk)
-                    .overlay {
-                        Text(URL(fileURLWithPath: path).lastPathComponent.isEmpty ? "\(index + 1)" : URL(fileURLWithPath: path).lastPathComponent)
-                            .font(.jsMonoSmall)
-                            .foregroundStyle(Color.labelStrong)
-                            .lineLimit(1)
-                            .padding(.jsXS)
-                    }
+            ForEach(0..<post.imageCount, id: \.self) { index in
+                imageCell(index: index)
                     .aspectRatio(1, contentMode: .fit)
                     .accessibilityLabel("자랑 이미지 \(index + 1)")
             }
+        }
+    }
+
+    @ViewBuilder
+    private func imageCell(index: Int) -> some View {
+        if post.imageDataItems.indices.contains(index),
+           let image = UIImage(data: post.imageDataItems[index]) {
+            Image(uiImage: image)
+                .resizable()
+                .scaledToFill()
+                .clipShape(RoundedRectangle(cornerRadius: .jsCornerSmall, style: .continuous))
+        } else {
+            RoundedRectangle(cornerRadius: .jsCornerSmall, style: .continuous)
+                .fill(LinearGradient.wallpaperDusk)
+                .overlay {
+                    Text(post.imageName(at: index))
+                        .font(.jsMonoSmall)
+                        .foregroundStyle(Color.labelStrong)
+                        .lineLimit(1)
+                        .padding(.jsXS)
+                }
         }
     }
 
@@ -173,6 +191,20 @@ public struct JSBragCard: View {
         }
         guard !parts.isEmpty else { return post.type.subtitle }
         return parts.joined(separator: " · ")
+    }
+}
+
+private extension JSBragCardModel {
+    var imageCount: Int {
+        max(imagePaths.count, imageDataItems.count)
+    }
+
+    func imageName(at index: Int) -> String {
+        guard imagePaths.indices.contains(index) else {
+            return "\(index + 1)"
+        }
+        let name = URL(fileURLWithPath: imagePaths[index]).lastPathComponent
+        return name.isEmpty ? "\(index + 1)" : name
     }
 }
 

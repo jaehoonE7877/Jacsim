@@ -8,7 +8,8 @@ public enum JacsimMigrationPlan: SchemaMigrationPlan {
             JacsimSchemaV2.self,
             JacsimSchemaV3.self,
             JacsimSchemaV4.self,
-            JacsimSchemaV5.self
+            JacsimSchemaV5.self,
+            CurrentSwiftDataSchema.self
         ]
     }
 
@@ -17,7 +18,8 @@ public enum JacsimMigrationPlan: SchemaMigrationPlan {
             migrateV1ToV2,
             .lightweight(fromVersion: JacsimSchemaV2.self, toVersion: JacsimSchemaV3.self),
             .lightweight(fromVersion: JacsimSchemaV3.self, toVersion: JacsimSchemaV4.self),
-            .lightweight(fromVersion: JacsimSchemaV4.self, toVersion: JacsimSchemaV5.self)
+            .lightweight(fromVersion: JacsimSchemaV4.self, toVersion: JacsimSchemaV5.self),
+            .lightweight(fromVersion: JacsimSchemaV5.self, toVersion: CurrentSwiftDataSchema.self)
         ]
     }
 
@@ -37,6 +39,7 @@ public enum JacsimMigrationPlan: SchemaMigrationPlan {
             try context.save()
         }
     )
+
 }
 
 public final class SwiftDataStack: @unchecked Sendable {
@@ -53,7 +56,7 @@ public final class SwiftDataStack: @unchecked Sendable {
     }
 
     public static func makeContainer(isStoredInMemoryOnly: Bool = false) throws -> ModelContainer {
-        let schema = Schema(versionedSchema: JacsimSchemaV5.self)
+        let schema = Schema(versionedSchema: CurrentSwiftDataSchema.self)
         if !isStoredInMemoryOnly {
             try WidgetDataMigrationUseCase.migrateStoreIfNeeded(schema: schema)
         }
