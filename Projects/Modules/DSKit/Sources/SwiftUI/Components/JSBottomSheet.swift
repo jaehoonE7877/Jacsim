@@ -7,10 +7,13 @@ public enum JSBottomSheetStyle {
 }
 
 public struct JSBottomSheet<Content: View>: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     let isPresented: Binding<Bool>
     let style: JSBottomSheetStyle
     let showDragIndicator: Bool
     let allowsInteractiveDismiss: Bool
+    let glass: Bool
     let content: Content
     let onDismiss: (() -> Void)?
 
@@ -22,6 +25,7 @@ public struct JSBottomSheet<Content: View>: View {
         style: JSBottomSheetStyle = .flexible(maxHeight: 400),
         showDragIndicator: Bool = true,
         allowsInteractiveDismiss: Bool = false,
+        glass: Bool = true,
         onDismiss: (() -> Void)? = nil,
         @ViewBuilder content: () -> Content
     ) {
@@ -29,6 +33,7 @@ public struct JSBottomSheet<Content: View>: View {
         self.style = style
         self.showDragIndicator = showDragIndicator
         self.allowsInteractiveDismiss = allowsInteractiveDismiss
+        self.glass = glass
         self.onDismiss = onDismiss
         self.content = content()
     }
@@ -44,46 +49,40 @@ public struct JSBottomSheet<Content: View>: View {
                             dismiss()
                         }
                     }
-                    .transition(.opacity)
+                    .transition(reduceMotion ? .identity : .opacity)
 
                 VStack(spacing: 0) {
                     if showDragIndicator {
                         dragIndicator
+                            .gesture(sheetDragGesture)
                     }
 
                     content
                         .frame(maxWidth: .infinity)
                         .frame(height: sheetHeight)
                 }
-                .background(
-                    Color.surfaceElevated
-                        .jsCornerRadius(16, corners: [.topLeft, .topRight])
-                )
+                .background(sheetBackground)
+                .jsGlassSheet()
                 .offset(y: max(0, offset))
-                .gesture(
-                    DragGesture()
-                        .onChanged { value in
-                            isDragging = true
-                            if value.translation.height > 0 {
-                                offset = value.translation.height
-                            }
-                        }
-                        .onEnded { value in
-                            isDragging = false
-                            let threshold: CGFloat = 100
-                            if allowsInteractiveDismiss, value.translation.height > threshold {
-                                dismiss()
-                            } else {
-                                withAnimation(.spring()) {
-                                    offset = 0
-                                }
-                            }
-                        }
-                )
-                .transition(.move(edge: .bottom))
+                .transition(reduceMotion ? .identity : .move(edge: .bottom))
+                .accessibilityElement(children: .contain)
+                .accessibilityIdentifier("glass.bottom.sheet")
             }
         }
-        .animation(.spring(response: 0.3, dampingFraction: 0.8), value: isPresented.wrappedValue)
+        .animation(reduceMotion ? nil : .spring(response: 0.3, dampingFraction: 0.8), value: isPresented.wrappedValue)
+    }
+
+    @ViewBuilder
+    private var sheetBackground: some View {
+        if glass {
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .fill(.thinMaterial)
+                .jsGlassCard(cornerRadius: 24)
+                .jsCornerRadius(24, corners: [.topLeft, .topRight])
+        } else {
+            Color.surfaceElevated
+                .jsCornerRadius(16, corners: [.topLeft, .topRight])
+        }
     }
 
     private var dragIndicator: some View {
@@ -92,6 +91,27 @@ public struct JSBottomSheet<Content: View>: View {
             .frame(width: 36, height: 5)
             .padding(.top, 8)
             .padding(.bottom, 4)
+    }
+
+    private var sheetDragGesture: some Gesture {
+        DragGesture()
+            .onChanged { value in
+                isDragging = true
+                if value.translation.height > 0 {
+                    offset = value.translation.height
+                }
+            }
+            .onEnded { value in
+                isDragging = false
+                let threshold: CGFloat = 100
+                if allowsInteractiveDismiss, value.translation.height > threshold {
+                    dismiss()
+                } else {
+                    withAnimation(.spring()) {
+                        offset = 0
+                    }
+                }
+            }
     }
 
     private var sheetHeight: CGFloat? {
@@ -242,40 +262,41 @@ public struct JSDatePickerBottomSheet: View {
     }
 }
 
-struct JSBottomSheet_Previews: PreviewProvider {
-    struct PreviewContainer: View {
-        @State private var showSheet = false
-        @State private var selectedDate = Date()
+private struct JSBottomSheetPreview: View {
+    @State private var showSheet = true
+    @State private var selectedDate = Date()
 
-        var body: some View {
-            ZStack {
-                VStack {
-                    Button(action: { showSheet = true }) {
-                        Text("Show Bottom Sheet")
-                            .font(.jsHeadline17Bold)
-                            .foregroundColor(.white)
-                            .padding()
-                            .background(
-                                RoundedRectangle(cornerRadius: 10)
-                                    .fill(Color.primaryNormal)
-                            )
-                    }
-                    .padding()
-
-                    Spacer()
-                }
-
-                JSDatePickerBottomSheet(
-                    selectedDate: $selectedDate,
-                    isPresented: $showSheet,
-                    title: "날짜 선택",
-                    onConfirm: {}
-                )
+    var body: some View {
+        ZStack {
+            LinearGradient.wallpaperMorning
+                .ignoresSafeArea()
+            Button("Show Bottom Sheet") {
+                showSheet = true
             }
+            .font(.jsButtonMedium)
+            .buttonStyle(.glassProminent)
+            .accessibilityLabel("Show glass bottom sheet")
+            JSDatePickerBottomSheet(
+                selectedDate: $selectedDate,
+                isPresented: $showSheet,
+                title: "날짜 선택",
+                onConfirm: {}
+            )
         }
     }
+}
 
-    static var previews: some View {
-        PreviewContainer()
-    }
+#Preview("JSBottomSheet - Light") {
+    JSBottomSheetPreview()
+        .preferredColorScheme(.light)
+}
+
+#Preview("JSBottomSheet - Dark") {
+    JSBottomSheetPreview()
+        .preferredColorScheme(.dark)
+}
+
+#Preview("JSBottomSheet - Accessibility") {
+    JSBottomSheetPreview()
+        .dynamicTypeSize(.accessibility3)
 }

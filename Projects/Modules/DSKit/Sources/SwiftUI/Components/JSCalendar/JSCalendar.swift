@@ -12,6 +12,7 @@ public enum JSCalendarDateColor {
     case high
 }
 
+@available(*, deprecated, message: "Use JSCalendarV2")
 public struct JSCalendar: View {
     @Binding var selectedDate: Date
     @State private var viewDate: Date

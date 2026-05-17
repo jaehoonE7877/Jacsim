@@ -49,7 +49,7 @@ public struct JSGlassHeroCard: View {
                 }
 
                 LinearGradient(
-                    colors: [.clear, .black.opacity(0.8)],
+                    colors: [.clear, Color.surfaceOverlay.opacity(0.82)],
                     startPoint: .top,
                     endPoint: .bottom
                 )
@@ -60,7 +60,7 @@ public struct JSGlassHeroCard: View {
                         Spacer()
                         Text(isTodayCertified ? "오늘 인증 완료" : "오늘 미인증")
                             .font(.jsLabel12Bold)
-                            .foregroundColor(isTodayCertified ? .green : .white)
+                            .foregroundColor(isTodayCertified ? Color.positive : Color.backgroundNormal)
                             .padding(.horizontal, 12)
                             .padding(.vertical, 6)
                             .background(.ultraThinMaterial)
@@ -72,13 +72,13 @@ public struct JSGlassHeroCard: View {
                     VStack(alignment: .leading, spacing: 8) {
                         Text(title)
                             .font(.jsDisplay28Bold)
-                            .foregroundColor(.white)
+                            .foregroundColor(Color.backgroundNormal)
                             .lineLimit(2)
 
                         if let subtitle = subtitle {
                             Text(subtitle)
                                 .font(.jsBody15Medium)
-                                .foregroundColor(.white.opacity(0.8))
+                                .foregroundColor(Color.backgroundNormal.opacity(0.8))
                                 .lineLimit(1)
                         }
 
@@ -86,11 +86,11 @@ public struct JSGlassHeroCard: View {
                             GeometryReader { geo in
                                 ZStack(alignment: .leading) {
                                     Capsule()
-                                        .fill(.white.opacity(0.3))
+                                        .fill(Color.backgroundNormal.opacity(0.3))
                                         .frame(height: 6)
                                     
                                     Capsule()
-                                        .fill(.white)
+                                        .fill(Color.backgroundNormal)
                                         .frame(width: geo.size.width * CGFloat(progress), height: 6)
                                 }
                             }
@@ -98,7 +98,7 @@ public struct JSGlassHeroCard: View {
 
                             Text("\(completedDays)/\(totalDays)일")
                                 .font(.jsLabel14Bold)
-                                .foregroundColor(.white)
+                                .foregroundColor(Color.backgroundNormal)
                         }
                         .padding(.top, 8)
                     }
@@ -113,8 +113,8 @@ public struct JSGlassHeroCard: View {
     }
 }
 
-struct JSGlassHeroCard_Previews: PreviewProvider {
-    static var previews: some View {
+private struct JSGlassHeroCardPreview: View {
+    var body: some View {
         ScrollView {
             VStack {
                 JSGlassHeroCard(
@@ -127,18 +127,23 @@ struct JSGlassHeroCard_Previews: PreviewProvider {
                     onTap: {}
                 )
                 .padding()
-
-                JSGlassHeroCard(
-                    title: "물 2L 마시기",
-                    progress: 0.3,
-                    totalDays: 7,
-                    completedDays: 2,
-                    isTodayCertified: true,
-                    onTap: {}
-                )
-                .padding()
             }
         }
         .background(Color.backgroundAlternative)
     }
+}
+
+#Preview("JSGlassHeroCard - Light") {
+    JSGlassHeroCardPreview()
+        .preferredColorScheme(.light)
+}
+
+#Preview("JSGlassHeroCard - Dark") {
+    JSGlassHeroCardPreview()
+        .preferredColorScheme(.dark)
+}
+
+#Preview("JSGlassHeroCard - Accessibility") {
+    JSGlassHeroCardPreview()
+        .dynamicTypeSize(.accessibility3)
 }

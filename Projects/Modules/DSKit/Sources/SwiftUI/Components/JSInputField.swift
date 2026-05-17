@@ -7,6 +7,8 @@ public struct JSInputField: View {
     let isSecure: Bool
     let isEnabled: Bool
     let errorMessage: String?
+    let axis: Axis
+    let lineLimit: Int?
 
     public init(
         title: String,
@@ -14,7 +16,9 @@ public struct JSInputField: View {
         text: Binding<String>,
         isSecure: Bool = false,
         isEnabled: Bool = true,
-        errorMessage: String? = nil
+        errorMessage: String? = nil,
+        axis: Axis = .horizontal,
+        lineLimit: Int? = nil
     ) {
         self.title = title
         self.placeholder = placeholder
@@ -22,6 +26,8 @@ public struct JSInputField: View {
         self.isSecure = isSecure
         self.isEnabled = isEnabled
         self.errorMessage = errorMessage
+        self.axis = axis
+        self.lineLimit = lineLimit
     }
 
     public var body: some View {
@@ -36,10 +42,11 @@ public struct JSInputField: View {
                 if isSecure {
                     SecureField(placeholder, text: $text)
                 } else {
-                    TextField(placeholder, text: $text)
+                    TextField(placeholder, text: $text, axis: axis)
                 }
             }
             .font(.jsBodyMedium)
+            .lineLimit(lineLimit ?? 1, reservesSpace: axis == .vertical)
             .padding(.jsMD)
             .background(
                 RoundedRectangle(cornerRadius: .jsCornerSmall)

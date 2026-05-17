@@ -1,14 +1,115 @@
+import Domain
 import DSKit
 import SwiftUI
 
 public struct MainView: View {
     @Bindable var model: MainModel
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     public init(model: MainModel) {
         self.model = model
     }
 
     public var body: some View {
-        HomeView(model: model.home)
+        ZStack {
+            Color.backgroundNormal
+                .ignoresSafeArea()
+
+            Group {
+                switch model.selectedTab {
+                case .today:
+                    HomeView(model: model.home)
+                case .calendar:
+                    CalendarView(model: model.calendar)
+                case .feed:
+                    FeedView(model: model.feed)
+                case .me:
+                    MeView(model: model.me)
+                case .plus:
+                    EmptyView()
+                default:
+                    HomeView(model: model.home)
+                }
+            }
+            .id(model.selectedTab)
+            .transition(reduceMotion ? .identity : .opacity)
+        }
+        .animation(reduceMotion ? .none : .easeInOut(duration: 0.18), value: model.selectedTab)
+        .safeAreaInset(edge: .bottom) {
+            if model.isRootTabBarVisible {
+                JSGlassFloatingTabBar(
+                    selection: $model.selectedTab,
+                    onSelect: { tab in
+                        model.tabSelected(tab)
+                    },
+                    onPlusTap: {
+                        model.plusButtonTapped()
+                    }
+                )
+                .padding(.top, .jsXS)
+                .padding(.bottom, .jsXS)
+            }
+        }
+        .overlay {
+            if model.isRootTabBarVisible {
+                PlusActionSheet(
+                    isPresented: $model.isPlusSheetPresented,
+                    onCreateTask: {
+                        model.createTaskActionTapped()
+                    },
+                    onCreateBrag: {
+                        model.createBragActionTapped()
+                    },
+                    onCoach: {
+                        model.coachActionTapped()
+                    }
+                )
+            }
+        }
+        .overlay(alignment: .top) {
+            if let toastText = model.plusToastText {
+                    JSGlassToast(text: toastText)
+                        .padding(.top, .jsXL)
+                        .padding(.horizontal, .jsXL)
+                    .transition(reduceMotion ? .identity : .move(edge: .top).combined(with: .opacity))
+                    .accessibilityLabel(toastText)
+            }
+        }
+        .animation(reduceMotion ? nil : JSAnimation.spring, value: model.plusToastText)
+        .sensoryFeedback(.impact(weight: .light), trigger: model.plusToastText)
+        .task(id: model.plusToastText) {
+            guard model.plusToastText != nil else { return }
+            try? await _Concurrency.Task.sleep(nanoseconds: 3_000_000_000)
+            guard !_Concurrency.Task.isCancelled else { return }
+            model.plusToastDismissed()
+        }
+        .sheet(isPresented: $model.isCoachPresented) {
+            NavigationStack {
+                CoachView(model: model.coach)
+            }
+        }
+        .fullScreenCover(item: $model.presentedGraduation) { context in
+            StageGraduationView(
+                context: context,
+                onNextStage: {
+                    model.graduationNextStageTapped()
+                },
+                onFinish: {
+                    model.graduationFinishTapped()
+                },
+                onBrag: {
+                    model.graduationBragTapped()
+                }
+            )
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .jacsimStageGraduated)) { notification in
+            guard let context = notification.object as? GraduationContext else { return }
+            model.graduationPresented(context)
+        }
+#if DEBUG
+        .task {
+            model.presentDebugGraduationIfRequested()
+        }
+#endif
     }
 }

@@ -41,6 +41,8 @@ public final class TaskDetailModel {
     public var shouldScrollToRecords: Bool = false
     public var coverImage: UIImage?
     public var editTask: TaskEditModel?
+    public var isVisibilitySelectorPresented: Bool = false
+    public var wallpaperRaw: String = "morning"
 
     @ObservationIgnored private let dependencies: JacsimDependencies
     @ObservationIgnored private let onTaskDeleted: () -> Void
@@ -103,6 +105,7 @@ public final class TaskDetailModel {
         }
 
         loadImages()
+        loadWallpaper()
 
         if task != originalTask {
             updateTask?.cancel()
@@ -140,12 +143,46 @@ public final class TaskDetailModel {
         }
     }
 
+    public func wallpaperLoaded(_ rawValue: String) {
+        wallpaperRaw = rawValue
+    }
+
+    private func loadWallpaper() {
+        let dependencies = dependencies
+        _Concurrency.Task {
+            wallpaperLoaded(await dependencies.userSettingsRepository.wallpaperRaw())
+        }
+    }
+
     public func changePhotoButtonTapped() {
         presentEditTask()
     }
 
     public func notificationSettingsButtonTapped() {
         presentEditTask()
+    }
+
+    public func visibilityButtonTapped() {
+        isVisibilitySelectorPresented = true
+    }
+
+    public func visibilitySelected(_ visibility: TaskVisibility) {
+        let previousVisibility = task.visibility
+        task.visibility = visibility
+        isVisibilitySelectorPresented = false
+        updateTask?.cancel()
+        updateTask = _Concurrency.Task { [dependencies, taskId = task.id] in
+            do {
+                try await dependencies.taskCommandClient.updateVisibility(taskId, visibility)
+            } catch {
+                Logger.certificationFailed(error: error)
+                task.visibility = previousVisibility
+            }
+        }
+    }
+
+    public func visibilitySelectionDismissed() {
+        isVisibilitySelectorPresented = false
     }
 
     public func editMemoButtonTapped() {

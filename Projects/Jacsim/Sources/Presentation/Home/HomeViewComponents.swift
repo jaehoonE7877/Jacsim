@@ -2,96 +2,43 @@ import SwiftUI
 import Domain
 import DSKit
 
-struct HomeFloatingAddButton: View {
-    let isExpanded: Bool
-    let isHidden: Bool
-    let reduceMotion: Bool
-    let height: CGFloat
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            HStack(spacing: .jsXS) {
-                Image(systemName: "plus")
-                    .font(.title3.weight(.semibold))
-                    .foregroundColor(.white)
-
-                if isExpanded {
-                    Text("새 작심")
-                        .font(.jsButtonMedium)
-                        .foregroundColor(.white)
-                        .lineLimit(1)
-                        .transition(.opacity.combined(with: .move(edge: .trailing)))
-                }
-            }
-            .frame(height: height)
-            .padding(.horizontal, isExpanded ? .jsLG : .jsMD)
-            .background(
-                Capsule()
-                    .fill(Color.v2BrandBlue)
-            )
-            .overlay(
-                Capsule()
-                    .stroke(Color.white.opacity(0.16), lineWidth: 1)
-            )
-            .shadow(color: .v2BrandBlue.opacity(0.26), radius: 14.jsScaled(), x: 0, y: 8.jsScaled())
-            .contentShape(Capsule())
-        }
-        .pressEffect()
-        .opacity(isHidden ? 0 : 1)
-        .scaleEffect(isHidden ? 0.92 : 1)
-        .offset(y: isHidden ? 24.jsScaled() : 0)
-        .allowsHitTesting(!isHidden)
-        .accessibilityHidden(isHidden)
-        .animation(
-            reduceMotion ? .none : .spring(response: 0.28, dampingFraction: 0.88),
-            value: isHidden
-        )
-        .animation(
-            reduceMotion ? .none : .spring(response: 0.28, dampingFraction: 0.88),
-            value: isExpanded
-        )
-        .accessibilityLabel("새 작심 만들기")
-        .accessibilityHint("새 작심 추가 화면을 엽니다")
-    }
-}
-
 struct HomeHeaderSection: View {
     let todayLabel: String
+    let displayName: String
     let onSettingsTap: () -> Void
 
     var body: some View {
-        HStack {
-            Text("작심")
-                .font(.jsDisplayMedium)
-                .foregroundColor(.labelStrong)
-                .lineLimit(1)
-                .minimumScaleFactor(0.86)
+        HStack(alignment: .top) {
+            VStack(alignment: .leading, spacing: .jsXS) {
+                Text("안녕하세요, \(displayName)")
+                    .font(.jsSerifDisplay)
+                    .foregroundColor(.labelStrong)
+                    .lineLimit(2)
+
+                Text(todayLabel)
+                    .font(.jsMonoSmall)
+                    .foregroundColor(.labelAlternative)
+                    .padding(.horizontal, .jsSM)
+                    .padding(.vertical, .jsMicro)
+                    .background(
+                        Capsule()
+                            .fill(Color.surfaceElevated.opacity(0.34))
+                    )
+            }
 
             Spacer()
-
-            Text(todayLabel)
-                .font(.jsLabelMedium)
-                .foregroundColor(.v2BrandBlue)
-                .lineLimit(1)
-                .padding(.horizontal, .jsSM)
-                .padding(.vertical, .jsMicro)
-                .background(
-                    Capsule()
-                        .fill(Color.v2BrandBlueSoft)
-                )
-                .accessibilityLabel("오늘 \(todayLabel)")
 
             Button(action: onSettingsTap) {
                 Image(systemName: "gearshape.fill")
                     .font(.jsHeadlineLarge)
                     .foregroundColor(.labelAlternative)
                     .frame(width: 44.jsScaled(.touchTarget), height: 44.jsScaled(.touchTarget))
+                    .accessibilityHidden(true)
             }
             .buttonStyle(.plain)
-            .zIndex(10)
             .accessibilityLabel("설정")
             .accessibilityHint("설정 화면으로 이동합니다")
+            .zIndex(10)
         }
         .padding(.horizontal, .jsXL)
         .padding(.top, .jsXS)
@@ -103,92 +50,132 @@ struct HomeSummaryCardSection: View {
     let overallProgress: Double
     let todayCompletedCount: Int
 
-    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
-
     var body: some View {
-        VStack(alignment: .leading, spacing: .jsSM) {
-            JSV2SectionHeader("오늘 흐름")
-            metrics
+        RedesignSectionCard(
+            title: "오늘 할 일",
+            subtitle: "인증 가능한 작심 \(activeTaskCount)개"
+        ) {
+            HStack(spacing: .jsSM) {
+                HomeSummaryMetricView(
+                    title: "전체 진행",
+                    value: "\(Int(overallProgress * 100))%",
+                    color: .primaryNormal
+                )
+                HomeSummaryMetricView(
+                    title: "오늘 완료",
+                    value: "\(todayCompletedCount)개",
+                    color: .positive
+                )
+                HomeSummaryMetricView(
+                    title: "남은 항목",
+                    value: "\(max(0, activeTaskCount - todayCompletedCount))개",
+                    color: .cautionary
+                )
+            }
         }
         .padding(.horizontal, .jsXL)
-    }
-
-    @ViewBuilder
-    private var metrics: some View {
-        if dynamicTypeSize.isAccessibilitySize {
-            VStack(spacing: .jsSM) {
-                JSV2MetricPill(
-                    title: "전체 진행",
-                    value: "\(Int(overallProgress * 100))%",
-                    systemImage: "chart.line.uptrend.xyaxis",
-                    style: .accent
-                )
-                JSV2MetricPill(
-                    title: "오늘 완료",
-                    value: "\(todayCompletedCount)개",
-                    systemImage: "checkmark.circle.fill",
-                    style: .success
-                )
-                JSV2MetricPill(
-                    title: "남은 인증",
-                    value: "\(max(0, activeTaskCount - todayCompletedCount))개",
-                    systemImage: "camera.fill",
-                    style: .warning
-                )
-            }
-        } else {
-            HStack(spacing: .jsSM) {
-                JSV2MetricPill(
-                    title: "전체 진행",
-                    value: "\(Int(overallProgress * 100))%",
-                    systemImage: "chart.line.uptrend.xyaxis",
-                    style: .accent
-                )
-                JSV2MetricPill(
-                    title: "오늘 완료",
-                    value: "\(todayCompletedCount)개",
-                    systemImage: "checkmark.circle.fill",
-                    style: .success
-                )
-                JSV2MetricPill(
-                    title: "남은 인증",
-                    value: "\(max(0, activeTaskCount - todayCompletedCount))개",
-                    systemImage: "camera.fill",
-                    style: .warning
-                )
-            }
-        }
     }
 }
 
 struct HomeHeroTaskSection: View {
     let task: Domain.Task
-    let imageData: Data?
     let onTap: () -> Void
+    let onPrimaryTap: () -> Void
 
-    private var heroImage: Image? {
-        imageData.flatMap { UIImage(data: $0) }.map { Image(uiImage: $0) }
-    }
-
-    private var subtitle: String {
+    private var dateRange: String {
         "\(task.startDate.formatted(.dateTime.month().day())) ~ \(task.endDate.formatted(.dateTime.month().day()))"
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: .jsMD) {
-            JSUnifiedHeroCard(
-                title: task.title,
-                subtitle: subtitle,
-                progress: task.progress,
-                totalDays: task.dayArray.count,
-                completedDays: task.completedDays,
-                image: heroImage,
-                isTodayCertified: task.isCompleted(on: Date()),
-                onTap: onTap
-            )
-            .frame(maxWidth: .infinity)
+        JSGlassCard(accessibilityLabel: "오늘의 작심 \(task.title)") {
+            VStack(alignment: .leading, spacing: .jsLG) {
+                HStack(alignment: .center, spacing: .jsLG) {
+                    JSStageRing(
+                        currentDays: task.completedDays,
+                        targetDays: max(task.dayArray.count, 1),
+                        stageType: jsStageType(for: task),
+                        accessibilityLabel: "\(task.completedDays)일 완료, 전체 \(task.dayArray.count)일"
+                    )
+                    .frame(width: 132.jsScaled(), height: 132.jsScaled())
+
+                    VStack(alignment: .leading, spacing: .jsSM) {
+                        Text("오늘의 작심")
+                            .font(.jsBodySmall)
+                            .foregroundColor(.labelAlternative)
+
+                        Text(task.title)
+                            .font(.jsSerifTitle)
+                            .foregroundColor(.labelStrong)
+                            .lineLimit(2)
+
+                        Text(dateRange)
+                            .font(.jsMonoSmall)
+                            .foregroundColor(.labelNeutral)
+
+                        Button(action: onPrimaryTap) {
+                            Text(task.isCompleted(on: Date()) ? "오늘 기록 보기 →" : "오늘 인증하기 →")
+                                .font(.jsButtonMedium)
+                                .foregroundColor(.backgroundNormal)
+                                .padding(.horizontal, .jsMD)
+                                .padding(.vertical, .jsXS)
+                                .background(
+                                    Capsule()
+                                        .fill(Color.forestAccent)
+                                )
+                        }
+                        .buttonStyle(.plain)
+                        .jsTouchTarget()
+                        .accessibilityLabel(task.isCompleted(on: Date()) ? "오늘 기록 보기" : "오늘 인증하기")
+                        .accessibilityHint(task.isCompleted(on: Date()) ? "오늘 인증 기록 영역으로 이동합니다" : "오늘 인증 화면으로 이동합니다")
+                    }
+                }
+            }
         }
+        .onTapGesture(perform: onTap)
         .frame(maxWidth: .infinity)
+    }
+
+    private func jsStageType(for task: Domain.Task) -> JSStageRing.StageType {
+        let days = task.currentStage?.durationDays ?? task.stages.last?.durationDays ?? task.dayArray.count
+        return JSStageRing.StageType(rawValue: days) ?? .seven
+    }
+}
+
+struct HomeStreakHeatmapSection: View {
+    let task: Domain.Task
+
+    var body: some View {
+        JSGlassCard(accessibilityLabel: "최근 84일 작심 히트맵") {
+            VStack(alignment: .leading, spacing: .jsMD) {
+                HStack {
+                    VStack(alignment: .leading, spacing: .jsMicro) {
+                        Text("이어온 기록")
+                            .font(.jsSerifTitle)
+                            .foregroundColor(.labelStrong)
+
+                        Text("최근 84일 인증 흐름")
+                            .font(.jsBodySmall)
+                            .foregroundColor(.labelAlternative)
+                    }
+
+                    Spacer()
+
+                    Text("\(task.completedDays)")
+                        .font(.jsMonoMedium)
+                        .foregroundColor(.forestAccent)
+                }
+
+                JSStreakHeatmap(states: heatmapStates)
+            }
+        }
+    }
+
+    private var heatmapStates: [Date: StreakState] {
+        let calendar = Calendar.current
+        return Dictionary(uniqueKeysWithValues: task.records.map { record in
+            let state: StreakState = record.check ? .completed : .empty
+            return (calendar.startOfDay(for: record.date), state)
+        })
     }
 }
 
@@ -201,22 +188,22 @@ enum HomeFocusActionState {
     var primaryTitle: String {
         switch self {
         case .pending:
-            return "인증하기"
+            return "오늘 인증하기"
         case .completedStageReady:
-            return "다음 단계"
+            return "다음 단계 보기"
         case .allDoneToday:
-            return "기록 보기"
+            return "오늘 기록 보기"
         case .failed:
-            return "재도전"
+            return "재도전 보기"
         }
     }
 
     var secondaryTitle: String {
         switch self {
         case .completedStageReady:
-            return "기록"
+            return "기록 보기"
         default:
-            return "상세"
+            return "상세 보기"
         }
     }
 }
@@ -230,34 +217,17 @@ struct HomeFocusActionRow: View {
         HStack(spacing: .jsSM) {
             JSButton(
                 title: state.primaryTitle,
-                systemImage: primarySystemImage,
                 style: .primary,
                 size: .medium,
                 action: onPrimaryTap
             )
-            .layoutPriority(1)
 
             JSButton(
                 title: state.secondaryTitle,
-                systemImage: "chevron.right",
-                style: .ghost,
+                style: .secondary,
                 size: .medium,
                 action: onSecondaryTap
             )
-            .frame(width: 104.jsScaled(.touchTarget))
-        }
-    }
-
-    private var primarySystemImage: String {
-        switch state {
-        case .pending:
-            return "camera.fill"
-        case .completedStageReady:
-            return "arrow.forward.circle.fill"
-        case .allDoneToday:
-            return "list.bullet.rectangle"
-        case .failed:
-            return "arrow.counterclockwise.circle.fill"
         }
     }
 }
@@ -270,20 +240,21 @@ struct HomeMiniCardsSection: View {
     var body: some View {
         VStack(alignment: .leading, spacing: .jsMD) {
             HStack {
-                Text("진행 중")
+                Text("진행 중인 작심들")
                     .font(.jsHeadlineMedium)
                     .foregroundColor(.labelStrong)
 
                 Spacer()
 
                 Button(action: onAllTasksTap) {
-                    Text("전체")
+                    Text("전체보기")
                         .font(.jsButtonSmall)
                         .foregroundColor(.labelAlternative)
                 }
-                .frame(minWidth: .jsTouchTarget, minHeight: .jsTouchTarget)
-                .contentShape(Rectangle())
-                .accessibilityLabel("전체 작심 보기")
+                .buttonStyle(.plain)
+                .jsTouchTarget()
+                .accessibilityLabel("진행 중인 작심 전체보기")
+                .accessibilityHint("전체 작심 목록으로 이동합니다")
             }
             .padding(.horizontal, .jsXL)
 
@@ -297,41 +268,27 @@ struct HomeMiniCardsSection: View {
 }
 
 struct HomeEmptyStateSection: View {
-    let onStart: () -> Void
-
     var body: some View {
         VStack(spacing: .jsXL) {
-            Image(systemName: "flag.checkered")
-                .font(.jsDisplayScaledBold(size: 64))
-                .foregroundColor(Color.labelAssistive)
-                .accessibilityHidden(true)
+            Image(systemName: "arrow.down.circle.fill")
+                .font(.jsDisplayScaledBold(size: 56))
+                .foregroundColor(Color.forestAccent)
 
             VStack(spacing: .jsXS) {
-                Text("첫 작심을 시작해요")
-                    .font(.jsHeadlineMedium)
+                Text("첫 작심을 만들어보세요")
+                    .font(.jsSerifTitle)
                     .foregroundColor(.labelStrong)
-                    .multilineTextAlignment(.center)
 
-                Text("작게 정하고 바로 인증하세요")
+                Text("아래 가운데 + 버튼에서 작게 시작할 수 있어요")
                     .font(.jsBodySmall)
                     .foregroundColor(.labelAlternative)
-                    .multilineTextAlignment(.center)
             }
-
-            JSButton(
-                title: "시작하기",
-                systemImage: "plus",
-                style: .primary,
-                size: .medium,
-                action: onStart
-            )
-            .padding(.horizontal, .jsXL)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 40.jsScaled())
         .background(
             RoundedRectangle(cornerRadius: 24.jsScaled())
-                .fill(Color.v2Surface)
+                .fill(Color.surfaceElevated.opacity(0.3))
                 .shadow(color: Color.labelStrong.opacity(0.05), radius: 10.jsScaled(), x: 0, y: 4.jsScaled())
         )
     }
@@ -392,21 +349,15 @@ private struct HomeSummaryMetricView: View {
             Text(title)
                 .font(.jsLabelSmall)
                 .foregroundColor(.labelAlternative)
-                .lineLimit(1)
-                .minimumScaleFactor(0.8)
             Text(value)
-                .font(.jsHeadlineSmall)
+                .font(.jsMonoSmall)
                 .foregroundColor(color)
-                .lineLimit(1)
-                .minimumScaleFactor(0.82)
         }
         .frame(maxWidth: .infinity, minHeight: 72.jsScaled())
         .background(
             RoundedRectangle(cornerRadius: .jsRadiusMD)
                 .fill(color.opacity(0.08))
         )
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel("\(title) \(value)")
     }
 }
 

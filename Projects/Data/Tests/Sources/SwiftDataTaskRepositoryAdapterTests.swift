@@ -13,13 +13,14 @@ struct SwiftDataTaskRepositoryAdapterTests {
         let today = Date()
         try await port.addTask(makeTask(title: "진행중", stageResult: .inProgress, startOffset: -1, baseDate: today))
         try await port.addTask(makeTask(title: "성공", stageResult: .success, startOffset: -31, stageType: .thirty, baseDate: today))
+        try await port.addTask(makeTask(title: "완주", stageResult: .success, startOffset: -181, stageType: .oneEighty, baseDate: today))
         try await port.addTask(makeTask(title: "실패", stageResult: .fail, startOffset: -10, baseDate: today))
 
         let activeTasks = try await port.fetchActiveTasks()
         let doneTasks = try await port.fetchTasksByStatus(.done)
 
-        #expect(Set(activeTasks.map(\.title)) == Set(["진행중", "실패"]))
-        #expect(Set(doneTasks.map(\.title)) == Set(["성공", "실패"]))
+        #expect(Set(activeTasks.map(\.title)) == Set(["진행중", "성공", "실패"]))
+        #expect(Set(doneTasks.map(\.title)) == Set(["완주", "실패"]))
     }
 
     @Test

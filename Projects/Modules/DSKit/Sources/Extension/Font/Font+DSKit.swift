@@ -1,3 +1,4 @@
+import CoreText
 import SwiftUI
 import UIKit
 
@@ -51,6 +52,56 @@ public extension Font {
         )
     }
 
+    // MARK: - Newsreader (Serif)
+    /// Newsreader contains no Hangul glyphs. SwiftUI auto-falls-back to the system Hangul font.
+    /// If a screen needs visually tight English+Korean composition (e.g. "Day 04 째"),
+    /// split runs across separate `Text` views and use Pretendard for the Korean run.
+    /// Do NOT attempt to bundle a Korean serif substitute in this goal.
+    static func newsreaderRegular(size: CGFloat) -> Font {
+        .newsreader14ptRegular(size: size)
+    }
+
+    static func newsreaderMedium(size: CGFloat) -> Font {
+        .newsreader24ptMedium(size: size)
+    }
+
+    static func newsreaderSemiBold(size: CGFloat) -> Font {
+        .newsreader60ptBold(size: size)
+    }
+
+    static func newsreader14ptRegular(size: CGFloat) -> Font {
+        Font(UIFont.newsreader14ptRegular(size: size) as CTFont)
+    }
+
+    static func newsreader24ptMedium(size: CGFloat) -> Font {
+        Font(UIFont.newsreader24ptMedium(size: size) as CTFont)
+    }
+
+    static func newsreader24ptMediumItalic(size: CGFloat) -> Font {
+        Font(UIFont.newsreader24ptMediumItalic(size: size) as CTFont)
+    }
+
+    static func newsreader36ptMedium(size: CGFloat) -> Font {
+        Font(UIFont.newsreader36ptMedium(size: size) as CTFont)
+    }
+
+    static func newsreader60ptBold(size: CGFloat) -> Font {
+        Font(UIFont.newsreader60ptBold(size: size) as CTFont)
+    }
+
+    static func newsreader60ptBoldItalic(size: CGFloat) -> Font {
+        Font(UIFont.newsreader60ptBoldItalic(size: size) as CTFont)
+    }
+
+    // MARK: - JetBrains Mono (Numerics)
+    static func jetBrainsMonoRegular(size: CGFloat) -> Font {
+        Font(UIFont.jetBrainsMonoRegular(size: size) as CTFont)
+    }
+
+    static func jetBrainsMonoMedium(size: CGFloat) -> Font {
+        Font(UIFont.jetBrainsMonoMedium(size: size) as CTFont)
+    }
+
     // MARK: - Adaptive Helpers
     static func jsDisplayScaledBold(size: CGFloat) -> Font {
         let scaledSize = size.jsScaled(.displayTypography)
@@ -70,10 +121,38 @@ public extension Font {
         )
     }
 
+    static func jsSerif(_ size: CGFloat, italic: Bool = false) -> Font {
+        let scaledSize = size.jsScaled(.displayTypography)
+
+        switch size {
+        case 40...:
+            return italic
+                ? .newsreader60ptBoldItalic(size: scaledSize)
+                : .newsreader60ptBold(size: scaledSize)
+        case 28..<40:
+            return .newsreader36ptMedium(size: scaledSize)
+        default:
+            return italic
+                ? .newsreader24ptMediumItalic(size: scaledSize)
+                : .newsreader24ptMedium(size: scaledSize)
+        }
+    }
+
     // MARK: - Display (Large titles)
     static var jsDisplayLarge: Font { .jsDisplayScaledBold(size: 32) }
     static var jsDisplayMedium: Font { .jsDisplayScaledBold(size: 28) }
     static var jsDisplaySmall: Font { .jsDisplayScaledBold(size: 24) }
+
+    // MARK: - Serif (Editorial moments)
+    static var jsSerifHero: Font { .jsSerif(56) }
+    static var jsSerifDisplay: Font { .jsSerif(36) }
+    static var jsSerifTitle: Font { .jsSerif(24) }
+    static var jsSerifQuote: Font { .jsSerif(18, italic: true) }
+
+    // MARK: - Serif Display Compatibility
+    static var jsSerifDisplayLarge: Font { .jsSerifDisplay }
+    static var jsSerifDisplayMedium: Font { .jsSerif(28) }
+    static var jsSerifDisplaySmall: Font { .jsSerifTitle }
 
     // MARK: - Headline (Section titles)
     static var jsHeadlineLarge: Font { .jsDisplayScaledSemiBold(size: 22) }
@@ -89,6 +168,11 @@ public extension Font {
     static var jsLabelLarge: Font { .pretendardRegular(size: 16, relativeTo: .subheadline) }
     static var jsLabelMedium: Font { .pretendardRegular(size: 14, relativeTo: .subheadline) }
     static var jsLabelSmall: Font { .pretendardRegular(size: 12, relativeTo: .caption1) }
+
+    // MARK: - Mono (Counters and structured data)
+    static var jsMonoLarge: Font { .jetBrainsMonoMedium(size: 28) }
+    static var jsMonoMedium: Font { .jetBrainsMonoMedium(size: 20) }
+    static var jsMonoSmall: Font { .jetBrainsMonoRegular(size: 14) }
 
     // MARK: - Button
     static var jsButtonLarge: Font { .pretendardSemiBold(size: 17, relativeTo: .headline) }

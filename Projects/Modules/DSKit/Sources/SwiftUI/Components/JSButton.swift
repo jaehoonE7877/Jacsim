@@ -64,7 +64,7 @@ public struct JSButton: View {
         }
         .disabled(!isEnabled)
         .opacity(isEnabled ? 1.0 : 0.5)
-        .frame(minHeight: 44.jsScaled(.touchTarget))
+        .frame(minWidth: 44.jsScaled(.touchTarget), minHeight: 44.jsScaled(.touchTarget))
         .contentShape(RoundedRectangle(cornerRadius: .jsCornerSmall, style: .continuous))
         .accessibilityLabel(title)
         .accessibilityHint(isEnabled ? "" : "현재 사용할 수 없습니다")

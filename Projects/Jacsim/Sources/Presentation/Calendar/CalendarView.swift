@@ -10,233 +10,217 @@ public struct CalendarView: View {
     }
 
     public var body: some View {
-        RedesignScreenScaffold(
-            title: "탐색",
-            state: screenState
-        ) {
-            RedesignSectionCard(title: "날짜") {
-                selectedDateButton
+        ZStack {
+            LinearGradient.wallpaperForest
+                .ignoresSafeArea()
+            Color.backgroundNormal.opacity(0.22)
+                .ignoresSafeArea()
 
-                JSCalendar(
-                    selectedDate: $model.selectedDate,
-                    scope: model.calendarScope,
-                    eventDates: model.eventDates,
-                    dateColors: convertDateColors(model.dateColors)
-                )
-                .onChange(of: model.selectedDate) {
-                    model.dateSelected(model.selectedDate)
+            ScrollView(showsIndicators: false) {
+                VStack(alignment: .leading, spacing: .jsLG) {
+                    header
+                    modePicker
+                    calendarSurface
+                    selectedDateSummary
+                }
+                .padding(.horizontal, .jsMD)
+                .padding(.top, .jsLG)
+                .padding(.bottom, 112.jsScaled())
+            }
+        }
+        .onAppear { model.loadTasks() }
+        .overlay {
+            dayRecordSheet
+        }
+    }
+
+    private var header: some View {
+        VStack(alignment: .leading, spacing: .jsXS) {
+            Text("달력")
+                .font(.jsSerifDisplay)
+                .foregroundColor(.labelStrong)
+
+            Text("월간 기록과 84일 흐름을 함께 봅니다")
+                .font(.jsBodySmall)
+                .foregroundColor(.labelAlternative)
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("달력, 월간 기록과 84일 흐름")
+    }
+
+    private var modePicker: some View {
+        Picker("달력 보기", selection: $model.displayMode) {
+            ForEach(CalendarDisplayMode.allCases, id: \.self) { mode in
+                Text(mode.title).tag(mode)
+            }
+        }
+        .pickerStyle(.segmented)
+        .accessibilityLabel("달력 보기 방식")
+    }
+
+    @ViewBuilder
+    private var calendarSurface: some View {
+        if model.isLoading {
+            JSGlassCard(accessibilityLabel: "캘린더 로딩") {
+                HStack(spacing: .jsSM) {
+                    ProgressView()
+                        .tint(.primaryNormal)
+                    Text("캘린더 기록을 준비하는 중이에요")
+                        .font(.jsBodyMedium)
+                        .foregroundColor(.labelAlternative)
                 }
             }
+        } else if model.loadFailed {
+            JSGlassCard(accessibilityLabel: "캘린더 오류") {
+                VStack(alignment: .leading, spacing: .jsSM) {
+                    Text("캘린더를 불러오지 못했어요")
+                        .font(.jsSerifTitle)
+                        .foregroundColor(.labelStrong)
+                    JSButton(title: "다시 시도", style: .secondary, size: .medium) {
+                        model.loadTasks()
+                    }
+                }
+            }
+        } else if model.displayMode == .month {
+            JSCalendarV2(selectedDate: $model.selectedDate, eventStates: eventStates, showsModePicker: false)
+                .onChange(of: model.selectedDate) { _, newDate in
+                    model.dateSelected(newDate)
+                }
+        } else {
+            JSGlassCard(accessibilityLabel: "84일 히트맵") {
+                VStack(alignment: .leading, spacing: .jsMD) {
+                    Text("84일 히트맵")
+                        .font(.jsSerifTitle)
+                        .foregroundColor(.labelStrong)
+                    JSStreakHeatmap(states: eventStates, endDate: model.selectedDate)
+                }
+            }
+        }
+    }
 
-            RedesignSectionCard(title: "인증 피드") {
-                let tasksForDate = tasksForSelectedDate
+    private var selectedDateSummary: some View {
+        JSGlassCard(accessibilityLabel: "\(formattedSelectedDate) 기록") {
+            VStack(alignment: .leading, spacing: .jsMD) {
+                HStack {
+                    VStack(alignment: .leading, spacing: .jsMicro) {
+                        Text(formattedSelectedDate)
+                            .font(.jsSerifTitle)
+                            .foregroundColor(.labelStrong)
+                        Text("\(tasksForSelectedDate.count)개의 작심")
+                            .font(.jsMonoSmall)
+                            .foregroundColor(.labelAlternative)
+                    }
+                    Spacer()
+                    Button {
+                        model.isDaySheetPresented = true
+                    } label: {
+                        Image(systemName: "list.bullet.rectangle")
+                            .font(.jsHeadlineMedium)
+                            .foregroundColor(.forestAccent)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("선택 날짜 기록 보기")
+                }
 
-                if tasksForDate.isEmpty {
-                    emptyStateView
+                if tasksForSelectedDate.isEmpty {
+                    Text("이 날은 작심이 없어요")
+                        .font(.jsBodyMedium)
+                        .foregroundColor(.labelAlternative)
                 } else {
-                    VStack(spacing: .jsSM) {
-                        ForEach(tasksForDate) { task in
-                            taskRow(task: task)
+                    VStack(spacing: .jsXS) {
+                        ForEach(tasksForSelectedDate.prefix(3)) { task in
+                            taskRow(task)
                         }
                     }
                 }
             }
         }
-        .onAppear { model.loadTasks() }
-        .overlay {
-            JSDatePickerBottomSheet(
-                selectedDate: $model.datePickerDate,
-                isPresented: $model.isDatePickerPresented,
-                title: "날짜 선택",
-                onConfirm: {
-                    model.datePickerConfirmed()
-                },
-                onDismiss: {
-                    model.datePickerDismissed()
-                }
-            )
-        }
     }
 
-    private var screenState: RedesignScreenState {
-        if model.isLoading {
-            return .loading(message: "기록을 불러오는 중")
-        }
+    private var dayRecordSheet: some View {
+        JSBottomSheet(
+            isPresented: $model.isDaySheetPresented,
+            style: .contentHeight,
+            allowsInteractiveDismiss: true,
+            glass: true,
+            onDismiss: { model.daySheetDismissed() }
+        ) {
+            VStack(alignment: .leading, spacing: .jsMD) {
+                Text(formattedSelectedDate)
+                    .font(.jsSerifTitle)
+                    .foregroundColor(.labelStrong)
+                    .padding(.horizontal, .jsLG)
+                    .padding(.top, .jsSM)
 
-        if model.loadFailed {
-            return .error(
-                RedesignErrorStateModel(
-                    title: "기록을 불러오지 못했어요",
-                    message: "다시 시도해 주세요",
-                    retry: RetryActionModel {
-                        model.loadTasks()
+                if tasksForSelectedDate.isEmpty {
+                    Text("선택한 날짜에 기록이 없습니다")
+                        .font(.jsBodyMedium)
+                        .foregroundColor(.labelAlternative)
+                        .padding(.horizontal, .jsLG)
+                        .padding(.bottom, .jsLG)
+                } else {
+                    VStack(spacing: .jsXS) {
+                        ForEach(tasksForSelectedDate) { task in
+                            taskRow(task)
+                        }
                     }
-                )
-            )
+                    .padding(.horizontal, .jsLG)
+                    .padding(.bottom, .jsLG)
+                }
+            }
         }
-
-        if model.tasks.isEmpty {
-            return .empty(
-                RedesignEmptyStateModel(
-                    title: "아직 작심이 없어요",
-                    message: "첫 작심을 시작해 보세요",
-                    icon: "calendar.badge.plus"
-                )
-            )
-        }
-
-        return .content
     }
-    
+
+    private func taskRow(_ task: Domain.Task) -> some View {
+        let completed = isTaskCompleted(task, on: model.selectedDate)
+        return JSListItem(
+            title: task.title,
+            subtitle: completed ? "인증 완료" : "인증 대기",
+            icon: completed ? "checkmark.circle.fill" : "circle",
+            iconColor: completed ? .streakCompleted : .labelAlternative,
+            accessory: .none
+        )
+        .background(
+            RoundedRectangle(cornerRadius: .jsRadiusMD, style: .continuous)
+                .fill(Color.surfaceElevated.opacity(0.24))
+        )
+    }
+
     private var tasksForSelectedDate: [Domain.Task] {
         let calendar = Calendar.current
         let targetDate = calendar.startOfDay(for: model.selectedDate)
-        
+
         return model.tasks.filter { task in
             let start = calendar.startOfDay(for: task.startDate)
             let end = calendar.startOfDay(for: task.endDate)
             return targetDate >= start && targetDate <= end
         }
     }
-    
-    private var emptyStateView: some View {
-        VStack(spacing: .jsMD) {
-            Image(systemName: "calendar.badge.exclamationmark")
-                .font(.jsDisplayScaledSemiBold(size: 48))
-                .foregroundColor(.labelAssistive)
-            Text("이 날은 비어 있어요")
-                .font(.jsBodyMedium)
-                .foregroundColor(.labelAlternative)
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, .jsXL)
-    }
 
-    private var selectedDateButton: some View {
-        Button {
-            model.datePickerButtonTapped()
-        } label: {
-            HStack(spacing: .jsSM) {
-                Image(systemName: "calendar")
-                    .font(.jsHeadlineSmall)
-                    .foregroundColor(.v2BrandBlue)
-                    .frame(width: 36.jsScaled(), height: 36.jsScaled())
-                    .background(
-                        Circle()
-                            .fill(Color.v2BrandBlueSoft)
-                    )
-
-                VStack(alignment: .leading, spacing: .jsMicro) {
-                    Text(formattedSelectedDate)
-                        .font(.jsBodyMedium)
-                        .foregroundColor(.labelStrong)
-
-                    Text("\(tasksForSelectedDate.count)개 작심")
-                        .font(.jsLabelMedium)
-                        .foregroundColor(.labelAlternative)
+    private var eventStates: [Date: StreakState] {
+        var states: [Date: StreakState] = [:]
+        let calendar = Calendar.current
+        for task in model.tasks {
+            for record in task.records {
+                let day = calendar.startOfDay(for: record.date)
+                if record.check {
+                    states[day] = .completed
+                } else if states[day] == nil {
+                    states[day] = .active
                 }
-
-                Spacer(minLength: .jsXS)
-
-                Image(systemName: "chevron.up.chevron.down")
-                    .font(.jsLabelMedium)
-                    .foregroundColor(.labelAlternative)
             }
-            .padding(.jsSM)
-            .background(
-                RoundedRectangle(cornerRadius: .jsRadiusMD, style: .continuous)
-                    .fill(Color.v2Surface)
-            )
         }
-        .buttonStyle(.plain)
-        .accessibilityHint("날짜 선택 화면을 엽니다")
-    }
-    
-    private func taskRow(task: Domain.Task) -> some View {
-        let isCompleted = isTaskCompleted(task, on: model.selectedDate)
-        
-        return HStack(spacing: .jsSM) {
-            ZStack {
-                RoundedRectangle(cornerRadius: 18.jsScaled(), style: .continuous)
-                    .fill(
-                        LinearGradient(
-                            colors: isCompleted
-                                ? [Color.v2BrandBlue.opacity(0.86), Color.positive.opacity(0.82)]
-                                : [Color.v2Surface, Color.v2BrandBlueSoft],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-
-                Image(systemName: isCompleted ? "checkmark.circle.fill" : "camera.fill")
-                    .font(.jsHeadlineLarge)
-                    .foregroundColor(isCompleted ? .white : .v2BrandBlue)
-            }
-            .frame(width: 74.jsScaled(), height: 74.jsScaled())
-            .accessibilityHidden(true)
-
-            VStack(alignment: .leading, spacing: .jsXS) {
-                Text(task.title)
-                    .font(.jsHeadlineSmall)
-                    .foregroundColor(.labelStrong)
-                    .lineLimit(2)
-
-                Text(taskDateRange(task))
-                    .font(.jsLabelMedium)
-                    .foregroundColor(.labelAlternative)
-                    .lineLimit(1)
-
-                JSV2StatusChip(
-                    isCompleted ? "인증 완료" : "인증 전",
-                    systemImage: isCompleted ? "checkmark.circle.fill" : "circle",
-                    style: isCompleted ? .success : .neutral
-                )
-            }
-
-            Spacer(minLength: .jsXS)
-        }
-        .padding(.jsSM)
-        .jsv2CardSurface(cornerRadius: 20.jsScaled(), shadowOpacity: 0.05)
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel("\(task.title), \(formattedSelectedDate), \(isCompleted ? "인증 완료" : "인증 전")")
+        return states
     }
 
     private var formattedSelectedDate: String {
         DateFormatType.toString(model.selectedDate, to: .fullWithoutYear)
     }
-    
+
     private func isTaskCompleted(_ task: Domain.Task, on date: Date) -> Bool {
         let calendar = Calendar.current
-        let targetDate = calendar.startOfDay(for: date)
-
-        if let dailyRecord = task.records.first(where: {
-            calendar.isDate($0.date, inSameDayAs: targetDate)
-        }) {
-            return dailyRecord.check
-        }
-        return false
-    }
-
-    private func taskDateRange(_ task: Domain.Task) -> String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "M.d"
-        return "\(formatter.string(from: task.startDate)) - \(formatter.string(from: task.endDate))"
-    }
-
-    private func convertDateColors(_ colors: [Date: Domain.TaskSuccessRate]) -> [Date: JSCalendarDateColor] {
-        var result: [Date: JSCalendarDateColor] = [:]
-        for (date, rate) in colors {
-            switch rate {
-            case .low:
-                result[date] = .low
-            case .medium:
-                result[date] = .medium
-            case .high:
-                result[date] = .high
-            default:
-                break
-            }
-        }
-        return result
+        return task.records.first {
+            calendar.isDate($0.date, inSameDayAs: date)
+        }?.check ?? false
     }
 }

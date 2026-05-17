@@ -12,6 +12,7 @@ public final class HomeModel {
         case update(Domain.Task, index: Int)
         case allTasks
         case setting
+        case newTask
     }
 
     public struct MiniCardDisplayData: Equatable, Identifiable {
@@ -55,13 +56,15 @@ public final class HomeModel {
     public var hasStartedNotificationListener = false
     public var toastMessage: String?
     public var heroTaskImageData: Data?
+    public var wallpaperRaw: String = "morning"
     public var loadingStartTime: Date?
     public var path: [Route] = []
-    public var challengeCreate: ChallengeCreateModel?
+    public var newTask: NewTaskModel?
 
     @ObservationIgnored public let dependencies: JacsimDependencies
     @ObservationIgnored private var fetchTask: _Concurrency.Task<Void, Never>?
     @ObservationIgnored private var imageLoadingTask: _Concurrency.Task<Void, Never>?
+    @ObservationIgnored private var settingsTask: _Concurrency.Task<Void, Never>?
     @ObservationIgnored private var notificationListenerTask: _Concurrency.Task<Void, Never>?
     @ObservationIgnored private var deepLinkListenerTask: _Concurrency.Task<Void, Never>?
 
@@ -76,6 +79,7 @@ public final class HomeModel {
     deinit {
         fetchTask?.cancel()
         imageLoadingTask?.cancel()
+        settingsTask?.cancel()
         notificationListenerTask?.cancel()
         deepLinkListenerTask?.cancel()
     }
@@ -90,6 +94,10 @@ public final class HomeModel {
         Logger.homeFetchingTasks()
         let fetchStartTime = Date()
         fetchTask?.cancel()
+        settingsTask?.cancel()
+        settingsTask = _Concurrency.Task { [dependencies] in
+            wallpaperLoaded(await dependencies.userSettingsRepository.wallpaperRaw())
+        }
         fetchTask = _Concurrency.Task { [dependencies] in
             do {
                 let tasks = try await dependencies.taskQueryClient.fetchActiveTasks()
@@ -144,18 +152,6 @@ public final class HomeModel {
         path.append(.setting)
     }
 
-    public func addButtonTapped() {
-        challengeCreate = ChallengeCreateModel(
-            dependencies: dependencies,
-            onChallengeCreated: { [weak self] in
-                self?.challengeCreated()
-            },
-            onCancelled: { [weak self] in
-                self?.challengeCancelled()
-            }
-        )
-    }
-
     public func allTasksButtonTapped() {
         path.append(.allTasks)
     }
@@ -191,10 +187,10 @@ public final class HomeModel {
     }
 
     public func deepLinkReceived(_ url: URL) {
-        guard url.scheme == "jacsim",
-              url.host == "challenge" else {
+        guard url.scheme == "jacsim" else {
             return
         }
+        guard url.host == "challenge" || url.host == "task" else { return }
         let idString = url.path.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
         guard let id = UUID(uuidString: idString) else { return }
         _Concurrency.Task { [dependencies] in
@@ -253,6 +249,10 @@ public final class HomeModel {
 
     public func toastDismissed() {
         toastMessage = nil
+    }
+
+    public func wallpaperLoaded(_ rawValue: String) {
+        wallpaperRaw = rawValue
     }
 
     private func startListenersIfNeeded() {
@@ -340,16 +340,6 @@ public final class HomeModel {
     private func deepLinkTaskLoaded(_ task: Domain.Task?) {
         guard let task else { return }
         path.append(.detail(task, scrollToRecords: false))
-    }
-
-    private func challengeCreated() {
-        challengeCreate = nil
-        toastMessage = "새 작심을 시작했어요"
-        onAppear()
-    }
-
-    private func challengeCancelled() {
-        challengeCreate = nil
     }
 
     private func shouldOpenCheckIn(for task: Domain.Task) -> Bool {

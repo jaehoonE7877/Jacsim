@@ -23,5 +23,8 @@ let project = Project.makeModule(
         .SPM.AcknowList,
         .SPM.CropViewController,
     ],
+    dependencies: [
+        .jacsimWidget
+    ],
     tags: ["app", "jacsim"]
 )

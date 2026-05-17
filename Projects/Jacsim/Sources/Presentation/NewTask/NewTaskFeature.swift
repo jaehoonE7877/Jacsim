@@ -77,6 +77,9 @@ public final class NewTaskModel {
     public var lastAcceptedTitle: String = ""
     public var image: UIImage?
     public var stageType: StageType = .three
+    public var startDate: Date = Calendar.current.startOfDay(for: Date())
+    public var endDate: Date = Calendar.current.date(byAdding: .day, value: 2, to: Calendar.current.startOfDay(for: Date())) ?? Date()
+    public var visibility: TaskVisibility = .private
     public var alarmDate: Date = NewTaskModel.defaultAlarmDate()
     public var isAlarmEnabled: Bool = false
     public var isSaving: Bool = false
@@ -94,6 +97,7 @@ public final class NewTaskModel {
 
     public init(
         dependencies: JacsimDependencies,
+        prefillTitle: String? = nil,
         onTaskCreated: @escaping () -> Void = {},
         onCancelled: @escaping () -> Void = {}
     ) {
@@ -101,6 +105,17 @@ public final class NewTaskModel {
         self.onTaskCreated = onTaskCreated
         self.onCancelled = onCancelled
         self.alarmDate = Self.defaultAlarmDate()
+        if let prefillTitle {
+            let title = String(
+                prefillTitle
+                    .trimmingCharacters(in: .whitespacesAndNewlines)
+                    .prefix(TextInputFieldPolicy.title.maxLength)
+            )
+            if !title.isEmpty {
+                self.title = title
+                self.lastAcceptedTitle = title
+            }
+        }
     }
 
     public var trimmedTitle: String {
@@ -119,11 +134,11 @@ public final class NewTaskModel {
     }
 
     public var canSubmit: Bool {
-        !trimmedTitle.isEmpty && image != nil
+        !trimmedTitle.isEmpty
     }
 
     public var hasDraftContent: Bool {
-        !trimmedTitle.isEmpty || image != nil || stageType != .three || isAlarmEnabled
+        !trimmedTitle.isEmpty || image != nil || stageType != .three || isAlarmEnabled || visibility != .private
     }
 
     public func nextStepTapped() {
@@ -143,7 +158,6 @@ public final class NewTaskModel {
     }
 
     public func saveButtonTapped() {
-        guard currentStep == .alarmConfirm else { return }
         let trimmedTitle = trimmedTitle
 
         if trimmedTitle.isEmpty {
@@ -151,25 +165,17 @@ public final class NewTaskModel {
             stepValidationError = .emptyTitle
             return
         }
-        guard let image else {
-            currentStep = .photo
-            stepValidationError = .missingPhoto
-            return
-        }
 
         isSaving = true
         saveFailed = false
         stepValidationError = nil
         let stageType = stageType
-        let startDate = Calendar.current.startOfDay(for: Date())
-        let endDate = Calendar.current.date(
-            byAdding: .day,
-            value: stageType.durationDays - 1,
-            to: startDate
-        ) ?? startDate
+        let startDate = Calendar.current.startOfDay(for: startDate)
+        let endDate = Calendar.current.startOfDay(for: endDate)
 
         let isAlarmEnabled = isAlarmEnabled
         let alarmDate = alarmDate
+        let visibility = visibility
         let createTaskUseCase = CreateTaskUseCase()
         var task = createTaskUseCase.createTask(
             title: trimmedTitle,
@@ -179,6 +185,7 @@ public final class NewTaskModel {
         )
         task.isNotificationEnabled = isAlarmEnabled
         task.alarm = isAlarmEnabled ? alarmDate : nil
+        task.visibility = visibility
         let taskToSave = task
 
         Logger.taskCreated(
@@ -190,8 +197,10 @@ public final class NewTaskModel {
 
         _Concurrency.Task { [dependencies] in
             do {
-                let data = try makeImageStoreInputData(from: image)
-                _ = try await dependencies.imageStore.saveImage(taskToSave.mainImageKey, data)
+                if let image {
+                    let data = try makeImageStoreInputData(from: image)
+                    _ = try await dependencies.imageStore.saveImage(taskToSave.mainImageKey, data)
+                }
                 try await dependencies.taskCommandClient.addTask(taskToSave)
                 let reminderUseCase = ReminderSchedulingUseCase()
                 let isNotificationEnabled = await dependencies.userSettingsRepository.isNotificationEnabled()
@@ -206,6 +215,36 @@ public final class NewTaskModel {
                 saveCompleted(.failure(error))
             }
         }
+    }
+
+    public func suggestionTapped(_ suggestion: String) {
+        title = suggestion
+    }
+
+    public func startDateChanged(_ date: Date) {
+        startDate = Calendar.current.startOfDay(for: date)
+        let minimumEndDate = Calendar.current.date(
+            byAdding: .day,
+            value: stageType.durationDays - 1,
+            to: startDate
+        ) ?? startDate
+        if endDate < startDate || endDate < minimumEndDate {
+            endDate = minimumEndDate
+        }
+    }
+
+    public func endDateChanged(_ date: Date) {
+        let normalized = Calendar.current.startOfDay(for: date)
+        endDate = max(normalized, startDate)
+    }
+
+    public func stageTypeChanged(_ stageType: StageType) {
+        self.stageType = stageType
+        endDate = Calendar.current.date(
+            byAdding: .day,
+            value: stageType.durationDays - 1,
+            to: startDate
+        ) ?? startDate
     }
 
     public func imageSelected(_ image: UIImage) {

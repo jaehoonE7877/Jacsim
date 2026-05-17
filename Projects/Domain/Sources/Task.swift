@@ -17,6 +17,7 @@ public struct Task: Sendable, Codable, Hashable, Identifiable {
     public var isNotificationEnabled: Bool
     public var stages: [StageSnapshot]
     public var records: [DailyRecordSnapshot]
+    public var visibility: TaskVisibility
     public var isDeleted: Bool
     public var createdAt: Date
     public var updatedAt: Date
@@ -30,6 +31,7 @@ public struct Task: Sendable, Codable, Hashable, Identifiable {
         isNotificationEnabled: Bool = false,
         stages: [StageSnapshot] = [],
         records: [DailyRecordSnapshot] = [],
+        visibility: TaskVisibility = .private,
         isDeleted: Bool = false,
         createdAt: Date = .now,
         updatedAt: Date = .now
@@ -42,6 +44,7 @@ public struct Task: Sendable, Codable, Hashable, Identifiable {
         self.isNotificationEnabled = isNotificationEnabled
         self.stages = stages
         self.records = records
+        self.visibility = visibility
         self.isDeleted = isDeleted
         self.createdAt = createdAt
         self.updatedAt = updatedAt

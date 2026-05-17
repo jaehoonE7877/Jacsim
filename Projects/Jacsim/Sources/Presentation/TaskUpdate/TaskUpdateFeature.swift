@@ -21,6 +21,7 @@ public final class TaskUpdateModel {
     public var saveFailed: Bool = false
     public var isOverwriteMode: Bool = false
     public var toastMessage: String?
+    public var certificationFeedbackTrigger: Int = 0
 
     @ObservationIgnored private let dependencies: JacsimDependencies
     @ObservationIgnored private let onSaveSuccess: () -> Void
@@ -121,6 +122,7 @@ public final class TaskUpdateModel {
         switch result {
         case .success:
             isSaving = false
+            certificationFeedbackTrigger += 1
             onSaveSuccess()
         case .failure:
             isSaving = false

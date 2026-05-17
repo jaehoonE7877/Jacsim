@@ -1,95 +1,68 @@
-# Design System Master File
+# Jacsim Design System Master File
 
-> **LOGIC:** `MASTER.md`를 기본으로 적용하고, 화면별 규칙은 `pages/<screen>.md`가 override 합니다.
-
----
-
-**Project:** Jacsim
-**Generated:** 2026-02-07
-**Source:** `ui-ux-pro-max` 추천값을 Jacsim(iOS/SwiftUI/DSKit) 기준으로 정규화
+> **LOGIC:** `04-Final.html` is the visual ground truth. This file pins the repo-facing implementation contract, and `pages/<screen>.md` may only add screen-specific constraints.
 
 ---
 
-## Global Rules
-
-### Visual Direction
-
-- Direction: Brand-Expressive + Enterprise Clarity
-- Base tone: 높은 가독성, 낮은 장식 밀도, 즉시 행동 가능한 정보 우선
-- Motion: 핵심 피드백에만 0.2~0.3s 모션 사용, `reduceMotion` 활성 시 정적 전환
-
-### Color Token Mapping (DSKit only)
-
-| Skill Role | Hex Hint | Jacsim Token |
-|---|---|---|
-| Primary | `#0D9488` | `Color.primaryNormal` |
-| Secondary | `#14B8A6` | `Color.primaryStrong` |
-| CTA Accent | `#F97316` | `Color.cautionary` |
-| Surface | `#F0FDFA` | `Color.backgroundNormal` |
-| Text | `#134E4A` | `Color.labelStrong` |
-| Success | - | `Color.positive` |
-| Warning | - | `Color.cautionary` |
-| Error | - | `Color.destructive` |
-
-### Typography Rules
-
-- Display: `Font.jsDisplayLarge/Medium/Small`
-- Headline: `Font.jsHeadlineLarge/Medium/Small`
-- Body: `Font.jsBodyLarge/Medium/Small`
-- Label: `Font.jsLabelLarge/Medium/Small`
-- Button: `Font.jsButtonLarge/Medium/Small`
-- 금지: 화면 레벨에서 `.system(...)` 하드코딩
-
-### Layout/Spacing Rules
-
-- Screen padding: 기본 수평 `.jsMD`, 강조 화면 `.jsXL`
-- Section gap: `.jsLG` ~ `.jsXXL`
-- Touch target: 최소 `.jsTouchTarget` (44pt)
-- Bottom CTA가 있는 화면은 스크롤 콘텐츠 하단 여백 최소 `120pt`
-
-### State Model (Mandatory)
-
-모든 핵심 화면은 아래 상태를 가져야 합니다.
-
-- `content`
-- `loading`
-- `empty`
-- `error` (+ retry action 권장)
-
-공통 구현: `RedesignScreenState`, `RedesignInlineErrorView`, `RetryActionModel`
-
-### Component Rules
-
-- CTA: `JSButton` 우선 사용
-- Section surface: `RedesignSectionCard` 또는 `JSCard`
-- Input: `JSInputField` 우선, 오류는 인풋 근처에 표시
-- Status: `JSStatusChip`, `RedesignStateBanner`
-- Calendar/List: `JSCalendar`, `JSListItem`
+**Project:** Jacsim  
+**Design source:** `claude.ai/design/p/019e2e13-a875-74ad-b477-d10f9a82f4d7`  
+**Canonical files:** `04-Final.html` > `02-DesignSystem.html` > `03-Screens.html` > `01-AsIs.html` > `index.html`  
+**Updated:** 2026-05-16
 
 ---
+
+## Global Direction
+
+- Direction: focus.mode redesign with calm progress, social proof, and iOS 26 Liquid Glass depth.
+- First screen: usable product UI, not a landing page.
+- Layout density: quiet and scannable; avoid marketing-style hero/card stacking.
+- Motion: use meaningful state feedback only; disable tab/screen transition animation when `accessibilityReduceMotion` is true.
+- Implementation: SwiftUI + `@Observable`, DSKit tokens only, no RxSwift/Realm additions.
+
+## Claude Design Audit Anchors
+
+- `01-AsIs.html`: current design audit and legacy blue/teal mismatch reference.
+- `02-DesignSystem.html`: focus.mode token system, Newsreader/Pretendard/JetBrains Mono typography, Liquid Glass component catalog.
+- `03-Screens.html`: redesigned walkthrough/home/calendar/task flows.
+- `04-Final.html`: final palette, wallpaper anchors, Liquid Glass components, social model, Visibility Matrix, notification rules.
+- Browser caveat: Claude renders the HTML preview inside a cross-origin iframe. The in-app browser can inspect file tabs and screenshots, but exact table DOM extraction may be blocked. When table-level certainty matters, prefer exported HTML/source or a readable screenshot before changing code behavior.
+
+## DSKit Token Contract
+
+- Colors: use `Color.primaryNormal`, `Color.forestAccent`, semantic label/background/surface tokens, streak/progress tokens, and the three wallpaper gradients.
+- Fonts: use Pretendard semantic text tokens for Korean/body UI, Newsreader semantic serif tokens for display/quote moments, and JetBrains Mono tokens for D-day, time, and numeric counts.
+- Serif policy: Newsreader has no Hangul glyphs. SwiftUI system fallback is allowed; split English/Korean runs only when visual composition is visibly uneven.
+- Spacing: use DSKit spacing constants. Floating tab bar margin is `.jsTabBarMargin`.
+- Liquid Glass: use `JSGlassFloatingTabBar`, `JSGlassCard`, `JSGlassSearchField`, `JSGlassToast`, `JSBottomSheet(glass: true)`, `jsGlassNavBar()`, and `JSWidgetSurface` before adding a new glass primitive.
+
+## Screen Architecture Contract
+
+- Root: `MainView` owns the 5-tab shell: today, calendar, plus, feed, me.
+- Today: `HomeView` has no scroll-driven FAB; primary create flow moves to the center plus tab.
+- Plus: plus sheet starts `NewTaskView` for "새 작심 만들기"; brag composer and AI coach remain disabled until later goals.
+- Calendar: Goal 6 may adopt `JSCalendarV2` visuals, but must not change persistence rules.
+- Feed/Me: placeholders exist only; real social UI belongs to Goal 7.
 
 ## Accessibility Rules
 
-- VoiceOver 라벨/힌트 누락 금지
-- Dynamic Type 큰 사이즈에서 잘림/겹침 금지
-- 텍스트 대비 4.5:1 이상 유지
-- 모션 효과는 `@Environment(\.accessibilityReduceMotion)`로 분기
+- Every new/changed component needs a default VoiceOver label.
+- Dynamic Type must be checked at accessibility XXXLarge for token previews and major screens.
+- Avoid text overlap in compact width; prefer wrapping and stable container dimensions.
+- Keep interactive hit targets at least `.jsTouchTarget`.
+- Do not encode state by color only.
 
----
+## Anti-Patterns
 
-## Anti-Patterns (Do NOT Use)
-
-- SwiftUI 화면에서 CSS/Web 체크리스트 직접 적용
-- 하드코딩 색상(`.blue/.red/.gray/.white`) 남용
-- 실패 상태에서 사용자 복구 경로 부재
-- 의미 없는 장식 애니메이션
-
----
+- Hardcoded SwiftUI colors such as `Color.blue`, `Color.red`, `Color.gray`, `Color.white`, `Color.black`.
+- Direct `.system(...)` fonts inside new UI.
+- New component abstractions that duplicate existing DSKit Liquid Glass components.
+- Screen-level networking or social repository calls in Goal 6.
+- Making private migrated tasks visible by default.
 
 ## Delivery Checklist
 
-- [ ] DSKit 토큰만 사용 (`Color/Font/Spacing`)
-- [ ] `loading/empty/error` 상태 확인
-- [ ] 주요 액션에 접근성 라벨 제공
-- [ ] `reduceMotion` 대응 확인
-- [ ] 리디자인 기본 동선(요약/사진/알림/기록)이 상시 노출되는지 확인
+- [ ] Match `04-Final.html` first, then `02-DesignSystem.html`.
+- [ ] Use DSKit color/font/spacing tokens only.
+- [ ] Preserve existing model/repository behavior unless the goal explicitly asks for it.
+- [ ] Verify Light, Dark, and accessibility XXXLarge where UI changed.
+- [ ] Run the agreed build/test baseline before handoff.

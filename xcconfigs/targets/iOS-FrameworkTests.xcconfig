@@ -1,6 +1,6 @@
-// iOS Framework Tests Configuration (Swift 6, iOS 18)
+// iOS Framework Tests Configuration (Swift 6, iOS 26)
 PRODUCT_NAME = $(TARGET_NAME)
-IPHONEOS_DEPLOYMENT_TARGET = 18.0
+IPHONEOS_DEPLOYMENT_TARGET = 26.0
 TARGETED_DEVICE_FAMILY = 1
 
 // Swift settings

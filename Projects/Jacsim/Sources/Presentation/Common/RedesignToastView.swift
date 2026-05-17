@@ -68,12 +68,12 @@ struct RedesignToastView: View {
                 .font(.jsHeadlineSmall)
                 .foregroundColor(payload.style.accentColor)
                 .frame(width: 28.jsScaled(.touchTarget), height: 28.jsScaled(.touchTarget))
-                .background(Color.white.opacity(0.14))
+                .background(Color.surfaceElevated.opacity(0.14))
                 .clipShape(Circle())
 
             Text(payload.message)
                 .font(.jsBodyMedium)
-                .foregroundColor(.white)
+                .foregroundColor(.labelNormal)
                 .lineLimit(2)
                 .multilineTextAlignment(.leading)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -85,8 +85,8 @@ struct RedesignToastView: View {
                 .fill(
                     LinearGradient(
                         colors: [
-                            Color.surfaceOverlay.opacity(0.88),
-                            payload.style.accentColor.opacity(0.62)
+                            Color.surfaceElevated.opacity(0.96),
+                            payload.style.accentColor.opacity(0.2)
                         ],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
@@ -95,7 +95,7 @@ struct RedesignToastView: View {
         )
         .overlay(
             RoundedRectangle(cornerRadius: .jsRadiusLG)
-                .stroke(Color.white.opacity(0.24), lineWidth: 1)
+                .stroke(Color.surfaceElevated.opacity(0.24), lineWidth: 1)
         )
         .shadow(
             color: payload.style.accentColor.opacity(0.28),

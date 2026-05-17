@@ -1,9 +1,9 @@
 # Projects/Jacsim
 
 ## Overview
-- User-facing app target built with SwiftUI, Observation, and async/await
-- Owns the Presentation layer and Application orchestration layer
-- App lifecycle setup starts in `Sources/Application/AppDelegate.swift`
+- 사용자 앱 타깃 (SwiftUI + @Observable)
+- Presentation 레이어와 Application 오케스트레이션 레이어 포함
+- 앱 라이프사이클 초기화는 `AppDelegate`에서 처리
 
 `*Feature.swift` files define `@Observable` screen models, state, and user-action methods. Matching `*View.swift` files render SwiftUI and bind to those models.
 

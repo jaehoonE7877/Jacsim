@@ -21,7 +21,7 @@ public enum JSShadow {
     /// 작은 그림자 - 은은한 입체감
     public static var small: ShadowStyle {
         ShadowStyle(
-            color: Color.black.opacity(0.08),
+            color: Color.surfaceOverlay.opacity(0.16),
             radius: 4.jsScaled(),
             x: 0,
             y: 2.jsScaled()
@@ -31,7 +31,7 @@ public enum JSShadow {
     /// 중간 그림자 - 기본 입체감
     public static var medium: ShadowStyle {
         ShadowStyle(
-            color: Color.black.opacity(0.12),
+            color: Color.surfaceOverlay.opacity(0.24),
             radius: 8.jsScaled(),
             x: 0,
             y: 4.jsScaled()
@@ -41,7 +41,7 @@ public enum JSShadow {
     /// 큰 그림자 - 강조된 입체감
     public static var large: ShadowStyle {
         ShadowStyle(
-            color: Color.black.opacity(0.16),
+            color: Color.surfaceOverlay.opacity(0.32),
             radius: 16.jsScaled(),
             x: 0,
             y: 8.jsScaled()

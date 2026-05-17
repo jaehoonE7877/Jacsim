@@ -1,15 +1,17 @@
 # Jacsim Knowledge Base (AGENTS.md)
 
 ## Overview
-- iOS 18+, Swift 6, Tuist + SPM multi-module app
-- SwiftUI + async/await + Observation + Port & Adapter architecture
-- App logic is kept behind explicit layer boundaries and module ownership
+- iOS 26+, Swift 6, Tuist + SPM 멀티모듈
+- SwiftUI + async/await + @Observable + Port & Adapter 아키텍처 기반
+- Liquid Glass + focus.mode + Social V2 디자인/소셜 시스템 적용
+- 앱 로직은 레이어 경계를 유지하며 모듈 단위로 관리
 
 ## Current Structure
 ```text
 ./
 ├── Projects/
 │   ├── Jacsim/                     # App(Presentation/Application)
+│   ├── JacsimWidget/               # WidgetKit extensions
 │   ├── Domain/                     # Domain rules/entities/services
 │   ├── ExternalInterface/          # Port contracts
 │   ├── Data/                       # Adapter implementations
@@ -25,10 +27,10 @@
 ```
 
 ## Layer Responsibilities
-- `Jacsim`: Presentation(SwiftUI + Observation) + Application use case orchestration
-- `Domain`: business rules, entity invariants, domain calculations
-- `ExternalInterface`: port contracts consumed by upper layers
-- `Data`: external I/O adapter implementations
+- `Jacsim`: Presentation(SwiftUI + @Observable) + Application use case orchestration
+- `Domain`: 비즈니스 규칙, 엔티티 불변식, 도메인 계산
+- `ExternalInterface`: 상위 레이어가 의존할 Port 계약
+- `Data`: 외부 I/O 구현체(Adapter)
 
 ## Why ExternalInterface Exists
 - Keeps Domain/Application from depending directly on concrete Data implementations
@@ -63,6 +65,7 @@ tuist test ExternalInterface
 | App use cases | `Projects/Jacsim/Sources/Application/UseCases/**` |
 | Client/DI wiring | `Projects/Jacsim/Sources/Client/**` |
 | SwiftUI screens/models | `Projects/Jacsim/Sources/Presentation/**` |
+| Widgets | `Projects/JacsimWidget/**` |
 | Domain logic | `Projects/Domain/Sources/**` |
 | Port contracts | `Projects/ExternalInterface/Sources/**` |
 | Data adapters | `Projects/Data/Sources/Adapters/**` |
@@ -101,6 +104,7 @@ tuist test ExternalInterface
 | Module | Guide | Read When |
 |---|---|---|
 | App (`Jacsim`) | `Projects/Jacsim/AGENTS.md` | Screen changes, client wiring, app lifecycle |
+| Widget (`JacsimWidget`) | `Projects/JacsimWidget/**` | WidgetKit extension surfaces |
 | `Domain` | `Projects/Domain/AGENTS.md` | Entities, policies, domain services |
 | `ExternalInterface` | `Projects/ExternalInterface/AGENTS.md` | Port contracts and boundaries |
 | `Data` | `Projects/Data/AGENTS.md` | Infrastructure adapters and mapping |

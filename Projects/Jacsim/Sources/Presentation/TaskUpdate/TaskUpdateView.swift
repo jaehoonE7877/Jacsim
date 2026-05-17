@@ -44,7 +44,7 @@ public struct TaskUpdateView: View {
         .overlay(alignment: .bottom) {
             if let message = model.toastMessage {
                 RedesignToastView(message: message, style: .error)
-                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                    .transition(reduceMotion ? .identity : .move(edge: .bottom).combined(with: .opacity))
                     .task(id: message) {
                         try? await _Concurrency.Task.sleep(
                             nanoseconds: RedesignToastView.defaultDismissNanoseconds
@@ -54,6 +54,7 @@ public struct TaskUpdateView: View {
             }
         }
         .animation(reduceMotion ? .none : .easeInOut(duration: 0.25), value: model.toastMessage)
+        .sensoryFeedback(.success, trigger: model.certificationFeedbackTrigger)
     }
     
     private var overwriteBanner: some View {

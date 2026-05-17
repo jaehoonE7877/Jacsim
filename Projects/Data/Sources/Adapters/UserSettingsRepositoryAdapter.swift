@@ -49,6 +49,36 @@ public actor UserSettingsRepositoryAdapter {
         try? context.save()
     }
 
+    public func wallpaperRaw() async -> String {
+        fetchOrCreateGlobalSettings().wallpaperRaw ?? "morning"
+    }
+
+    public func updateWallpaperRaw(_ rawValue: String) async {
+        let settings = fetchOrCreateGlobalSettings()
+        settings.wallpaperRaw = rawValue
+        try? context.save()
+    }
+
+    public func socialNotificationSettings() async -> SocialNotificationSettings {
+        mapSocialNotificationSettings(fetchOrCreateGlobalSettings())
+    }
+
+    public func updateSocialNotificationSettings(_ socialSettings: SocialNotificationSettings) async {
+        let settings = fetchOrCreateGlobalSettings()
+        settings.notifyFollowRequested = socialSettings.followRequested
+        settings.notifyFollowAccepted = socialSettings.followAccepted
+        settings.notifyFriendPosted = socialSettings.friendPosted
+        settings.notifyFriendGraduated = socialSettings.friendGraduated
+        settings.notifyPostCheered = socialSettings.postCheered
+        settings.notifyPostFollowed = socialSettings.postFollowed
+        settings.notifyPostCommented = socialSettings.postCommented
+        settings.notifyCoachWeekly = socialSettings.coachWeekly
+        settings.coachWeeklyHour = socialSettings.coachWeeklyHour
+        settings.coachWeeklyMinute = socialSettings.coachWeeklyMinute
+        settings.coachWeeklyWeekday = socialSettings.coachWeeklyWeekday
+        try? context.save()
+    }
+
     private func fetchOrCreateGlobalSettings() -> AppSettingsModel {
         let settingsDescriptor = FetchDescriptor<AppSettingsModel>()
         if let existing = (try? context.fetch(settingsDescriptor))?.first(where: { $0.id == GlobalSettings.id }) {
@@ -63,5 +93,21 @@ public actor UserSettingsRepositoryAdapter {
         context.insert(settings)
         try? context.save()
         return settings
+    }
+
+    private func mapSocialNotificationSettings(_ model: AppSettingsModel) -> SocialNotificationSettings {
+        SocialNotificationSettings(
+            followRequested: model.notifyFollowRequested ?? true,
+            followAccepted: model.notifyFollowAccepted ?? true,
+            friendPosted: model.notifyFriendPosted ?? false,
+            friendGraduated: model.notifyFriendGraduated ?? true,
+            postCheered: model.notifyPostCheered ?? true,
+            postFollowed: model.notifyPostFollowed ?? true,
+            postCommented: model.notifyPostCommented ?? true,
+            coachWeekly: model.notifyCoachWeekly ?? true,
+            coachWeeklyHour: model.coachWeeklyHour ?? 20,
+            coachWeeklyMinute: model.coachWeeklyMinute ?? 0,
+            coachWeeklyWeekday: model.coachWeeklyWeekday ?? 1
+        )
     }
 }

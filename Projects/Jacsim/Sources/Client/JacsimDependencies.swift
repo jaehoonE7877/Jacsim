@@ -3,6 +3,7 @@ import Data
 import Domain
 import ExternalInterface
 import Foundation
+import WidgetKit
 
 public struct JacsimDependencies: Sendable {
     public var appPreferences: AppPreferencesPort
@@ -10,6 +11,14 @@ public struct JacsimDependencies: Sendable {
     public var imageStore: ImageStorePort
     public var taskRepository: TaskRepositoryPort
     public var userSettingsRepository: UserSettingsRepositoryPort
+    public var socialUserRepository: SocialUserRepositoryPort
+    public var followRepository: FollowRepositoryPort
+    public var bragPostRepository: BragPostRepositoryPort
+    public var cheerRepository: CheerRepositoryPort
+    public var commentRepository: CommentRepositoryPort
+    public var followChallengeRepository: FollowChallengeRepositoryPort
+    public var aiCoachClient: any AICoachClientPort
+    public var seedSocialIfNeeded: @Sendable () async -> Void
     public var taskQueryClient: TaskQueryClientPort
     public var taskCommandClient: TaskCommandClientPort
     public var stageFlowClient: StageFlowClientPort
@@ -24,6 +33,14 @@ public struct JacsimDependencies: Sendable {
         imageStore: ImageStorePort,
         taskRepository: TaskRepositoryPort,
         userSettingsRepository: UserSettingsRepositoryPort,
+        socialUserRepository: SocialUserRepositoryPort,
+        followRepository: FollowRepositoryPort,
+        bragPostRepository: BragPostRepositoryPort,
+        cheerRepository: CheerRepositoryPort,
+        commentRepository: CommentRepositoryPort,
+        followChallengeRepository: FollowChallengeRepositoryPort,
+        aiCoachClient: any AICoachClientPort,
+        seedSocialIfNeeded: @escaping @Sendable () async -> Void,
         taskQueryClient: TaskQueryClientPort,
         taskCommandClient: TaskCommandClientPort,
         stageFlowClient: StageFlowClientPort,
@@ -37,6 +54,14 @@ public struct JacsimDependencies: Sendable {
         self.imageStore = imageStore
         self.taskRepository = taskRepository
         self.userSettingsRepository = userSettingsRepository
+        self.socialUserRepository = socialUserRepository
+        self.followRepository = followRepository
+        self.bragPostRepository = bragPostRepository
+        self.cheerRepository = cheerRepository
+        self.commentRepository = commentRepository
+        self.followChallengeRepository = followChallengeRepository
+        self.aiCoachClient = aiCoachClient
+        self.seedSocialIfNeeded = seedSocialIfNeeded
         self.taskQueryClient = taskQueryClient
         self.taskCommandClient = taskCommandClient
         self.stageFlowClient = stageFlowClient
@@ -69,6 +94,16 @@ public extension JacsimDependencies {
         let certificationUseCase = CertificationUseCase(
             fetchTask: { await taskRepositoryAdapter.fetchTask(id: $0) },
             updateTask: { try await taskRepositoryAdapter.updateTask($0) }
+        )
+
+        let notificationAdapter = LocalNotificationSchedulerAdapter()
+        let notificationScheduler = NotificationSchedulerPort(
+            scheduleDailyReminder: { try await notificationAdapter.scheduleReminder(taskId: $0, title: $1, time: $2) },
+            cancelReminder: { await notificationAdapter.cancelReminder(taskId: $0) },
+            cancelAllReminders: { await notificationAdapter.cancelAllReminders() },
+            requestAuthorization: { try await notificationAdapter.requestAuthorization() },
+            scheduleSocial: { try await notificationAdapter.scheduleSocial(trigger: $0, context: $1) },
+            cancelSocial: { try await notificationAdapter.cancelSocial(matching: $0) }
         )
 
         let jacsimClient = JacsimClientPort(
@@ -141,6 +176,7 @@ public extension JacsimDependencies {
             },
             certifyToday: { taskId, index, memo, imagePath in
                 let startTime = Date()
+                let beforeTask = await taskRepositoryAdapter.fetchTask(id: taskId)
                 Logger.certificationSaving(
                     taskId: taskId.rawValue.uuidString,
                     index: index,
@@ -157,6 +193,26 @@ public extension JacsimDependencies {
                     Logger.certificationSavedToSwiftData(
                         duration: Date().timeIntervalSince(startTime)
                     )
+                    WidgetCenter.shared.reloadTimelines(ofKind: "TodayJacsimWidget")
+                    WidgetCenter.shared.reloadTimelines(ofKind: "StreakWidget")
+                    if let beforeTask,
+                       var afterTask = await taskRepositoryAdapter.fetchTask(id: taskId),
+                       let graduation = StageGraduationDetector().graduationContext(before: beforeTask, after: afterTask) {
+                        if let lastIndex = afterTask.stages.indices.last {
+                            afterTask.stages[lastIndex].result = .success
+                            try? await taskRepositoryAdapter.updateTask(afterTask)
+                        }
+                        NotificationCenter.default.post(name: .jacsimStageGraduated, object: graduation)
+                        try? await notificationScheduler.scheduleSocial(
+                            .friendGraduated,
+                            SocialNotificationContext(
+                                sourceUserId: SocialLocalSession.currentUserID,
+                                taskId: graduation.taskId,
+                                title: "친구의 스테이지 졸업",
+                                body: "\(graduation.taskTitle) \(graduation.durationDays)일 스테이지를 완주했어요"
+                            )
+                        )
+                    }
                 } catch {
                     Logger.certificationFailed(error: error)
                 }
@@ -174,7 +230,12 @@ public extension JacsimDependencies {
             addTask: { try await jacsimClient.addTask($0) },
             updateTask: { try await jacsimClient.updateTask($0) },
             deleteTask: { try await jacsimClient.deleteTask($0) },
-            updateTaskInfo: { await jacsimClient.updateTaskInfo($0, $1, $2, $3, $4) }
+            updateTaskInfo: { await jacsimClient.updateTaskInfo($0, $1, $2, $3, $4) },
+            updateVisibility: { taskId, visibility in
+                guard var task = try await taskRepository.fetchTask(taskId) else { return }
+                task.visibility = visibility
+                try await taskRepository.updateTask(task)
+            }
         )
         let stageFlowClient = StageFlowClientPort(
             evaluateStageResult: { await jacsimClient.evaluateStageResult($0) },
@@ -184,14 +245,6 @@ public extension JacsimDependencies {
         let certificationClient = CertificationClientPort(
             updateMemo: { await jacsimClient.updateMemo($0, $1, $2) },
             certifyToday: { await jacsimClient.certifyToday($0, $1, $2, $3) }
-        )
-
-        let notificationAdapter = LocalNotificationSchedulerAdapter()
-        let notificationScheduler = NotificationSchedulerPort(
-            scheduleDailyReminder: { try await notificationAdapter.scheduleReminder(taskId: $0, title: $1, time: $2) },
-            cancelReminder: { await notificationAdapter.cancelReminder(taskId: $0) },
-            cancelAllReminders: { await notificationAdapter.cancelAllReminders() },
-            requestAuthorization: { try await notificationAdapter.requestAuthorization() }
         )
 
         let imageStoreAdapter = DocumentImageStoreAdapter()
@@ -206,8 +259,57 @@ public extension JacsimDependencies {
         let userSettingsRepository = UserSettingsRepositoryPort(
             isNotificationEnabled: { await userSettingsAdapter.isNotificationEnabled() },
             getAllReminders: { await userSettingsAdapter.getAllReminders() },
-            updateNotificationEnabled: { await userSettingsAdapter.updateNotificationEnabled($0) }
+            updateNotificationEnabled: { await userSettingsAdapter.updateNotificationEnabled($0) },
+            wallpaperRaw: { await userSettingsAdapter.wallpaperRaw() },
+            updateWallpaperRaw: { await userSettingsAdapter.updateWallpaperRaw($0) },
+            socialNotificationSettings: { await userSettingsAdapter.socialNotificationSettings() },
+            updateSocialNotificationSettings: { await userSettingsAdapter.updateSocialNotificationSettings($0) }
         )
+
+        let socialUserRepositoryAdapter = SocialUserRepositoryAdapter()
+        let socialUserRepository = SocialUserRepositoryPort(
+            fetchUser: { try await socialUserRepositoryAdapter.fetchUser(id: $0) },
+            fetchUserByHandle: { try await socialUserRepositoryAdapter.fetchUserByHandle($0) },
+            searchUsers: { try await socialUserRepositoryAdapter.searchUsers(query: $0) },
+            upsertUser: { try await socialUserRepositoryAdapter.upsertUser($0) }
+        )
+
+        let followRepositoryAdapter = FollowRepositoryAdapter()
+        let followRepository = FollowRepositoryPort(
+            fetchPendingRequests: { try await followRepositoryAdapter.fetchPendingRequests(for: $0) },
+            fetchAccepted: { try await followRepositoryAdapter.fetchAccepted(for: $0) },
+            fetchAll: { try await followRepositoryAdapter.fetchAll(for: $0) },
+            upsertFollow: { try await followRepositoryAdapter.upsertFollow($0) }
+        )
+
+        let bragPostRepositoryAdapter = BragPostRepositoryAdapter()
+        let bragPostRepository = BragPostRepositoryPort(
+            fetchFeed: { try await bragPostRepositoryAdapter.fetchFeed(for: $0, follow: $1) },
+            fetchPosts: { try await bragPostRepositoryAdapter.fetchPosts(authorID: $0) },
+            createPost: { try await bragPostRepositoryAdapter.createPost($0) },
+            deletePost: { try await bragPostRepositoryAdapter.deletePost(id: $0) }
+        )
+
+        let cheerRepositoryAdapter = CheerRepositoryAdapter()
+        let cheerRepository = CheerRepositoryPort(
+            addUnique: { try await cheerRepositoryAdapter.addUnique(postId: $0, userId: $1) },
+            fetchCheers: { try await cheerRepositoryAdapter.fetchCheers(postId: $0) }
+        )
+
+        let commentRepositoryAdapter = CommentRepositoryAdapter()
+        let commentRepository = CommentRepositoryPort(
+            addComment: { try await commentRepositoryAdapter.addComment($0) },
+            fetchComments: { try await commentRepositoryAdapter.fetchComments(postId: $0) },
+            deleteComment: { try await commentRepositoryAdapter.deleteComment(id: $0) }
+        )
+
+        let followChallengeRepositoryAdapter = FollowChallengeRepositoryAdapter()
+        let followChallengeRepository = FollowChallengeRepositoryPort(
+            recordFollowChallenge: { try await followChallengeRepositoryAdapter.recordFollowChallenge($0) },
+            fetchByCopier: { try await followChallengeRepositoryAdapter.fetchByCopier($0) }
+        )
+
+        let seedSocialUseCase = SeedSocialUseCase()
 
         return JacsimDependencies(
             appPreferences: UserDefaultsAppPreferencesAdapter().makePort(),
@@ -215,6 +317,20 @@ public extension JacsimDependencies {
             imageStore: imageStore,
             taskRepository: taskRepository,
             userSettingsRepository: userSettingsRepository,
+            socialUserRepository: socialUserRepository,
+            followRepository: followRepository,
+            bragPostRepository: bragPostRepository,
+            cheerRepository: cheerRepository,
+            commentRepository: commentRepository,
+            followChallengeRepository: followChallengeRepository,
+            aiCoachClient: MockAICoachClientAdapter(),
+            seedSocialIfNeeded: {
+                do {
+                    try await seedSocialUseCase.seedIfNeeded()
+                } catch {
+                    Logger.certificationFailed(error: error)
+                }
+            },
             taskQueryClient: taskQueryClient,
             taskCommandClient: taskCommandClient,
             stageFlowClient: stageFlowClient,
@@ -252,6 +368,39 @@ public extension JacsimDependencies {
             getAllReminders: { [] },
             updateNotificationEnabled: { _ in }
         ),
+        socialUserRepository: SocialUserRepositoryPort(
+            fetchUser: { _ in nil },
+            fetchUserByHandle: { _ in nil },
+            searchUsers: { _ in [] },
+            upsertUser: { _ in }
+        ),
+        followRepository: FollowRepositoryPort(
+            fetchPendingRequests: { _ in [] },
+            fetchAccepted: { _ in [] },
+            fetchAll: { _ in [] },
+            upsertFollow: { _ in }
+        ),
+        bragPostRepository: BragPostRepositoryPort(
+            fetchFeed: { _, _ in [] },
+            fetchPosts: { _ in [] },
+            createPost: { _ in },
+            deletePost: { _ in }
+        ),
+        cheerRepository: CheerRepositoryPort(
+            addUnique: { _, _ in true },
+            fetchCheers: { _ in [] }
+        ),
+        commentRepository: CommentRepositoryPort(
+            addComment: { _ in },
+            fetchComments: { _ in [] },
+            deleteComment: { _ in }
+        ),
+        followChallengeRepository: FollowChallengeRepositoryPort(
+            recordFollowChallenge: { _ in },
+            fetchByCopier: { _ in [] }
+        ),
+        aiCoachClient: MockAICoachClientAdapter(),
+        seedSocialIfNeeded: {},
         taskQueryClient: TaskQueryClientPort(
             fetchActiveTasks: { [] },
             fetchTask: { _ in nil },

@@ -3,12 +3,28 @@ import DSKit
 import Foundation
 import Observation
 
+public enum CalendarDisplayMode: String, CaseIterable {
+    case month
+    case year
+
+    var title: String {
+        switch self {
+        case .month:
+            return "월"
+        case .year:
+            return "연"
+        }
+    }
+}
+
 @MainActor
 @Observable
 public final class CalendarModel {
     public var selectedDate: Date = Date()
     public var datePickerDate: Date = Date()
     public var isDatePickerPresented: Bool = false
+    public var isDaySheetPresented: Bool = false
+    public var displayMode: CalendarDisplayMode = .month
     public var calendarScope: JSCalendarScope = .month
     public var tasks: [Domain.Task] = []
     public var eventDates: [Date] = []
@@ -43,6 +59,11 @@ public final class CalendarModel {
 
     public func dateSelected(_ date: Date) {
         selectedDate = date
+        isDaySheetPresented = true
+    }
+
+    public func daySheetDismissed() {
+        isDaySheetPresented = false
     }
 
     public func datePickerButtonTapped() {

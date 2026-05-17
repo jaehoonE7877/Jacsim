@@ -24,6 +24,9 @@ public enum JSSpacing {
     
     /// 44pt - 최소 터치 타겟 크기
     public static var touchTarget: CGFloat { 44.jsScaled(.touchTarget) }
+
+    /// 16pt - Floating tab bar horizontal margin
+    public static var tabBarMargin: CGFloat { 16.jsScaled() }
 }
 
 public extension CGFloat {
@@ -35,4 +38,5 @@ public extension CGFloat {
     static var jsXL: CGFloat { JSSpacing.xl }
     static var jsXXL: CGFloat { JSSpacing.xxl }
     static var jsTouchTarget: CGFloat { JSSpacing.touchTarget }
+    static var jsTabBarMargin: CGFloat { JSSpacing.tabBarMargin }
 }

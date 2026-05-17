@@ -4,23 +4,10 @@ import DSKit
 import _Concurrency
 
 public struct HomeView: View {
-    private enum FabState {
-        case expanded
-        case collapsed
-        case hidden
-    }
-
     @Bindable var model: HomeModel
     @State private var tapFeedbackTrigger = 0
-    @State private var fabState: FabState = .expanded
-    @State private var previousScrollOffset: CGFloat = 0
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    private var fabHeight: CGFloat { 56.jsScaled() }
-    private var fabCollapseThreshold: CGFloat { -56.jsScaled() }
-    private var fabHiddenThreshold: CGFloat { -148.jsScaled() }
-    private var fabExpandThreshold: CGFloat { -20.jsScaled() }
-    private var scrollDeltaDeadZone: CGFloat { 3.jsScaled() }
     private var shouldShowSummarySection: Bool {
         PresentationRedesignFlags.isEnabled(.home) &&
         PresentationRedesignFlags.isSectionEnabled(.homeSummary)
@@ -28,24 +15,8 @@ public struct HomeView: View {
     private var shouldShowMiniCardsSection: Bool {
         PresentationRedesignFlags.isSectionEnabled(.homeMiniCards)
     }
-    private var contentBottomPadding: CGFloat {
-        switch fabState {
-        case .expanded:
-            return .jsSM
-        case .collapsed, .hidden:
-            return .jsXS
-        }
-    }
-    private var toastBottomPadding: CGFloat {
-        switch fabState {
-        case .expanded:
-            return 116.jsScaled()
-        case .collapsed:
-            return 96.jsScaled()
-        case .hidden:
-            return 40.jsScaled()
-        }
-    }
+    private var contentBottomPadding: CGFloat { 96.jsScaled() }
+    private var toastBottomPadding: CGFloat { 104.jsScaled() }
     private var overallProgress: Double {
         guard !model.activeTasks.isEmpty else { return 0 }
         let total = model.activeTasks.reduce(0.0) { partial, task in
@@ -58,6 +29,16 @@ public struct HomeView: View {
     }
     private var todayLabel: String {
         DateFormatType.toString(Date(), to: .fullWithoutYear)
+    }
+    private var wallpaperGradient: LinearGradient {
+        switch model.wallpaperRaw {
+        case "forest":
+            return .wallpaperForest
+        case "dusk":
+            return .wallpaperDusk
+        default:
+            return .wallpaperMorning
+        }
     }
 
     public init(model: HomeModel) {
@@ -103,12 +84,19 @@ public struct HomeView: View {
             AllTaskView(model: AllTaskModel(dependencies: model.dependencies))
         case .setting:
             SettingView(model: SettingScreenModel(dependencies: model.dependencies))
+        case .newTask:
+            if let newTask = model.newTask {
+                NewTaskView(model: newTask)
+            } else {
+                EmptyView()
+            }
         }
     }
 
     private var mainContent: some View {
         ZStack {
-            Color.v2Background.ignoresSafeArea()
+            wallpaperGradient.ignoresSafeArea()
+            Color.backgroundNormal.opacity(0.18).ignoresSafeArea()
 
             scrollContent
         }
@@ -125,39 +113,16 @@ public struct HomeView: View {
                 }
             }
         }
-        .safeAreaInset(edge: .bottom) {
-            HStack {
-                Spacer()
-                floatingAddButton
-            }
-            .padding(.top, .jsXS)
-            .padding(.trailing, .jsMD)
-            .padding(.bottom, .jsSM)
-        }
         .animation(reduceMotion ? .none : .easeInOut(duration: 0.25), value: model.toastMessage)
-        .sheet(item: $model.challengeCreate) { challengeModel in
-            ChallengeCreateView(model: challengeModel)
-                .presentationDragIndicator(.hidden)
-                .interactiveDismissDisabled(true)
-        }
         .sensoryFeedback(.impact(weight: .light), trigger: tapFeedbackTrigger)
-    }
-
-    private var floatingAddButton: some View {
-        HomeFloatingAddButton(
-            isExpanded: fabState == .expanded,
-            isHidden: fabState == .hidden,
-            reduceMotion: reduceMotion,
-            height: fabHeight,
-            action: handleAddButtonTap
-        )
     }
 
     private var scrollContent: some View {
         ScrollView(showsIndicators: false) {
-            VStack(alignment: .leading, spacing: .jsLG) {
+            VStack(alignment: .leading, spacing: .jsXXL) {
                 HomeHeaderSection(
                     todayLabel: todayLabel,
+                    displayName: "작심러",
                     onSettingsTap: handleSettingsButtonTap
                 )
 
@@ -169,18 +134,6 @@ public struct HomeView: View {
                 reduceMotion ? .none : .easeInOut(duration: 0.22),
                 value: model.isLoading
             )
-            .background(
-                GeometryReader { proxy in
-                    Color.clear.preference(
-                        key: HomeScrollOffsetPreferenceKey.self,
-                        value: proxy.frame(in: .named("homeScrollView")).minY
-                    )
-                }
-            )
-        }
-        .coordinateSpace(name: "homeScrollView")
-        .onPreferenceChange(HomeScrollOffsetPreferenceKey.self) { offset in
-            updateFabState(for: offset)
         }
     }
 
@@ -195,7 +148,7 @@ public struct HomeView: View {
         } else if let heroTask = model.heroTask {
             loadedContent(for: heroTask)
         } else {
-            HomeEmptyStateSection(onStart: handleAddButtonTap)
+            HomeEmptyStateSection()
                 .padding(.top, 40.jsScaled())
                 .padding(.horizontal, .jsXL)
         }
@@ -203,20 +156,6 @@ public struct HomeView: View {
 
     @ViewBuilder
     private func loadedContent(for heroTask: Domain.Task) -> some View {
-        HomeHeroTaskSection(
-            task: heroTask,
-            imageData: model.heroTaskImageData,
-            onTap: { handleTaskTap(heroTask) }
-        )
-        .padding(.horizontal, .jsXL)
-
-        HomeFocusActionRow(
-            state: focusActionState(for: heroTask),
-            onPrimaryTap: { handleFocusPrimaryAction(heroTask) },
-            onSecondaryTap: { handleFocusSecondaryAction(heroTask) }
-        )
-        .padding(.horizontal, .jsXL)
-
         if shouldShowSummarySection {
             HomeSummaryCardSection(
                 activeTaskCount: model.activeTasks.count,
@@ -225,6 +164,16 @@ public struct HomeView: View {
             )
             .transition(.opacity)
         }
+
+        HomeHeroTaskSection(
+            task: heroTask,
+            onTap: { handleTaskTap(heroTask) },
+            onPrimaryTap: { handleFocusPrimaryAction(heroTask) }
+        )
+        .padding(.horizontal, .jsXL)
+
+        HomeStreakHeatmapSection(task: heroTask)
+            .padding(.horizontal, .jsXL)
 
         if shouldShowMiniCardsSection && model.activeTasks.count > 1 {
             HomeMiniCardsSection(
@@ -240,11 +189,6 @@ public struct HomeView: View {
             nanoseconds: RedesignToastView.defaultDismissNanoseconds
         )
         model.toastDismissed()
-    }
-
-    private func handleAddButtonTap() {
-        model.addButtonTapped()
-        triggerTapFeedback()
     }
 
     private func handleSettingsButtonTap() {
@@ -312,46 +256,6 @@ public struct HomeView: View {
         }
     }
 
-    private func updateFabState(for offset: CGFloat) {
-        let delta = offset - previousScrollOffset
-        previousScrollOffset = offset
-
-        guard abs(delta) > scrollDeltaDeadZone else { return }
-
-        switch fabState {
-        case .expanded:
-            if offset < fabCollapseThreshold {
-                setFabState(.collapsed)
-            }
-        case .collapsed:
-            if offset < fabHiddenThreshold && delta < 0 {
-                setFabState(.hidden)
-            } else if offset > fabExpandThreshold {
-                setFabState(.expanded)
-            }
-        case .hidden:
-            if delta > 0 {
-                if offset > fabExpandThreshold {
-                    setFabState(.expanded)
-                } else {
-                    setFabState(.collapsed)
-                }
-            }
-        }
-    }
-
-    private func setFabState(_ state: FabState) {
-        guard fabState != state else { return }
-        fabState = state
-    }
-}
-
-private struct HomeScrollOffsetPreferenceKey: PreferenceKey {
-    static var defaultValue: CGFloat { 0 }
-
-    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
-        value = nextValue()
-    }
 }
 
 #Preview {
